@@ -10,13 +10,13 @@
 
 Equipe de **5 integrantes**, dentro do limite de 3 a 5 estabelecido pela disciplina.
 
-| Integrante | Matrícula | Papel | GitHub |
+| Integrante | Matrícula | GitHub | Papel |
 |---|---|---|---|
-| Ingryd Vitoria de Araújo Barbosa | 01642893 | *a definir* | *a preencher* |
-| João Pedro Nunes de França | 01626444 | *a definir* | *a preencher* |
-| Marcio Maycom | 01607574 | *a definir* | *a preencher* |
-| Pedro Miranda | 01607408 | *a definir* | *a preencher* |
-| Thiago José Falcão de Freitas | 01597267 | *a definir* | *a preencher* |
+| Ingryd Vitoria de Araújo Barbosa | 01642893 | [@ingrydaraujob](https://github.com/ingrydaraujob) | *a definir* |
+| João Pedro Nunes de França | 01626444 | [@joaopfranca04](https://github.com/joaopfranca04) | *a definir* |
+| Marcio Maycom | 01607574 | [@mihaeldatoman](https://github.com/mihaeldatoman) | *a definir* |
+| Pedro Miranda | 01607408 | [@PedroMiranda243](https://github.com/PedroMiranda243) | *a definir* |
+| Thiago José Falcão de Freitas | 01597267 | [@ThiagojFalcao](https://github.com/ThiagojFalcao) | *a definir* |
 
 Os cinco papéis previstos — Scrum Master, Product Owner, Desenvolvedor Backend / Núcleo Computacional,
 Desenvolvedor Frontend, e Banco de Dados / Documentação / Testes — estão descritos na seção 2. A atribuição
