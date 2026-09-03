@@ -2,14 +2,16 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 1.0 — 03/09/2026
-**Marco final:** entrega da disciplina em **05/12/2026**
+**Versão:** 1.1 — 03/09/2026
+
+**Datas oficiais da disciplina:** entrega da Sprint 1 em **05/09/2026** · entrega final em **05/12/2026**
 
 ---
 
 ## 1. Estrutura
 
-O semestre foi dividido em **7 sprints quinzenais**, de quinta a quarta-feira, entre 03/09 e 05/12/2026.
+O semestre foi dividido em **7 sprints**, entre o início dos trabalhos e 05/12/2026. As sprints 2 a 5 e a 7
+são quinzenais, de segunda a sexta; a Sprint 6 tem três semanas por concentrar o núcleo computacional.
 
 A disciplina apresentou um esqueleto de 5 sprints e autorizou o acréscimo de novas sprints conforme a
 necessidade. Optamos por 7 pelas duas razões abaixo:
@@ -30,35 +32,35 @@ funcionando.
 
 | Sprint | Período | Tema | Entregável executável |
 |:--:|---|---|---|
-| **1** | 03/09 – 16/09 | Planejamento e descoberta | Documentação completa e repositório configurado |
-| **2** | 17/09 – 30/09 | Modelagem e protótipo | Esquema do banco criado por migração + protótipo navegável + gerador de dados |
-| **3** | 01/10 – 14/10 | Arquitetura e ambiente | `docker compose up` sobe o sistema · CI verde · **kernel de GPU validado** |
-| **4** | 15/10 – 28/10 | Autenticação, perfis e ingestão | Login com 4 perfis + importação gravando no banco |
-| **5** | 29/10 – 11/11 | BI, segmentação e previsão | Painel com ranking e séries + modelo treinado + otimizador serial |
-| **6** | 12/11 – 25/11 | Paralelismo, GPU e comunicação | Otimizador em CPU paralela e **GPU** + benchmark na tela + fila de aprovação |
-| **7** | 26/11 – 05/12 | Fechamento e entrega | Sistema completo, testado, documentado e os dois vídeos publicados |
+| **1** | até **05/09** | Planejamento e descoberta | Documentação completa e repositório configurado |
+| **2** | 07/09 – 18/09 | Modelagem e protótipo | Esquema do banco criado por migração + protótipo navegável + gerador de dados |
+| **3** | 21/09 – 02/10 | Arquitetura e ambiente | `docker compose up` sobe o sistema · CI verde · **kernel de GPU validado** |
+| **4** | 05/10 – 16/10 | Autenticação, perfis e ingestão | Login com 4 perfis + importação gravando no banco |
+| **5** | 19/10 – 30/10 | BI, segmentação e previsão | Painel com ranking e séries + modelo treinado + otimizador serial |
+| **6** | 02/11 – 20/11 | Paralelismo, GPU e comunicação | Otimizador em CPU paralela e **GPU** + benchmark na tela + fila de aprovação |
+| **7** | 23/11 – **05/12** | Fechamento e entrega | Sistema completo, testado, documentado e os dois vídeos publicados |
 
 ```mermaid
 gantt
-    title Cronograma GIH — 03/09 a 05/12/2026
+    title Cronograma GIH — até 05/12/2026
     dateFormat YYYY-MM-DD
     axisFormat %d/%m
 
     section Planejamento
-    S1 Planejamento e descoberta      :s1, 2026-09-03, 14d
-    S2 Modelagem e protótipo          :s2, 2026-09-17, 14d
+    S1 Planejamento e descoberta      :done, s1, 2026-08-27, 2026-09-05
+    S2 Modelagem e protótipo          :s2, 2026-09-07, 12d
 
     section Construção
-    S3 Arquitetura e ambiente         :s3, 2026-10-01, 14d
-    S4 Autenticação e ingestão        :s4, 2026-10-15, 14d
-    S5 BI, segmentação e previsão     :s5, 2026-10-29, 14d
+    S3 Arquitetura e ambiente         :s3, 2026-09-21, 12d
+    S4 Autenticação e ingestão        :s4, 2026-10-05, 12d
+    S5 BI, segmentação e previsão     :s5, 2026-10-19, 12d
 
     section Núcleo avançado
-    Spike de GPU                      :crit, spike, 2026-10-01, 14d
-    S6 Paralelismo, GPU e comunicação :crit, s6, 2026-11-12, 14d
+    Spike de GPU                      :crit, spike, 2026-09-21, 12d
+    S6 Paralelismo, GPU e comunicação :crit, s6, 2026-11-02, 19d
 
     section Entrega
-    S7 Fechamento e entrega           :s7, 2026-11-26, 10d
+    S7 Fechamento e entrega           :s7, 2026-11-23, 13d
     Entrega final                     :milestone, m1, 2026-12-05, 0d
 ```
 
@@ -67,7 +69,7 @@ gantt
 ## 3. Detalhamento por sprint
 
 ### Sprint 1 — Planejamento e descoberta
-**03/09 – 16/09 · 27 pontos**
+**até 05/09 · 27 pontos**
 
 | Meta | Histórias |
 |---|---|
@@ -78,15 +80,13 @@ gantt
 | Construir o cronograma | H05 |
 | Configurar o repositório GitHub | H06 |
 
-**Entregável:** documentação aprovada e repositório público com milestones, labels, board e regra de
-proteção configurados.
-
-**Como será demonstrado na orientação:** repositório aberto na tela, percorrendo os documentos e o board.
+**Entregável:** documento único da Sprint 1 entregue no Teams até **05/09**, formulário de identificação
+da equipe preenchido, e repositório público com milestones, labels, board e regra de proteção configurados.
 
 ---
 
 ### Sprint 2 — Modelagem e protótipo
-**17/09 – 30/09 · 23 pontos**
+**07/09 – 18/09 · 23 pontos**
 
 | Meta | Histórias |
 |---|---|
@@ -105,7 +105,7 @@ necessária para o benchmark do otimizador. Sem ele, a Sprint 6 começaria sem i
 ---
 
 ### Sprint 3 — Arquitetura e ambiente
-**01/10 – 14/10 · 14 pontos**
+**21/09 – 02/10 · 14 pontos**
 
 | Meta | Histórias |
 |---|---|
@@ -123,7 +123,7 @@ maior incerteza do projeto. Ver seção 5.
 ---
 
 ### Sprint 4 — Autenticação, perfis e ingestão
-**15/10 – 28/10 · 76 pontos**
+**05/10 – 16/10 · 76 pontos**
 
 | Meta | Histórias |
 |---|---|
@@ -136,13 +136,10 @@ maior incerteza do projeto. Ver seção 5.
 **Entregável:** um usuário faz login, importa um relatório com período, vê a prévia, confirma e encontra os
 dados gravados. Perfis diferentes enxergam telas diferentes, com a negação validada no servidor.
 
-**Frentes paralelas:** autenticação (backend + banco) e ingestão (backend + interface) avançam
-simultaneamente, por pessoas diferentes.
-
 ---
 
 ### Sprint 5 — BI, segmentação e previsão
-**29/10 – 11/11 · 111 pontos**
+**19/10 – 30/10 · 111 pontos**
 
 | Meta | Histórias |
 |---|---|
@@ -163,7 +160,7 @@ formalização do otimizador. É o ponto de controle mais importante do cronogra
 ---
 
 ### Sprint 6 — Paralelismo, GPU e comunicação
-**12/11 – 25/11 · 76 pontos**
+**02/11 – 20/11 · três semanas · 76 pontos**
 
 | Meta | Histórias |
 |---|---|
@@ -178,13 +175,13 @@ formalização do otimizador. É o ponto de controle mais importante do cronogra
 **Entregável:** o mesmo problema resolvido nos três modos, com tabela de tempos, *speedup* e gráfico de
 escalabilidade na tela; fila de aprovação impedindo envio sem decisão humana.
 
-**É a sprint que define a nota do componente avançado.** Ao final dela o projeto precisa ter um número
-concreto de *speedup* para apresentar.
+**É a única sprint de três semanas, e é a que define a nota do componente avançado.** Ao final dela o
+projeto precisa ter um número concreto de *speedup* para apresentar.
 
 ---
 
 ### Sprint 7 — Fechamento e entrega
-**26/11 – 05/12 · 51 pontos**
+**23/11 – 05/12 · 51 pontos**
 
 | Meta | Histórias |
 |---|---|
@@ -207,12 +204,12 @@ exclusivamente para correção, gravação e ensaio.
 
 | Data | Marco | Critério de verificação |
 |---|---|---|
-| **16/09** | Planejamento aprovado | Documentação e repositório apresentados na orientação |
-| **30/09** | Modelo de dados definido | Banco criado por migração e populado pelo gerador |
-| **14/10** | Ambiente reprodutível e **risco de GPU retirado** | Sistema sobe com um comando; kernel de GPU executado com sucesso |
-| **28/10** | Sistema com acesso controlado e dados reais entrando | Login com perfis + importação completa |
-| **11/11** | Inteligência funcionando | Painel, segmentação, modelo treinado e otimizador serial |
-| **25/11** | **Componente avançado demonstrável** | Speedup medido e exibido na interface |
+| **05/09** | **Planejamento entregue** | Documento no Teams e formulário de identificação preenchido |
+| **18/09** | Modelo de dados definido | Banco criado por migração e populado pelo gerador |
+| **02/10** | Ambiente reprodutível e **risco de GPU retirado** | Sistema sobe com um comando; kernel de GPU executado com sucesso |
+| **16/10** | Sistema com acesso controlado e dados entrando | Login com perfis + importação completa |
+| **30/10** | Inteligência funcionando | Painel, segmentação, modelo treinado e otimizador serial |
+| **20/11** | **Componente avançado demonstrável** | Speedup medido e exibido na interface |
 | **30/11** | Congelamento de escopo | Nenhuma funcionalidade nova a partir desta data |
 | **05/12** | **Entrega final** | Sistema, código, documentação, banco e os dois vídeos |
 
@@ -225,7 +222,7 @@ exclusivamente para correção, gravação e ensaio.
 | **R1** | A cadeia de compilação de GPU não funcionar no ambiente disponível | Média | **Alto** | *Spike* antecipado para a Sprint 3 (H47), seis semanas antes de ser necessário. Se falhar, há alternativas em ordem de preferência: CuPy, Numba com destino CUDA, ou OpenCL. O `nvcc` ainda não está instalado na estação de desenvolvimento — instalar o CUDA Toolkit é a primeira tarefa da H47. |
 | **R2** | A Sprint 5 concentrar carga acima da capacidade real | **Alta** | Médio | Medir a velocidade real nas Sprints 2 e 3 e recalibrar antes de iniciar a Sprint 5. Histórias marcadas S e C migram para a Sprint 7 na primeira evidência de atraso, não depois. |
 | **R3** | O speedup em GPU ficar abaixo da meta de 5x | Média | **Alto** | O gerador sintético permite ampliar a escala do cenário até o ponto em que o paralelismo compensa o custo de transferência. Se ainda assim não atingir, o resultado medido é reportado com a análise do porquê — um resultado negativo bem explicado é conteúdo técnico legítimo, muito melhor que um número inflado. |
-| **R4** | Concentração de conhecimento em um único integrante no núcleo em C++/CUDA | **Alta** | Médio | Programação em par obrigatória nas histórias H53 e H54; revisão por Pull Request de outro integrante; registro das decisões em documento de arquitetura. |
+| **R4** | Concentração de conhecimento em um único integrante no núcleo em C++/CUDA | **Alta** | Médio | Programação em par obrigatória nas histórias H53 e H54; revisão por Pull Request de outro integrante; registro das decisões em documento. |
 | **R5** | Modelo preditivo não superar o baseline ingênuo | Média | Médio | Baselines implementados **antes** do modelo (H46), para saber cedo qual é o alvo. Se o ganho não vier do aprendizado, o otimizador continua funcionando com as estimativas do baseline, e a análise do porquê vira conteúdo da documentação. |
 | **R6** | Ausência ou queda de participação de um integrante | Média | **Alto** | Papéis com substituto natural definido; nenhuma história crítica com um único responsável; acompanhamento por commits e pelo board em cada orientação. |
 | **R7** | Vídeos deixados para os últimos dias | Média | **Alto** | Roteiros escritos já na Sprint 6; congelamento de escopo em 30/11; gravação distribuída entre 01/12 e 04/12. |
@@ -237,11 +234,11 @@ exclusivamente para correção, gravação e ensaio.
 
 | Cerimônia | Quando | Duração | Objetivo |
 |---|---|---|---|
-| Planejamento da sprint | Quinta, início da sprint | 60 min | Selecionar histórias e distribuir responsáveis |
+| Planejamento da sprint | Segunda, início da sprint | 60 min | Selecionar histórias e distribuir responsáveis |
 | Acompanhamento | Segunda e quinta | 15 min | O que avançou, o que trava, o que vem |
 | Orientação com a professora | Semanal | conforme a disciplina | Apresentar evolução prática, tirar dúvidas, validar arquitetura |
-| Revisão da sprint | Quarta, fim da sprint | 45 min | Demonstrar o que ficou pronto |
-| Retrospectiva | Quarta, após a revisão | 30 min | O que manter, o que mudar |
+| Revisão da sprint | Sexta, fim da sprint | 45 min | Demonstrar o que ficou pronto |
+| Retrospectiva | Sexta, após a revisão | 30 min | O que manter, o que mudar |
 
 Detalhes de papéis, *Definition of Done* e fluxo de trabalho em
 [06 — Equipe e processo](06-equipe-e-processo.md).
@@ -250,9 +247,9 @@ Detalhes de papéis, *Definition of Done* e fluxo de trabalho em
 
 ## 7. Observação sobre as datas
 
-As datas das sprints foram construídas a partir do único marco fixo divulgado — a entrega final em
-**05/12/2026** — e distribuídas em quinzenas regulares a partir de 03/09.
+As sprints 2 a 7 foram distribuídas a partir das duas datas oficiais divulgadas pela disciplina — entrega
+da Sprint 1 em **05/09** e entrega final em **05/12**.
 
-O calendário de orientações e a data de entrega de cada sprint definidos pela disciplina têm precedência:
-na primeira orientação, este cronograma será ajustado às datas oficiais, preservando a sequência de temas e
+O calendário de orientações e as datas de entrega das demais sprints definidos pela disciplina têm
+precedência: assim que forem divulgados, este cronograma será ajustado, preservando a sequência de temas e
 os marcos técnicos.

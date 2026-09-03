@@ -79,7 +79,30 @@ bruta e igualmente inviável de resolver "no olho".
 ponte natural entre as duas disciplinas: a Fábrica de Software entrega o produto completo em torno dele,
 Tópicos Avançados entrega o motor.
 
-### 2.4 O que já se sabe que não resolve
+### 2.4 Por que este problema é relevante
+
+**Para a operação.** A cauda longa concentra a maior parte do potencial de crescimento não explorado: são
+85% dos parceiros recebendo uma fração da atenção comercial. Um parceiro que sai da base não é apenas uma
+receita perdida — é um restaurante que passa a operar só no concorrente, e reconquistá-lo custa muito mais
+do que teria custado mantê-lo. O alerta que chega um período antes é a diferença entre uma conversa de
+retenção e uma perda consumada.
+
+**Para os parceiros.** São comércios pequenos, quase sempre sem estrutura de marketing. Para eles, entrar
+numa campanha bem escolhida é acesso a demanda que não conseguiriam gerar sozinhos. Quando a alocação é
+feita por intuição, quem já é grande recebe mais — e a assimetria se aprofunda sozinha.
+
+**Para a decisão.** Verba de incentivo e agenda da equipe são recursos escassos e disputados. Hoje a
+escolha é feita sem critério explícito e, principalmente, **sem verificação posterior**: não se sabe se a
+campanha da semana passada funcionou, porque nada foi medido contra uma previsão. Sem linha de base, não
+existe aprendizado — apenas repetição.
+
+**Para o campo técnico.** O problema não é uma desculpa para usar tecnologia; ele *exige* a tecnologia.
+Priorizar ações sob restrições de orçamento, capacidade e cotas é otimização combinatória, e estimar o
+retorno de cada ação é um problema de previsão. São duas classes de problema com solução conhecida e
+mensurável — e é isso que permite avaliar objetivamente se a solução funcionou, comparando *speedup* e erro
+de previsão contra baselines, em vez de opinar sobre a interface.
+
+### 2.5 O que já se sabe que não resolve
 
 | Alternativa | Por que não basta |
 |---|---|
