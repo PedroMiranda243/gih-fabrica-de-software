@@ -8,6 +8,8 @@
 
 ## 1. Composição da equipe
 
+**Turma:** CC8MB
+
 Equipe de **5 integrantes**, dentro do limite de 3 a 5 estabelecido pela disciplina.
 
 | Integrante | Matrícula | GitHub | Papel |

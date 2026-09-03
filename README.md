@@ -127,6 +127,8 @@ escala para evidenciar o ganho de paralelismo.
 
 ## Equipe
 
+**Turma:** CC8MB
+
 Projeto desenvolvido por 5 integrantes. Os papéis organizam o trabalho, mas **todos contribuem com código** —
 ver [`docs/06-equipe-e-processo.md`](docs/06-equipe-e-processo.md).
 
