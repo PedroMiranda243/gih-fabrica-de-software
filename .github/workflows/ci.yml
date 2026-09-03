@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  higiene-do-repositorio:
+    name: Higiene do repositório
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Nenhum arquivo .env versionado
+        run: |
+          if git ls-files | grep -E '(^|/)\.env$|(^|/)\.env\.' | grep -v '\.env\.example$'; then
+            echo "::error::Arquivo de ambiente versionado. Segredos vão em .env, que está no .gitignore."
+            exit 1
+          fi
+          echo "OK — nenhum .env versionado."
+
+      - name: Nenhum arquivo de dados versionado
+        run: |
+          if git ls-files | grep -Ei '\.(csv|xlsx|xls)$' | grep -v '^scripts/exemplos/'; then
+            echo "::error::Arquivo de dados versionado. Toda massa de demonstração é gerada por scripts/gerar_dados_sinteticos.py."
+            exit 1
+          fi
+          echo "OK — nenhum arquivo de dados versionado."
+
+      - name: Nenhum segredo aparente no código
+        run: |
+          if git grep -nEi "(api[_-]?key|secret|token|password)[[:space:]]*=[[:space:]]*['\"][A-Za-z0-9_/+.-]{16,}['\"]" -- . ':!.github/workflows/*' ':!*.example'; then
+            echo "::error::Possível segredo literal no código."
+            exit 1
+          fi
+          echo "OK — nenhum segredo aparente."
+
+      - name: Documentação obrigatória presente
+        run: |
+          for f in README.md CONTRIBUTING.md \
+                   docs/01-visao-do-produto.md docs/02-requisitos.md \
+                   docs/03-casos-de-uso.md docs/04-product-backlog.md \
+                   docs/05-cronograma.md docs/06-equipe-e-processo.md \
+                   docs/07-arquitetura-preliminar.md; do
+            test -f "$f" || { echo "::error::Documento ausente: $f"; exit 1; }
+          done
+          echo "OK — documentação completa."
+
+  api:
+    name: API (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verificar se o módulo já existe
+        id: existe
+        run: |
+          if [ -d api ]; then echo "pronto=sim" >> "$GITHUB_OUTPUT"; else echo "pronto=nao" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/setup-python@v5
+        if: steps.existe.outputs.pronto == 'sim'
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        if: steps.existe.outputs.pronto == 'sim'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r api/requirements.txt
+          pip install ruff pytest pytest-cov
+
+      - name: Análise estática
+        if: steps.existe.outputs.pronto == 'sim'
+        run: ruff check api
+
+      - name: Testes
+        if: steps.existe.outputs.pronto == 'sim'
+        run: pytest api/tests --cov=api/app --cov-report=term-missing
+
+      - name: Módulo ainda não criado
+        if: steps.existe.outputs.pronto == 'nao'
+        run: echo "Diretório api/ ainda não existe — previsto para a Sprint 3 (história H09)."
+
+  web:
+    name: Interface (React)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verificar se o módulo já existe
+        id: existe
+        run: |
+          if [ -f web/package.json ]; then echo "pronto=sim" >> "$GITHUB_OUTPUT"; else echo "pronto=nao" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/setup-node@v4
+        if: steps.existe.outputs.pronto == 'sim'
+        with:
+          node-version: '20'
+
+      - name: Instalar, verificar e testar
+        if: steps.existe.outputs.pronto == 'sim'
+        working-directory: web
+        run: |
+          npm ci
+          npm run lint --if-present
+          npm run test --if-present
+          npm run build
+
+      - name: Módulo ainda não criado
+        if: steps.existe.outputs.pronto == 'nao'
+        run: echo "Diretório web/ ainda não existe — previsto para a Sprint 3 (história H09)."
