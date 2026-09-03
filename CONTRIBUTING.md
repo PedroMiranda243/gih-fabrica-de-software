@@ -3,6 +3,10 @@
 Guia de trabalho da equipe do Growth Intelligence Hub. Detalhamento completo de papéis e cerimônias em
 [`docs/06-equipe-e-processo.md`](docs/06-equipe-e-processo.md).
 
+> **Antes do primeiro commit, leia [`CLAUDE.md`](CLAUDE.md).** Ele traz as regras inegociáveis, o mapa de
+> responsabilidades por diretório, as convenções de nomenclatura e as orientações para trabalhar com
+> assistente de IA sem que cinco pessoas produzam cinco arquiteturas diferentes.
+
 ## Ramos
 
 `main` é **protegida**: recebe alterações apenas por Pull Request aprovado por outro integrante, com a

@@ -88,6 +88,7 @@ Detalhamento em [`docs/07-arquitetura-preliminar.md`](docs/07-arquitetura-prelim
 
 | Documento | Conteúdo |
 |---|---|
+| [**CLAUDE.md**](CLAUDE.md) | **Contexto e convenções para assistentes de IA — leia antes de codificar** |
 | [01 — Visão do produto](docs/01-visao-do-produto.md) | Tema, problema, objetivos, público-alvo, KPIs |
 | [02 — Requisitos](docs/02-requisitos.md) | 36 requisitos funcionais e 20 não funcionais, com rastreabilidade |
 | [03 — Casos de uso](docs/03-casos-de-uso.md) | 14 casos de uso, diagrama e especificação detalhada |
