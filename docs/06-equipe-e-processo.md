@@ -10,13 +10,17 @@
 
 Equipe de **5 integrantes**, dentro do limite de 3 a 5 estabelecido pela disciplina.
 
-| Papel | Integrante | GitHub |
-|---|---|---|
-| Scrum Master | *a preencher* | *a preencher* |
-| Product Owner | *a preencher* | *a preencher* |
-| Desenvolvedor Backend / Núcleo Computacional | *a preencher* | *a preencher* |
-| Desenvolvedor Frontend | *a preencher* | *a preencher* |
-| Banco de Dados, Documentação e Testes | *a preencher* | *a preencher* |
+| Integrante | Matrícula | Papel | GitHub |
+|---|---|---|---|
+| Ingryd Vitoria de Araújo Barbosa | 01642893 | *a definir* | *a preencher* |
+| João Pedro Nunes de França | 01626444 | *a definir* | *a preencher* |
+| Marcio Maycom | 01607574 | *a definir* | *a preencher* |
+| Pedro Miranda | 01607408 | *a definir* | *a preencher* |
+| Thiago José Falcão de Freitas | 01597267 | *a definir* | *a preencher* |
+
+Os cinco papéis previstos — Scrum Master, Product Owner, Desenvolvedor Backend / Núcleo Computacional,
+Desenvolvedor Frontend, e Banco de Dados / Documentação / Testes — estão descritos na seção 2. A atribuição
+de cada papel a cada integrante é definida na primeira reunião da equipe.
 
 > **Os papéis organizam; não isolam.** Todos os integrantes contribuem com código e todos aparecem no
 > histórico de commits. A disciplina avalia participação individual, e a ausência de participação de um

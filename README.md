@@ -130,13 +130,13 @@ escala para evidenciar o ganho de paralelismo.
 Projeto desenvolvido por 5 integrantes. Os papéis organizam o trabalho, mas **todos contribuem com código** —
 ver [`docs/06-equipe-e-processo.md`](docs/06-equipe-e-processo.md).
 
-| Papel | Integrante |
-|---|---|
-| Scrum Master | *a definir* |
-| Product Owner | *a definir* |
-| Desenvolvedor Backend / Núcleo Computacional | *a definir* |
-| Desenvolvedor Frontend | *a definir* |
-| Banco de Dados, Documentação e Testes | *a definir* |
+| Integrante | Matrícula | Papel |
+|---|---|---|
+| Ingryd Vitoria de Araújo Barbosa | 01642893 | *a definir* |
+| João Pedro Nunes de França | 01626444 | *a definir* |
+| Marcio Maycom | 01607574 | *a definir* |
+| Pedro Miranda | 01607408 | *a definir* |
+| Thiago José Falcão de Freitas | 01597267 | *a definir* |
 
 **Orientação:** Prof.ª Pryscilla Gonçalves (Fábrica de Software) · Prof. Antenor Parnaíba (Tópicos Avançados)
 
