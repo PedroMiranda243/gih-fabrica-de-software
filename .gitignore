@@ -1,0 +1,62 @@
+# Segredos e configuração local
+.env
+.env.local
+*.pem
+*.key
+
+# Dados — NUNCA versionar dados reais de operação (ver docs/06-equipe-e-processo.md, seção 9)
+data/
+dados/
+*.csv
+*.xlsx
+*.xls
+!scripts/exemplos/*.csv
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+dist/
+build/
+*.egg-info/
+
+# C++ / CUDA
+*.o
+*.obj
+*.so
+*.dll
+*.dylib
+*.exe
+*.lib
+*.a
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+
+# Modelos treinados (regerar com o script de treino)
+*.pt
+*.pth
+*.onnx
+modelo/artefatos/
+
+# Node / React
+node_modules/
+.vite/
+web/dist/
+
+# Editores e sistema operacional
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
