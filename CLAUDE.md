@@ -276,6 +276,30 @@ O que precisa estar decidido antes de codificar, e registrado em `docs/`:
 - Contraste mínimo AA (RNF22) e layout a partir de 768 px (RNF21) — verificados, não presumidos
 - Estados vazios: base sem dados, período único, otimização sem solução viável
 
+**O protótipo (H08) é portão, não sugestão.** A direção visual precisa estar aprovada pela equipe antes de
+existir CSS. Num projeto anterior deste mesmo domínio, "tema escuro e elegante" foi tratado como
+especificação suficiente; o redesign inteiro foi rejeitado depois de pronto e ~500 linhas de CSS foram
+descartadas. Validar antes custa uma conversa; validar depois custa o trabalho inteiro.
+
+### Sistema visual: duas regras que não se negociam
+
+Vieram da correção daquele redesign rejeitado. Valem desde a primeira tela.
+
+**1. Cada cor tem um trabalho só.** A cor de ação significa *"responde ao seu clique"* — botão, link, foco,
+seleção — e nada mais. No projeto anterior ela era marca, ação **e** dado ao mesmo tempo, usada 18 vezes
+incluindo todas as barras de categoria. Quando uma cor significa tudo, não significa nada.
+
+- As cores semânticas (risco, ascensão, Top, recém-chegado) aparecem só como **ponto ou barra**
+- O rótulo do segmento é **neutro** — "Top 15" repetido doze vezes em cor é ruído puro
+- Gráficos usam uma **rampa fria própria**, nunca a cor de ação nem as semânticas
+
+Se você for acrescentar a cor de ação em algo que não responde a clique, é sinal de que a cor errada está
+sendo usada.
+
+**2. Hierarquia vem do peso e da superfície, não do contraste.** Passar no teste de contraste não faz o
+olho achar nada. Na tabela de parceiros, o nome deve ser o **único** elemento em peso alto e tinta cheia.
+A escada de superfícies precisa de degraus largos o bastante para serem percebidos.
+
 ### Antes de abrir o Pull Request
 
 - [ ] Li o diff inteiro e entendo cada linha
@@ -289,11 +313,15 @@ O que precisa estar decidido antes de codificar, e registrado em `docs/`:
 
 ## 7. Armadilhas conhecidas
 
-Estas já custaram tempo. Se bater de frente com uma delas, a resposta está aqui.
+Boa parte destas veio de um projeto anterior no mesmo domínio, onde cada uma custou horas. Se bater de
+frente com alguma, a resposta já está aqui.
+
+### Dados e regras de negócio
 
 - **Importação sem período corrompe a segmentação em silêncio.** Sem as datas, as métricas ficam órfãs na
-  linha do tempo e a segmentação por tendência classifica errado *sem emitir erro*. Por isso a importação
-  sem período é recusada na entrada (RN03), não tolerada com um valor padrão.
+  linha do tempo e a segmentação por tendência classifica errado *sem emitir erro*. Aconteceu de verdade:
+  parceiros perderam classificação e o painel continuou parecendo correto. Por isso a importação sem
+  período é recusada na entrada (RN03), não tolerada com um valor padrão.
 
 - **Mobilidade do Top N lida do segmento dá resposta errada.** Ver RN02. O teste que cobre isso precisa
   incluir um parceiro que está no Top N *e* em queda.
@@ -301,12 +329,57 @@ Estas já custaram tempo. Se bater de frente com uma delas, a resposta está aqu
 - **Ticket médio é derivado, nunca armazenado.** Guardar como coluna faz o valor divergir das parcelas que
   o originam (RN04).
 
-- **GPU não é garantida.** O sistema precisa funcionar em máquina sem placa compatível, caindo para CPU
-  paralela (RNF06). Nunca assuma CUDA disponível.
+- **Sempre que a escolha for entre seguir com dado parcial e recusar explicando, recuse e explique.**
+  Corromper em silêncio custa muito mais caro que falhar alto.
+
+### Desempenho
+
+- **Nada de N+1 na segmentação.** Recalcular o segmento com uma consulta por parceiro funciona com 100 e
+  morre com 10.000 — que é a carga do RNF04, com resposta em até 2 s pelo RNF03. A solução é **consulta
+  agregada**, não thread. Isso precisa estar certo na primeira versão do serviço, não virar otimização
+  depois.
 
 - **Escala pequena não mostra ganho de GPU.** Com ~100 parceiros, o custo de transferência domina o tempo
   total. O benchmark usa o cenário de referência de 2.000 parceiros por isso — e essa limitação faz parte
   do resultado a ser reportado, não é defeito.
+
+- **GPU não é garantida.** O sistema precisa funcionar em máquina sem placa compatível, caindo para CPU
+  paralela (RNF06). Nunca assuma CUDA disponível.
+
+### Como testar de verdade
+
+- **Teste o que o usuário vê, não o que o código diz.** Num projeto anterior, a tela de login "não fazia
+  nada": o login funcionava, mas a tela não sumia. O atributo `[hidden]` tem especificidade baixíssima em
+  CSS e uma classe com `display` o anulava. **Os testes validavam a propriedade `hidden` e passavam com a
+  tela visível na frente do usuário.** Verifique visibilidade por `getComputedStyle().display`, nunca pelo
+  atributo — e mantenha um reset `[hidden] { display: none !important }` no CSS.
+
+- **Desconfie do instrumento antes do resultado.** Uma auditoria de contraste lia as cores com regex
+  esperando `rgb()`; como as cores eram `oklch()`, o regex lia zeros e acusava falha catastrófica que não
+  existia. O mesmo padrão deu falso positivo em testes de XSS feitos com regex sobre HTML. Meça contraste
+  pintando a cor num `<canvas>` e lendo o pixel; parseie HTML com parser de HTML. **Medição surpreendente
+  geralmente é medição quebrada.**
+
+- **Comentário sem medição é hipótese.** Um comentário afirmando "aqui o CORS nem é exercitado" escondeu
+  um bug por semanas. Se você não mediu, não escreva como certeza — a próxima pessoa vai confiar no
+  comentário em vez de investigar.
+
+- **Escreva o teste de ponta a ponta cedo.** Num projeto anterior ele só apareceu depois da auditoria de
+  segurança, e foi identificado como erro de ordem. Aqui ele entra junto com a ingestão.
+
+### Ambiente Windows
+
+- **O console mostra mojibake** (`JoÃ£o`) mesmo com os dados corretos em UTF-8. **Não confunda com bug de
+  encoding.** Para verificar de verdade, escreva num arquivo com `encoding='utf-8'` e leia o arquivo, ou
+  cheque os bytes.
+
+- **Aspas em JSON no shell quebram com frequência.** Para testar a API, prefira um script Python a
+  `curl -d '{...}'` — já houve teste "passando" porque o corpo chegava vazio.
+
+- **Docker para quando a máquina fica ociosa.** Se a API não sobe e o banco está fora, é provavelmente
+  isso. Suba o Docker Desktop de novo antes de procurar bug.
+
+### Processo
 
 - **Uma migração por Pull Request.** Duas em paralelo conflitam no número sequencial e quebram o histórico
   do banco para todo mundo.
