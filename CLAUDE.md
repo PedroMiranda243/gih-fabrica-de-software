@@ -345,9 +345,12 @@ frente com alguma, a resposta já está aqui.
   agregada**, não thread. Isso precisa estar certo na primeira versão do serviço, não virar otimização
   depois.
 
-- **Escala pequena não mostra ganho de GPU.** Com ~100 parceiros, o custo de transferência domina o tempo
-  total. O benchmark usa o cenário de referência de 2.000 parceiros por isso — e essa limitação faz parte
-  do resultado a ser reportado, não é defeito.
+- **Escala pequena não mostra ganho de GPU — e agora há número.** O spike da H47 mediu: abaixo de ~4.000
+  planos candidatos, 16 threads de OpenMP batem a GPU inteira; acima disso, a GPU com transferência a cada
+  geração ganha só 1,1x–1,3x do OpenMP — mas o kernel sozinho ganha 11x. A transferência é 88% do tempo.
+  Por isso a população **permanece na GPU entre gerações** (H54c): não é otimização, é o que justifica usar
+  GPU. O benchmark usa o cenário de referência de 2.000 parceiros por isso — e essa limitação faz parte do
+  resultado a ser reportado, não é defeito. Ver `nucleo/spike/RESULTADO.md`.
 
 - **GPU não é garantida.** O sistema precisa funcionar em máquina sem placa compatível, caindo para CPU
   paralela (RNF06). Nunca assuma CUDA disponível.
@@ -366,6 +369,15 @@ frente com alguma, a resposta já está aqui.
   pintando a cor num `<canvas>` e lendo o pixel; parseie HTML com parser de HTML. **Medição surpreendente
   geralmente é medição quebrada.**
 
+- **Benchmark com número fixo de repetições mede o relógio, não o trabalho.** Na validação do toolchain
+  (H47), o ganho do OpenMP em 1.024 planos saiu **7,5x numa execução e 13,9x na seguinte**, no mesmo cenário
+  e no mesmo binário: cinco repetições de uma passada sub-milissegundo são ruído. Calibre quantas repetições
+  cabem num alvo de tempo (~300 ms), aqueça antes de medir e reporte **mediana de várias execuções**. Sem
+  isso, a Sprint 12 vai colocar num gráfico um número que não se reproduz na frente da banca.
+
+- **A medição paralela oscila mais que a serial — reporte dispersão.** No mesmo teste, o tempo serial repetiu
+  em 0,1% entre execuções enquanto o paralelo variou 45%. Um número único de *speedup* esconde isso.
+
 - **Comentário sem medição é hipótese.** Um comentário afirmando "aqui o CORS nem é exercitado" escondeu
   um bug por semanas. Se você não mediu, não escreva como certeza — a próxima pessoa vai confiar no
   comentário em vez de investigar.
@@ -381,6 +393,12 @@ frente com alguma, a resposta já está aqui.
 
 - **Aspas em JSON no shell quebram com frequência.** Para testar a API, prefira um script Python a
   `curl -d '{...}'` — já houve teste "passando" porque o corpo chegava vazio.
+
+- **O caminho deste projeto tem acento, e o `cmd` quebra com ele.** `cd` funciona, mas encadear com `&&`,
+  `|` ou `&` na mesma linha falha sem mensagem útil — e `cl`/`nvcc` só existem depois do `vcvars64.bat`,
+  que é exatamente um encadeamento desses. Por isso compilar o `nucleo/` é sempre por `construir.bat`, nunca
+  chamando o compilador solto. Se precisar mesmo de uma linha de `cmd`, use o caminho curto 8.3 (obtido com
+  `for %I in (".") do @echo %~sI`).
 
 - **Docker para quando a máquina fica ociosa.** Se a API não sobe e o banco está fora, é provavelmente
   isso. Suba o Docker Desktop de novo antes de procurar bug.
