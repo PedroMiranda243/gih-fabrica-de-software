@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 1.0 — 03/09/2026
+**Versão:** 2.0 — 15/09/2026
 
 ---
 
@@ -23,12 +23,20 @@ Equipe de **5 integrantes**, dentro do limite de 3 a 5 estabelecido pela discipl
 As responsabilidades de cada papel estão descritas na seção 2. Os papéis organizam o trabalho; **todos os
 integrantes contribuem com código** e aparecem no histórico de commits.
 
-### Par no núcleo computacional
+### Trilha do núcleo computacional
 
-As histórias **H53** (OpenMP) e **H54** (CUDA) exigem programação em par: ninguém pode ser a única pessoa
-que entende o motor do projeto — é o risco R4 do [cronograma](05-cronograma.md). O par de
-[@PedroMiranda243](https://github.com/PedroMiranda243) nessas histórias é definido no planejamento da
-Sprint 5, junto com o acesso à máquina com GPU.
+A equipe decidiu que [@PedroMiranda243](https://github.com/PedroMiranda243) conduz o núcleo sozinho. É o
+risco **R4** do [cronograma](05-cronograma.md), assumido conscientemente: 116 pontos entre modelo
+preditivo e otimizador, na parte mais difícil e menos familiar, com a máquina de GPU concentrada numa
+pessoa.
+
+Como não há par para diluir o conhecimento, valem três compromissos:
+
+1. Decisões do núcleo registradas em ADR, não apenas em comentário de código
+2. Apresentação do código do núcleo nas revisões das Sprints 10 e 11, até que outro integrante consiga
+   explicar o funcionamento do kernel
+3. Se o spike de GPU da Sprint 3 revelar dificuldade maior que a prevista, a decisão de reforçar a trilha
+   volta à mesa na hora — não na Sprint 11
 
 > **Os papéis organizam; não isolam.** Todos os integrantes contribuem com código e todos aparecem no
 > histórico de commits. A disciplina avalia participação individual, e a ausência de participação de um
@@ -50,9 +58,9 @@ considerar uma história concluída.
 
 ### Desenvolvedor Backend / Núcleo Computacional
 Implementa a API, as regras de negócio e — principalmente — o **núcleo em C++/CUDA e o modelo preditivo**.
-É a trilha técnica mais especializada do projeto, e por isso a que exige mais disciplina de
-compartilhamento: programação em par obrigatória nas histórias H53 e H54, e decisões registradas em
-documento.
+É a trilha mais especializada e a mais pesada: os épicos E5 e E6 somam 116 pontos sob um único
+responsável. Por decisão da equipe não há par nessa trilha, o que torna obrigatória a disciplina de
+registrar decisões e apresentar o código do núcleo nas revisões — ver o risco R4 do cronograma.
 
 ### Desenvolvedor Frontend
 Constrói as telas, o painel, os gráficos e os formulários. Responsável pela responsividade e pela
@@ -125,13 +133,17 @@ Mensagens em português, explicando **o porquê** e não apenas o quê. O "o qu�
 
 ## 5. Cerimônias
 
+Sprints **semanais**, de segunda a sexta.
+
 | Cerimônia | Quando | Duração | Participantes |
 |---|---|---|---|
-| Planejamento da sprint | Quinta, início da sprint | 60 min | Toda a equipe |
-| Acompanhamento | Segunda e quinta | 15 min | Toda a equipe |
-| Orientação | Semanal | conforme a disciplina | Equipe + professora |
-| Revisão da sprint | Quarta, fim da sprint | 45 min | Toda a equipe |
-| Retrospectiva | Quarta, após a revisão | 30 min | Toda a equipe |
+| Planejamento da sprint | Segunda, início da sprint | 30 min | Toda a equipe |
+| Acompanhamento | Quarta | 15 min | Toda a equipe |
+| Orientação | Conforme a disciplina | — | Equipe + professora |
+| Revisão e retrospectiva | Sexta, fim da sprint | 40 min | Toda a equipe |
+
+Com ciclo de uma semana o planejamento encurta e a revisão ganha peso: é nela que a velocidade real é
+medida e o plano da semana seguinte é recalibrado.
 
 ### O que levar para cada orientação
 
@@ -139,7 +151,7 @@ A disciplina é explícita: não são aceitas orientações baseadas apenas em s
 implementação. Toda reunião apresenta **evolução prática**. O roteiro fixo:
 
 1. Repositório atualizado, aberto na tela
-2. Funcionalidades desenvolvidas na quinzena, **rodando**
+2. Funcionalidades desenvolvidas na semana, **rodando**
 3. Dificuldades encontradas e o que foi tentado
 4. Planejamento da próxima sprint
 

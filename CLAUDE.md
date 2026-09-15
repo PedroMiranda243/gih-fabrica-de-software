@@ -154,7 +154,7 @@ mesmo arquivo na mesma semana.
 | Diretório | Dono | Papel | Quem mais mexe |
 |---|---|---|---|
 | `api/` | @PedroMiranda243 | Dev Backend / Núcleo | Banco/Testes (migrações e testes) |
-| `nucleo/` | @PedroMiranda243 | Dev Backend / Núcleo | ninguém sozinho — ver abaixo |
+| `nucleo/` | @PedroMiranda243 | Dev Backend / Núcleo | responsável único — ver abaixo |
 | `modelo/` | @PedroMiranda243 | Dev Backend / Núcleo | — |
 | `web/` | @ingrydaraujob | Dev Frontend | — |
 | `api/migrations/` | @joaopfranca04 | Banco de Dados | Backend, com aviso |
@@ -165,8 +165,14 @@ mesmo arquivo na mesma semana.
 Esse mapa está automatizado em [`.github/CODEOWNERS`](.github/CODEOWNERS): ao abrir um Pull Request que
 toque um destes caminhos, o dono é convidado a revisar.
 
-**`nucleo/` exige programação em par.** As histórias H53 (OpenMP) e H54 (CUDA) não podem ter uma única
-pessoa que entenda o código — é o risco R4 do cronograma. Duas pessoas, sempre.
+**`nucleo/` tem um único responsável, e isso é um risco assumido.** É o R4 do cronograma: se só uma pessoa
+entende o motor do projeto, a banca pode perguntar a quem não sabe responder. Como não há par, a mitigação
+é **transferência de conhecimento**:
+
+- Toda decisão não óbvia vira ADR em `docs/07-arquitetura-preliminar.md`, não só comentário no código
+- O código do núcleo é apresentado à equipe nas revisões das Sprints 10 e 11, com alguém além do autor
+  conseguindo explicar o que o kernel faz e por quê
+- Os comentários no `nucleo/` explicam o *porquê* com mais rigor que no resto do projeto
 
 ### Como evitar conflito de merge
 
