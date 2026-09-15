@@ -240,6 +240,24 @@ Sugestões práticas para que cinco assistentes produzam código coerente.
 - Não deixe o assistente adicionar dependência nova sem discussão. Cada biblioteca é dívida.
 - Não peça ao assistente para "fazer os testes passarem". Peça para corrigir o defeito.
 
+### Interface: carregue as referências de design antes de codificar
+
+Tela feita "no capricho do momento" fica com cara de template. Antes de escrever qualquer coisa em `web/`,
+carregue as skills de design e UX disponíveis no seu assistente — e, para **qualquer gráfico**, carregue a
+referência de visualização de dados **antes da primeira linha de código do gráfico**, não depois.
+
+Isto vale especialmente aqui: o produto **é** um painel. Ranking, séries históricas, comparativo de
+benchmark e distribuição por segmento são o núcleo da experiência, não enfeite. Gráfico ilegível ou paleta
+inconsistente compromete a demonstração final, que vale 20% da nota.
+
+O que precisa estar decidido antes de codificar, e registrado em `docs/`:
+
+- Paleta, tipografia e escala de espaçamento — uma vez, para o projeto inteiro
+- Regra de cor para os **segmentos** (Top, Em Ascensão, Em Risco, Recém-chegado, Estável): cada segmento
+  tem uma cor e só uma, usada de forma idêntica em tabela, gráfico e indicador
+- Contraste mínimo AA (RNF22) e layout a partir de 768 px (RNF21) — verificados, não presumidos
+- Estados vazios: base sem dados, período único, otimização sem solução viável
+
 ### Antes de abrir o Pull Request
 
 - [ ] Li o diff inteiro e entendo cada linha
