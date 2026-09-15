@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 1.0 — 03/09/2026
+**Versão:** 1.1 — 15/09/2026
 
 ---
 
@@ -36,14 +36,14 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 |---|---|---:|---|
 | **E1** | Fundação, planejamento e ambiente | 47 | 1–3 |
 | **E2** | Autenticação, perfis e auditoria | 39 | 4 |
-| **E3** | Ingestão e modelo de dados | 44 | 2, 4 |
+| **E3** | Ingestão e modelo de dados | 46 | 2, 4 |
 | **E4** | Inteligência de negócio e segmentação | 47 | 5 |
 | **E5** | Núcleo preditivo | 34 | 5 |
-| **E6** | Otimização, paralelismo e GPU | 63 | 3, 5, 6 |
+| **E6** | Otimização, paralelismo e GPU | 82 | 3, 5, 6 |
 | **E7** | Central de comunicação | 26 | 6 |
 | **E8** | Assistente analítico | 21 | 7 |
-| **E9** | Qualidade, documentação e entrega | 42 | 1–7 |
-| | **Total** | **363** | |
+| **E9** | Qualidade, documentação e entrega | 47 | 1–7 |
+| | **Total** | **389** | |
 
 ---
 
@@ -58,7 +58,7 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H05** | Como equipe, quero um cronograma por sprint até 05/12, para acompanhar o avanço. | M | 3 | 1 | 7 sprints com datas, metas e entregável executável por sprint |
 | **H06** | Como equipe, quero o repositório GitHub configurado, para versionar e evidenciar o processo. | M | 3 | 1 | Repositório público, README, `.gitignore`, milestones, labels, board e regra de proteção em `main` |
 | **H07** | Como equipe, quero um modelo entidade-relacionamento, para orientar a implementação do banco. | M | 8 | 2 | Diagrama ER com entidades, atributos, chaves e cardinalidades; revisado pela equipe |
-| **H08** | Como equipe, quero um protótipo navegável das telas principais, para validar a interface antes de codificar. | S | 5 | 2 | Protótipo cobrindo painel, importação, campanha e fila de aprovação |
+| **H08** | Como equipe, quero um protótipo navegável das telas principais, para validar a interface antes de codificar. | **M** | 5 | 2 | Protótipo cobrindo painel, importação, campanha e aprovação; paleta, tipografia e cor por segmento definidas; **aprovado pela equipe antes de existir qualquer CSS** |
 | **H09** | Como desenvolvedor, quero o ambiente subindo com um comando, para eliminar divergência entre máquinas. | M | 5 | 3 | `docker compose up` sobe API, banco e interface a partir de um clone limpo |
 | **H10** | Como equipe, quero integração contínua no repositório, para não integrar código quebrado. | M | 2 | 3 | Fluxo executa análise estática e testes a cada Pull Request e bloqueia a mesclagem se falhar |
 
@@ -90,6 +90,7 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H27** | Como analista, quero que o sistema sugira a categoria pelo nome, para acelerar o cadastro. | S | 5 | 4 | RF15, RN05; sugestão marcada como não confirmada até validação humana |
 | **H28** | Como equipe, quero um gerador de dados sintéticos, para demonstrar o sistema e medir o otimizador em escala. | M | 5 | 2 | RF16; gera de 100 a 10.000 parceiros com múltiplos períodos, tendência, sazonalidade e ruído; semente reproduzível |
 | **H29** | Como analista, quero consultar o histórico de importações, para auditar a origem dos dados. | M | 2 | 4 | RF13; autor, data, período e total de registros |
+| **H77** | Como desenvolvedor, quero um comando que limpe e repovoe o banco, para testar sempre a partir de um estado conhecido. | M | 2 | 2 | Limpa o banco, aplica as migrações e repovoa com o gerador em um comando; pede confirmação antes de apagar |
 
 ## E4 — Inteligência de negócio e segmentação
 
@@ -98,7 +99,7 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H30** | Como gestor, quero ver os indicadores consolidados do período, para entender o resultado da rede. | M | 5 | 5 | RF17; faturamento, pedidos, ticket médio, parceiros ativos e variação |
 | **H31** | Como gestor, quero ver o ranking com a variação de posição, para saber quem subiu e quem caiu. | M | 5 | 5 | RF18; posição atual, posição anterior e variação percentual |
 | **H32** | Como gestor, quero ver a série histórica em gráfico, para enxergar tendência e não apenas o retrato. | M | 5 | 5 | RF19; série da unidade e série individual por parceiro |
-| **H33** | Como sistema, quero segmentar cada parceiro por regra determinística, para classificar sem ambiguidade. | M | 8 | 5 | RF20, RN01; precedência respeitada; reprocessar produz resultado idêntico; coberto por testes |
+| **H33** | Como sistema, quero segmentar cada parceiro por regra determinística, para classificar sem ambiguidade. | M | 8 | 5 | RF20, RN01; precedência respeitada; reprocessar produz resultado idêntico; coberto por testes; **recálculo por consulta agregada, sem uma consulta por parceiro** |
 | **H34** | Como administrador, quero configurar os limiares da segmentação, para adaptar a regra à operação. | S | 3 | 5 | RF21; alteração sem recompilar e sem alterar código |
 | **H35** | Como gestor, quero ver quem entrou e saiu do Top N, para acompanhar a mobilidade do ranking. | M | 5 | 5 | RF22, RN02; cálculo derivado do ranking, não do segmento; coberto por teste que expõe a diferença |
 | **H36** | Como analista, quero filtrar e ordenar a lista de parceiros, para chegar rápido ao recorte que me interessa. | M | 5 | 5 | RF23; filtros por categoria e segmento; ordenação por qualquer coluna |
@@ -164,6 +165,7 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H69** | Como equipe, quero testes automatizados no núcleo de regras, para não regredir a cada mudança. | M | 8 | 5–6 | RNF24; cobertura de no mínimo 70% em segmentação, ranking, previsão e otimização |
 | **H70** | Como equipe, quero testes de segurança automatizados, para validar autorização, injeção e sessão. | M | 5 | 6 | RNF12, RNF13, RNF14; testes cobrindo cada vetor previsto |
 | **H71** | Como equipe, quero exigir Pull Request revisado para entrar em `main`, para elevar a qualidade e distribuir o conhecimento. | M | 2 | 3 | RNF25; regra de proteção ativa; nenhum push direto |
+| **H78** | Como equipe, quero um teste de ponta a ponta contra a API no ar, para pegar o que o teste unitário não pega. | M | 5 | 4 | Verifica autorização de cada endpoint por perfil, ingestão completa e recálculo da segmentação; escrito em Python, não em `curl` |
 | **H72** | Como avaliador, quero conseguir subir o sistema seguindo apenas o README, para verificar o resultado sem ajuda. | M | 5 | 7 | RNF27; validado por um integrante que não escreveu a parte em questão |
 | **H73** | Como equipe, quero a documentação técnica final consolidada, para entregar junto ao código. | M | 5 | 7 | Arquitetura, modelo de dados, decisões, resultados do benchmark e do modelo |
 | **H74** | Como equipe, quero produzir o vídeo horizontal de apresentação, para cumprir a entrega final. | M | 8 | 7 | Até 10 minutos, formato 16:9, publicado; cobre problema, solução, arquitetura, tecnologias, demonstração, IA, GPU, otimizações e resultados |
@@ -177,12 +179,13 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | Sprint | Histórias | Pontos |
 |---|---|---:|
 | 1 — Planejamento | H01–H06 | 27 |
-| 2 — Modelagem e protótipo | H07, H08, H20, H28 | 23 |
+| 2 — Modelagem e protótipo | H07, H08, H20, H28, H77 | 25 |
 | 3 — Arquitetura e ambiente | H09, H10, H47, H71 | 14 |
-| 4 — Autenticação e ingestão | H11–H19, H21–H27, H29 | 76 |
+| 4 — Autenticação e ingestão | H11–H19, H21–H27, H29, H78 | 78 |
 | 5 — BI, previsão e otimizador base | H30–H38, H40–H46, H48–H52, H69 (parte) | 111 |
-| 6 — Paralelismo, GPU e comunicação | H53–H58, H60–H64, H69 (parte), H70 | 76 |
-| 7 — Fechamento e entrega | H39, H59, H65–H68, H72–H76 | 51 |
+| 6 — Paralelismo, GPU e comunicação | H53–H58, H60–H64, H69 (parte), H70 | 78 |
+| 7 — Fechamento e entrega | H39, H59, H65–H68, H72–H76 | 56 |
+| | **Total** | **389** |
 
 > As Sprints 4 e 5 concentram carga acima da velocidade de referência. É deliberado: são as sprints com
 > maior paralelismo entre as trilhas (autenticação, ingestão, interface e núcleo avançam simultaneamente,

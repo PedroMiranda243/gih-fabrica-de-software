@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 1.1 — 03/09/2026
+**Versão:** 1.2 — 15/09/2026
 
 **Datas oficiais da disciplina:** entrega da Sprint 1 em **05/09/2026** · entrega final em **05/12/2026**
 
@@ -86,7 +86,7 @@ da equipe preenchido, e repositório público com milestones, labels, board e re
 ---
 
 ### Sprint 2 — Modelagem e protótipo
-**07/09 – 18/09 · 23 pontos**
+**07/09 – 18/09 · 25 pontos**
 
 | Meta | Histórias |
 |---|---|
@@ -94,9 +94,10 @@ da equipe preenchido, e repositório público com milestones, labels, board e re
 | Prototipar as telas principais | H08 |
 | Versionar o esquema por migrações | H20 |
 | Construir o gerador de dados sintéticos | H28 |
+| Criar o comando de limpar e repovoar o banco | H77 |
 
-**Entregável:** banco criado a partir das migrações e populado pelo gerador; protótipo navegável das quatro
-telas centrais.
+**Entregável:** banco criado a partir das migrações e populado pelo gerador; um comando limpa e repovoa
+tudo; protótipo navegável das quatro telas centrais, com a direção visual aprovada.
 
 **Por que o gerador entra tão cedo:** ele destrava três frentes ao mesmo tempo — permite desenvolver o
 painel sem esperar dados, permite treinar o modelo preditivo, e é a única forma de gerar a escala
@@ -123,7 +124,7 @@ maior incerteza do projeto. Ver seção 5.
 ---
 
 ### Sprint 4 — Autenticação, perfis e ingestão
-**05/10 – 16/10 · 76 pontos**
+**05/10 – 16/10 · 78 pontos**
 
 | Meta | Histórias |
 |---|---|
@@ -132,6 +133,7 @@ maior incerteza do projeto. Ver seção 5.
 | Trilha de auditoria | H18 |
 | Importação por texto e CSV, com prévia e validação | H21, H22, H23, H24, H25, H29 |
 | Cadastro de parceiros e sugestão de categoria | H26, H27 |
+| Teste de ponta a ponta contra a API no ar | H78 |
 
 **Entregável:** um usuário faz login, importa um relatório com período, vê a prévia, confirma e encontra os
 dados gravados. Perfis diferentes enxergam telas diferentes, com a negação validada no servidor.
@@ -160,7 +162,7 @@ formalização do otimizador. É o ponto de controle mais importante do cronogra
 ---
 
 ### Sprint 6 — Paralelismo, GPU e comunicação
-**02/11 – 20/11 · três semanas · 76 pontos**
+**02/11 – 20/11 · três semanas · 78 pontos**
 
 | Meta | Histórias |
 |---|---|
@@ -181,7 +183,7 @@ projeto precisa ter um número concreto de *speedup* para apresentar.
 ---
 
 ### Sprint 7 — Fechamento e entrega
-**23/11 – 05/12 · 51 pontos**
+**23/11 – 05/12 · 56 pontos**
 
 | Meta | Histórias |
 |---|---|
