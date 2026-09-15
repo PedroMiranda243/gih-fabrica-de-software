@@ -1,0 +1,33 @@
+# Ambiente completo do GIH: um comando sobe tudo (RNF07).
+#   docker compose up
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-gih}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gih}
+      POSTGRES_DB: ${POSTGRES_DB:-gih}
+    # Preso ao localhost: o banco não deve ficar exposto na rede (RNF14).
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - dados_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gih} -d ${POSTGRES_DB:-gih}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-gih}:${POSTGRES_PASSWORD:-gih}@postgres:5432/${POSTGRES_DB:-gih}
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  dados_postgres:

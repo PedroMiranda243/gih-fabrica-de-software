@@ -1,0 +1,9 @@
+# Dependências de produção da API.
+# Licença anotada por exigência da regra 2.8 do CLAUDE.md: toda solução autoral ou open source.
+
+fastapi==0.115.6           # MIT
+uvicorn[standard]==0.34.0  # BSD-3-Clause
+sqlalchemy==2.0.36         # MIT
+psycopg[binary]==3.2.3     # LGPL-3.0 — copyleft fraco: uso como biblioteca não contamina o projeto
+alembic==1.14.0            # MIT
+pydantic-settings==2.7.0   # MIT
