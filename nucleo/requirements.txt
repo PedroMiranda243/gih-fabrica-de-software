@@ -1,0 +1,6 @@
+# Núcleo computacional — dependências do spike e do otimizador.
+# Licença anotada por exigência da regra 2.8 do CLAUDE.md.
+
+numpy==2.4.6                # BSD-3-Clause
+cupy-cuda12x[ctk]==14.2.0   # MIT — traz runtime e headers do CUDA via pip,
+                            # dispensando a instalação do toolkit no sistema

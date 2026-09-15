@@ -269,6 +269,40 @@ apresenta os modos disponíveis e explica a ausência dos demais.
 
 ---
 
+### ADR-005 — CUDA via NVRTC, sem instalar o toolkit no sistema
+
+**Status:** Decidido para o spike · reavaliar antes da H53
+**Data:** 15/09/2026
+
+**Situação:** a máquina de desenvolvimento não tem **nenhum compilador C++** — nem MSVC, nem `g++`, nem
+`clang++` — e não tem o CUDA Toolkit. No Windows, o `nvcc` depende do MSVC como compilador hospedeiro, o
+que torna o caminho tradicional uma instalação de vários gigabytes antes da primeira linha de código.
+
+**Alternativas:**
+
+| Opção | Avaliação |
+|---|---|
+| **CuPy com `RawKernel` (NVRTC)** | **Escolhida para o spike.** Kernel é CUDA C de verdade, compilado em tempo de execução. Runtime e headers vêm por `pip`, sem instalação de sistema. Licença MIT |
+| MSVC Build Tools + CUDA Toolkit | Caminho tradicional, necessário para `nvcc` e obrigatório para a H53 (OpenMP em C++). Custo: vários gigabytes e configuração |
+| Numba com destino CUDA | Escreve-se Python anotado, não CUDA C — afasta o projeto da linguagem que a disciplina prioriza |
+| OpenCL | Alternativa aberta registrada no risco R1; só faria sentido se a NVIDIA saísse do caminho |
+
+**Decisão:** o spike usa CuPy com `RawKernel`. O kernel é CUDA C legítimo e roda na GPU — o que retira o
+risco R1 sem bloquear o projeto numa instalação longa.
+
+**Consequências:**
+
+- O risco R1 está retirado com evidência medida: *speedup* total de 8,7x, acima da meta de 5x do RNF02
+- A escolha **não resolve a H53**, que pede C++ com OpenMP e exige um compilador C++ de qualquer forma
+- Descobriu-se que a transferência consome 95% do tempo, o que define a arquitetura da H54c: a população
+  precisa permanecer na GPU entre gerações
+- Se o toolchain C++ for instalado, migrar o kernel para compilação por `nvcc` é direto — o código CUDA C
+  é o mesmo
+
+Resultado completo em [`nucleo/spike/RESULTADO.md`](../nucleo/spike/RESULTADO.md).
+
+---
+
 ## 6. Ambiente de desenvolvimento
 
 | Item | Situação |
