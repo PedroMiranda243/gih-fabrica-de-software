@@ -11,15 +11,14 @@
 | Ator | Tipo | Descrição |
 |---|---|---|
 | **Administrador** | Primário | Responsável técnico da operação. Gerencia usuários, perfis e parâmetros do sistema; audita as ações registradas. Não participa da operação comercial. |
-| **Gestor** | Primário | Responsável pela unidade. É quem decide: configura as restrições, executa o otimizador e acompanha a mobilidade do ranking. Tem acesso a tudo que é operacional. |
-| **Analista** | Primário | Executa o relacionamento no dia a dia. Importa relatórios e analisa parceiros — mas **não executa o otimizador**, porque executá-lo é comprometer orçamento. |
+| **Gestor** | Primário | Responsável pela unidade. É quem decide: executa o otimizador, aprova mensagens e acompanha a mobilidade do ranking. Tem acesso a tudo que é operacional. |
+| **Analista** | Primário | Executa o relacionamento no dia a dia. Importa relatórios, analisa parceiros e redige mensagens — mas **não aprova** envio nem executa o otimizador. |
 | **Parceiro** | Primário | Comércio da rede. Acesso restrito ao próprio desempenho histórico. |
-| **Modelo de Linguagem Local** | Secundário (sistema) | Serviço interno que responde ao assistente, se o módulo condicional for implementado. Nunca calcula números. |
+| **Modelo de Linguagem Local** | Secundário (sistema) | Serviço interno que redige textos e responde ao assistente. Nunca calcula números. |
 
 > A separação entre **Gestor** e **Analista** é o que materializa a exigência de *diferentes perfis de
-> usuários*: os dois enxergam o mesmo painel e analisam os mesmos dados, mas apenas o Gestor pode
-> **comprometer recursos** — configurar o orçamento de uma campanha e disparar a otimização. O Analista
-> prepara e propõe; o Gestor decide.
+> usuários*: os dois enxergam o mesmo painel, mas apenas o Gestor pode comprometer recursos (executar
+> campanha) e comprometer a relação com o parceiro (aprovar mensagem).
 
 ---
 
@@ -42,9 +41,9 @@
 | **UC07** | Treinar modelo de previsão | Administrador, Gestor | RF27, RF28 |
 | **UC08** | Configurar e executar otimização de campanha | Gestor | RF29, RF30, RF31, RF35 |
 | **UC09** | Comparar desempenho serial, paralelo e GPU | Gestor, Administrador | RF32, RF33, RF34 |
-| ~~**UC10**~~ | ~~Gerar mensagens por segmento~~ | — | **Fora do escopo** |
-| ~~**UC11**~~ | ~~Aprovar ou rejeitar mensagem~~ | — | **Fora do escopo** |
-| **UC12** | Consultar assistente analítico | Gestor, Analista | RF41, RF42, RF43 — **condicional** |
+| **UC10** | Gerar mensagens por segmento | Analista, Gestor | RF36, RF37 |
+| **UC11** | Aprovar ou rejeitar mensagem | Gestor | RF38, RF39, RF40 |
+| **UC12** | Consultar assistente analítico | Gestor, Analista | RF41, RF42, RF43 |
 | **UC13** | Consultar meu desempenho | Parceiro | RF19, RF26 |
 | **UC14** | Auditar ações do sistema | Administrador | RF06, RF08 |
 
@@ -61,7 +60,9 @@
 | UC07 Treinar modelo | ● | ● | — | — |
 | UC08 Executar otimização | — | ● | ○ | — |
 | UC09 Benchmark | ● | ● | — | — |
-| UC12 Assistente *(condicional)* | — | ● | ● | — |
+| UC10 Gerar mensagens | — | ● | ● | — |
+| UC11 Aprovar mensagem | — | ● | — | — |
+| UC12 Assistente | — | ● | ● | — |
 | UC13 Meu desempenho | — | — | — | ● |
 | UC14 Auditoria | ● | — | — | — |
 
@@ -71,8 +72,8 @@
 
 ## 4. Especificação detalhada
 
-Detalhamento dos cinco casos de uso centrais do escopo comprometido. Os demais seguem o mesmo formato e
-serão detalhados na Sprint 2, conforme o backlog.
+Detalhamento dos seis casos de uso centrais. Os demais seguem o mesmo formato e serão detalhados na Sprint 2,
+conforme o backlog.
 
 ---
 
@@ -219,7 +220,7 @@ serão detalhados na Sprint 2, conforme o backlog.
 7. O sistema executa o otimizador, exibindo indicador de progresso.
 8. O sistema apresenta o **plano de campanha**: a lista de pares parceiro-ação selecionados, o uplift total
    esperado, o custo total, a folga em relação a cada restrição e o tempo de execução.
-9. O usuário pode exportar o plano de campanha para executá-lo fora do sistema.
+9. O usuário pode exportar o plano ou encaminhá-lo para a geração de mensagens (UC10).
 10. O sistema registra a execução com autor, parâmetros, modo, tempo e resultado.
 
 **Fluxos alternativos**
@@ -282,8 +283,45 @@ serão detalhados na Sprint 2, conforme o backlog.
 
 ---
 
+### UC11 — Aprovar ou rejeitar mensagem
+
+| | |
+|---|---|
+| **Ator principal** | Gestor |
+| **Objetivo** | Garantir que nenhuma comunicação chegue ao parceiro sem revisão humana |
+| **Pré-condições** | Usuário autenticado com perfil Gestor; existem mensagens pendentes (UC10) |
+| **Pós-condições** | Mensagem no estado aprovado ou rejeitado, com autor e data registrados |
+| **Requisitos** | RF37, RF38, RF39, RF40; regra RN06 |
+
+**Fluxo principal**
+
+1. O Gestor abre a fila de aprovação.
+2. O sistema lista as mensagens pendentes com o parceiro de destino, o segmento, a ação associada e o texto.
+3. O Gestor seleciona uma mensagem e a revisa.
+4. O Gestor aprova, edita ou rejeita.
+5. O sistema registra a decisão com autor, data e conteúdo final, e move a mensagem para o histórico.
+6. O sistema apresenta a próxima mensagem pendente.
+
+**Fluxos alternativos**
+
+- **A1 — Edição antes da aprovação.** No passo 4, o Gestor altera o texto; o sistema guarda a versão final
+  editada, preservando a versão original gerada para efeito de auditoria.
+- **A2 — Rejeição com motivo.** Ao rejeitar, o Gestor pode registrar o motivo, que fica disponível no
+  histórico e serve de insumo para ajustar a geração.
+- **A3 — Aprovação em lote.** O Gestor seleciona várias mensagens do mesmo segmento e aprova em conjunto —
+  ainda assim é **ação humana explícita** e cada mensagem registra a decisão individualmente (RN06).
+- **A4 — Tentativa por perfil não autorizado.** Se um Analista tentar aprovar, o servidor nega a operação
+  independentemente do que a interface exiba (RNF14), e a tentativa é registrada na auditoria.
+
+**Exceções**
+
+- **E1 — Mensagem já decidida.** Se a mensagem tiver sido decidida por outro usuário nesse intervalo, o
+  sistema informa a decisão já registrada e recarrega a fila, evitando sobrescrita.
+
+---
+
 ## 5. Casos de uso a detalhar na Sprint 2
 
-UC02, UC04, UC06, UC07, UC12, UC13 e UC14 estão especificados no nível de objetivo, ator e requisitos
+UC02, UC04, UC06, UC07, UC10, UC12, UC13 e UC14 estão especificados no nível de objetivo, ator e requisitos
 cobertos (seção 3). O detalhamento de fluxos entra no backlog da Sprint 2, junto com a modelagem de dados —
 ver [04 — Product Backlog](04-product-backlog.md), épico E1.

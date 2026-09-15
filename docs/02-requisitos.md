@@ -73,10 +73,7 @@
 | **RF34** | O sistema deve registrar o histórico das execuções do otimizador com autor, data, parâmetros, modo de execução, tempo e resultado. | S | GES, ADM |
 | **RF35** | O sistema deve permitir comparar lado a lado dois planos de campanha gerados com parâmetros diferentes. | C | GES |
 
-### ~~Módulo 5 — Central de comunicação~~ — fora do escopo desta entrega
-
-> Os requisitos abaixo permanecem numerados e documentados, mas **não serão implementados**. Ver a
-> justificativa em [01 — Visão do produto](01-visao-do-produto.md), seção 5.2.
+### Módulo 5 — Central de comunicação
 
 | ID | Requisito | Prioridade | Perfis |
 |---|---|---|---|
@@ -86,9 +83,7 @@
 | **RF39** | O sistema deve impedir que qualquer mensagem transite para o estado aprovado sem ação explícita de um usuário com perfil Gestor. | M | GES |
 | **RF40** | O sistema deve manter o histórico das mensagens aprovadas e rejeitadas, com autor da decisão, data e conteúdo final. | S | GES, ANL |
 
-### Módulo 6 — Assistente analítico — entrega condicional
-
-> Este módulo só será implementado se a Sprint 6 fechar adiantada. Ver [01 — Visão do produto](01-visao-do-produto.md), seção 5.3.
+### Módulo 6 — Assistente analítico
 
 | ID | Requisito | Prioridade | Perfis |
 |---|---|---|---|
@@ -96,8 +91,7 @@
 | **RF42** | O sistema deve citar, em toda resposta do assistente, o período e a origem dos dados utilizados; e deve declarar explicitamente a insuficiência de dados quando não houver base para responder, em vez de produzir uma resposta especulativa. | M | GES, ANL |
 | **RF43** | O sistema deve impedir que o assistente produza valores numéricos que não tenham sido calculados pelo núcleo determinístico. | M | GES, ANL |
 
-> **Total: 43 requisitos funcionais documentados.**
-> **35 no escopo comprometido** · **3 de entrega condicional** (RF41 a RF43) · **5 fora do escopo** (RF36 a RF40).
+> **Total: 43 requisitos funcionais** — 31 *Must*, 9 *Should*, 3 *Could*.
 
 ---
 
@@ -188,8 +182,8 @@ que o exercita. Casos de uso detalhados em [03 — Casos de uso](03-casos-de-uso
 | RF27 a RF28 | O4 | P2 | UC07 |
 | RF29 a RF31, RF35 | O5 | **P4** | UC08 |
 | RF32 a RF34 | O6 | **P4** | UC09 |
-| ~~RF36 a RF40~~ | ~~O7~~ | ~~P5~~ | Fora do escopo |
-| RF41 a RF43 | O2 | P1 | UC12 — condicional |
+| RF36 a RF40 | O7 | P5 | UC10, UC11 |
+| RF41 a RF43 | O2 | P1 | UC12 |
 
 ### Cobertura inversa: de objetivo para requisito
 
@@ -201,7 +195,7 @@ que o exercita. Casos de uso detalhados em [03 — Casos de uso](03-casos-de-uso
 | O4 — Prever | RF27, RF28 |
 | O5 — Otimizar | RF29, RF30, RF31, RF35 |
 | O6 — Acelerar | RF32, RF33, RF34 |
-| ~~O7 — Comunicar com aprovação~~ | Fora do escopo desta entrega |
+| O7 — Comunicar com aprovação | RF36, RF37, RF38, RF39, RF40 |
 | O8 — Controlar acesso | RF01, RF02, RF03, RF04, RF05, RF06, RF07, RF08 |
 
 Nenhum objetivo está sem requisito, e nenhum requisito funcional está órfão de objetivo.
@@ -254,7 +248,7 @@ Uma categoria inferida a partir do nome permanece marcada como sugestão até qu
 comerciais por categoria só consideram categorias confirmadas, o que evita que um parceiro classificado por
 engano entre numa campanha à qual não pertence.
 
-### ~~RN06 — Nenhuma mensagem sai sem aprovação humana~~ — fora do escopo
+### RN06 — Nenhuma mensagem sai sem aprovação humana
 
 A transição de uma mensagem para o estado aprovado exige ação explícita de um usuário com perfil Gestor
 (RF39). Não há aprovação automática, nem por decurso de prazo, nem por regra de confiança do modelo.

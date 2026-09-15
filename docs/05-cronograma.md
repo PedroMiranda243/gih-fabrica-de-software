@@ -37,7 +37,7 @@ funcionando.
 | **3** | 21/09 – 02/10 | Arquitetura e ambiente | `docker compose up` sobe o sistema · CI verde · **kernel de GPU validado** |
 | **4** | 05/10 – 16/10 | Autenticação, perfis e ingestão | Login com 4 perfis + importação gravando no banco |
 | **5** | 19/10 – 30/10 | BI, segmentação e previsão | Painel com ranking e séries + modelo treinado + otimizador serial |
-| **6** | 02/11 – 20/11 | Paralelismo e GPU | Otimizador em CPU paralela e **GPU** + benchmark comparativo na tela |
+| **6** | 02/11 – 20/11 | Paralelismo, GPU e comunicação | Otimizador em CPU paralela e **GPU** + benchmark na tela + fila de aprovação |
 | **7** | 23/11 – **05/12** | Fechamento e entrega | Sistema completo, testado, documentado e os dois vídeos publicados |
 
 ```mermaid
@@ -57,7 +57,7 @@ gantt
 
     section Núcleo avançado
     Spike de GPU                      :crit, spike, 2026-09-21, 12d
-    S6 Paralelismo e GPU              :crit, s6, 2026-11-02, 19d
+    S6 Paralelismo, GPU e comunicação :crit, s6, 2026-11-02, 19d
 
     section Entrega
     S7 Fechamento e entrega           :s7, 2026-11-23, 13d
@@ -161,8 +161,8 @@ formalização do otimizador. É o ponto de controle mais importante do cronogra
 
 ---
 
-### Sprint 6 — Paralelismo e GPU
-**02/11 – 20/11 · três semanas · 52 pontos**
+### Sprint 6 — Paralelismo, GPU e comunicação
+**02/11 – 20/11 · três semanas · 78 pontos**
 
 | Meta | Histórias |
 |---|---|
@@ -171,13 +171,11 @@ formalização do otimizador. É o ponto de controle mais importante do cronogra
 | Escolha de modo e degradação para CPU | H55, H56 |
 | Benchmark comparativo na interface | H57 |
 | Histórico de execuções | H58 |
+| Geração de mensagens e fila de aprovação | H60, H61, H62, H63, H64 |
 | Testes do núcleo e de segurança | H69 (parte), H70 |
 
 **Entregável:** o mesmo problema resolvido nos três modos, com tabela de tempos, *speedup* e gráfico de
-escalabilidade na tela.
-
-**Esta sprint perdeu 26 pontos no corte de escopo, de propósito.** A central de comunicação saiu daqui
-justamente para abrir folga na sprint que concentra o CUDA e o benchmark.
+escalabilidade na tela; fila de aprovação impedindo envio sem decisão humana.
 
 **É a única sprint de três semanas, e é a que define a nota do componente avançado.** Ao final dela o
 projeto precisa ter um número concreto de *speedup* para apresentar.
@@ -185,11 +183,11 @@ projeto precisa ter um número concreto de *speedup* para apresentar.
 ---
 
 ### Sprint 7 — Fechamento e entrega
-**23/11 – 05/12 · 35 pontos comprometidos + 21 condicionais**
+**23/11 – 05/12 · 56 pontos**
 
 | Meta | Histórias |
 |---|---|
-| *Assistente analítico, se houver folga* | *H65, H66, H67, H68 — condicional* |
+| Assistente analítico com citação e abstenção | H65, H66, H67, H68 |
 | Portal do parceiro e comparação de planos (se houver folga) | H39, H59 |
 | Reprodutibilidade a partir do README | H72 |
 | Documentação técnica final | H73 |
@@ -214,7 +212,6 @@ exclusivamente para correção, gravação e ensaio.
 | **16/10** | Sistema com acesso controlado e dados entrando | Login com perfis + importação completa |
 | **30/10** | Inteligência funcionando | Painel, segmentação, modelo treinado e otimizador serial |
 | **20/11** | **Componente avançado demonstrável** | Speedup medido e exibido na interface |
-| **20/11** | Decisão sobre o módulo condicional | Assistente entra na Sprint 7 apenas se esta sprint fechar adiantada |
 | **30/11** | Congelamento de escopo | Nenhuma funcionalidade nova a partir desta data |
 | **05/12** | **Entrega final** | Sistema, código, documentação, banco e os dois vídeos |
 
