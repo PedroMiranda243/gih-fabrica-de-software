@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 800" width="1210" height="800" role="img" aria-label="Diagrama de casos de uso do Growth Intelligence Hub">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 750" width="1210" height="750" role="img" aria-label="Diagrama de casos de uso do Growth Intelligence Hub">
   <title>Diagrama de casos de uso — Growth Intelligence Hub</title>
 
   <style>
@@ -7,23 +7,25 @@
     .uc      { fill: #eaf2fb; stroke: #2c5b8f; stroke-width: 1.6; }
     .uc-core { fill: #e6f4ec; stroke: #2c7a56; stroke-width: 2.2; }
     .uc-all  { fill: #fdf3e3; stroke: #b07d2a; stroke-width: 1.8; }
+    .uc-cond { fill: #f4f6f8; stroke: #93a2b4; stroke-width: 1.6; stroke-dasharray: 6 4; }
     .assoc   { stroke: #8d9bad; stroke-width: 1.3; fill: none; }
     .actor   { stroke: #1f3a5f; stroke-width: 2; fill: none; stroke-linecap: round; }
     .head    { fill: #ffffff; stroke: #1f3a5f; stroke-width: 2; }
     text     { font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; fill: #16283f; }
     .t-uc    { font-size: 12.5px; text-anchor: middle; }
     .t-core  { font-size: 12.5px; text-anchor: middle; fill: #1c4a35; font-weight: 600; }
+    .t-cond  { font-size: 12.5px; text-anchor: middle; fill: #5b6b7e; }
     .t-actor { font-size: 13.5px; text-anchor: middle; font-weight: 600; }
     .t-sys   { font-size: 14px; font-weight: 700; fill: #1f3a5f; letter-spacing: .6px; }
     .t-title { font-size: 19px; text-anchor: middle; font-weight: 700; fill: #16283f; }
     .t-leg   { font-size: 11.5px; fill: #4a5a6e; }
   </style>
 
-  <rect class="bg" x="0" y="0" width="1210" height="800"/>
+  <rect class="bg" x="0" y="0" width="1210" height="750"/>
   <text class="t-title" x="605" y="34">Casos de Uso — Growth Intelligence Hub (GIH)</text>
 
   <!-- Fronteira do sistema -->
-  <rect class="bound" x="250" y="62" width="720" height="660" rx="10"/>
+  <rect class="bound" x="250" y="62" width="720" height="598" rx="10"/>
   <text class="t-sys" x="272" y="86">GROWTH INTELLIGENCE HUB</text>
 
   <!-- Associações: Administrador -->
@@ -33,20 +35,18 @@
   <line class="assoc" x1="174" y1="254" x2="460" y2="126"/>
 
   <!-- Associações: Gestor -->
-  <line class="assoc" x1="174" y1="572" x2="280" y2="399"/>
-  <line class="assoc" x1="174" y1="572" x2="280" y2="471"/>
-  <line class="assoc" x1="174" y1="572" x2="280" y2="543"/>
-  <line class="assoc" x1="174" y1="572" x2="280" y2="615"/>
-  <line class="assoc" x1="174" y1="572" x2="280" y2="687"/>
+  <line class="assoc" x1="174" y1="552" x2="280" y2="399"/>
+  <line class="assoc" x1="174" y1="552" x2="280" y2="471"/>
+  <line class="assoc" x1="174" y1="552" x2="280" y2="543"/>
+  <line class="assoc" x1="174" y1="552" x2="280" y2="615"/>
 
   <!-- Associações: Analista -->
   <line class="assoc" x1="1051" y1="372" x2="940" y2="255"/>
   <line class="assoc" x1="1051" y1="372" x2="940" y2="327"/>
-  <line class="assoc" x1="1051" y1="372" x2="940" y2="399"/>
   <line class="assoc" x1="1051" y1="372" x2="940" y2="471"/>
 
   <!-- Associações: Parceiro -->
-  <line class="assoc" x1="1051" y1="622" x2="940" y2="615"/>
+  <line class="assoc" x1="1051" y1="612" x2="940" y2="615"/>
 
   <!-- UC01 — comum a todos os perfis -->
   <ellipse class="uc-all" cx="610" cy="122" rx="150" ry="26"/>
@@ -76,9 +76,6 @@
   <text class="t-core" x="420" y="613">UC09 · Comparar serial,</text>
   <text class="t-core" x="420" y="627">paralelo e GPU</text>
 
-  <ellipse class="uc" cx="420" cy="687" rx="140" ry="26"/>
-  <text class="t-uc" x="420" y="692">UC11 · Aprovar ou rejeitar mensagem</text>
-
   <!-- Coluna direita: Analista e Parceiro -->
   <ellipse class="uc" cx="800" cy="255" rx="140" ry="26"/>
   <text class="t-uc" x="800" y="260">UC03 · Importar relatório</text>
@@ -86,11 +83,9 @@
   <ellipse class="uc" cx="800" cy="327" rx="140" ry="26"/>
   <text class="t-uc" x="800" y="332">UC04 · Gerenciar parceiros</text>
 
-  <ellipse class="uc" cx="800" cy="399" rx="140" ry="26"/>
-  <text class="t-uc" x="800" y="404">UC10 · Gerar mensagens por segmento</text>
-
-  <ellipse class="uc" cx="800" cy="471" rx="140" ry="26"/>
-  <text class="t-uc" x="800" y="476">UC12 · Consultar assistente</text>
+  <ellipse class="uc-cond" cx="800" cy="471" rx="140" ry="26"/>
+  <text class="t-cond" x="800" y="468">UC12 · Consultar assistente</text>
+  <text class="t-cond" x="800" y="482" font-size="10.5">«condicional»</text>
 
   <ellipse class="uc" cx="800" cy="615" rx="140" ry="26"/>
   <text class="t-uc" x="800" y="620">UC13 · Consultar meu desempenho</text>
@@ -104,12 +99,12 @@
   <text class="t-actor" x="150" y="346">Administrador</text>
 
   <!-- Ator: Gestor -->
-  <circle class="head" cx="150" cy="560" r="13"/>
-  <line class="actor" x1="150" y1="573" x2="150" y2="610"/>
-  <line class="actor" x1="126" y1="588" x2="174" y2="588"/>
-  <line class="actor" x1="150" y1="610" x2="134" y2="636"/>
-  <line class="actor" x1="150" y1="610" x2="166" y2="636"/>
-  <text class="t-actor" x="150" y="656">Gestor</text>
+  <circle class="head" cx="150" cy="540" r="13"/>
+  <line class="actor" x1="150" y1="553" x2="150" y2="590"/>
+  <line class="actor" x1="126" y1="568" x2="174" y2="568"/>
+  <line class="actor" x1="150" y1="590" x2="134" y2="616"/>
+  <line class="actor" x1="150" y1="590" x2="166" y2="616"/>
+  <text class="t-actor" x="150" y="636">Gestor</text>
 
   <!-- Ator: Analista -->
   <circle class="head" cx="1075" cy="360" r="13"/>
@@ -120,19 +115,22 @@
   <text class="t-actor" x="1075" y="456">Analista</text>
 
   <!-- Ator: Parceiro -->
-  <circle class="head" cx="1075" cy="610" r="13"/>
-  <line class="actor" x1="1075" y1="623" x2="1075" y2="660"/>
-  <line class="actor" x1="1051" y1="638" x2="1099" y2="638"/>
-  <line class="actor" x1="1075" y1="660" x2="1059" y2="686"/>
-  <line class="actor" x1="1075" y1="660" x2="1091" y2="686"/>
-  <text class="t-actor" x="1075" y="706">Parceiro</text>
+  <circle class="head" cx="1075" cy="600" r="13"/>
+  <line class="actor" x1="1075" y1="613" x2="1075" y2="650"/>
+  <line class="actor" x1="1051" y1="628" x2="1099" y2="628"/>
+  <line class="actor" x1="1075" y1="650" x2="1059" y2="676"/>
+  <line class="actor" x1="1075" y1="650" x2="1091" y2="676"/>
+  <text class="t-actor" x="1075" y="696">Parceiro</text>
 
   <!-- Legenda -->
-  <rect x="250" y="744" width="18" height="12" rx="3" class="uc-core"/>
-  <text class="t-leg" x="276" y="754">Núcleo computacional avançado (Tópicos Avançados)</text>
+  <rect x="250" y="694" width="18" height="12" rx="3" class="uc-core"/>
+  <text class="t-leg" x="276" y="704">Núcleo computacional avançado (Tópicos Avançados)</text>
 
-  <rect x="632" y="744" width="18" height="12" rx="3" class="uc-all"/>
-  <text class="t-leg" x="658" y="754">Comum a todos os perfis</text>
+  <rect x="620" y="694" width="18" height="12" rx="3" class="uc-all"/>
+  <text class="t-leg" x="646" y="704">Todos os perfis</text>
 
-  <text class="t-leg" x="828" y="754">As linhas indicam o ator principal; ver a matriz de permissões.</text>
+  <rect x="740" y="694" width="18" height="12" rx="3" class="uc-cond"/>
+  <text class="t-leg" x="766" y="704">Entrega condicional</text>
+
+  <text class="t-leg" x="890" y="704">UC10 e UC11 saíram do escopo na revisão da Sprint 1.</text>
 </svg>

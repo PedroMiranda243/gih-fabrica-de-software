@@ -30,7 +30,7 @@ intuição. É, na verdade, um problema de **otimização combinatória com rest
 | **3. Previsão** | Modelo treinado pela equipe estima o faturamento do próximo período e o risco de queda |
 | **4. Otimização** | Motor próprio aloca as ações comerciais sob restrições (orçamento, nº de ações, cotas por categoria) maximizando o uplift esperado |
 | **5. Aceleração** | O otimizador roda em três modos — serial, CPU multi-thread e **GPU** — com benchmark comparativo na própria interface |
-| **6. Comunicação** | Gera mensagens por segmento; **nada é enviado sem aprovação humana** |
+| **6. Ação** | Exporta o plano priorizado para execução, com o uplift esperado e o custo de cada ação |
 
 **KPI de produto:** mobilidade do ranking Top N — parceiros da cauda longa subindo ao topo é a prova de que
 o relacionamento ativo funcionou.
@@ -41,9 +41,9 @@ o relacionamento ativo funcionou.
 
 ## Princípio de projeto: número não se alucina
 
-Ranking, segmentação e otimização são **determinísticos**, implementados em código. O modelo de linguagem do
-assistente **nunca calcula uma métrica** — ele apenas redige texto e responde sobre dados já recuperados,
-sempre citando o período de origem ou se abstendo quando não há dado suficiente.
+Ranking, segmentação e otimização são **determinísticos**, implementados em código. O modelo preditivo
+**estima**, e a estimativa é sempre apresentada como tal; as restrições que o otimizador respeita são
+verificadas em código, não inferidas. Nenhum modelo de linguagem participa de cálculo numérico.
 
 Essa separação é o que permite confiar no painel: dois usuários que rodarem a mesma análise sobre os mesmos
 dados obtêm exatamente o mesmo resultado.
@@ -59,7 +59,7 @@ dados obtêm exatamente o mesmo resultado.
 | Modelo preditivo | **PyTorch + NumPy** | Modelo treinado pela equipe, não uma API de terceiros |
 | Banco de dados | **PostgreSQL 16** | Relacional, com histórico por período |
 | Interface | **React + Vite** | Dashboard, gráficos e formulários |
-| Assistente | LLM local via **Ollama** | Complementar; roda na máquina, sem enviar dados para fora |
+| Assistente *(condicional)* | LLM local via **Ollama** | Complementar; roda na máquina, sem enviar dados para fora |
 | Versionamento | **Git + GitHub** | Issues, Projects, Pull Requests e CI |
 | Execução | **Docker Compose** | `docker compose up` sobe o ambiente inteiro |
 
@@ -90,9 +90,9 @@ Detalhamento em [`docs/07-arquitetura-preliminar.md`](docs/07-arquitetura-prelim
 |---|---|
 | [**CLAUDE.md**](CLAUDE.md) | **Contexto e convenções para assistentes de IA — leia antes de codificar** |
 | [01 — Visão do produto](docs/01-visao-do-produto.md) | Tema, problema, objetivos, público-alvo, KPIs |
-| [02 — Requisitos](docs/02-requisitos.md) | 36 requisitos funcionais e 20 não funcionais, com rastreabilidade |
+| [02 — Requisitos](docs/02-requisitos.md) | 43 requisitos funcionais e 29 não funcionais, com rastreabilidade |
 | [03 — Casos de uso](docs/03-casos-de-uso.md) | 14 casos de uso, diagrama e especificação detalhada |
-| [04 — Product Backlog](docs/04-product-backlog.md) | 9 épicos e 50 histórias priorizadas |
+| [04 — Product Backlog](docs/04-product-backlog.md) | 9 épicos e 78 histórias priorizadas |
 | [05 — Cronograma](docs/05-cronograma.md) | 7 sprints até 05/12/2026, marcos e riscos |
 | [06 — Equipe e processo](docs/06-equipe-e-processo.md) | Papéis, cerimônias, Definition of Done, fluxo Git |
 | [07 — Arquitetura preliminar](docs/07-arquitetura-preliminar.md) | Visão de contêineres, decisões (ADRs), ambiente |
@@ -102,14 +102,14 @@ Detalhamento em [`docs/07-arquitetura-preliminar.md`](docs/07-arquitetura-prelim
 
 ## Como executar
 
-> O ambiente executável entra na **Sprint 3** (01/10 – 14/10). Esta seção descreve o alvo e será
+> O ambiente executável entra na **Sprint 3** (21/09 – 02/10). Esta seção descreve o alvo e será
 > atualizada com os comandos definitivos quando o esqueleto subir.
 
 **Pré-requisitos:** Docker Desktop · Python 3.11 · Node.js 20 · (opcional) NVIDIA CUDA Toolkit 12.x
 
 ```bash
-git clone https://github.com/PedroMiranda243/growth-intelligence-hub.git
-cd growth-intelligence-hub
+git clone https://github.com/PedroMiranda243/gih-fabrica-de-software.git
+cd gih-fabrica-de-software
 cp .env.example .env
 docker compose up
 ```

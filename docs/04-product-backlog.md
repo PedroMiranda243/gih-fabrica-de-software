@@ -40,10 +40,12 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **E4** | Inteligência de negócio e segmentação | 47 | 5 |
 | **E5** | Núcleo preditivo | 34 | 5 |
 | **E6** | Otimização, paralelismo e GPU | 82 | 3, 5, 6 |
-| **E7** | Central de comunicação | 26 | 6 |
-| **E8** | Assistente analítico | 21 | 7 |
+| ~~**E7**~~ | ~~Central de comunicação~~ | ~~26~~ | **fora do escopo** |
+| **E8** | Assistente analítico | 21 | 7 — **condicional** |
 | **E9** | Qualidade, documentação e entrega | 47 | 1–7 |
-| | **Total** | **389** | |
+| | **Escopo comprometido** | **342** | |
+| | *Entrega condicional (E8)* | *21* | |
+| | *Fora do escopo (E7)* | *26* | |
 
 ---
 
@@ -139,7 +141,10 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H58** | Como gestor, quero consultar o histórico de execuções do otimizador, para retomar e comparar decisões. | S | 3 | 6 | RF34; autor, data, parâmetros, modo, tempo e resultado |
 | **H59** | Como gestor, quero comparar dois planos lado a lado, para escolher entre cenários. | C | 5 | 7 | RF35; diferenças destacadas entre os dois planos |
 
-## E7 — Central de comunicação
+## ~~E7 — Central de comunicação~~ — fora do escopo desta entrega
+
+> Cortado após o feedback da Sprint 1. As histórias permanecem documentadas para registro da decisão.
+> Justificativa em [01 — Visão do produto](01-visao-do-produto.md), seção 5.2.
 
 | ID | História | Pri | Pts | Sprint | Critérios de aceite |
 |---|---|:--:|--:|:--:|---|
@@ -149,7 +154,9 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H63** | Como sistema, quero impedir aprovação sem ação humana de um gestor, para proteger a relação com o parceiro. | M | 5 | 6 | RF39, RN06; tentativa por outro perfil é negada no servidor e registrada |
 | **H64** | Como gestor, quero consultar o histórico de mensagens decididas, para acompanhar o que foi comunicado. | S | 3 | 6 | RF40; autor da decisão, data e conteúdo final |
 
-## E8 — Assistente analítico
+## E8 — Assistente analítico — entrega condicional
+
+> Só entra se a Sprint 6 encerrar adiantada. Ver [01 — Visão do produto](01-visao-do-produto.md), seção 5.3.
 
 | ID | História | Pri | Pts | Sprint | Critérios de aceite |
 |---|---|:--:|--:|:--:|---|
@@ -183,9 +190,10 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | 3 — Arquitetura e ambiente | H09, H10, H47, H71 | 14 |
 | 4 — Autenticação e ingestão | H11–H19, H21–H27, H29, H78 | 78 |
 | 5 — BI, previsão e otimizador base | H30–H38, H40–H46, H48–H52, H69 (parte) | 111 |
-| 6 — Paralelismo, GPU e comunicação | H53–H58, H60–H64, H69 (parte), H70 | 78 |
-| 7 — Fechamento e entrega | H39, H59, H65–H68, H72–H76 | 56 |
-| | **Total** | **389** |
+| 6 — Paralelismo e GPU | H53–H58, H69 (parte), H70 | 52 |
+| 7 — Fechamento e entrega | H39, H59, H72–H76 | 35 |
+| | **Escopo comprometido** | **342** |
+| | *Condicional: H65–H68* | *21* |
 
 > As Sprints 4 e 5 concentram carga acima da velocidade de referência. É deliberado: são as sprints com
 > maior paralelismo entre as trilhas (autenticação, ingestão, interface e núcleo avançam simultaneamente,
@@ -193,15 +201,26 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 > Sprints 2 e 3 não sustentar a carga, as histórias marcadas **S** e **C** dessas sprints migram para a
 > Sprint 7 antes que o atraso se acumule.
 
-## Primeiro corte, se o prazo apertar
+## Cortes já realizados
 
-Ordem de remoção acordada previamente, para que a decisão não seja tomada sob pressão:
+Aplicados após o feedback da Sprint 1, que apontou escopo amplo demais:
+
+| Épico | Pontos | Decisão |
+|---|---:|---|
+| **E7** Central de comunicação | 26 | **Fora do escopo** |
+| **E8** Assistente analítico | 21 | **Condicional** — só se a Sprint 6 encerrar adiantada |
+
+Efeito prático: a Sprint 6 cai de 78 para **52 pontos**. É a sprint que concentra o otimizador em CUDA e o
+benchmark, ou seja, a folga foi criada exatamente onde o risco é maior.
+
+## Próximo corte, se o prazo ainda apertar
+
+Ordem acordada previamente, para que a decisão não seja tomada sob pressão:
 
 1. **H59** comparar planos lado a lado (C)
 2. **H39** portal do parceiro (C)
 3. **H27** sugestão de categoria (S)
 4. **H38** exportação em CSV (S)
-5. **H65** perguntas livres ao assistente (S) — mantendo H66, H67 e H68, que protegem a confiabilidade
 
-Nada dos épicos **E6** e **E9** entra nessa lista: são, respectivamente, o diferencial técnico avaliado e a
-condição de entrega.
+Nada dos épicos **E4**, **E5**, **E6** e **E9** entra nessa lista: são o produto, o diferencial técnico
+avaliado e a condição de entrega.

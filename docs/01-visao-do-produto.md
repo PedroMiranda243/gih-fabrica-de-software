@@ -32,7 +32,7 @@ desenvolver comercialmente essa base.
 | **Complexidade compatível com um TCC** | Ingestão, modelagem temporal, regras de segmentação, aprendizado de máquina, otimização combinatória, paralelismo e GPU, controle de acesso e auditoria |
 | Permitir **evolução** ao longo do semestre | Sete sprints com entregas independentes e cumulativas, cada uma executável |
 | Ser **viável** no prazo | Escopo fatiado por módulo; o núcleo pesado tem *spike* técnico antecipado para a Sprint 3 |
-| **Funcionalidades suficientes** | 36 requisitos funcionais em 6 módulos integrados |
+| **Funcionalidades suficientes** | 43 requisitos funcionais documentados, em 6 módulos integrados |
 | Componente **de IA / otimização / GPU** não decorativo | O motor de decisão *é* o produto — sem ele o sistema vira um painel passivo |
 
 ---
@@ -133,7 +133,7 @@ orçamento e capacidade da operação.
 | **O4** | Prever o faturamento do próximo período e o risco de queda de cada parceiro, com modelo treinado pela equipe | MAPE do modelo inferior ao de um baseline ingênuo (repetir o último período) em conjunto de teste separado |
 | **O5** | Otimizar a alocação de ações comerciais sob restrições, maximizando o uplift esperado | O plano gerado respeita 100% das restrições e supera a heurística "investir nos maiores" em uplift esperado |
 | **O6** | Acelerar o otimizador por paralelismo em CPU e GPU, com ganho medido | *Speedup* ≥ 5× em GPU sobre o baseline serial, no cenário de referência, com qualidade de solução equivalente |
-| **O7** | Gerar mensagens de relacionamento por segmento, com aprovação humana obrigatória | Nenhuma mensagem transita para o estado "aprovada" sem ação explícita de um usuário autorizado |
+| ~~**O7**~~ | ~~Gerar mensagens de relacionamento por segmento, com aprovação humana obrigatória~~ | **Fora do escopo desta entrega** — ver 5.2 |
 | **O8** | Controlar o acesso por perfil, com trilha de auditoria das ações sensíveis | Toda ação sensível registra autor, data e parâmetros; usuário sem permissão recebe negação no servidor |
 
 ### 3.3 Indicadores de sucesso
@@ -189,7 +189,7 @@ O público-alvo condiciona decisões técnicas que aparecem nos requisitos não 
 - **Rastreabilidade das análises** — o gestor precisa justificar a decisão para a franqueadora e para os
   próprios parceiros, então toda resposta cita a fonte (RNF11)
 - **Aprovação humana antes de qualquer envio** — a relação com o parceiro é ativo estratégico da unidade;
-  nenhuma mensagem sai automaticamente (O7, RF33)
+  o plano de campanha é recomendação, e a decisão de executá-lo é sempre humana
 
 ---
 
@@ -203,18 +203,46 @@ O público-alvo condiciona decisões técnicas que aparecem nos requisitos não 
 | M2 — Ingestão e dados | Importação por texto e CSV, validação, cadastro de parceiros, gerador de dados sintéticos |
 | M3 — BI e segmentação | Dashboard, ranking com variação, séries históricas, segmentação, mobilidade do Top N, filtros, busca, exportação |
 | M4 — Núcleo computacional | Modelo preditivo treinado, otimizador de campanhas, execução serial/CPU/GPU, benchmark, histórico e comparação de cenários |
-| M5 — Comunicação | Geração de mensagens por segmento e fila de aprovação |
-| M6 — Assistente | Consulta em linguagem natural com citação de fonte e abstenção |
+| ~~M5 — Comunicação~~ | **Fora do escopo desta entrega** — ver 5.2 |
+| M6 — Assistente | Consulta em linguagem natural com citação de fonte e abstenção — **entrega condicional**, ver 5.3 |
 
 ### 5.2 Fora do escopo desta entrega
 
 | Item | Motivo |
 |---|---|
+| **Central de comunicação** (módulo M5, RF36 a RF40) | **Cortado após o feedback da Sprint 1** — ver justificativa abaixo |
 | Integração direta por API com plataformas de delivery | Depende de acesso concedido por terceiros; a ingestão por texto e CSV cobre o caso de uso |
-| Envio efetivo das mensagens por aplicativo de mensageria | Exige dados de contato reais e conta habilitada; o sistema entrega a mensagem aprovada e pronta para envio |
+| Envio efetivo de mensagens por aplicativo de mensageria | Exige dados de contato reais e conta habilitada |
 | Aplicativo móvel nativo | A interface responsiva atende o uso em desktop e tablet |
 | Operação multi-unidade (várias franquias na mesma instância) | Ampliaria o modelo de dados e o controle de acesso além do prazo do semestre |
 | Leitura de dados por reconhecimento óptico de imagem | A importação por texto e CSV já cobre a entrada; agregaria risco sem agregar avaliação |
+
+#### Por que a central de comunicação saiu
+
+A avaliação da Sprint 1 apontou que o escopo estava amplo demais e pediu redução. A decisão de onde cortar
+seguiu um critério único: **preservar o que sustenta o valor do produto e o componente técnico avaliado, e
+remover o que agrega superfície sem agregar profundidade.**
+
+A geração de mensagens e a fila de aprovação eram a última milha do fluxo — úteis como produto, mas
+periféricas ao problema central (P4, a alocação de esforço sob restrições). O sistema continua entregando
+o plano de campanha priorizado e exportável; o que deixa de existir é a redação automática da mensagem.
+
+Cortá-la libera uma sprint inteira de folga justamente na **Sprint 6**, que concentra o otimizador em CUDA
+e o benchmark — a parte mais difícil, mais arriscada e que mais pesa na avaliação.
+
+### 5.3 Entrega condicional
+
+| Item | Condição |
+|---|---|
+| **Assistente analítico** (módulo M6, RF41 a RF43) | Só será implementado se a Sprint 6 encerrar adiantada |
+
+O assistente responde perguntas em linguagem natural sobre os dados, sempre citando o período de origem ou
+declarando insuficiência de dados. É uma boa funcionalidade, mas **não é o componente de inteligência
+avaliado** — esse papel cabe ao modelo preditivo e ao otimizador paralelo.
+
+Se entrar, entra com as duas armadilhas já mapeadas: perguntas de listagem precisam de filtro por metadado,
+não de busca por similaridade; e a reindexação precisa ser exclusiva, sob risco de uma execução antiga
+sobrescrever a nova.
 
 ---
 
