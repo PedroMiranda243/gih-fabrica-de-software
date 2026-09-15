@@ -97,6 +97,7 @@ Detalhamento em [`docs/07-arquitetura-preliminar.md`](docs/07-arquitetura-prelim
 | [06 — Equipe e processo](docs/06-equipe-e-processo.md) | Papéis, cerimônias, Definition of Done, fluxo Git |
 | [07 — Arquitetura preliminar](docs/07-arquitetura-preliminar.md) | Visão de contêineres, decisões (ADRs), ambiente |
 | [08 — Modelo de dados](docs/08-modelo-de-dados.md) | Diagrama ER, entidades, restrições e índices |
+| [09 — Sistema visual](docs/09-sistema-visual.md) | Paleta validada, tipografia, espaçamento e estados vazios |
 | [Como contribuir](CONTRIBUTING.md) | Branches, commits, Pull Requests |
 
 ---
