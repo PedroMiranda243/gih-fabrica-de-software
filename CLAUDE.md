@@ -30,7 +30,7 @@ Documentação completa em [`docs/`](docs/). Comece por
 
 ## 2. Regras inegociáveis
 
-Estas oito regras não são preferências. Violar qualquer uma delas reprova o Pull Request.
+Estas nove regras não são preferências. Violar qualquer uma delas reprova o Pull Request.
 
 ### 2.1 O repositório é público — nada real entra aqui
 
@@ -83,7 +83,25 @@ As duas mais fáceis de errar:
 
 `main` é protegida. Nada de push direto, nada de auto-aprovação. Ver [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-### 2.8 Não altere o que não é seu sem combinar
+### 2.8 Tudo é autoral ou open source
+
+Nenhuma dependência paga, nenhum serviço que cobre por uso, nenhuma API proprietária de IA. O que o
+sistema faz, ele faz com código da equipe ou com biblioteca livre rodando na própria infraestrutura.
+
+- **IA roda local.** Modelo via Ollama, na máquina. Nunca OpenAI, Gemini, Claude ou similar por API — além
+  do custo, mandaria dados para fora e tiraria a reprodutibilidade da avaliação.
+- **O núcleo de decisão é escrito pela equipe.** Segmentação, previsão e otimização. Pegar um solver pronto
+  resolveria o problema e eliminaria justamente o componente que a disciplina avalia (ver ADR-002 em
+  `docs/07-arquitetura-preliminar.md`).
+- **Bibliotecas com licença permissiva** — MIT, Apache 2.0 ou BSD. Evite copyleft forte: o repositório é
+  público mas com direitos reservados aos autores, e uma dependência GPL/AGPL conflita com isso.
+- **Exceção conhecida:** o CUDA Toolkit é gratuito, porém proprietário da NVIDIA. Foi explicitamente
+  recomendado pela disciplina, então fica. O equivalente aberto é o **OpenCL**, já registrado como
+  alternativa no risco R1 do cronograma.
+
+Antes de adicionar qualquer dependência: confira a licença e registre a escolha na issue.
+
+### 2.9 Não altere o que não é seu sem combinar
 
 Ver o mapa de responsabilidades na seção 4. Assistentes de IA adoram "melhorar de passagem" arquivos
 vizinhos — é a principal fonte de conflito de merge em equipe. Se algo fora do seu escopo está errado,
