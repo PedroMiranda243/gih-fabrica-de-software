@@ -139,10 +139,27 @@ A interface (`web/`) entra na Sprint 3.
 
 ### Dados de demonstração
 
-O repositório **não contém dados reais**. Toda a massa de demonstração é gerada por
-`scripts/gerar_dados_sinteticos.py`, que produz redes de 100 a 10.000 parceiros com sazonalidade,
-tendências e ruído controlados — o mesmo gerador alimenta o benchmark do otimizador, que precisa de
-escala para evidenciar o ganho de paralelismo.
+O repositório **não contém dados reais**. Toda a massa de demonstração é gerada por script.
+
+```bash
+python scripts/gerar_dados_sinteticos.py --parceiros 2000 --periodos 12
+```
+
+```bash
+python scripts/resetar_banco.py --parceiros 500
+```
+
+O gerador produz redes de 100 a 10.000 parceiros, com **cauda longa** (o Top 15 concentra cerca de um terço
+do faturamento numa rede de algumas centenas), perfis de trajetória distintos — em ascensão, em queda,
+estável, volátil e recém-chegado — sazonalidade e ruído. A semente é parametrizável, então a mesma execução
+sempre produz a mesma rede.
+
+Isso não é enfeite: sem cauda longa não existiria o problema que o produto resolve, e sem perfis de
+trajetória não haveria o que segmentar nem o que o modelo preditivo aprender. O mesmo gerador alimenta o
+benchmark do otimizador, que precisa de escala para evidenciar o ganho de paralelismo.
+
+O `resetar_banco.py` reverte as migrações, reaplica e repovoa — é o ciclo que se usa dezenas de vezes por
+dia durante o desenvolvimento.
 
 ---
 
