@@ -109,17 +109,28 @@ Detalhamento em [`docs/07-arquitetura-preliminar.md`](docs/07-arquitetura-prelim
 git clone https://github.com/PedroMiranda243/gih-fabrica-de-software.git
 cd gih-fabrica-de-software
 cp .env.example .env
-docker compose up -d postgres
-
-cd api
-python -m venv .venv && .venv/Scripts/activate      # Linux/Mac: source .venv/bin/activate
-pip install -r requirements-dev.txt
-alembic upgrade head                                 # cria o esquema
-uvicorn app.main:app --reload
+docker compose up
 ```
+
+É só isso. O compose sobe o PostgreSQL, espera ele ficar saudável, **aplica as migrações** e serve a API.
 
 Verificação: `http://localhost:8000/api/health` deve responder `banco: "ok"`.
 Documentação da API em `http://localhost:8000/api/docs`.
+
+### Desenvolvendo a API fora do container
+
+Para ter recarga automática ao salvar:
+
+```bash
+docker compose up -d postgres
+cd api
+python -m venv .venv && .venv/Scripts/activate      # Linux/Mac: source .venv/bin/activate
+pip install -r requirements-dev.txt
+alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+Testes e análise estática, de dentro de `api/`: `pytest` e `ruff check .`
 
 > A porta do Postgres no host é **5433** por padrão (`POSTGRES_PORT` no `.env`), porque a 5432 costuma já
 > estar ocupada por outro Postgres na máquina.
