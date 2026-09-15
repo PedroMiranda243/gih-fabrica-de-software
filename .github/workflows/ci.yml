@@ -68,16 +68,17 @@ jobs:
         if: steps.existe.outputs.pronto == 'sim'
         run: |
           python -m pip install --upgrade pip
-          pip install -r api/requirements.txt
-          pip install ruff pytest pytest-cov
+          pip install -r api/requirements-dev.txt
 
       - name: Análise estática
         if: steps.existe.outputs.pronto == 'sim'
-        run: ruff check api
+        working-directory: api
+        run: ruff check .
 
       - name: Testes
         if: steps.existe.outputs.pronto == 'sim'
-        run: pytest api/tests --cov=api/app --cov-report=term-missing
+        working-directory: api
+        run: pytest --cov=app --cov-report=term-missing
 
       - name: Módulo ainda não criado
         if: steps.existe.outputs.pronto == 'nao'
