@@ -9,8 +9,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gih}
       POSTGRES_DB: ${POSTGRES_DB:-gih}
     # Preso ao localhost: o banco não deve ficar exposto na rede (RNF14).
+    # A porta do host é configurável porque 5432 costuma já estar ocupada por
+    # outro Postgres na máquina de quem desenvolve.
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
     volumes:
       - dados_postgres:/var/lib/postgresql/data
     healthcheck:

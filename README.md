@@ -92,18 +92,16 @@ Detalhamento em [`docs/07-arquitetura-preliminar.md`](docs/07-arquitetura-prelim
 | [01 — Visão do produto](docs/01-visao-do-produto.md) | Tema, problema, objetivos, público-alvo, KPIs |
 | [02 — Requisitos](docs/02-requisitos.md) | 43 requisitos funcionais e 29 não funcionais, com rastreabilidade |
 | [03 — Casos de uso](docs/03-casos-de-uso.md) | 14 casos de uso, diagrama e especificação detalhada |
-| [04 — Product Backlog](docs/04-product-backlog.md) | 9 épicos e 78 histórias priorizadas |
-| [05 — Cronograma](docs/05-cronograma.md) | 7 sprints até 05/12/2026, marcos e riscos |
+| [04 — Product Backlog](docs/04-product-backlog.md) | 9 épicos e 81 histórias priorizadas |
+| [05 — Cronograma](docs/05-cronograma.md) | 13 sprints semanais até 05/12/2026, marcos e riscos |
 | [06 — Equipe e processo](docs/06-equipe-e-processo.md) | Papéis, cerimônias, Definition of Done, fluxo Git |
 | [07 — Arquitetura preliminar](docs/07-arquitetura-preliminar.md) | Visão de contêineres, decisões (ADRs), ambiente |
+| [08 — Modelo de dados](docs/08-modelo-de-dados.md) | Diagrama ER, entidades, restrições e índices |
 | [Como contribuir](CONTRIBUTING.md) | Branches, commits, Pull Requests |
 
 ---
 
 ## Como executar
-
-> O ambiente executável entra na **Sprint 3** (21/09 – 02/10). Esta seção descreve o alvo e será
-> atualizada com os comandos definitivos quando o esqueleto subir.
 
 **Pré-requisitos:** Docker Desktop · Python 3.11 · Node.js 20 · (opcional) NVIDIA CUDA Toolkit 12.x
 
@@ -111,10 +109,22 @@ Detalhamento em [`docs/07-arquitetura-preliminar.md`](docs/07-arquitetura-prelim
 git clone https://github.com/PedroMiranda243/gih-fabrica-de-software.git
 cd gih-fabrica-de-software
 cp .env.example .env
-docker compose up
+docker compose up -d postgres
+
+cd api
+python -m venv .venv && .venv/Scripts/activate      # Linux/Mac: source .venv/bin/activate
+pip install -r requirements-dev.txt
+alembic upgrade head                                 # cria o esquema
+uvicorn app.main:app --reload
 ```
 
-Interface em `http://localhost:5173` · API em `http://localhost:8000/docs`
+Verificação: `http://localhost:8000/api/health` deve responder `banco: "ok"`.
+Documentação da API em `http://localhost:8000/api/docs`.
+
+> A porta do Postgres no host é **5433** por padrão (`POSTGRES_PORT` no `.env`), porque a 5432 costuma já
+> estar ocupada por outro Postgres na máquina.
+
+A interface (`web/`) entra na Sprint 3.
 
 ### Dados de demonstração
 

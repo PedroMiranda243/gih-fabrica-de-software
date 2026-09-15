@@ -390,6 +390,15 @@ frente com alguma, a resposta já está aqui.
 - **Uma migração por Pull Request.** Duas em paralelo conflitam no número sequencial e quebram o histórico
   do banco para todo mundo.
 
+- **O `autogenerate` do Alembic não remove os tipos ENUM no downgrade.** Ele só derruba as tabelas. Sem
+  acrescentar `DROP TYPE` à mão, reverter e reaplicar falha com *type already exists* — e o erro só aparece
+  na segunda execução, quando já se perdeu tempo procurando em outro lugar. Toda migração que cria enum
+  precisa derrubá-lo no downgrade. Ver `esquema_inicial`.
+
+- **A porta 5432 costuma estar ocupada.** Outro Postgres na máquina impede o container de subir. O
+  `docker-compose.yml` usa `POSTGRES_PORT`, com 5433 como padrão — e o `DATABASE_URL` precisa apontar para
+  a mesma porta, senão as migrações rodam no banco errado.
+
 ---
 
 ## 8. Onde encontrar o resto
