@@ -133,16 +133,19 @@ sugeriu" não é justificativa.
 Cada diretório tem um dono. Isso não impede ninguém de contribuir — impede cinco pessoas de editarem o
 mesmo arquivo na mesma semana.
 
-| Diretório | Dono (papel) | Quem mais mexe |
-|---|---|---|
-| `api/` | Dev Backend / Núcleo | Banco/Testes (migrações e testes) |
-| `nucleo/` | Dev Backend / Núcleo | ninguém sozinho — ver abaixo |
-| `modelo/` | Dev Backend / Núcleo | — |
-| `web/` | Dev Frontend | — |
-| `api/migrations/` | Banco de Dados | Backend, com aviso |
-| `scripts/` | Banco de Dados | todos |
-| `docs/` | Product Owner | todos |
-| `.github/` | Scrum Master | — |
+| Diretório | Dono | Papel | Quem mais mexe |
+|---|---|---|---|
+| `api/` | @PedroMiranda243 | Dev Backend / Núcleo | Banco/Testes (migrações e testes) |
+| `nucleo/` | @PedroMiranda243 | Dev Backend / Núcleo | ninguém sozinho — ver abaixo |
+| `modelo/` | @PedroMiranda243 | Dev Backend / Núcleo | — |
+| `web/` | @ingrydaraujob | Dev Frontend | — |
+| `api/migrations/` | @joaopfranca04 | Banco de Dados | Backend, com aviso |
+| `scripts/` | @joaopfranca04 | Banco de Dados | todos |
+| `docs/` | @mihaeldatoman | Product Owner | todos |
+| `.github/` | @ThiagojFalcao | Scrum Master | — |
+
+Esse mapa está automatizado em [`.github/CODEOWNERS`](.github/CODEOWNERS): ao abrir um Pull Request que
+toque um destes caminhos, o dono é convidado a revisar.
 
 **`nucleo/` exige programação em par.** As histórias H53 (OpenMP) e H54 (CUDA) não podem ter uma única
 pessoa que entenda o código — é o risco R4 do cronograma. Duas pessoas, sempre.

@@ -1,0 +1,36 @@
+# Donos de código — Growth Intelligence Hub
+#
+# Traduz o mapa de responsabilidades do CLAUDE.md (seção 4) em revisão automática:
+# ao abrir um Pull Request que toque um destes caminhos, o dono é convidado a revisar.
+#
+# Isso NÃO impede ninguém de contribuir fora da sua área. Serve para que a pessoa que
+# conhece o código seja sempre chamada, e para evitar duas pessoas editando o mesmo
+# arquivo na mesma semana.
+#
+# Última linha que casar com o arquivo é a que vale.
+
+# Padrão: qualquer mudança avisa o Scrum Master, que acompanha o avanço geral
+*                       @ThiagojFalcao
+
+# Backend, núcleo computacional e modelo preditivo
+/api/                   @PedroMiranda243
+/nucleo/                @PedroMiranda243
+/modelo/                @PedroMiranda243
+
+# Interface
+/web/                   @ingrydaraujob
+
+# Banco de dados, scripts e testes
+/api/migrations/        @joaopfranca04
+/scripts/               @joaopfranca04
+
+# Documentação e backlog
+/docs/                  @mihaeldatoman
+/README.md              @mihaeldatoman
+
+# Processo e automação
+/.github/               @ThiagojFalcao
+/CONTRIBUTING.md        @ThiagojFalcao
+
+# Contrato de convenções: mudança aqui afeta todo mundo
+/CLAUDE.md              @PedroMiranda243 @ThiagojFalcao @mihaeldatoman

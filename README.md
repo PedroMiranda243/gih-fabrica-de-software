@@ -134,11 +134,11 @@ ver [`docs/06-equipe-e-processo.md`](docs/06-equipe-e-processo.md).
 
 | Integrante | Matrícula | GitHub | Papel |
 |---|---|---|---|
-| Ingryd Vitoria de Araújo Barbosa | 01642893 | [@ingrydaraujob](https://github.com/ingrydaraujob) | *a definir* |
-| João Pedro Nunes de França | 01626444 | [@joaopfranca04](https://github.com/joaopfranca04) | *a definir* |
-| Marcio Maycom | 01607574 | [@mihaeldatoman](https://github.com/mihaeldatoman) | *a definir* |
-| Pedro Miranda | 01607408 | [@PedroMiranda243](https://github.com/PedroMiranda243) | *a definir* |
-| Thiago José Falcão de Freitas | 01597267 | [@ThiagojFalcao](https://github.com/ThiagojFalcao) | *a definir* |
+| Ingryd Vitoria de Araújo Barbosa | 01642893 | [@ingrydaraujob](https://github.com/ingrydaraujob) | Desenvolvedora Frontend |
+| João Pedro Nunes de França | 01626444 | [@joaopfranca04](https://github.com/joaopfranca04) | Banco de Dados, Documentação e Testes |
+| Marcio Maycom | 01607574 | [@mihaeldatoman](https://github.com/mihaeldatoman) | Product Owner |
+| Pedro Miranda | 01607408 | [@PedroMiranda243](https://github.com/PedroMiranda243) | Desenvolvedor Backend / Núcleo Computacional |
+| Thiago José Falcão de Freitas | 01597267 | [@ThiagojFalcao](https://github.com/ThiagojFalcao) | Scrum Master |
 
 **Orientação:** Prof.ª Pryscilla Gonçalves (Fábrica de Software) · Prof. Antenor Parnaíba (Tópicos Avançados)
 

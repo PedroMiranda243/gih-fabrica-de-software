@@ -14,15 +14,21 @@ Equipe de **5 integrantes**, dentro do limite de 3 a 5 estabelecido pela discipl
 
 | Integrante | Matrícula | GitHub | Papel |
 |---|---|---|---|
-| Ingryd Vitoria de Araújo Barbosa | 01642893 | [@ingrydaraujob](https://github.com/ingrydaraujob) | *a definir* |
-| João Pedro Nunes de França | 01626444 | [@joaopfranca04](https://github.com/joaopfranca04) | *a definir* |
-| Marcio Maycom | 01607574 | [@mihaeldatoman](https://github.com/mihaeldatoman) | *a definir* |
-| Pedro Miranda | 01607408 | [@PedroMiranda243](https://github.com/PedroMiranda243) | *a definir* |
-| Thiago José Falcão de Freitas | 01597267 | [@ThiagojFalcao](https://github.com/ThiagojFalcao) | *a definir* |
+| Ingryd Vitoria de Araújo Barbosa | 01642893 | [@ingrydaraujob](https://github.com/ingrydaraujob) | Desenvolvedora Frontend |
+| João Pedro Nunes de França | 01626444 | [@joaopfranca04](https://github.com/joaopfranca04) | Banco de Dados, Documentação e Testes |
+| Marcio Maycom | 01607574 | [@mihaeldatoman](https://github.com/mihaeldatoman) | Product Owner |
+| Pedro Miranda | 01607408 | [@PedroMiranda243](https://github.com/PedroMiranda243) | Desenvolvedor Backend / Núcleo Computacional |
+| Thiago José Falcão de Freitas | 01597267 | [@ThiagojFalcao](https://github.com/ThiagojFalcao) | Scrum Master |
 
-Os cinco papéis previstos — Scrum Master, Product Owner, Desenvolvedor Backend / Núcleo Computacional,
-Desenvolvedor Frontend, e Banco de Dados / Documentação / Testes — estão descritos na seção 2. A atribuição
-de cada papel a cada integrante é definida na primeira reunião da equipe.
+As responsabilidades de cada papel estão descritas na seção 2. Os papéis organizam o trabalho; **todos os
+integrantes contribuem com código** e aparecem no histórico de commits.
+
+### Par no núcleo computacional
+
+As histórias **H53** (OpenMP) e **H54** (CUDA) exigem programação em par: ninguém pode ser a única pessoa
+que entende o motor do projeto — é o risco R4 do [cronograma](05-cronograma.md). O par de
+[@PedroMiranda243](https://github.com/PedroMiranda243) nessas histórias é definido no planejamento da
+Sprint 5, junto com o acesso à máquina com GPU.
 
 > **Os papéis organizam; não isolam.** Todos os integrantes contribuem com código e todos aparecem no
 > histórico de commits. A disciplina avalia participação individual, e a ausência de participação de um
