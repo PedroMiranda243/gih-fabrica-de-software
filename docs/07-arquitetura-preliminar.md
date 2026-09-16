@@ -394,6 +394,57 @@ transação da requisição.
 
 ---
 
+### ADR-009 — Formato do relatório importado: tolerante, guiado por cabeçalho
+
+**Status:** Decidido pela equipe
+**Data:** 16/09/2026
+
+**Situação:** a H21 pedia "interpreta o formato definido", mas o formato não estava definido em lugar
+nenhum de `docs/`. O UC03 diz *o que* precisa ser extraído — nome do parceiro, faturamento e número de
+pedidos — e não *como* o texto chega.
+
+**Alternativas:**
+
+| Opção | Avaliação |
+|---|---|
+| **Tolerante, guiado por cabeçalho** | **Escolhida.** Separador `;`, tabulação, `\|` ou `,`; ordem das colunas livre; sinônimos aceitos nos nomes |
+| Formato fixo e declarado | Interpretador mais simples e erro mais preciso, mas quebra quando a origem muda a exportação, e obriga o usuário a arrumar o texto antes de colar |
+| Texto em prosa, por expressão regular | Serviria se o relatório fosse texto corrido. Mais frágil, e difícil de explicar quando rejeita uma linha |
+
+**Decisão:** o relatório precisa de **uma linha de cabeçalho** nomeando as colunas. Exemplo mínimo:
+
+```
+Parceiro;Faturamento;Pedidos
+Comércio Alfa;12500,40;312
+Comércio Beta;8940,00;201
+```
+
+| Coluna | Sinônimos aceitos |
+|---|---|
+| nome | parceiro, nome, estabelecimento, loja, comercio, restaurante |
+| faturamento | faturamento, vendas, valor, receita, total |
+| pedidos | pedidos, qtd, quantidade, numero de pedidos |
+
+Acentuação e caixa são ignoradas. Colunas extras são ignoradas. O valor monetário aceita `12.500,40`,
+`12500,40`, `12500.40` e `R$ 12.500,40` — **o último separador que aparecer é o decimal**.
+
+**Consequências:**
+
+- Colar de planilha (que produz tabulação) e importar CSV exportado passam pelo **mesmo** interpretador.
+  A H22, na Sprint 6, vira só a leitura do arquivo e a decodificação
+- A vírgula é o **último** separador testado de propósito: em português ela também é decimal, e num
+  arquivo separado por vírgula o valor `1.000,50` seria partido ao meio
+- Linha ruim não interrompe a leitura — vira rejeição com motivo, e o usuário decide na prévia se segue
+  com o resto (UC03, A5)
+- **Custo assumido:** tolerância esconde erro. Um cabeçalho escrito `Faturamentos` não é reconhecido e o
+  relatório inteiro é recusado. A mitigação é a mensagem do fluxo A4, que devolve as três primeiras
+  linhas recebidas junto com a recusa
+- O interpretador é função pura de texto para resultado, em `app/leitor_relatorio.py`. É o que permite a
+  prévia da H24 usar **o mesmo** código da gravação da H21, sem risco de a prévia mostrar uma coisa e a
+  gravação fazer outra
+
+---
+
 ## 6. Ambiente de desenvolvimento
 
 | Item | Situação |

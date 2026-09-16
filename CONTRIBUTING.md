@@ -45,6 +45,11 @@ por tendência classifica errado sem emitir erro. Melhor falhar na entrada.
 5. Aguarde a CI ficar verde
 6. Mescle por *squash*
 
+> **Para a issue fechar sozinha, a palavra-chave precisa estar em inglês.** O GitHub reconhece
+> `closes #27`, `fixes #27` e `resolves #27` — e **ignora** `fecha #27`. As oito issues da Sprint 4
+> ficaram abertas depois da mesclagem por causa disso. O resto da descrição continua em português;
+> só essa linha é que o GitHub lê.
+
 ## Definition of Done
 
 Uma história só está concluída quando todos os itens forem verdadeiros:

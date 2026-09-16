@@ -8,11 +8,13 @@ import logging
 import uuid
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.db import sessao
-from app.rotas import auditoria, autenticacao, usuarios
+from app.erros import erro_de_validacao
+from app.rotas import auditoria, autenticacao, importacoes, usuarios
 
 log = logging.getLogger("gih")
 
@@ -29,7 +31,14 @@ app = FastAPI(
 # prefixo e a própria exigência de perfil.
 app.include_router(autenticacao.router)
 app.include_router(usuarios.router)
+app.include_router(importacoes.router)
 app.include_router(auditoria.router)
+
+
+# Erro de validacao em portugues, com a explicacao do campo quando ela existe
+# (RNF20). O padrao do FastAPI responde em ingles e num formato pensado para
+# quem escreve API, nao para quem preenche formulario.
+app.add_exception_handler(RequestValidationError, erro_de_validacao)
 
 
 @app.exception_handler(Exception)
