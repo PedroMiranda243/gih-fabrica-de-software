@@ -144,6 +144,7 @@ def criar_usuario():
         senha: str = SENHA_PADRAO,
         ativo: bool = True,
         nome: str | None = None,
+        parceiro_id: int | None = None,
     ) -> int:
         s = Sessao()
         try:
@@ -153,6 +154,9 @@ def criar_usuario():
                 senha_hash=gerar_hash(senha),
                 perfil=perfil,
                 ativo=ativo,
+                # Só o perfil Parceiro aceita vínculo, e o banco cobra isso por
+                # CHECK — passar aqui sem ser Parceiro estoura na gravação.
+                parceiro_id=parceiro_id,
             )
             s.add(u)
             s.commit()
