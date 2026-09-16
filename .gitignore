@@ -52,6 +52,8 @@ modelo/artefatos/
 node_modules/
 # O gerador do documento de entrega tem dependencias proprias (docx, mermaid-cli).
 docs/entrega/node_modules/
+# O .docx e intermediario: o entregavel e o PDF, e o Word o regenera do script.
+docs/entregas/*.docx
 .vite/
 web/dist/
 

@@ -11,6 +11,7 @@
 
 ## 1. Visão geral
 
+<!-- diagrama: arquitetura-geral -->
 ```mermaid
 flowchart TB
     U["Usuário<br/>(navegador)"]

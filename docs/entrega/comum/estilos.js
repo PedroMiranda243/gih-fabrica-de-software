@@ -104,7 +104,19 @@ function table(widths, rows, opts = {}) {
 
 const espaco = (h = 120) => new Paragraph({ spacing: { after: h }, children: [] });
 const quebra = () => new Paragraph({ children: [new PageBreak()] });
+
+/**
+ * Bloco monoespacado: notacao relacional e saida de terminal.
+ *
+ * Devolve um paragrafo por linha, sem espaco entre eles, para o alinhamento em
+ * coluna sobreviver — que e o unico motivo de usar monoespacada aqui.
+ */
+const mono = (linhas) => linhas.map((linha) => new Paragraph({
+  spacing: { after: 0 },
+  children: [new TextRun({ text: linha, font: 'Consolas', size: 16 })],
+}));
+
 module.exports = {
   CW, AZUL, CINZA, VERDE,
-  p, rich, h1, h2, h3, bullet, cell, table, espaco, quebra,
+  p, rich, h1, h2, h3, bullet, cell, table, espaco, quebra, mono,
 };
