@@ -131,6 +131,64 @@ class Auditoria(Base):
     __table_args__ = (Index("ix_auditoria_ocorrido_em", "ocorrido_em"),)
 
 
+
+class SessaoAcesso(Base):
+    """Sessão autenticada, com estado no servidor (RF01, RF02).
+
+    O nome não é `Sessao` porque `app.db.sessao` já é a sessão do SQLAlchemy —
+    duas coisas diferentes com o mesmo nome no mesmo import é erro esperando
+    acontecer.
+
+    Guarda-se o **hash** do identificador, nunca ele próprio: quem conseguir ler
+    esta tabela não consegue se passar por ninguém.
+    """
+
+    __tablename__ = "sessao_acesso"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuario.id"))
+
+    criada_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    expira_em: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+    # Revogar em vez de apagar: "esta sessão foi encerrada por troca de senha"
+    # é informação de investigação, e some se a linha for removida.
+    revogada_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    motivo_revogacao: Mapped[str | None] = mapped_column(String(40))
+
+    origem: Mapped[str | None] = mapped_column(String(45))  # cabe IPv6
+    agente: Mapped[str | None] = mapped_column(String(255))
+
+    usuario: Mapped[Usuario] = relationship()
+
+    __table_args__ = (Index("ix_sessao_acesso_usuario", "usuario_id"),)
+
+
+class TentativaLogin(Base):
+    """Tentativas de autenticação, base do bloqueio por força bruta (RNF11).
+
+    `login` é texto livre e **não** é chave estrangeira de propósito: tentativa
+    contra usuário inexistente também precisa ser contada, senão a defesa só
+    protege quem já existe — e é justamente o login desconhecido que o ataque
+    por dicionário usa.
+    """
+
+    __tablename__ = "tentativa_login"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    login: Mapped[str] = mapped_column(String(60))
+    origem: Mapped[str] = mapped_column(String(45))
+    sucesso: Mapped[bool] = mapped_column(Boolean)
+    ocorrido_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (Index("ix_tentativa_origem_ocorrido", "origem", "ocorrido_em"),)
+
+
 # --------------------------------------------------------------------------- parceiros
 class Categoria(Base):
     __tablename__ = "categoria"

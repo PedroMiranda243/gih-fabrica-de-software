@@ -400,6 +400,13 @@ frente com alguma, a resposta já está aqui.
   chamando o compilador solto. Se precisar mesmo de uma linha de `cmd`, use o caminho curto 8.3 (obtido com
   `for %I in (".") do @echo %~sI`).
 
+- **Arquivo gravado no Windows vira CRLF e quebra o contêiner.** O `entrypoint.sh` com fim de
+  linha CRLF faz o shebang virar `/bin/sh\r`, e o Docker responde
+  `exec ./entrypoint.sh: no such file or directory` — apontando para o arquivo, **que existe**. Pior: o
+  `git diff` não mostra nada, porque o git normaliza na leitura enquanto o Docker copia o arquivo do
+  disco. O `.gitattributes` fixa LF nos arquivos que o Linux lê; e se você gravar um `.sh` por
+  script Python, passe `newline="\n"` — o modo texto traduz para CRLF sozinho.
+
 - **Docker para quando a máquina fica ociosa.** Se a API não sobe e o banco está fora, é provavelmente
   isso. Suba o Docker Desktop de novo antes de procurar bug.
 

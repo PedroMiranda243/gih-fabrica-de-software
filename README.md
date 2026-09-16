@@ -113,10 +113,27 @@ cp .env.example .env
 docker compose up
 ```
 
-É só isso. O compose sobe o PostgreSQL, espera ele ficar saudável, **aplica as migrações** e serve a API.
+É só isso. O compose sobe o PostgreSQL, espera ele ficar saudável, **aplica as migrações**, cria o
+administrador inicial se não houver nenhum, e serve a API.
 
 Verificação: `http://localhost:8000/api/health` deve responder `banco: "ok"`.
 Documentação da API em `http://localhost:8000/api/docs`.
+
+### Primeiro acesso
+
+**Não existe senha padrão.** Este repositório é público, e um `admin/admin` no código seria porta aberta
+em qualquer implantação que esquecesse de trocá-la. Na primeira subida, o sistema sorteia uma senha e a
+imprime **uma única vez** no log:
+
+```
+docker compose logs api | grep "Senha sorteada"
+```
+
+Anote: ela não é gravada em lugar nenhum e não pode ser recuperada. Troque no primeiro acesso, em
+`POST /api/sessao/senha`. Para definir a senha de antemão, preencha `ADMIN_SENHA` no `.env` antes de subir.
+
+Perdeu a senha e não há outro administrador? Apague o usuário direto no banco e suba de novo — o comando
+`python -m app.cli criar-admin` recria quando não existe nenhum administrador ativo.
 
 ### Desenvolvendo a API fora do container
 
@@ -132,6 +149,10 @@ uvicorn app.main:app --reload
 ```
 
 Testes e análise estática, de dentro de `api/`: `pytest` e `ruff check .`
+
+> Os testes precisam do PostgreSQL no ar: eles criam um banco `gih_teste` separado, aplicam as migrações
+> nele e limpam as tabelas entre cada teste. SQLite em memória seria mais rápido e não exercitaria `JSONB`,
+> os tipos `ENUM` nem as restrições `CHECK` do esquema.
 
 > A porta do Postgres no host é **5433** por padrão (`POSTGRES_PORT` no `.env`), porque a 5432 costuma já
 > estar ocupada por outro Postgres na máquina.

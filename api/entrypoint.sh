@@ -9,5 +9,10 @@ set -e
 echo "Aplicando migrações..."
 alembic upgrade head
 
+# Sem administrador não há como entrar, e o RNF07 pede um comando só. O comando
+# é idempotente: se já existe administrador, ele não faz nada.
+echo "Conferindo o administrador inicial..."
+python -m app.cli criar-admin
+
 echo "Subindo a API..."
 exec uvicorn app.main:app --host 0.0.0.0 --port 8000
