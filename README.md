@@ -84,6 +84,27 @@ Detalhamento em [`docs/07-arquitetura-preliminar.md`](docs/07-arquitetura-prelim
 
 ---
 
+## Entregas da disciplina
+
+| Entrega | Prazo | Documento |
+|---|---|---|
+| Sprint 01 — planejamento e descoberta | 05/09/2026 | incluída no documento abaixo |
+| **Sprint 02 — arquitetura e modelagem** | 19/09/2026 | [`docs/entregas/GRUPO-18-GIH-SPRINT-02.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-02.pdf) |
+
+O documento é acumulado: cada entrega traz as sprints anteriores e a atual. Ele é **gerado a partir da
+documentação deste repositório**, e não escrito à parte — ver [`docs/entrega/`](docs/entrega/).
+
+```bash
+node docs/entrega/renderizar_diagramas.js   # diagramas, a partir dos blocos mermaid do markdown
+node docs/entrega/capturar_prototipo.js     # as quatro telas do protótipo
+node docs/entrega/gerar.js                  # monta o .docx
+powershell -ExecutionPolicy Bypass -File docs/entrega/converter_pdf.ps1
+```
+
+> As sprints da disciplina não são as mesmas da equipe: trabalhamos em 13 sprints semanais, e a entrega de
+> arquitetura e modelagem cobre da nossa sprint 2 à 5. A tabela de equivalência está em
+> [`docs/05-cronograma.md`](docs/05-cronograma.md), seção 1.
+
 ## Documentação
 
 | Documento | Conteúdo |

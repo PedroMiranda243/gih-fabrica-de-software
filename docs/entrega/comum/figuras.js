@@ -1,10 +1,25 @@
 /**
  * Figuras do documento: diagramas e capturas de tela, com legenda.
  *
- * Os diagramas entram como **SVG**, não como imagem rasterizada. O Word desenha
- * o vetor, então a figura continua nítida em qualquer zoom e na impressão — que
- * é critério de aceite da entrega ("os diagramas deverão estar legíveis"). O PNG
- * vai junto só como reserva, exigida pela biblioteca para visualizadores antigos.
+ * **Os diagramas entram rasterizados, e a razão é um defeito medido, não gosto.**
+ *
+ * O SVG parecia a escolha óbvia: o Word aceita vetor, e a figura ficaria nítida
+ * em qualquer zoom. E o documento até gerava. Mas ao conferir o PDF exportado,
+ * os diagramas apareciam **com as caixas e as setas, e sem nenhum texto dentro**.
+ * O Word desenha as formas do SVG do mermaid e descarta os rótulos, que vêm em
+ * `foreignObject`. Um diagrama de classes sem os nomes das classes não é um
+ * diagrama ruim — é uma figura vazia.
+ *
+ * Não dava para perceber isso olhando o .docx aberto na tela: só o PDF exportado
+ * mostra. Esse é o motivo de a verificação desta entrega incluir abrir o PDF e
+ * olhar as páginas, e não apenas conferir que o arquivo foi gerado.
+ *
+ * A compensação é resolução: os PNG saem do mermaid em escala 4, o que dá cerca
+ * de 350 dpi no tamanho em que entram na página — resolução de impressão de
+ * verdade. A legibilidade impressa, que é o critério de aceite, fica preservada.
+ *
+ * O SVG continua sendo gerado e versionado em `docs/diagramas/`, onde o GitHub
+ * o renderiza como vetor e os rótulos aparecem normalmente.
  */
 const fs = require('fs');
 const path = require('path');
@@ -59,13 +74,13 @@ function diagrama(nome, limiteLargura) {
     }
   }
 
+  // A proporção vem do SVG, que é a fonte exata; os pixels vêm do PNG.
   return new Paragraph({
     alignment: AlignmentType.CENTER,
     spacing: { before: 120, after: 60 },
     children: [new ImageRun({
-      type: 'svg',
-      data: fs.readFileSync(svg),
-      fallback: { type: 'png', data: fs.readFileSync(png) },
+      type: 'png',
+      data: fs.readFileSync(png),
       transformation: medir(proporcaoDoSvg(svg), limiteLargura),
     })],
   });

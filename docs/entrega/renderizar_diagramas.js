@@ -88,8 +88,10 @@ function renderizar(diagrama, configuracao) {
 
   for (const [pasta, extensao, extras] of [
     [SAIDA_SVG, 'svg', []],
-    // O PNG é só fallback; 2x dá margem confortável para impressão.
-    [SAIDA_PNG, 'png', ['--scale', '2']],
+    // 4x: a figura entra na página com 642 px de largura, então esta escala dá
+    // cerca de 350 dpi — resolução de impressão. O PNG deixou de ser reserva e
+    // passou a ser o que o documento usa; ver o comentário em comum/figuras.js.
+    [SAIDA_PNG, 'png', ['--scale', '4']],
   ]) {
     fs.mkdirSync(pasta, { recursive: true });
     const destino = path.join(pasta, `${diagrama.nome}.${extensao}`);

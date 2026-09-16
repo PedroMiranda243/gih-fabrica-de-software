@@ -235,42 +235,9 @@ function montar() {
   const children = [];
 
 
-// ===== CAPA =====
-children.push(espaco(1400));
-children.push(p('CENTRO UNIVERSITÁRIO MAURÍCIO DE NASSAU', { align: AlignmentType.CENTER, bold: true, size: 22, color: AZUL }));
-children.push(p('Bacharelado em Ciência da Computação', { align: AlignmentType.CENTER, size: 20 }));
-children.push(espaco(900));
-children.push(p('GROWTH INTELLIGENCE HUB (GIH)', { align: AlignmentType.CENTER, bold: true, size: 44, color: AZUL, after: 100 }));
-children.push(p('Plataforma de inteligência de crescimento para redes de parceiros', { align: AlignmentType.CENTER, size: 24, after: 40 }));
-children.push(p('em marketplaces regionais de delivery', { align: AlignmentType.CENTER, size: 24 }));
-children.push(espaco(500));
-children.push(p('SPRINT 1 — PLANEJAMENTO E DESCOBERTA', { align: AlignmentType.CENTER, bold: true, size: 24, color: '2C5B8F' }));
-children.push(espaco(700));
-children.push(p('EQUIPE', { align: AlignmentType.CENTER, bold: true, size: 20, color: '5A6B7E', after: 100 }));
-EQUIPE.forEach(([nome, mat]) => children.push(
-  p(`${nome}  —  ${mat}`, { align: AlignmentType.CENTER, size: 20, after: 50 })));
-children.push(espaco(700));
-children.push(p('Projeto Integrador', { align: AlignmentType.CENTER, bold: true, size: 21, after: 60 }));
-children.push(p('Fábrica de Software  ·  Prof.ª Pryscilla Gonçalves', { align: AlignmentType.CENTER, size: 20, after: 40 }));
-children.push(p('Tópicos Avançados  ·  Prof. Antenor Parnaíba', { align: AlignmentType.CENTER, size: 20 }));
-children.push(espaco(700));
-children.push(p('2026.2', { align: AlignmentType.CENTER, bold: true, size: 22 }));
-children.push(p('Entrega final da disciplina: 05 de dezembro de 2026', { align: AlignmentType.CENTER, size: 18, color: '5A6B7E' }));
-children.push(quebra());
-
-// ===== SUMÁRIO =====
-children.push(h1('Sumário'));
-[
-  '1. Identificação da equipe', '2. Tema', '3. Definição do problema', '4. Objetivos do sistema',
-  '5. Público-alvo', '6. Requisitos Funcionais', '7. Requisitos Não Funcionais',
-  '8. Casos de Uso', '9. Product Backlog', '10. Cronograma inicial', '11. Repositório GitHub',
-].forEach(t => children.push(p(t, { size: 21, after: 90 })));
-children.push(espaco(200));
-children.push(rich([
-  { t: 'Documentação completa e versionada em: ', s: 19, c: '5A6B7E' },
-  { t: 'github.com/PedroMiranda243/gih-fabrica-de-software', s: 19, b: true, c: '2C5B8F' },
-]));
-children.push(quebra());
+  // A capa e o sumario originais desta sprint ficaram de fora: o documento
+  // acumulado tem uma capa so, montada em gerar.js. Mantidos aqui, apareciam
+  // duplicados no meio do PDF.
 
 // ===== 1. EQUIPE =====
 children.push(h1('1. Identificação da equipe'));
