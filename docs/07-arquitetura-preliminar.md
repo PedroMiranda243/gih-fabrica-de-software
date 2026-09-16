@@ -88,34 +88,23 @@ intensivo, paralelização, otimização e GPU estão em Python, C++ e CUDA.
 
 ---
 
-## 3. Modelo de dados preliminar
+## 3. Modelo de dados
 
-```mermaid
-erDiagram
-    USUARIO ||--o{ AUDITORIA : registra
-    USUARIO ||--o{ IMPORTACAO : realiza
-    USUARIO ||--o{ EXECUCAO_OTIMIZADOR : dispara
-    USUARIO ||--o{ MENSAGEM : decide
+Este documento trazia um diagrama entidade-relacionamento preliminar, feito antes da modelagem detalhada.
+Ele foi **removido em vez de atualizado**: existiam duas versões do mesmo diagrama no repositório, e elas
+já tinham divergido — discordavam da cardinalidade entre `EXECUCAO_OTIMIZADOR` e `PLANO_CAMPANHA`.
+Duplicata de diagrama sempre diverge, e a que ninguém está olhando é a que fica errada.
 
-    PARCEIRO ||--o{ METRICA : possui
-    PARCEIRO ||--o{ HISTORICO_SEGMENTO : recebe
-    PARCEIRO ||--o{ PREVISAO : recebe
-    PARCEIRO ||--o{ ITEM_PLANO : participa
-    PARCEIRO }o--|| CATEGORIA : pertence
+**O modelo de dados vive em [`08-modelo-de-dados.md`](08-modelo-de-dados.md)**, em uma versão só: modelo
+conceitual, modelo relacional com tipos e chaves, índices, restrições e a evidência do banco criado.
 
-    PERIODO ||--o{ METRICA : delimita
-    PERIODO ||--o{ HISTORICO_SEGMENTO : delimita
-    IMPORTACAO ||--o{ METRICA : origina
-
-    EXECUCAO_OTIMIZADOR ||--|| PLANO_CAMPANHA : produz
-    PLANO_CAMPANHA ||--o{ ITEM_PLANO : contem
-    ACAO_COMERCIAL ||--o{ ITEM_PLANO : define
-    ITEM_PLANO ||--o| MENSAGEM : gera
-```
+As dezesseis entidades, em resumo:
 
 | Entidade | Papel |
 |---|---|
 | `USUARIO` | Credenciais e perfil de acesso |
+| `SESSAO_ACESSO` | Sessão autenticada, com estado no servidor |
+| `TENTATIVA_LOGIN` | Tentativas de autenticação, base do bloqueio por força bruta |
 | `AUDITORIA` | Trilha de ações sensíveis |
 | `CATEGORIA` | Classificação do parceiro, com a marca de confirmada ou sugerida |
 | `PARCEIRO` | Comércio da rede |
@@ -130,9 +119,11 @@ erDiagram
 | `ITEM_PLANO` | Par parceiro-ação selecionado |
 | `MENSAGEM` | Texto gerado, com estado e decisão humana |
 
-Modelagem detalhada com atributos, chaves e cardinalidades: história **H07**, Sprint 2.
+Diagrama de classes, incluindo a camada de serviços e o núcleo computacional:
+[`10-diagrama-de-classes.md`](10-diagrama-de-classes.md).
 
 ---
+
 
 ## 4. O núcleo computacional
 

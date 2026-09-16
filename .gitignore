@@ -50,6 +50,8 @@ modelo/artefatos/
 
 # Node / React
 node_modules/
+# O gerador do documento de entrega tem dependencias proprias (docx, mermaid-cli).
+docs/entrega/node_modules/
 .vite/
 web/dist/
 
