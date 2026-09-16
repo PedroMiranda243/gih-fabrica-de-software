@@ -25,6 +25,13 @@ services:
     build: ./api
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-gih}:${POSTGRES_PASSWORD:-gih}@postgres:5432/${POSTGRES_DB:-gih}
+      # O filtro por data da auditoria usa o dia do relógio de quem consulta.
+      # Sem isto o contêiner roda em UTC e "hoje" perde o que aconteceu depois
+      # das 21h no horário local.
+      TZ: ${TZ:-America/Recife}
+      COOKIE_SEGURO: ${COOKIE_SEGURO:-false}
+      ADMIN_LOGIN: ${ADMIN_LOGIN:-admin}
+      ADMIN_SENHA: ${ADMIN_SENHA:-}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:

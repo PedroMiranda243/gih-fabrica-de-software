@@ -1,7 +1,8 @@
 """Aplicação FastAPI do Growth Intelligence Hub.
 
-Esqueleto da API. Por enquanto expõe apenas a verificação de saúde, que é o
-único endpoint público do sistema — todos os demais exigirão sessão (RF05).
+`/api/health` e a abertura de sessão são os únicos pontos públicos. Todo o
+resto exige sessão válida, e a autorização por perfil é verificada no servidor
+a cada requisição (RF05, RNF14) — ver `app/dependencias.py`.
 """
 import logging
 import uuid
@@ -11,16 +12,24 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.db import sessao
+from app.rotas import auditoria, autenticacao, usuarios
 
 log = logging.getLogger("gih")
 
 app = FastAPI(
     title="Growth Intelligence Hub",
     description="API do painel de inteligência de crescimento para redes de parceiros.",
-    version="0.1.0",
+    version="0.2.0",
     docs_url="/api/docs",
     openapi_url="/api/openapi.json",
 )
+
+
+# As rotas entram aqui, e a ordem não importa: cada módulo declara o próprio
+# prefixo e a própria exigência de perfil.
+app.include_router(autenticacao.router)
+app.include_router(usuarios.router)
+app.include_router(auditoria.router)
 
 
 @app.exception_handler(Exception)
