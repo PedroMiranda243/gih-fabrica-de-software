@@ -51,6 +51,25 @@ jobs:
   api:
     name: API (Python)
     runs-on: ubuntu-latest
+
+    # Os testes da API rodam contra um Postgres de verdade, nao contra SQLite:
+    # o modelo usa JSONB, tipos ENUM e restricoes CHECK, e nenhum deles existe
+    # em SQLite. Teste que nao exercita a restricao nao prova que ela esta la.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: gih
+          POSTGRES_PASSWORD: gih
+          POSTGRES_DB: gih
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - uses: actions/checkout@v4
 
@@ -78,6 +97,10 @@ jobs:
       - name: Testes
         if: steps.existe.outputs.pronto == 'sim'
         working-directory: api
+        env:
+          # O conftest cria um banco `<nome>_teste` separado a partir desta URL
+          # e aplica as migracoes nele com `alembic upgrade head`.
+          DATABASE_URL: postgresql+psycopg://gih:gih@localhost:5432/gih
         run: pytest --cov=app --cov-report=term-missing
 
       - name: Módulo ainda não criado
