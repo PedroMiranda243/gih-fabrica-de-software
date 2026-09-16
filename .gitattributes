@@ -1,0 +1,19 @@
+# Fim de linha, fixado no repositorio.
+#
+# Sem isto, um editor ou script rodando no Windows grava CRLF num arquivo que o
+# Linux precisa ler em LF. O `entrypoint.sh` com CRLF derruba o container com
+# "exec ./entrypoint.sh: no such file or directory" — o shebang vira "/bin/sh"
+# e a mensagem aponta para o arquivo, que existe. Custou tempo uma vez.
+
+* text=auto
+
+*.sh        text eol=lf
+*.py        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+Dockerfile  text eol=lf
+*.cpp       text eol=lf
+*.cu        text eol=lf
+
+# Estes sao executados pelo cmd do Windows e precisam de CRLF.
+*.bat       text eol=crlf
