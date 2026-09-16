@@ -303,6 +303,61 @@ Resultado completo em [`nucleo/spike/RESULTADO.md`](../nucleo/spike/RESULTADO.md
 
 ---
 
+### ADR-007 — Sessão com estado no servidor, não token autocontido
+
+**Status:** Decidido
+**Data:** 15/09/2026
+
+**Situação:** o RF01 pede sessão identificada, o RF02 pede que o encerramento a invalide **no servidor**, e
+o RNF10 pede cookie com `HttpOnly` e `SameSite` e renovação do identificador no momento da autenticação.
+
+**Alternativas:**
+
+| Opção | Avaliação |
+|---|---|
+| **Identificador opaco com estado no servidor** | **Escolhida.** 256 bits sorteados, guardados como hash; a linha em `sessao_acesso` é a fonte da verdade |
+| JWT em cookie | Rejeitada. Um token assinado só deixa de valer quando expira, e o RF02 exige efeito imediato. A lista de revogação que contornaria isso reintroduz exatamente o estado que o JWT existia para evitar |
+| Sessão na memória do processo | Rejeitada. Some a cada reinício do contêiner e não sobrevive a mais de uma réplica |
+
+**Decisão:** identificador opaco, `secrets.token_urlsafe(32)`, gravado como SHA-256. Argon2 seria errado
+aqui: o token já tem entropia suficiente para não haver força bruta a temer, e a conferência acontece a
+cada requisição, onde um hash lento custaria caro. O que se protege é o vazamento da tabela.
+
+**Consequências:**
+
+- Encerrar sessão, desativar usuário e trocar senha têm efeito **imediato**, não no fim da sessão em curso
+- Uma consulta a mais por requisição, por índice único — aceitável
+- **Não existe segredo de assinatura para gerenciar**, um a menos no `.env`
+- O CSRF fica coberto por `SameSite=Lax`. Se aparecer um fluxo entre sites, passa a ser preciso um token
+  dedicado
+- **Pendente:** a tabela de sessões só cresce. A limpeza das expiradas não foi implementada e vira tarefa
+  quando o volume justificar
+
+---
+
+### ADR-008 — A auditoria grava em transação própria
+
+**Status:** Decidido
+**Data:** 15/09/2026
+
+**Situação:** o RF06 manda registrar as ações sensíveis, e a mais sensível de todas — a tentativa de login
+recusada — termina numa resposta de erro.
+
+**Decisão:** `app/auditoria.py` abre a própria sessão de banco e comita imediatamente, separada da
+transação da requisição.
+
+**Consequências:**
+
+- Se a auditoria participasse da transação da requisição, o `rollback` da falha levaria junto o registro
+  da falha. A trilha teria **só sucessos** — e mentiria por omissão exatamente sobre o que se investiga
+- O mesmo vale para `tentativa_login`: sem transação própria, o contador de força bruta apagaria as
+  próprias evidências e nunca chegaria às cinco falhas do RNF11
+- Em troca, existe uma janela em que a operação é revertida e o registro fica. É o lado certo do
+  compromisso: registro a mais é ruído, registro a menos é ponto cego
+- Falha ao auditar **nunca** derruba a operação do usuário; vai para o log
+
+---
+
 ## 6. Ambiente de desenvolvimento
 
 | Item | Situação |
