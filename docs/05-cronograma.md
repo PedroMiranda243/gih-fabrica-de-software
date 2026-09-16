@@ -1,12 +1,36 @@
 # 05 — Cronograma
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Versão:** 2.0 — 15/09/2026 · sprints semanais
+**Versão:** 2.1 — 16/09/2026 · sprints semanais
 **Datas oficiais da disciplina:** entrega da Sprint 1 em **05/09/2026** · entrega final em **05/12/2026**
 
 ---
 
-## 1. Mudança para sprints semanais
+## 1. Duas numerações de sprint — e como elas se correspondem
+
+**Este projeto tem 13 sprints semanais. A disciplina tem sprints de entrega, que são outra coisa.** A
+confusão é fácil e vale resolver logo: quando este documento diz "Sprint 3", é a terceira semana de
+desenvolvimento da equipe, não a terceira entrega avaliada.
+
+| Entrega da disciplina | Prazo | Cobre as nossas sprints | O que foi entregue |
+|---|---|:--:|---|
+| **Sprint 01** — planejamento e descoberta | 05/09/2026 | 1 | Tema, problema, objetivos, público-alvo, requisitos, casos de uso, backlog, cronograma, repositório |
+| **Sprint 02** — arquitetura e modelagem | 19/09/2026 | 2 a 5 | Arquitetura, diagrama de classes, MER, modelo relacional, protótipo, banco criado, repositório estruturado |
+| Sprint 03 em diante | a definir | 6 em diante | — |
+
+A numeração semanal é a que aparece nas *issues*, nos *milestones* e nos commits do GitHub, e por isso não
+foi renumerada: mudá-la desalinharia o histórico do repositório, que é justamente onde a disciplina pede
+que a evolução do projeto seja demonstrada.
+
+**A segunda entrega cobre quatro das nossas sprints, e não uma.** A equipe está adiantada em relação ao
+calendário da disciplina: na data da entrega de arquitetura e modelagem, o banco já está criado e migrado,
+a API já autentica com perfis e já ingere relatórios, e o risco técnico do núcleo em GPU já foi retirado
+por medição.
+
+---
+
+
+## 2. Mudança para sprints semanais
 
 A avaliação da Sprint 1 pediu que as sprints quinzenais passassem a **semanais**. Este documento aplica a
 mudança: 13 sprints ao todo, sendo a primeira já entregue e 12 ciclos semanais de segunda a sexta até
@@ -33,7 +57,7 @@ Não é só um recorte do calendário. Três consequências práticas:
 
 ---
 
-## 2. Visão geral
+## 3. Visão geral
 
 | Sprint | Período | Tema | Pts | Entregável demonstrável |
 |:--:|---|---|--:|---|
@@ -83,7 +107,7 @@ gantt
 
 ---
 
-## 3. Detalhamento
+## 4. Detalhamento
 
 ### Sprint 2 — Modelagem e fundação · 14/09 – 18/09 · 22 pts
 `H07` modelo ER (8) · `H20` migrações (5) · `H09` ambiente com um comando (5) · `H10` CI (2) · `H71` proteção da `main` (2)
@@ -143,7 +167,7 @@ kernel CUDA compilado e conferido contra a CPU.
 
 ---
 
-## 4. A semana que não fecha
+## 5. A semana que não fecha
 
 **A Sprint 13 está com 45 pontos contra uma média de 30, e é justamente a semana dos dois vídeos.**
 
@@ -163,7 +187,7 @@ reprodutibilidade (H72). Sem eles não há entrega.
 
 ---
 
-## 5. Marcos
+## 6. Marcos
 
 | Data | Marco | Critério de verificação |
 |---|---|---|
@@ -181,7 +205,7 @@ reprodutibilidade (H72). Sem eles não há entrega.
 
 ---
 
-## 6. Riscos
+## 7. Riscos
 
 | # | Risco | Prob. | Impacto | Mitigação |
 |:--:|---|:--:|:--:|---|
@@ -195,7 +219,7 @@ reprodutibilidade (H72). Sem eles não há entrega.
 
 ---
 
-## 7. Ritmo semanal
+## 8. Ritmo semanal
 
 | Cerimônia | Quando | Duração |
 |---|---|---|
