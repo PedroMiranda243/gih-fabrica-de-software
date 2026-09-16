@@ -10,11 +10,13 @@ campo a campo, em vez de serializarem a entidade inteira.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.modelos import Perfil
+from app.config import config
+from app.modelos import OrigemImportacao, Perfil
 
 # Senha longa demais é trabalho de hash caro sem ganho nenhum — o Argon2 leva o
 # tempo que for pedido dele. O teto é proteção de recurso (RNF15).
@@ -133,3 +135,70 @@ class PaginaAuditoria(BaseModel):
     total: int
     pagina: int
     tamanho: int
+
+
+# ------------------------------------------------------------------ importação
+class PedidoImportacao(BaseModel):
+    """Entrada da prévia e da gravação.
+
+    `periodo_inicio` e `periodo_fim` são **obrigatórios e sem valor padrão**
+    (RF10, RN03). A explicação de por quê vai junto na resposta de erro — ver
+    `app/erros.py`.
+    """
+
+    periodo_inicio: date
+    periodo_fim: date
+    texto: str = Field(min_length=1, max_length=config.tamanho_maximo_relatorio)
+
+    @model_validator(mode="after")
+    def periodo_coerente(self):
+        if self.periodo_fim < self.periodo_inicio:
+            raise ValueError("A data final do período não pode ser anterior à inicial.")
+        return self
+
+
+class LinhaReconhecida(BaseModel):
+    linha: int
+    nome: str
+    faturamento: Decimal
+    pedidos: int
+
+
+class LinhaRejeitadaResposta(BaseModel):
+    linha: int
+    conteudo: str
+    motivo: str
+
+
+class PeriodoResposta(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    data_inicio: date
+    data_fim: date
+
+
+class PreviaImportacao(BaseModel):
+    """O que será gravado, antes de gravar (RF11, H24).
+
+    Os rejeitados vêm com o motivo de cada um: "3 linhas rejeitadas" não permite
+    corrigir nada.
+    """
+
+    periodo: PeriodoResposta
+    reconhecidos: list[LinhaReconhecida]
+    rejeitados: list[LinhaRejeitadaResposta]
+    parceiros_novos: list[str]
+    total_reconhecido: int
+    total_rejeitado: int
+    periodo_ja_importado: bool
+
+
+class ImportacaoResposta(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    periodo: PeriodoResposta
+    origem: OrigemImportacao
+    total_gravado: int
+    total_rejeitado: int
+    enviado_em: datetime

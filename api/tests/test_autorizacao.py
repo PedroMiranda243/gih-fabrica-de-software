@@ -46,6 +46,10 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("POST", "/api/usuarios"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/usuarios/{usuario_id}"): {Perfil.ADMINISTRADOR},
     ("PATCH", "/api/usuarios/{usuario_id}"): {Perfil.ADMINISTRADOR},
+    # UC03 — Importar relatório: Gestor e Analista
+    ("POST", "/api/importacoes"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("POST", "/api/importacoes/previa"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/importacoes"): {Perfil.GESTOR, Perfil.ANALISTA},
     # UC14 — Auditar ações: só Administrador
     ("GET", "/api/auditoria"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/auditoria/acoes"): {Perfil.ADMINISTRADOR},
@@ -107,9 +111,13 @@ def test_toda_rota_tem_permissao_declarada():
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize(("metodo", "caminho"), rotas_da_aplicacao())
 def test_sem_sessao_o_protegido_responde_401(cliente, metodo, caminho):
+    permitidos = PERMISSOES.get((metodo, caminho))
+    if permitidos is None:
+        pytest.skip("rota sem permissão declarada — ver test_toda_rota_tem_permissao_declarada")
+
     r = cliente.request(metodo, concretizar(caminho), json={})
 
-    if PERMISSOES[(metodo, caminho)] is PUBLICO:
+    if permitidos is PUBLICO:
         assert r.status_code != 401, f"{metodo} {caminho} deveria ser público"
     else:
         assert r.status_code == 401, (
@@ -123,8 +131,12 @@ def test_sem_sessao_o_protegido_responde_401(cliente, metodo, caminho):
 # ---------------------------------------------------------------------------
 def _casos():
     for metodo, caminho in rotas_da_aplicacao():
-        permitidos = PERMISSOES[(metodo, caminho)]
-        if permitidos is PUBLICO:
+        # Rota sem declaração é pulada aqui de propósito: quem reclama dela é
+        # `test_toda_rota_tem_permissao_declarada`, com a mensagem que diz o que
+        # fazer. Buscar direto no dicionário estouraria um KeyError na **coleta**
+        # e derrubaria o arquivo inteiro, escondendo o diagnóstico.
+        permitidos = PERMISSOES.get((metodo, caminho))
+        if permitidos is None or permitidos is PUBLICO:
             continue
         for perfil in Perfil:
             yield metodo, caminho, perfil, perfil in permitidos
