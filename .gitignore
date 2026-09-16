@@ -35,6 +35,9 @@ build/
 *.exe
 *.lib
 *.a
+*.exp
+*.pdb
+nucleo/spike/bin/
 cmake-build-*/
 CMakeFiles/
 CMakeCache.txt

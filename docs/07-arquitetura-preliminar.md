@@ -271,7 +271,7 @@ apresenta os modos disponíveis e explica a ausência dos demais.
 
 ### ADR-005 — CUDA via NVRTC, sem instalar o toolkit no sistema
 
-**Status:** Decidido para o spike · reavaliar antes da H53
+**Status:** Superada pela **ADR-006** em 15/09/2026 · mantida como registro do que foi medido
 **Data:** 15/09/2026
 
 **Situação:** a máquina de desenvolvimento não tem **nenhum compilador C++** — nem MSVC, nem `g++`, nem
@@ -297,9 +297,45 @@ risco R1 sem bloquear o projeto numa instalação longa.
 - Descobriu-se que a transferência consome 95% do tempo, o que define a arquitetura da H54c: a população
   precisa permanecer na GPU entre gerações
 - Se o toolchain C++ for instalado, migrar o kernel para compilação por `nvcc` é direto — o código CUDA C
-  é o mesmo
+  é o mesmo. **Foi o que aconteceu, no mesmo dia:** ver ADR-006
 
 Resultado completo em [`nucleo/spike/RESULTADO.md`](../nucleo/spike/RESULTADO.md).
+
+---
+
+### ADR-006 — Toolchain nativo: compilar com `nvcc` e MSVC, não mais por NVRTC
+
+**Status:** Decidido
+**Data:** 15/09/2026
+
+**Situação:** o MSVC Build Tools 2022 e o CUDA Toolkit 13.4 foram instalados na máquina de
+desenvolvimento, removendo o impedimento que originou a ADR-005. A H53 exige C++ com OpenMP, que o NVRTC
+não cobre de forma alguma.
+
+**Decisão:** o núcleo passa a ser **C++ compilado antecipadamente** — `cl` para a versão serial e OpenMP,
+`nvcc -arch=native` para a versão CUDA. O CuPy sai do caminho de produção e fica apenas no spike original,
+como registro histórico.
+
+**Consequências:**
+
+- O caminho de CPU paralela do RNF06 está validado com medição: **~9x com 16 threads**, resultado idêntico
+  ao serial
+- O kernel compilado por `nvcc` confere com a CPU com **erro relativo zero** — mesma ordem de soma, mesmo
+  `float32`
+- Mediu-se o que a ADR-005 não podia medir: contra **OpenMP**, e não contra o serial, a GPU com
+  transferência a cada geração ganha só **1,1x a 1,3x**, e abaixo de ~4.000 planos **perde**. Sem a
+  transferência, ganha 11x. Isso promove a residência da população na GPU de otimização a **requisito** da
+  H54c
+- `nvcc` no Windows usa o `cl` como compilador hospedeiro, então o ambiente do MSVC precisa ser carregado
+  **antes** do CUDA entrar no `PATH`. Está encapsulado em `nucleo/spike/ambiente.bat`
+- O caminho do projeto contém acento, o que quebra o encadeamento de comandos no `cmd`. Por isso compilar é
+  sempre via `construir.bat`, nunca chamando `cl` ou `nvcc` soltos
+- **Custo assumido:** compilar deixa de ser reprodutível só com `pip`. Quem for mexer no `nucleo/` precisa
+  do Build Tools e do Toolkit instalados. Para o restante da equipe nada muda — `api/`, `web/` e `modelo/`
+  não dependem disso
+- A imagem Docker do núcleo ainda não foi construída; empacotar o `nvcc` é trabalho em aberto
+
+Resultado completo em [`nucleo/spike/RESULTADO.md`](../nucleo/spike/RESULTADO.md), parte 2.
 
 ---
 
@@ -363,7 +399,8 @@ transação da requisição.
 | Item | Situação |
 |---|---|
 | GPU de desenvolvimento | NVIDIA GeForce RTX 4060, 8 GB, driver 616.56 — **disponível e verificada** |
-| CUDA Toolkit (`nvcc`) | **Não instalado** — primeira tarefa da história H47, na Sprint 3 |
+| CUDA Toolkit (`nvcc`) | **13.4 — instalado e validado** em 15/09/2026 (H47) |
+| Compilador C++ | **MSVC 19.44 (Build Tools 2022)** — instalado e validado; exigido só para `nucleo/` |
 | Python | 3.11 |
 | Node.js | 20 |
 | Docker Desktop | Necessário para o banco e para o empacotamento |
