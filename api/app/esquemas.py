@@ -171,8 +171,18 @@ class LinhaRejeitadaResposta(BaseModel):
 
 
 class PeriodoResposta(BaseModel):
+    """Janela de tempo de um relatório.
+
+    O `id` é o que permite ao cliente pedir um período específico ao painel —
+    sem ele, o parâmetro `periodo_id` existiria sem ninguém ter como preenchê-lo.
+
+    Vem nulo **só** na prévia da importação, onde o período ainda não foi
+    gravado: mostrar um id ali seria inventar um registro que não existe.
+    """
+
     model_config = ConfigDict(from_attributes=True)
 
+    id: int | None = None
     data_inicio: date
     data_fim: date
 
@@ -301,3 +311,97 @@ class VinculoParceiro(BaseModel):
             self.metricas + self.segmentos + self.previsoes
             + self.itens_de_plano + self.mensagens + self.usuarios
         )
+
+
+# ---------------------------------------------------------------------- painel
+# Contrato do UC05. Três convenções valem para tudo o que vem abaixo, e o
+# frontend depende delas:
+#
+#   1. `periodo` nulo significa **base vazia** (UC05, A1) — não é erro, é o
+#      estado inicial de quem ainda não importou nada.
+#   2. `periodo_anterior` nulo significa **período único** (UC05, A2): não há
+#      contra o que comparar, e toda variação vem nula junto.
+#   3. Variação nula **não** é zero. Zero é "não mudou"; nulo é "não dá para
+#      dizer" — sem período anterior, ou com base anterior zerada, que tornaria
+#      a divisão indefinida. Desenhar zero nesses casos seria afirmar
+#      estabilidade que ninguém mediu.
+class VariacaoIndicadores(BaseModel):
+    """Variação percentual de cada indicador contra o período anterior (RF17)."""
+
+    faturamento: Decimal | None
+    pedidos: Decimal | None
+    ticket_medio: Decimal | None
+    parceiros_ativos: Decimal | None
+
+
+class IndicadoresPainel(BaseModel):
+    """Indicadores consolidados do período (RF17, H30).
+
+    **Ticket médio é derivado aqui, nunca lido de coluna** (RN04): é o
+    faturamento somado dividido pelos pedidos somados. Guardá-lo faria o valor
+    divergir das parcelas que o originam na primeira correção de dado.
+
+    Note que o ticket médio da rede **não** é a média dos tickets dos parceiros:
+    é a razão dos totais, que é o que responde "quanto vale um pedido nesta
+    rede". A média das médias daria peso igual a quem fez 3 pedidos e a quem fez
+    3.000.
+    """
+
+    periodo: PeriodoResposta | None
+    periodo_anterior: PeriodoResposta | None
+    faturamento: Decimal
+    pedidos: int
+    ticket_medio: Decimal | None
+    parceiros_ativos: int
+    variacao: VariacaoIndicadores | None
+
+
+class LinhaRanking(BaseModel):
+    """Um parceiro no ranking do período (RF18, H31)."""
+
+    parceiro_id: int
+    nome: str
+    categoria: str | None
+    posicao: int
+    posicao_anterior: int | None
+    faturamento: Decimal
+    pedidos: int
+    ticket_medio: Decimal | None
+    variacao_percentual: Decimal | None
+    estreante: bool = Field(
+        description=(
+            "Não tinha métrica no período anterior. É diferente de ter caído: "
+            "sem esta marca, posição anterior nula seria lida como queda."
+        ),
+    )
+
+
+class PaginaRanking(BaseModel):
+    periodo: PeriodoResposta | None
+    periodo_anterior: PeriodoResposta | None
+    itens: list[LinhaRanking]
+    total: int
+    pagina: int
+    tamanho: int
+
+
+class PontoSerie(BaseModel):
+    """Um período na série (RF19, H32).
+
+    Os três valores vêm **nulos juntos** quando não houve medição naquele
+    período. A lacuna é explícita de propósito: omitir o ponto faria o gráfico
+    ligar os vizinhos com uma reta, desenhando uma tendência onde não houve
+    medição nenhuma.
+    """
+
+    periodo: PeriodoResposta
+    faturamento: Decimal | None
+    pedidos: int | None
+    ticket_medio: Decimal | None
+
+
+class SerieHistorica(BaseModel):
+    escopo: str = Field(description='"rede" ou "parceiro".')
+    parceiro_id: int | None
+    parceiro_nome: str | None
+    pontos: list[PontoSerie]
