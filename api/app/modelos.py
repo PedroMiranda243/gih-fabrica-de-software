@@ -28,9 +28,10 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.db import Base
+from app.texto import normalizar
 
 
 # --------------------------------------------------------------------------- enums
@@ -203,6 +204,13 @@ class Parceiro(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     nome: Mapped[str] = mapped_column(String(160), unique=True)
+
+    # Forma de comparação do nome: minúscula, sem acento (RF24). Existe como
+    # coluna, e não como função na consulta, porque `unaccent(lower(nome))`
+    # aplicado linha a linha impede qualquer índice de servir — viraria
+    # varredura completa na carga do RNF04.
+    nome_normalizado: Mapped[str] = mapped_column(String(160))
+
     categoria_id: Mapped[int | None] = mapped_column(ForeignKey("categoria.id"))
 
     # Categoria em branco é resultado aceitável: melhor vazio que palpite errado.
@@ -217,12 +225,33 @@ class Parceiro(Base):
 
     categoria: Mapped[Categoria | None] = relationship()
 
+    @validates("nome")
+    def _sincronizar_nome_normalizado(self, chave: str, valor: str) -> str:
+        """Mantém `nome_normalizado` colado em `nome`, em toda gravação.
+
+        Deixar o preenchimento a cargo de quem grava faria a coluna envelhecer
+        na primeira rota que esquecesse — e a busca deixaria de encontrar o
+        parceiro renomeado **sem erro nenhum**, que é a forma de falha mais cara
+        deste projeto.
+        """
+        self.nome_normalizado = normalizar(valor)
+        return valor
+
     __table_args__ = (
         CheckConstraint(
             "(categoria_id IS NULL) = (origem_categoria IS NULL)",
             name="ck_parceiro_categoria_com_origem",
         ),
         Index("ix_parceiro_nome", "nome"),
+        # Índice de trigrama: é o que faz `LIKE '%termo%'` usar índice em vez de
+        # varrer a tabela. Um btree comum só serviria para busca por prefixo, e
+        # o RF24 pede correspondência parcial em qualquer posição do nome.
+        Index(
+            "ix_parceiro_nome_normalizado_trgm",
+            "nome_normalizado",
+            postgresql_using="gin",
+            postgresql_ops={"nome_normalizado": "gin_trgm_ops"},
+        ),
     )
 
 
