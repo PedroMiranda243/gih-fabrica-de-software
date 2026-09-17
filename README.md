@@ -171,6 +171,22 @@ uvicorn app.main:app --reload
 
 Testes e análise estática, de dentro de `api/`: `pytest` e `ruff check .`
 
+### Verificação de ponta a ponta
+
+A suíte do `pytest` sobe a aplicação em processo. A verificação abaixo roda contra **a API no ar** — HTTP
+real, cookie real, banco real — e reporta cada checagem agrupada pelos itens de entrega da disciplina.
+É também o roteiro da demonstração.
+
+```bash
+docker compose up -d
+cd api
+GIH_ADMIN_SENHA=... python e2e/verificacao.py
+```
+
+A senha do administrador sai no log da primeira subida:
+`docker compose logs api | grep "Senha sorteada"`. O comando **sai com código diferente de zero** se
+qualquer verificação falhar — senão não é verificação, é impressão.
+
 > Os testes precisam do PostgreSQL no ar: eles criam um banco `gih_teste` separado, aplicam as migrações
 > nele e limpam as tabelas entre cada teste. SQLite em memória seria mais rápido e não exercitaria `JSONB`,
 > os tipos `ENUM` nem as restrições `CHECK` do esquema.
