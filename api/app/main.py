@@ -14,7 +14,7 @@ from sqlalchemy import text
 
 from app.db import sessao
 from app.erros import erro_de_validacao
-from app.rotas import auditoria, autenticacao, importacoes, usuarios
+from app.rotas import auditoria, autenticacao, categorias, importacoes, parceiros, usuarios
 
 log = logging.getLogger("gih")
 
@@ -31,6 +31,8 @@ app = FastAPI(
 # prefixo e a própria exigência de perfil.
 app.include_router(autenticacao.router)
 app.include_router(usuarios.router)
+app.include_router(parceiros.router)
+app.include_router(categorias.router)
 app.include_router(importacoes.router)
 app.include_router(auditoria.router)
 
