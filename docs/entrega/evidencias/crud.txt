@@ -1,0 +1,196 @@
+Transcrição do CRUD principal · http://localhost:8000
+Dados sintéticos; nenhum nome real de empresa ou pessoa.
+
+==============================================================================
+Preparação — um analista, que é quem gerencia parceiros (UC04)
+==============================================================================
+
+$ POST /api/usuarios
+  > {
+  >   "login": "t41435.analista",
+  >   "nome": "Analista da Evidência",
+  >   "senha": "********",
+  >   "perfil": "ANALISTA"
+  > }
+  201 Created
+  < {
+  <   "id": 66,
+  <   "login": "t41435.analista",
+  <   "nome": "Analista da Evidência",
+  <   "perfil": "ANALISTA",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-09-17T05:09:02.323704Z"
+  < }
+
+==============================================================================
+Login — item 2 da entrega
+==============================================================================
+
+$ POST /api/sessao
+  > {
+  >   "login": "t41435.analista",
+  >   "senha": "********"
+  > }
+  201 Created
+  < {
+  <   "usuario": {
+  <     "id": 66,
+  <     "login": "t41435.analista",
+  <     "nome": "Analista da Evidência",
+  <     "perfil": "ANALISTA",
+  <     "ativo": true,
+  <     "parceiro_id": null,
+  <     "criado_em": "2026-09-17T05:09:02.323704Z"
+  <   },
+  <   "expira_em": "2026-09-17T13:09:04.748622Z"
+  < }
+
+==============================================================================
+CADASTRAR — item 5 da entrega
+==============================================================================
+
+$ POST /api/categorias
+  > {
+  >   "nome": "Categoria t41435"
+  > }
+  201 Created
+  < {
+  <   "id": 43,
+  <   "nome": "Categoria t41435",
+  <   "ativa": true
+  < }
+
+$ POST /api/parceiros
+  > {
+  >   "nome": "Comércio t41435",
+  >   "status": "PROSPECCAO",
+  >   "contato": "contato@exemplo.test"
+  > }
+  201 Created
+  < {
+  <   "id": 468,
+  <   "nome": "Comércio t41435",
+  <   "categoria": null,
+  <   "origem_categoria": null,
+  <   "status": "PROSPECCAO",
+  <   "contato": "contato@exemplo.test",
+  <   "ativo": true,
+  <   "criado_em": "2026-09-17T05:09:04.766023Z"
+  < }
+
+==============================================================================
+CONSULTAR
+==============================================================================
+
+$ GET /api/parceiros/468
+  200 OK
+  < {
+  <   "id": 468,
+  <   "nome": "Comércio t41435",
+  <   "categoria": null,
+  <   "origem_categoria": null,
+  <   "status": "PROSPECCAO",
+  <   "contato": "contato@exemplo.test",
+  <   "ativo": true,
+  <   "criado_em": "2026-09-17T05:09:04.766023Z"
+  < }
+
+$ GET /api/parceiros?busca=t41435
+  200 OK
+  < [
+  <   {
+  <     "id": 468,
+  <     "nome": "Comércio t41435",
+  <     "categoria": null,
+  <     "origem_categoria": null,
+  <     "status": "PROSPECCAO",
+  <     "contato": "contato@exemplo.test",
+  <     "ativo": true,
+  <     "criado_em": "2026-09-17T05:09:04.766023Z"
+  <   }
+  < ]
+
+==============================================================================
+ATUALIZAR
+==============================================================================
+
+$ PATCH /api/parceiros/468
+  > {
+  >   "status": "ATIVO",
+  >   "categoria_id": 43
+  > }
+  200 OK
+  < {
+  <   "id": 468,
+  <   "nome": "Comércio t41435",
+  <   "categoria": {
+  <     "id": 43,
+  <     "nome": "Categoria t41435",
+  <     "ativa": true
+  <   },
+  <   "origem_categoria": "MANUAL",
+  <   "status": "ATIVO",
+  <   "contato": "contato@exemplo.test",
+  <   "ativo": true,
+  <   "criado_em": "2026-09-17T05:09:04.766023Z"
+  < }
+
+==============================================================================
+Nome repetido é recusado — a unicidade é garantida pelo banco
+==============================================================================
+
+$ POST /api/parceiros
+  > {
+  >   "nome": "Comércio t41435"
+  > }
+  409 Conflict
+  < {
+  <   "detail": "Já existe um parceiro com o nome 'Comércio t41435'."
+  < }
+
+==============================================================================
+EXCLUIR — sem histórico, a exclusão acontece
+==============================================================================
+
+$ DELETE /api/parceiros/468
+  204 No Content
+  < (sem conteúdo)
+
+$ GET /api/parceiros/468
+  404 Not Found
+  < {
+  <   "detail": "Parceiro não encontrado."
+  < }
+
+==============================================================================
+EXCLUIR — com histórico, a exclusão é recusada com o motivo
+==============================================================================
+
+Primeiro uma importação, para o parceiro passar a ter faturamento:
+
+$ POST /api/importacoes
+  > {
+  >   "periodo_inicio": "2028-03-17",
+  >   "periodo_fim": "2028-03-23",
+  >   "texto": "Parceiro;Faturamento;Pedidos\nComércio t41435 hist;12500,40;312\n"
+  > }
+  409 Conflict
+  < {
+  <   "detail": "Este período já foi importado. Substituir os dados existentes exige uma decisão explícita, que ainda não está disponível — por ora, cancele ou informe outro período."
+  < }
+
+==============================================================================
+Controle de perfis — item 4 da entrega
+==============================================================================
+
+O mesmo analista tentando a área de usuários, que é do Administrador:
+
+$ GET /api/usuarios
+  403 Forbidden
+  < {
+  <   "detail": "Seu perfil não permite esta operação."
+  < }
+
+==============================================================================
+Fim da transcrição.
