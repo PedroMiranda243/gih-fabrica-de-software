@@ -60,6 +60,14 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("POST", "/api/importacoes/arquivo"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("POST", "/api/importacoes/arquivo/previa"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/importacoes"): {Perfil.GESTOR, Perfil.ANALISTA},
+    # UC05 — Painel e ranking: Gestor e Analista executam, Administrador só lê.
+    # Como aqui tudo é leitura, ele entra — diferente do UC03 e do UC04, onde a
+    # matriz lhe nega acesso. A distinção é da tabela, não uma escolha do código.
+    ("GET", "/api/painel/indicadores"): {
+        Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA,
+    },
+    ("GET", "/api/painel/ranking"): {Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/painel/series"): {Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA},
     # UC14 — Auditar ações: só Administrador
     ("GET", "/api/auditoria"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/auditoria/acoes"): {Perfil.ADMINISTRADOR},
