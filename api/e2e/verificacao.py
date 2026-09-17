@@ -10,7 +10,10 @@ mascararam resultado neste projeto, com teste "passando" porque o corpo chegava
 vazio. Ver a armadilha registrada no CLAUDE.md.
 
 A saída é organizada pelos seis itens da terceira entrega da disciplina, o que a
-torna também o roteiro da demonstração.
+torna também o roteiro da demonstração. O que o sistema ganhou depois daquela
+entrega entra em blocos marcados com `[  + ]`, fora da numeração: renumerar faria
+a saída deixar de casar com o documento, e não verificar faria o roteiro deixar
+de representar o sistema.
 
 Uso:
     python e2e/verificacao.py
@@ -26,6 +29,7 @@ import os
 import secrets
 import sys
 from datetime import date, timedelta
+from decimal import ROUND_HALF_UP, Decimal
 
 import httpx
 
@@ -73,6 +77,15 @@ class Relatorio:
 
     def item(self, numero: int, titulo: str) -> None:
         print(f"\n[{numero}/6] {titulo}")
+
+    def secao(self, titulo: str) -> None:
+        """Bloco fora da numeração dos seis itens da entrega.
+
+        A numeração [n/6] espelha a lista da terceira entrega acadêmica, e o
+        sistema cresce além dela. Renumerar faria a saída deixar de casar com o
+        documento; não verificar faria o roteiro deixar de representar o sistema.
+        """
+        print(f"\n[  + ] {titulo}")
 
     def checar(self, descricao: str, condicao: bool, detalhe: str = "") -> bool:
         self.total += 1
@@ -382,6 +395,87 @@ def item_ingestao(r: Relatorio, url: str, criados: dict[str, str], marca: str) -
 
     r.nota("o recálculo da segmentação entra na Sprint 7 e ainda não existe")
 
+    # O id do período volta para a verificação do painel poder consultar
+    # **este** período. Sem ele restaria consultar "o mais recente", que numa
+    # base com execuções anteriores pode ser o de outra execução.
+    if gravacao.status_code == 201:
+        return gravacao.json()["periodo"]["id"]
+    return None
+
+
+# --------------------------------------------------------------------- extra
+def item_painel(r: Relatorio, url: str, criados: dict[str, str], periodo_id: int | None) -> None:
+    """Painel: indicadores, ranking e séries (UC05 · H30, H31, H32).
+
+    Fica fora da numeração porque não é um dos seis itens da terceira entrega —
+    mas precisa ser verificado, senão o roteiro de demonstração passa a cobrir
+    menos do que o sistema faz.
+    """
+    r.secao("Painel — indicadores, ranking e séries")
+
+    login = criados.get("GESTOR")
+    if not login or periodo_id is None:
+        r.checar("há gestor e período para consultar o painel", False)
+        return
+
+    with sessao(url) as c:
+        if not entrar(c, login, SENHA):
+            r.checar("o gestor autentica", False)
+            return
+
+        ind = c.get("/api/painel/indicadores", params={"periodo_id": periodo_id})
+        corpo = ind.json() if ind.status_code == 200 else {}
+        r.checar(
+            "os indicadores consolidam o período importado",
+            ind.status_code == 200 and corpo.get("parceiros_ativos") == 2,
+            f"{corpo.get('faturamento')} em {corpo.get('pedidos')} pedidos",
+        )
+
+        # Invariante da RN04: o ticket é a razão dos totais, calculada na
+        # consulta. Conferir a relação, e não um número fixo, é o que mantém a
+        # verificação válida quando a massa muda.
+        faturamento = Decimal(corpo.get("faturamento") or 0)
+        pedidos = int(corpo.get("pedidos") or 0)
+        esperado = (
+            (faturamento / pedidos).quantize(Decimal("0.01"), ROUND_HALF_UP) if pedidos else None
+        )
+        r.checar(
+            "o ticket médio é a razão dos totais, e não coluna guardada",
+            corpo.get("ticket_medio") == (str(esperado) if esperado is not None else None),
+            "RN04",
+        )
+
+        rank = c.get("/api/painel/ranking", params={"periodo_id": periodo_id})
+        itens = rank.json().get("itens", []) if rank.status_code == 200 else []
+        faturamentos = [Decimal(i["faturamento"]) for i in itens]
+        r.checar(
+            "o ranking ordena por faturamento, com posições sem buraco",
+            bool(itens)
+            and [i["posicao"] for i in itens] == list(range(1, len(itens) + 1))
+            and faturamentos == sorted(faturamentos, reverse=True),
+            f"{len(itens)} parceiros",
+        )
+
+        serie = c.get("/api/painel/series")
+        pontos = serie.json().get("pontos", []) if serie.status_code == 200 else []
+        datas = [p["periodo"]["data_inicio"] for p in pontos]
+        r.checar(
+            "a série da rede sai em ordem cronológica",
+            bool(pontos) and datas == sorted(datas),
+            f"{len(pontos)} períodos",
+        )
+
+        individual = c.get(
+            "/api/painel/series", params={"parceiro_id": itens[0]["parceiro_id"]} if itens else {}
+        )
+        r.checar(
+            "a série individual cobre todos os períodos, com lacuna explícita",
+            individual.status_code == 200
+            and len(individual.json()["pontos"]) == len(pontos)
+            and individual.json()["escopo"] == "parceiro",
+            "período sem medição vem nulo, não sumido",
+        )
+
 
 def limpar(admin: httpx.Client, criados: dict[str, str]) -> None:
     """Desativa os usuários que a verificação criou.
@@ -433,7 +527,8 @@ def main() -> int:
         criados = item_cadastro(r, admin, marca)
         item_perfis(r, a.url, criados)
         item_crud(r, a.url, criados, marca)
-        item_ingestao(r, a.url, criados, marca)
+        periodo_id = item_ingestao(r, a.url, criados, marca)
+        item_painel(r, a.url, criados, periodo_id)
         limpar(admin, criados)
 
     return r.encerrar()
