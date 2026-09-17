@@ -375,6 +375,50 @@ def item_ingestao(r: Relatorio, url: str, criados: dict[str, str], marca: str) -
 
         repetida = c.post("/api/importacoes", json={**periodo, "texto": relatorio})
         r.checar("reimportar o mesmo período é recusado", repetida.status_code == 409, "RF12")
+        ja_existe = repetida.json().get("detail", {}).get("ja_existe", {})
+        r.checar(
+            "a recusa diz quantos registros seriam apagados e quem os trouxe",
+            ja_existe.get("metricas_que_serao_apagadas") == 2 and bool(ja_existe.get("autor")),
+            "H25",
+        )
+
+        # Uma linha só: se substituir somasse em vez de trocar, o total ficaria
+        # em três e a checagem abaixo cairia.
+        menor = f"Parceiro;Faturamento;Pedidos\nAlfa {marca};777,00;7\n"
+        trocada = c.post(
+            "/api/importacoes", json={**periodo, "texto": menor, "substituir": True}
+        )
+        r.checar(
+            "com substituir, o período é trocado e não somado",
+            trocada.status_code == 201 and trocada.json()["total_gravado"] == 1,
+            trocada.text[:70] if trocada.status_code != 201 else "H25",
+        )
+
+        # Arquivo, e não texto colado: é o outro caminho de entrada, e ele
+        # precisa chegar ao mesmo lugar (H22).
+        por_arquivo = c.post(
+            "/api/importacoes/arquivo",
+            files={"arquivo": (f"{marca}.csv", relatorio_de(marca).encode("utf-8"), "text/csv")},
+            data=periodo_de(marca, 2),
+        )
+        r.checar(
+            "importa por arquivo enviado",
+            por_arquivo.status_code == 201 and por_arquivo.json()["origem"] == "CSV",
+            por_arquivo.text[:70] if por_arquivo.status_code != 201 else "H22",
+        )
+
+        historico = c.get("/api/importacoes").json()
+        r.checar(
+            "o histórico traz o autor de cada importação",
+            all(i["autor"]["nome"] for i in historico["itens"]),
+            "RF13",
+        )
+        substituidas = [i for i in historico["itens"] if i["metricas_vigentes"] == 0]
+        r.checar(
+            "a importação substituída fica no histórico, com zero métrica vigente",
+            len(substituidas) == 1,
+            "o rastro sobrevive ao dado",
+        )
 
         documentacao = c.get("/api/docs")
         r.checar("a documentação interativa está no ar", documentacao.status_code == 200,
