@@ -149,6 +149,13 @@ class PedidoImportacao(BaseModel):
     periodo_inicio: date
     periodo_fim: date
     texto: str = Field(min_length=1, max_length=config.tamanho_maximo_relatorio)
+    substituir: bool = Field(
+        default=False,
+        description=(
+            "Apaga o conteúdo anterior do período antes de gravar. "
+            "O padrão é não substituir: o RF12 manda cancelar."
+        ),
+    )
 
     @model_validator(mode="after")
     def periodo_coerente(self):
@@ -193,15 +200,45 @@ class PreviaImportacao(BaseModel):
     periodo_ja_importado: bool
 
 
+class AutorResposta(BaseModel):
+    """Quem trouxe o dado, no histórico.
+
+    Só id e nome: a listagem responde "quem importou", e carregar login e perfil
+    junto exporia dado de conta numa tela que não precisa dele.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    nome: str
+
+
 class ImportacaoResposta(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     periodo: PeriodoResposta
+    autor: AutorResposta
     origem: OrigemImportacao
     total_gravado: int
     total_rejeitado: int
     enviado_em: datetime
+    metricas_vigentes: int = Field(
+        default=0,
+        description=(
+            "Quantas métricas desta importação continuam no banco. "
+            "Zero significa que outra importação substituiu o período."
+        ),
+    )
+
+
+class PaginaImportacoes(BaseModel):
+    """Paginada pelo mesmo motivo da auditoria: a lista só cresce."""
+
+    itens: list[ImportacaoResposta]
+    total: int
+    pagina: int
+    tamanho: int
 
 
 # ------------------------------------------------------- parceiros e categorias

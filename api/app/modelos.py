@@ -260,6 +260,10 @@ class Importacao(Base):
     )
 
     periodo: Mapped[Periodo] = relationship()
+    # O histórico da H29 precisa responder "quem trouxe este dado", e o RF13
+    # pede o autor pelo nome. Sem a relação, a listagem faria uma consulta por
+    # linha para descobrir isso.
+    autor: Mapped[Usuario] = relationship()
 
 
 class Metrica(Base):
