@@ -184,6 +184,84 @@ def test_busca_por_trecho_do_nome(analista):
     assert [p["nome"] for p in r.json()] == ["Padaria do Centro"]
 
 
+# ============================================= H37 · busca sem acentuação
+@pytest.mark.parametrize(
+    "termo",
+    ["comercio", "Comércio", "COMERCIO", "cOmErCiO", "mércio", "mercio"],
+)
+def test_busca_ignora_acentuacao_e_caixa(analista, termo):
+    """RF24 — buscar `comercio` precisa encontrar `Comércio`.
+
+    A busca anterior usava `ILIKE`, que ignora maiúsculas e **não** ignora
+    acento: a história parecia cumprida e metade do critério não estava.
+    """
+    analista.post("/api/parceiros", json={"nome": "Comércio Órion"})
+    analista.post("/api/parceiros", json={"nome": "Mercado do Bairro"})
+
+    r = analista.get("/api/parceiros", params={"busca": termo})
+
+    assert [p["nome"] for p in r.json()] == ["Comércio Órion"]
+
+
+def test_busca_encontra_por_trecho_no_meio_do_nome(analista):
+    """Correspondência parcial em qualquer posição, não só por prefixo."""
+    analista.post("/api/parceiros", json={"nome": "Restaurante Sabor Caseiro"})
+
+    r = analista.get("/api/parceiros", params={"busca": "sabor"})
+
+    assert len(r.json()) == 1
+
+
+def test_renomear_mantem_a_busca_correta(analista):
+    """A coluna normalizada não pode envelhecer em relação ao nome.
+
+    Se ela ficasse presa ao valor do cadastro, o parceiro renomeado deixaria de
+    ser encontrado pelo nome novo — **sem erro nenhum**, que é o modo de falha
+    mais caro deste projeto.
+    """
+    alvo = analista.post("/api/parceiros", json={"nome": "Nome Antigo"}).json()["id"]
+
+    analista.patch(f"/api/parceiros/{alvo}", json={"nome": "Café Renomeado"})
+
+    assert len(analista.get("/api/parceiros", params={"busca": "cafe"}).json()) == 1
+    assert analista.get("/api/parceiros", params={"busca": "antigo"}).json() == []
+
+
+@pytest.mark.parametrize("curinga", ["%", "_", "%%", "a%"])
+def test_curinga_digitado_e_texto_e_nao_padrao(analista, curinga):
+    """Quem digita `%` está procurando um nome, não pedindo curinga.
+
+    Sem escapar, `%` casaria com tudo e `_` com qualquer caractere — a busca
+    devolveria a base inteira e pareceria estar funcionando.
+    """
+    analista.post("/api/parceiros", json={"nome": "Padaria do Centro"})
+    analista.post("/api/parceiros", json={"nome": "Mercado do Bairro"})
+
+    r = analista.get("/api/parceiros", params={"busca": curinga})
+
+    assert r.json() == []
+
+
+def test_parceiro_criado_pela_importacao_tambem_e_encontrado(analista):
+    """A importação cria parceiro por outro caminho, e ele precisa ser buscável.
+
+    Os dois caminhos usam a mesma normalização — se divergissem, só o parceiro
+    cadastrado pela tela apareceria, e ninguém desconfiaria da busca.
+    """
+    analista.post(
+        "/api/importacoes",
+        json={
+            "periodo_inicio": "2026-04-06",
+            "periodo_fim": "2026-04-12",
+            "texto": "Parceiro;Faturamento;Pedidos\nEmpório Água Verde;900,00;12\n",
+        },
+    )
+
+    r = analista.get("/api/parceiros", params={"busca": "emporio agua"})
+
+    assert [p["nome"] for p in r.json()] == ["Empório Água Verde"]
+
+
 def test_filtra_por_situacao_e_por_categoria(analista, categoria):
     analista.post("/api/parceiros", json={"nome": "Com categoria", "categoria_id": categoria})
     inativo = analista.post("/api/parceiros", json={"nome": "Sem categoria"}).json()["id"]

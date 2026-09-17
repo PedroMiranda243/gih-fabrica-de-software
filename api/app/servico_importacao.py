@@ -13,7 +13,7 @@ from datetime import date, datetime
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from app.leitor_relatorio import Leitura, LinhaLida, interpretar, normalizar
+from app.leitor_relatorio import Leitura, LinhaLida, interpretar
 from app.modelos import (
     HistoricoSegmento,
     Importacao,
@@ -24,6 +24,7 @@ from app.modelos import (
     Previsao,
     Usuario,
 )
+from app.texto import normalizar
 
 
 @dataclass

@@ -19,9 +19,10 @@ from __future__ import annotations
 
 import csv
 import re
-import unicodedata
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
+
+from app.texto import normalizar
 
 # Sinônimos aceitos por coluna, já normalizados (minúsculo, sem acento).
 COLUNAS = {
@@ -70,11 +71,6 @@ class FormatoNaoReconhecido(ValueError):
     def __init__(self, mensagem: str, primeiras_linhas: list[str]):
         super().__init__(mensagem)
         self.primeiras_linhas = primeiras_linhas
-
-
-def normalizar(texto: str) -> str:
-    sem_acento = unicodedata.normalize("NFKD", texto)
-    return "".join(c for c in sem_acento if not unicodedata.combining(c)).strip().casefold()
 
 
 def detectar_separador(cabecalho: str) -> str:
