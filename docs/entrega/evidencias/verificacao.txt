@@ -1,0 +1,53 @@
+Verificação de ponta a ponta · http://localhost:8000
+
+[1/6] Banco de dados conectado
+      ok   a API responde à verificação de saúde
+      ok   a API confirma o banco no ar  banco='ok'
+      ok   o banco tem registros gravados pela aplicação  297 eventos na trilha
+
+[2/6] Login funcional
+      ok   credencial válida abre sessão
+      ok   o cookie de sessão vem protegido  HttpOnly presente
+      ok   a resposta não devolve senha
+      ok   a sessão identifica o usuário
+      ok   encerrar invalida a sessão no servidor
+      ok   senha errada é recusada
+      ok   usuário inexistente responde igual a senha errada  indistinguível, como pede o RNF11
+
+[3/6] Cadastro de usuários
+      ok   cria usuário com perfil ADMINISTRADOR  e2e98525.administrador
+      ok   cria usuário com perfil GESTOR  e2e98525.gestor
+      ok   cria usuário com perfil ANALISTA  e2e98525.analista
+      ok   os usuários criados estão persistidos
+      ok   a listagem não expõe hash de senha
+
+[4/6] Controle de perfis
+      ·    20 rotas conferidas contra 3 perfis, a partir da matriz de docs/03-casos-de-uso.md
+      ok   sem sessão, todo endpoint protegido responde 401
+      ok   perfil ADMINISTRADOR só acessa o que a matriz permite
+      ok   perfil GESTOR só acessa o que a matriz permite
+      ok   perfil ANALISTA só acessa o que a matriz permite
+
+[5/6] CRUD principal — parceiros
+      ok   cadastrar  Comércio e2e98525
+      ok   consultar
+      ok   consultar pela busca por nome
+      ok   cadastrar categoria
+      ok   atualizar
+      ok   a categoria confirmada por pessoa é gravada como MANUAL  RN05
+      ok   nome repetido é recusado
+      ok   excluir
+      ok   o excluído some da consulta
+      ok   excluir parceiro com histórico é recusado  409
+      ok   a recusa diz quantos registros impedem e aponta a desativação
+
+[6/6] Ingestão e execução local
+      ok   importação sem período é recusada  RN03
+      ok   a recusa explica por que o período é obrigatório
+      ok   a prévia lista reconhecidos e rejeitados
+      ok   a importação grava as métricas  2 gravadas
+      ok   reimportar o mesmo período é recusado  RF12
+      ok   a documentação interativa está no ar  /api/docs
+      ·    o recálculo da segmentação entra na Sprint 7 e ainda não existe
+
+As 36 verificações passaram.

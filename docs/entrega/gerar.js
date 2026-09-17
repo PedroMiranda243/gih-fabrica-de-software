@@ -8,7 +8,11 @@
  * Uso:
  *   node docs/entrega/renderizar_diagramas.js     # os diagramas, a partir do markdown
  *   node docs/entrega/capturar_prototipo.js       # as telas do protótipo
+ *   node docs/entrega/capturar_evidencias.js      # a documentação da API, com ela no ar
  *   node docs/entrega/gerar.js                    # este arquivo
+ *
+ * As evidências de execução (`evidencias/*.txt`) vêm dos scripts de `api/e2e/`,
+ * e são geradas com a API no ar. Ver o README.
  *
  * Depois, converter para PDF pelo Word (Arquivo > Exportar > Criar PDF).
  */
@@ -22,10 +26,22 @@ const {
 const { p, rich, h1, espaco, quebra, AZUL } = require('./comum/estilos');
 const sprint01 = require('./secoes/sprint01');
 const sprint02 = require('./secoes/sprint02');
+const sprint03 = require('./secoes/sprint03');
 
 const GRUPO = '18';
 const PROJETO = 'GROWTH INTELLIGENCE HUB (GIH)';
-const SAIDA = path.join(__dirname, '..', 'entregas', `GRUPO-${GRUPO}-GIH-SPRINT-02.docx`);
+
+// A sprint corrente da disciplina. O documento é acumulado: cada entrega traz
+// as anteriores e a atual, então acrescentar uma sprint é acrescentar um módulo
+// em `secoes/` e uma linha aqui.
+const SPRINT = {
+  numero: '03',
+  titulo: 'ESTRUTURA INICIAL FUNCIONANDO',
+  anteriores: 'Documento acumulado: inclui as Sprints 01 e 02',
+};
+const SAIDA = path.join(
+  __dirname, '..', 'entregas', `GRUPO-${GRUPO}-GIH-SPRINT-${SPRINT.numero}.docx`,
+);
 
 // Ordem alfabética por nome, como consta na documentação da equipe.
 const EQUIPE = [
@@ -50,8 +66,8 @@ function capa() {
   c.push(p('em marketplaces regionais de delivery', { align: AlignmentType.CENTER, size: 24 }));
   c.push(espaco(420));
 
-  c.push(p('SPRINT 02 — ARQUITETURA E MODELAGEM DO SISTEMA', { align: AlignmentType.CENTER, bold: true, size: 24, color: '2C5B8F', after: 60 }));
-  c.push(p('Documento acumulado: inclui a Sprint 01 — Planejamento e Descoberta', { align: AlignmentType.CENTER, size: 19, color: '5A6B7E' }));
+  c.push(p(`SPRINT ${SPRINT.numero} — ${SPRINT.titulo}`, { align: AlignmentType.CENTER, bold: true, size: 24, color: '2C5B8F', after: 60 }));
+  c.push(p(SPRINT.anteriores, { align: AlignmentType.CENTER, size: 19, color: '5A6B7E' }));
   c.push(espaco(480));
 
   c.push(p('EQUIPE', { align: AlignmentType.CENTER, bold: true, size: 20, color: '5A6B7E', after: 100 }));
@@ -89,6 +105,14 @@ function sumario() {
     '7. Projeto estruturado no GitHub',
   ].forEach((t) => c.push(p(t, { size: 20, after: 70, indent: { left: 280 } })));
 
+  c.push(p('PARTE III — SPRINT 03 · ESTRUTURA INICIAL FUNCIONANDO', { bold: true, size: 21, color: '2C5B8F', before: 260, after: 100 }));
+  [
+    '1. A estrutura implementada', '2. Banco de dados conectado', '3. Login funcional',
+    '4. Cadastro de usuários', '5. Controle de perfis', '6. CRUD principal',
+    '7. Execução local', '8. Repositório', '9. Dificuldades encontradas',
+    '10. Ajustes no planejamento', '11. Próximos passos',
+  ].forEach((t) => c.push(p(t, { size: 20, after: 70, indent: { left: 280 } })));
+
   c.push(espaco(300));
   c.push(rich([
     { t: 'Documentação completa e versionada em: ', s: 19, c: '5A6B7E' },
@@ -104,12 +128,14 @@ function main() {
     ...sumario(),
     ...sprint01.montar(),
     ...sprint02.montar(),
+    ...sprint03.montar(),
   ];
 
   const doc = new Document({
     creator: `Grupo ${GRUPO} — Equipe GIH`,
-    title: `Sprint 02 — ${PROJETO}`,
-    description: 'Entregáveis das Sprints 01 e 02 — Fábrica de Software e Tópicos Avançados, 2026.2',
+    title: `Sprint ${SPRINT.numero} — ${PROJETO}`,
+    description:
+      `Entregáveis até a Sprint ${SPRINT.numero} — Fábrica de Software e Tópicos Avançados, 2026.2`,
     styles: { default: { document: { run: { font: 'Calibri', size: 20 } } } },
     sections: [{
       properties: {
@@ -125,7 +151,10 @@ function main() {
           children: [new Paragraph({
             alignment: AlignmentType.CENTER,
             children: [new TextRun({
-              children: [`Growth Intelligence Hub · Grupo ${GRUPO} · Sprint 02 · `, PageNumber.CURRENT],
+              children: [
+                `Growth Intelligence Hub · Grupo ${GRUPO} · Sprint ${SPRINT.numero} · `,
+                PageNumber.CURRENT,
+              ],
               size: 16, color: '8A97A8', font: 'Calibri',
             })],
           })],

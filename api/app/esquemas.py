@@ -16,7 +16,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.config import config
-from app.modelos import OrigemImportacao, Perfil
+from app.modelos import OrigemCategoria, OrigemImportacao, Perfil, StatusComercial
 
 # Senha longa demais é trabalho de hash caro sem ganho nenhum — o Argon2 leva o
 # tempo que for pedido dele. O teto é proteção de recurso (RNF15).
@@ -202,3 +202,102 @@ class ImportacaoResposta(BaseModel):
     total_gravado: int
     total_rejeitado: int
     enviado_em: datetime
+
+
+# ------------------------------------------------------- parceiros e categorias
+class NovaCategoria(BaseModel):
+    nome: str = Field(min_length=2, max_length=60)
+
+    @field_validator("nome")
+    @classmethod
+    def sem_espaco_sobrando(cls, v: str) -> str:
+        return v.strip()
+
+
+class CategoriaResposta(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    nome: str
+    ativa: bool
+
+
+class NovoParceiro(BaseModel):
+    """Cadastro de parceiro (RF14).
+
+    **`origem_categoria` não entra aqui de propósito.** Quem cadastra pela API é
+    uma pessoa escolhendo a categoria, e isso é confirmação — a rota grava
+    `MANUAL`. Deixar o cliente informar a origem permitiria marcar como confirmada
+    uma classificação que ninguém confirmou, que é exatamente o que a RN05 impede.
+    """
+
+    nome: str = Field(min_length=2, max_length=160)
+    categoria_id: int | None = None
+    status: StatusComercial = StatusComercial.ATIVO
+    contato: str | None = Field(default=None, max_length=120)
+
+    @field_validator("nome", "contato")
+    @classmethod
+    def sem_espaco_sobrando(cls, v: str | None) -> str | None:
+        return v.strip() if v else v
+
+
+class EdicaoParceiro(BaseModel):
+    """Tudo opcional: o que não vier fica como está.
+
+    `categoria_id` aceita nulo **explicitamente** para permitir desclassificar um
+    parceiro. Por isso a ausência do campo e o nulo precisam ser distinguidos —
+    ver `campos_informados` abaixo.
+    """
+
+    nome: str | None = Field(default=None, min_length=2, max_length=160)
+    categoria_id: int | None = None
+    status: StatusComercial | None = None
+    contato: str | None = Field(default=None, max_length=120)
+    ativo: bool | None = None
+
+    @model_validator(mode="after")
+    def algo_para_mudar(self):
+        if not self.model_fields_set:
+            raise ValueError("Informe ao menos um campo para alterar.")
+        return self
+
+    @property
+    def campos_informados(self) -> set[str]:
+        """Quais campos vieram no corpo, distinguindo ausente de nulo."""
+        return self.model_fields_set
+
+
+class ParceiroResposta(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    nome: str
+    categoria: CategoriaResposta | None
+    origem_categoria: OrigemCategoria | None
+    status: StatusComercial
+    contato: str | None
+    ativo: bool
+    criado_em: datetime
+
+
+class VinculoParceiro(BaseModel):
+    """O que impede um parceiro de ser excluído, contado por tipo.
+
+    Devolvido junto com a recusa do `DELETE`: dizer apenas "não é possível excluir"
+    obriga o usuário a adivinhar o que apagar antes.
+    """
+
+    metricas: int
+    segmentos: int
+    previsoes: int
+    itens_de_plano: int
+    mensagens: int
+    usuarios: int
+
+    @property
+    def total(self) -> int:
+        return (
+            self.metricas + self.segmentos + self.previsoes
+            + self.itens_de_plano + self.mensagens + self.usuarios
+        )

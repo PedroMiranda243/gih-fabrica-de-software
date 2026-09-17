@@ -116,6 +116,28 @@ function captura(nome, limiteLargura) {
   });
 }
 
+/** Captura de evidência: Swagger, terminal, qualquer prova de execução. */
+function evidencia(nome, limiteLargura) {
+  const arquivo = path.join(__dirname, '..', 'evidencias', `${nome}.png`);
+  if (!fs.existsSync(arquivo)) {
+    throw new Error(
+      `Falta ${nome}.png. Rode "node docs/entrega/capturar_evidencias.js" com a API no ar.`,
+    );
+  }
+
+  const dados = fs.readFileSync(arquivo);
+  return new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: { before: 120, after: 60 },
+    children: [new ImageRun({
+      type: 'png',
+      data: dados,
+      transformation: medir(dados.readUInt32BE(16) / dados.readUInt32BE(20), limiteLargura),
+    })],
+  });
+}
+
+
 /** Imagem já rasterizada que veio da Sprint 01. */
 function imagem(nomeArquivo, limiteLargura) {
   const arquivo = path.join(DIAGRAMAS, nomeArquivo);
@@ -152,4 +174,4 @@ const legenda = (texto) => new Paragraph({
 
 const reiniciarContador = () => { contador = 0; };
 
-module.exports = { diagrama, captura, imagem, legenda, reiniciarContador };
+module.exports = { diagrama, captura, evidencia, imagem, legenda, reiniciarContador };

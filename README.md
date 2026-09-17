@@ -88,8 +88,9 @@ Detalhamento em [`docs/07-arquitetura-preliminar.md`](docs/07-arquitetura-prelim
 
 | Entrega | Prazo | Documento |
 |---|---|---|
-| Sprint 01 — planejamento e descoberta | 05/09/2026 | incluída no documento abaixo |
-| **Sprint 02 — arquitetura e modelagem** | 19/09/2026 | [`docs/entregas/GRUPO-18-GIH-SPRINT-02.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-02.pdf) |
+| Sprint 01 — planejamento e descoberta | 05/09/2026 | incluída nos documentos abaixo |
+| Sprint 02 — arquitetura e modelagem | 19/09/2026 | [`GRUPO-18-GIH-SPRINT-02.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-02.pdf) |
+| **Sprint 03 — estrutura inicial funcionando** | 19/09/2026 | [`GRUPO-18-GIH-SPRINT-03.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-03.pdf) |
 
 O documento é acumulado: cada entrega traz as sprints anteriores e a atual. Ele é **gerado a partir da
 documentação deste repositório**, e não escrito à parte — ver [`docs/entrega/`](docs/entrega/).
@@ -97,8 +98,17 @@ documentação deste repositório**, e não escrito à parte — ver [`docs/entr
 ```bash
 node docs/entrega/renderizar_diagramas.js   # diagramas, a partir dos blocos mermaid do markdown
 node docs/entrega/capturar_prototipo.js     # as quatro telas do protótipo
+node docs/entrega/capturar_evidencias.js    # a documentação interativa da API   (exige a API no ar)
 node docs/entrega/gerar.js                  # monta o .docx
 powershell -ExecutionPolicy Bypass -File docs/entrega/converter_pdf.ps1
+```
+
+As evidências de execução vêm de execuções reais, e não são transcritas à mão:
+
+```bash
+cd api
+GIH_ADMIN_SENHA=... python e2e/verificacao.py > ../docs/entrega/evidencias/verificacao.txt
+GIH_ADMIN_SENHA=... python e2e/transcricao.py > ../docs/entrega/evidencias/crud.txt
 ```
 
 > As sprints da disciplina não são as mesmas da equipe: trabalhamos em 13 sprints semanais, e a entrega de
@@ -170,6 +180,22 @@ uvicorn app.main:app --reload
 ```
 
 Testes e análise estática, de dentro de `api/`: `pytest` e `ruff check .`
+
+### Verificação de ponta a ponta
+
+A suíte do `pytest` sobe a aplicação em processo. A verificação abaixo roda contra **a API no ar** — HTTP
+real, cookie real, banco real — e reporta cada checagem agrupada pelos itens de entrega da disciplina.
+É também o roteiro da demonstração.
+
+```bash
+docker compose up -d
+cd api
+GIH_ADMIN_SENHA=... python e2e/verificacao.py
+```
+
+A senha do administrador sai no log da primeira subida:
+`docker compose logs api | grep "Senha sorteada"`. O comando **sai com código diferente de zero** se
+qualquer verificação falhar — senão não é verificação, é impressão.
 
 > Os testes precisam do PostgreSQL no ar: eles criam um banco `gih_teste` separado, aplicam as migrações
 > nele e limpam as tabelas entre cada teste. SQLite em memória seria mais rápido e não exercitaria `JSONB`,

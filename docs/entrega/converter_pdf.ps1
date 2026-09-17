@@ -18,7 +18,7 @@
 #
 # Uso:  powershell -ExecutionPolicy Bypass -File docs/entrega/converter_pdf.ps1
 
-$nome = 'GRUPO-18-GIH-SPRINT-02'
+$nome = 'GRUPO-18-GIH-SPRINT-03'
 $raiz = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $origem = Join-Path $raiz "docs\entregas\$nome.docx"
 $destino = Join-Path $raiz "docs\entregas\$nome.pdf"
