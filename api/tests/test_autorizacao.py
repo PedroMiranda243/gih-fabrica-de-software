@@ -46,6 +46,14 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("POST", "/api/usuarios"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/usuarios/{usuario_id}"): {Perfil.ADMINISTRADOR},
     ("PATCH", "/api/usuarios/{usuario_id}"): {Perfil.ADMINISTRADOR},
+    # UC04 — Gerenciar parceiros e categorias: Gestor e Analista
+    ("GET", "/api/parceiros"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("POST", "/api/parceiros"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/parceiros/{parceiro_id}"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("PATCH", "/api/parceiros/{parceiro_id}"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("DELETE", "/api/parceiros/{parceiro_id}"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/categorias"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("POST", "/api/categorias"): {Perfil.GESTOR, Perfil.ANALISTA},
     # UC03 — Importar relatório: Gestor e Analista
     ("POST", "/api/importacoes"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("POST", "/api/importacoes/previa"): {Perfil.GESTOR, Perfil.ANALISTA},
@@ -60,7 +68,7 @@ IGNORADAS = {"/api/openapi.json", "/api/docs", "/api/docs/oauth2-redirect", "/ap
 
 # Valores de caminho para as rotas parametrizadas. O id não precisa existir: um
 # 404 já prova que a autorização deixou passar, que é o que se está medindo.
-PARAMETROS = {"usuario_id": "1"}
+PARAMETROS = {"usuario_id": "1", "parceiro_id": "1"}
 
 
 def rotas_da_aplicacao() -> list[tuple[str, str]]:
