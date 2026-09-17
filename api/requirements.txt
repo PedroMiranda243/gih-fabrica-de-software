@@ -8,3 +8,4 @@ psycopg[binary]==3.2.3     # LGPL-3.0 — copyleft fraco: uso como biblioteca n�
 alembic==1.14.0            # MIT
 pydantic-settings==2.7.0   # MIT
 argon2-cffi==23.1.0        # MIT — Argon2id, o que o RNF09 pede
+python-multipart==0.0.20   # Apache-2.0 — envio de arquivo (H22); é como o Starlette lê multipart

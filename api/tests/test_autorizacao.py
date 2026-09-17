@@ -57,6 +57,8 @@ PERMISSOES: dict[tuple[str, str], object] = {
     # UC03 — Importar relatório: Gestor e Analista
     ("POST", "/api/importacoes"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("POST", "/api/importacoes/previa"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("POST", "/api/importacoes/arquivo"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("POST", "/api/importacoes/arquivo/previa"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/importacoes"): {Perfil.GESTOR, Perfil.ANALISTA},
     # UC14 — Auditar ações: só Administrador
     ("GET", "/api/auditoria"): {Perfil.ADMINISTRADOR},

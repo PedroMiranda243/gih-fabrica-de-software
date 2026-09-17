@@ -32,6 +32,10 @@ class Acao(enum.StrEnum):
     LOGOUT = "LOGOUT"
     SENHA_ALTERADA = "SENHA_ALTERADA"
     IMPORTACAO_REALIZADA = "IMPORTACAO_REALIZADA"
+    # Ação própria, e não uma importação comum: substituir apaga dado que outros
+    # períodos já podem ter lido. Se as duas ficassem sob o mesmo nome, a
+    # pergunta "quem apagou o período de setembro?" não teria resposta no filtro.
+    IMPORTACAO_SUBSTITUIDA = "IMPORTACAO_SUBSTITUIDA"
     PARCEIRO_CRIADO = "PARCEIRO_CRIADO"
     PARCEIRO_EDITADO = "PARCEIRO_EDITADO"
     PARCEIRO_CLASSIFICADO = "PARCEIRO_CLASSIFICADO"
