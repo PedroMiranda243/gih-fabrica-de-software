@@ -15,6 +15,13 @@ entrega entra em blocos marcados com `[  + ]`, fora da numeração: renumerar fa
 a saída deixar de casar com o documento, e não verificar faria o roteiro deixar
 de representar o sistema.
 
+**Não deixa resíduo.** O banco é o que a equipe usa para testar e demonstrar, e
+cada execução grava nele períodos no futuro. No fim — mesmo se algo estourar no
+meio — o que a execução gravou sai do banco, e a verificação confere que o painel
+voltou a abrir onde abria. A limpeza vai direto no banco, e não pela API — o
+porquê está em `e2e/limpeza.py` —, então a verificação precisa alcançar também o
+banco, pelo `DATABASE_URL` do `.env`.
+
 Uso:
     python e2e/verificacao.py
     python e2e/verificacao.py --url http://localhost:8000 --login admin --senha ...
@@ -36,6 +43,7 @@ import httpx
 # A matriz de permissões vem do módulo de teste, e não é copiada para cá: duas
 # cópias divergiriam, e a daqui é a que ninguém olharia.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from e2e.limpeza import LimpezaRecusada, desativar_usuarios, limpar_execucao  # noqa: E402
 from tests.test_autorizacao import PERMISSOES, PUBLICO, concretizar  # noqa: E402
 
 # Cor so quando a saida e um terminal. Redirecionada para arquivo — que e
@@ -533,15 +541,51 @@ def item_painel(r: Relatorio, url: str, criados: dict[str, str], periodo_id: int
         )
 
 
-def limpar(admin: httpx.Client, criados: dict[str, str]) -> None:
-    """Desativa os usuários que a verificação criou.
+# --------------------------------------------------------------------- extra
+def item_limpeza(
+    r: Relatorio, admin: httpx.Client, marca: str, painel_antes: httpx.Response
+) -> None:
+    """Desfaz o que a execução gravou, e confere pelo painel que desfez.
 
-    Desativar, e não apagar: a trilha de auditoria referencia o autor de cada
-    ação, e remover a linha deixaria o histórico apontando para o nada.
+    Sem isto, cada execução deixava três semanas no futuro no banco da equipe, e
+    o painel — que abre no período mais recente — passava a abrir numa delas. A
+    última checagem olha exatamente esse sintoma, e pela API: o que importa é o
+    painel mostrar o que mostrava antes, não a contagem de linhas apagadas.
     """
-    for usuario in admin.get("/api/usuarios").json():
-        if usuario["login"] in criados.values() and usuario["ativo"]:
-            admin.patch(f'/api/usuarios/{usuario["id"]}', json={"ativo": False})
+    r.secao("Limpeza — o banco volta ao que era antes da execução")
+
+    if not desativar_usuarios(admin, marca):
+        # Tudo o mais é gravado pelos usuários da execução; sem eles não há o que
+        # desfazer, e procurar no banco só acusaria "banco errado".
+        r.nota("a execução não chegou a criar usuários, e sem eles nada foi gravado")
+        return
+
+    try:
+        removidos = limpar_execucao(marca)
+    except LimpezaRecusada as e:
+        r.checar("remove do banco o que a execução gravou", False, f"{e}; nada foi removido")
+    else:
+        r.checar("remove do banco o que a execução gravou", True, str(removidos))
+
+    depois = admin.get("/api/painel/indicadores")
+    igual = painel_antes.status_code == depois.status_code == 200 and (
+        depois.json() == painel_antes.json()
+    )
+    r.checar(
+        "o painel volta a abrir no mesmo período, com os mesmos totais",
+        igual,
+        onde_o_painel_abre(depois)
+        if igual
+        else f"antes: {onde_o_painel_abre(painel_antes)}; agora: {onde_o_painel_abre(depois)}",
+    )
+    r.nota("os usuários da execução ficam, desativados: a trilha de auditoria aponta para eles")
+
+
+def onde_o_painel_abre(resposta: httpx.Response) -> str:
+    if resposta.status_code != 200:
+        return f"o painel respondeu {resposta.status_code}"
+    periodo = resposta.json()["periodo"]
+    return f'período de {periodo["data_inicio"]}' if periodo else "base sem período"
 
 
 def main() -> int:
@@ -578,14 +622,23 @@ def main() -> int:
             return 2
 
         assert saude.status_code == 200
-        item_banco(r, admin)
-        item_login(r, a.url, a.login, a.senha)
-        criados = item_cadastro(r, admin, marca)
-        item_perfis(r, a.url, criados)
-        item_crud(r, a.url, criados, marca)
-        periodo_id = item_ingestao(r, a.url, criados, marca)
-        item_painel(r, a.url, criados, periodo_id)
-        limpar(admin, criados)
+
+        # Onde o painel abre antes de a verificação gravar qualquer coisa. É
+        # contra isto que a limpeza é conferida no fim.
+        painel_antes = admin.get("/api/painel/indicadores")
+        try:
+            item_banco(r, admin)
+            item_login(r, a.url, a.login, a.senha)
+            criados = item_cadastro(r, admin, marca)
+            item_perfis(r, a.url, criados)
+            item_crud(r, a.url, criados, marca)
+            periodo_id = item_ingestao(r, a.url, criados, marca)
+            item_painel(r, a.url, criados, periodo_id)
+        finally:
+            # No `finally`: a execução interrompida por uma exceção é justamente
+            # a que deixaria mais para trás — período no futuro no painel e
+            # usuário ativo com a senha que está publicada neste arquivo.
+            item_limpeza(r, admin, marca, painel_antes)
 
     return r.encerrar()
 
