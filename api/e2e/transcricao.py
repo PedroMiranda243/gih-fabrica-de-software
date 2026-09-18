@@ -7,6 +7,11 @@ quatro operações e nas duas saídas da exclusão.
 É o que a terceira entrega da disciplina pede como evidência do CRUD — e é mais
 honesto que uma captura de tela, porque mostra o dado indo e voltando.
 
+Como a verificação, não deixa resíduo: no fim, o que a transcrição gravou sai do
+banco e o analista criado é desativado (ver `e2e/limpeza.py`). O aviso da
+limpeza vai para a saída de erro, e não para a transcrição — ele não é parte da
+evidência.
+
 Uso:
     GIH_ADMIN_SENHA=... python e2e/transcricao.py > ../docs/entrega/evidencias/crud.txt
 """
@@ -20,6 +25,10 @@ import sys
 from datetime import date, timedelta
 
 import httpx
+
+# Mesmo arranjo da verificação: a limpeza usa o modelo de dados da API.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from e2e.limpeza import LimpezaRecusada, desativar_usuarios, limpar_execucao  # noqa: E402
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -78,6 +87,20 @@ def troca(
     return resposta
 
 
+def desfazer(admin: httpx.Client, marca: str) -> bool:
+    """Tira do banco o que a transcrição gravou; devolve se conseguiu."""
+    if not desativar_usuarios(admin, marca):
+        # O analista é quem grava tudo; sem ele, não há o que desfazer.
+        return True
+    try:
+        removidos = limpar_execucao(marca)
+    except LimpezaRecusada as e:
+        print(f"Limpeza recusada, nada foi removido do banco: {e}", file=sys.stderr)
+        return False
+    print(f"Limpeza — removidos do banco: {removidos}; analista desativado.", file=sys.stderr)
+    return True
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--url", default=os.environ.get("GIH_URL", "http://localhost:8000"))
@@ -98,14 +121,27 @@ def main() -> int:
             print("Não consegui autenticar como administrador.", file=sys.stderr)
             return 2
 
-        titulo("Preparação — um analista, que é quem gerencia parceiros (UC04)")
-        analista = f"{marca}.analista"
-        troca(admin, "POST", "/api/usuarios", {
-            "login": analista, "nome": "Analista da Evidência",
-            "senha": SENHA, "perfil": "ANALISTA",
-        })
+        try:
+            titulo("Preparação — um analista, que é quem gerencia parceiros (UC04)")
+            analista = f"{marca}.analista"
+            troca(admin, "POST", "/api/usuarios", {
+                "login": analista, "nome": "Analista da Evidência",
+                "senha": SENHA, "perfil": "ANALISTA",
+            })
+            transcrever_crud(a.url, marca, analista)
+        finally:
+            # No `finally`, pelo mesmo motivo da verificação: a execução
+            # interrompida no meio é a que deixaria mais para trás.
+            limpo = desfazer(admin, marca)
 
-    with httpx.Client(base_url=a.url, timeout=30) as c:
+    print(f"\n{'=' * LARGURA}")
+    print("Fim da transcrição.")
+    return 0 if limpo else 1
+
+
+def transcrever_crud(url: str, marca: str, analista: str) -> None:
+    """O que o analista faz: login, as quatro operações e as duas saídas da exclusão."""
+    with httpx.Client(base_url=url, timeout=30) as c:
         titulo("Login — item 2 da entrega")
         troca(c, "POST", "/api/sessao", {"login": analista, "senha": SENHA})
 
@@ -153,10 +189,6 @@ def main() -> int:
         titulo("Controle de perfis — item 4 da entrega")
         print("\nO mesmo analista tentando a área de usuários, que é do Administrador:")
         troca(c, "GET", "/api/usuarios")
-
-    print(f"\n{'=' * LARGURA}")
-    print("Fim da transcrição.")
-    return 0
 
 
 if __name__ == "__main__":
