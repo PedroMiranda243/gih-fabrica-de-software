@@ -135,7 +135,7 @@ GIH_ADMIN_SENHA=... python e2e/transcricao.py > ../docs/entrega/evidencias/crud.
 
 ## Como executar
 
-**Pré-requisitos:** Docker Desktop · Python 3.11 · Node.js 20 · (opcional) NVIDIA CUDA Toolkit 12.x
+**Pré-requisitos:** Docker Desktop · Python 3.11 · Node.js 22 · (opcional) NVIDIA CUDA Toolkit 12.x
 
 ```bash
 git clone https://github.com/PedroMiranda243/gih-fabrica-de-software.git
