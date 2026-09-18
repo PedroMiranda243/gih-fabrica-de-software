@@ -197,6 +197,18 @@ A senha do administrador sai no log da primeira subida:
 `docker compose logs api | grep "Senha sorteada"`. O comando **sai com código diferente de zero** se
 qualquer verificação falhar — senão não é verificação, é impressão.
 
+**A verificação não deixa resíduo no banco da equipe.** Ela importa relatórios em semanas no futuro, e
+antes elas se acumulavam até o painel abrir numa semana de 2055. Agora, no fim de cada execução — mesmo
+interrompida —, os períodos, importações, métricas, parceiros e categorias que ela gravou saem do banco,
+e a última checagem confere que o painel voltou a abrir onde abria. Os usuários de teste ficam
+**desativados**, não apagados, porque a trilha de auditoria aponta para eles. A transcrição do CRUD faz
+o mesmo.
+
+A limpeza vai **direto no banco**, pelo `DATABASE_URL` do `.env`, porque a API recusa de propósito apagar
+histórico — o porquê completo está em [`api/e2e/limpeza.py`](api/e2e/limpeza.py). Se o `DATABASE_URL`
+apontar para outro banco que não o da API, a limpeza recusa e a verificação reprova, em vez de dar por
+limpo o banco errado.
+
 > Os testes precisam do PostgreSQL no ar: eles criam um banco `gih_teste` separado, aplicam as migrações
 > nele e limpam as tabelas entre cada teste. SQLite em memória seria mais rápido e não exercitaria `JSONB`,
 > os tipos `ENUM` nem as restrições `CHECK` do esquema.
