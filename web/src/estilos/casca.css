@@ -1,0 +1,188 @@
+/* Casca da aplicação: trilho lateral, cabeçalho e área de conteúdo. */
+
+.casca {
+  display: grid;
+  grid-template-columns: var(--trilho) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+/* ------------------------------------------------------------- trilho */
+.trilho {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-20);
+  padding: var(--esp-20) var(--esp-12);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+.trilho__marca {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-4);
+  padding: 0 var(--esp-8);
+}
+
+.trilho__sigla {
+  font-size: var(--txt-19);
+  font-weight: var(--peso-marca);
+  letter-spacing: -0.01em;
+}
+
+.trilho__produto {
+  font-size: var(--txt-11);
+  font-weight: var(--peso-rotulo);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.trilho__navegacao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-4);
+}
+
+.trilho__item {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-8);
+  min-height: 44px;
+  padding: 0 var(--esp-8);
+  border-radius: var(--raio-controle);
+  color: var(--ink-2);
+  font-size: var(--txt-13);
+  font-weight: var(--peso-rotulo);
+  text-decoration: none;
+  transition: background var(--transicao), color var(--transicao);
+}
+
+.trilho__item:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* Selecionado responde ao clique, então usa a cor de ação — é exatamente o
+   trabalho dela. O fundo fraco carrega o estado; o peso reforça sem depender
+   de cor, para quem não a distingue. */
+.trilho__item[aria-current="page"] {
+  background: var(--acao-fraca);
+  color: var(--acao-ink);
+  font-weight: var(--peso-nome);
+}
+
+/* Abaixo de 860 px o trilho vira barra horizontal rolável, como manda o
+   `docs/09`. A rolagem é dele, nunca da página. */
+@media (max-width: 860px) {
+  .casca {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .trilho {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--esp-12);
+    padding: var(--esp-8) var(--esp-12);
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+
+  .trilho__marca {
+    padding: 0;
+  }
+
+  .trilho__produto {
+    display: none;
+  }
+
+  .trilho__navegacao {
+    flex-direction: row;
+  }
+
+  .trilho__item {
+    white-space: nowrap;
+  }
+}
+
+/* --------------------------------------------------------- conteúdo */
+.conteudo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-16);
+  padding: var(--esp-15) var(--esp-24);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.cabecalho__titulo {
+  font-size: var(--txt-19);
+  font-weight: var(--peso-marca);
+}
+
+.cabecalho__direita {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-12);
+}
+
+.cabecalho__quem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.3;
+}
+
+.cabecalho__nome {
+  font-size: var(--txt-13);
+  font-weight: var(--peso-nome);
+}
+
+.cabecalho__perfil {
+  font-size: var(--txt-11);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.icone-botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--raio-controle);
+  background: var(--surface);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background var(--transicao), color var(--transicao);
+}
+
+.icone-botao:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.pagina {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-20);
+  padding: var(--esp-24);
+  /* Gutter lateral nunca some, mesmo no telefone. */
+  padding-inline: max(var(--esp-16), var(--esp-24));
+}
+
+@media (max-width: 600px) {
+  .cabecalho,
+  .pagina {
+    padding-inline: var(--esp-16);
+  }
+}

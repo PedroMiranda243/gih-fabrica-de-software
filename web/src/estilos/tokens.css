@@ -1,0 +1,167 @@
+/*
+ * Tokens do sistema visual — transcritos de `docs/09-sistema-visual.md`.
+ *
+ * Este arquivo é a única fonte de cor, tipo e espaço da aplicação. Nenhum
+ * componente escreve um hexadecimal ou um pixel solto: se um valor não está
+ * aqui, ele não existe no projeto.
+ *
+ * A razão não é organização. A paleta foi **validada**, não escolhida no olho:
+ * o primeiro conjunto reprovou com ΔE 4,1 em deuteranopia entre "em risco" e
+ * "em ascensão" — um daltônico não distinguiria os dois estados mais
+ * consequentes do painel. A correção levou o par a ΔE 9,9. Um valor inventado
+ * num componente escapa dessa validação sem ninguém perceber.
+ *
+ * Os dois avisos que sobraram na validação (turquesa a 2,82:1 de contraste no
+ * claro, e ΔE 7,2 no escuro) têm a mesma mitigação, obrigatória em todo lugar:
+ * **a cor de segmento nunca aparece sozinha**, sempre ao lado do rótulo em
+ * texto. Nenhuma informação depende de distinguir a cor.
+ */
+
+:root {
+  /* ---------------------------------------------------- neutros e ação */
+  /* Os neutros têm viés frio, escolhido para conversar com a rampa azul dos
+     gráficos. Cinza puro lê como não decidido. */
+  --ground: #f7f8fa;
+  --surface: #ffffff;
+  --surface-2: #f0f2f6;
+  --border: #e3e7ed;
+  --ink: #101826;
+  --ink-2: #5a6474;
+  --ink-3: #8a93a3;
+
+  /* `--acao` significa "responde ao seu clique" — botão, link, foco, seleção.
+     Nada mais. Quando uma cor é marca, ação e dado ao mesmo tempo, ela deixa
+     de significar qualquer coisa. */
+  --acao: #d97706;
+  --acao-ink: #a1560a;
+  --acao-fraca: #fdf3e3;
+  /* Texto sobre o fundo de acao. Tinta escura **fixa nos dois temas**: branco
+     sobre o ambar mediu 3,19:1 no claro e 2,15:1 no escuro, e o AA pede 4,5.
+     Escuro sobre ambar mede 5,58 e 8,27. Nao pode ser `--ink`, que clareia no
+     modo escuro e voltaria a reprovar. */
+  --acao-sobre: #101826;
+
+  /* ------------------------------------------------------------ segmentos */
+  --seg-risco: #d03b3b;
+  --seg-ascensao: #1baf7a;
+  --seg-recem: #4a3aa7;
+  --seg-prosp: #eb6834;
+  --seg-top: #2a78d6;
+  /* Estável é cinza de propósito: sem tendência, sem atenção necessária.
+     Ausência de sinal é informação. */
+  --seg-estavel: #8a93a3;
+
+  /* ------------------------------------------------- séries de gráfico */
+  /* Rampa fria própria: gráfico nunca usa `--acao` nem as cores de segmento. */
+  --serie-1: #2a78d6;
+  --serie-2: #eb6834;
+  --serie-3: #1baf7a;
+  --grade: #e8ecf3;
+
+  /* ----------------------------------------------------------- tipografia */
+  --fonte-interface: "Fira Sans", system-ui, -apple-system, sans-serif;
+  /* Fira Code nos números não é enfeite: em tabela de ranking, dígito que não
+     alinha obriga o olho a reler. */
+  --fonte-dados: "Fira Code", ui-monospace, "Cascadia Code", monospace;
+
+  /* A escala. Fora dela, não existe. */
+  --txt-11: 0.6875rem;
+  --txt-115: 0.71875rem;
+  --txt-12: 0.75rem;
+  --txt-13: 0.8125rem;
+  --txt-135: 0.84375rem;
+  --txt-14: 0.875rem;
+  --txt-19: 1.1875rem;
+  --txt-22: 1.375rem;
+
+  /* 400 corpo · 500 rótulos · 600 nomes e títulos · 700 só título de página */
+  --peso-corpo: 400;
+  --peso-rotulo: 500;
+  --peso-nome: 600;
+  --peso-marca: 700;
+
+  /* ------------------------------------------------- espaçamento e forma */
+  /* Escala densa, apropriada a painel. */
+  --esp-4: 4px;
+  --esp-6: 6px;
+  --esp-8: 8px;
+  --esp-12: 12px;
+  --esp-15: 15px;
+  --esp-16: 16px;
+  --esp-20: 20px;
+  --esp-24: 24px;
+
+  --raio-controle: 6px;
+  --raio-painel: 8px;
+
+  --trilho: 208px;
+
+  /* Transições de 150–300 ms (RNF22). O valor vira 0 sob
+     `prefers-reduced-motion`, mais abaixo — declarar como token permite
+     desligar tudo num lugar só. */
+  --transicao: 180ms ease;
+}
+
+/* ------------------------------------------------------------- modo escuro */
+/* Três estados, não dois: escolha explícita clara, escolha explícita escura, e
+   o padrão do sistema, que é o que a maioria vê. O `:not([data-tema="claro"])`
+   faz a escolha explícita do usuário vencer a do sistema operacional. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --ground: #0d1117;
+    --surface: #12161c;
+    --surface-2: #171c24;
+    --border: #262d38;
+    --ink: #eef1f6;
+    --ink-2: #a8b1bf;
+    --ink-3: #6f7987;
+
+    --acao: #f0a02a;
+    --acao-ink: #f0a02a;
+    --acao-fraca: #2a1f10;
+
+    --seg-risco: #d03b3b;
+    --seg-ascensao: #199e70;
+    --seg-recem: #9085e9;
+    --seg-prosp: #d95926;
+    --seg-top: #3987e5;
+    --seg-estavel: #6f7987;
+
+    --serie-1: #3987e5;
+    --serie-2: #d95926;
+    --serie-3: #199e70;
+    --grade: #232a34;
+  }
+}
+
+:root[data-tema="escuro"] {
+  --ground: #0d1117;
+  --surface: #12161c;
+  --surface-2: #171c24;
+  --border: #262d38;
+  --ink: #eef1f6;
+  --ink-2: #a8b1bf;
+  --ink-3: #6f7987;
+
+  --acao: #f0a02a;
+  --acao-ink: #f0a02a;
+  --acao-fraca: #2a1f10;
+
+  --seg-risco: #d03b3b;
+  --seg-ascensao: #199e70;
+  --seg-recem: #9085e9;
+  --seg-prosp: #d95926;
+  --seg-top: #3987e5;
+  --seg-estavel: #6f7987;
+
+  --serie-1: #3987e5;
+  --serie-2: #d95926;
+  --serie-3: #199e70;
+  --grade: #232a34;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transicao: 0ms;
+  }
+}
