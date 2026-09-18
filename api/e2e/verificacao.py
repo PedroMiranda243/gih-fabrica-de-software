@@ -426,7 +426,15 @@ def item_ingestao(r: Relatorio, url: str, criados: dict[str, str], marca: str) -
             all(i["autor"]["nome"] for i in historico["itens"]),
             "RF13",
         )
-        substituidas = [i for i in historico["itens"] if i["metricas_vigentes"] == 0]
+        # Só no período desta execução: o histórico é da base inteira, e uma
+        # substituição feita por outra execução — ou por alguém testando a tela —
+        # entraria na conta e reprovaria a verificação por algo que não é dela.
+        substituidas = [
+            i
+            for i in historico["itens"]
+            if i["metricas_vigentes"] == 0
+            and i["periodo"]["data_inicio"] == periodo["periodo_inicio"]
+        ]
         r.checar(
             "a importação substituída fica no histórico, com zero métrica vigente",
             len(substituidas) == 1,
