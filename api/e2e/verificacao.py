@@ -353,7 +353,7 @@ def item_crud(r: Relatorio, url: str, criados: dict[str, str], marca: str) -> No
 
 
 # --------------------------------------------------------------------------- 6
-def item_ingestao(r: Relatorio, url: str, criados: dict[str, str], marca: str) -> None:
+def item_ingestao(r: Relatorio, url: str, criados: dict[str, str], marca: str) -> int | None:
     r.item(6, "Ingestão e execução local")
 
     login = criados.get("ANALISTA")
@@ -442,8 +442,12 @@ def item_ingestao(r: Relatorio, url: str, criados: dict[str, str], marca: str) -
     # O id do período volta para a verificação do painel poder consultar
     # **este** período. Sem ele restaria consultar "o mais recente", que numa
     # base com execuções anteriores pode ser o de outra execução.
-    if gravacao.status_code == 201:
-        return gravacao.json()["periodo"]["id"]
+    #
+    # É o período do arquivo, e não o da primeira gravação: aquele foi trocado
+    # acima por um relatório de uma linha só, e o painel mostraria um parceiro
+    # onde a verificação espera os dois que a importação trouxe.
+    if por_arquivo.status_code == 201:
+        return por_arquivo.json()["periodo"]["id"]
     return None
 
 
