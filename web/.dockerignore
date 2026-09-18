@@ -1,0 +1,7 @@
+# `node_modules` instalado no Windows carrega binários nativos de Windows — o
+# empacotador e o linter têm partes compiladas por plataforma. Copiado para o
+# contêiner Linux, ele quebra com erro que aponta para o pacote, e não para a
+# causa. O contêiner instala o próprio.
+node_modules
+dist
+*.log

@@ -38,5 +38,16 @@ services:
       postgres:
         condition: service_healthy
 
+  # A interface. Fecha a metade da H09 que faltava: "docker compose up sobe API,
+  # banco **e interface**". O navegador fala só com ela; o `/api` é repassado
+  # ao serviço acima pela rede do compose, e é por isso que o cookie de sessão
+  # funciona sem abrir CORS na API — ver web/vite.config.js.
+  web:
+    build: ./web
+    ports:
+      - "127.0.0.1:5173:5173"
+    depends_on:
+      - api
+
 volumes:
   dados_postgres:

@@ -121,7 +121,10 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.existe.outputs.pronto == 'sim'
         with:
-          node-version: '20'
+          # 22, e não 20: o Node 20 saiu de suporte em abril de 2026, e a cadeia de
+          # teste da interface (jsdom, vitest) exige 22. É também o runtime do
+          # web/Dockerfile — a CI testa onde a interface roda.
+          node-version: '22'
 
       - name: Instalar, verificar e testar
         if: steps.existe.outputs.pronto == 'sim'

@@ -1,0 +1,297 @@
+/* Peças que aparecem em mais de uma tela. */
+
+/* ------------------------------------------------------------ carregando */
+/* Esqueleto que **reserva o espaço** do conteúdo, em vez de um fiandeiro que
+   empurra o layout quando o dado chega. Conteúdo que salta ao carregar é a
+   diferença entre uma tela que parece pronta e uma que parece quebrada. */
+.esqueleto {
+  border-radius: var(--raio-controle);
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--border) 37%,
+    var(--surface-2) 63%
+  );
+  background-size: 400% 100%;
+  animation: esqueleto-brilho 1.4s ease infinite;
+}
+
+@keyframes esqueleto-brilho {
+  from {
+    background-position: 100% 50%;
+  }
+  to {
+    background-position: 0 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .esqueleto {
+    animation: none;
+  }
+}
+
+.carregando {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  color: var(--ink-2);
+  font-size: var(--txt-13);
+}
+
+/* ---------------------------------------------------------- estado vazio */
+/* Tela vazia sem explicação é defeito. Cada um dos três estados previstos no
+   `docs/09` diz o que aconteceu e qual é o próximo passo. */
+.vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--esp-8);
+  padding: var(--esp-24) var(--esp-16);
+  text-align: center;
+}
+
+.vazio__titulo {
+  font-size: var(--txt-14);
+  font-weight: var(--peso-nome);
+}
+
+.vazio__texto {
+  max-width: 44ch;
+  color: var(--ink-2);
+  font-size: var(--txt-13);
+}
+
+.vazio__acao {
+  margin-top: var(--esp-8);
+}
+
+/* ------------------------------------------------------------ indicadores */
+.indicadores {
+  display: grid;
+  /* Fluido de verdade: as colunas se ajustam sem ponto de quebra escrito à
+     mão, e nenhum cartão fica sozinho numa linha esticado. */
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--esp-12);
+}
+
+.indicador {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-6);
+  padding: var(--esp-15) var(--esp-16);
+}
+
+.indicador__rotulo {
+  font-size: var(--txt-12);
+  font-weight: var(--peso-rotulo);
+  color: var(--ink-2);
+}
+
+.indicador__valor {
+  font-size: var(--txt-22);
+  font-weight: var(--peso-nome);
+  letter-spacing: -0.01em;
+}
+
+.indicador__variacao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-4);
+  font-size: var(--txt-12);
+  font-family: var(--fonte-dados);
+  font-variant-numeric: tabular-nums;
+}
+
+/* O texto da variação é **neutro**. A cor de segmento vai só para a seta,
+   que é marca gráfica — a regra 1.1 do `docs/09` diz que cor de segmento
+   aparece como ponto ou barra, nunca como texto. A primeira versão pintava o
+   número de turquesa, e a medição deu 2,82:1: ilegível, além de fora da regra.
+
+   A seta é redundante com o sinal do número, então quem não distingue a cor
+   não perde nada. */
+.indicador__variacao {
+  color: var(--ink-2);
+}
+
+.indicador__variacao--sobe svg {
+  color: var(--seg-ascensao);
+}
+
+.indicador__variacao--cai svg {
+  color: var(--seg-risco);
+}
+
+/* Estável e indefinida ficam neutras as duas, mas não iguais: estável mostra
+   "0,00%", que é uma medição; indefinida mostra travessão, que é a ausência
+   dela. A cor não distingue — o texto distingue. */
+.indicador__variacao--estavel {
+  color: var(--ink-2);
+}
+
+.indicador__variacao--indefinida {
+  color: var(--ink-2);
+}
+
+/* ---------------------------------------------------------------- tabela */
+/* A tabela rola no **próprio container**. A página nunca rola na horizontal. */
+.tabela-rolagem {
+  overflow-x: auto;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--txt-13);
+}
+
+.tabela th,
+.tabela td {
+  padding: var(--esp-8) var(--esp-12);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tabela thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--txt-11);
+  font-weight: var(--peso-rotulo);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.tabela tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transicao);
+}
+
+.tabela tbody tr:last-child {
+  border-bottom: none;
+}
+
+.tabela tbody tr:hover {
+  background: var(--surface-2);
+}
+
+/* Sem zebra: em tabela densa ela vira ruído, e o fio de borda já separa as
+   linhas. A hierarquia vem do peso, não do fundo. */
+
+.tabela .numerica {
+  text-align: right;
+  font-family: var(--fonte-dados);
+  font-variant-numeric: tabular-nums;
+}
+
+/* O nome é o **único** elemento em peso alto e tinta cheia. É assim que o olho
+   encontra a linha sem precisar de contraste extra. */
+.tabela .nome {
+  font-weight: var(--peso-nome);
+  color: var(--ink);
+  white-space: normal;
+  min-width: 18ch;
+}
+
+.tabela .secundaria {
+  color: var(--ink-2);
+}
+
+.posicao {
+  font-family: var(--fonte-dados);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+/* Ponto de segmento: a cor **nunca** aparece sozinha, sempre ao lado do
+   rótulo em texto neutro. É a mitigação registrada na validação da paleta. */
+.ponto-segmento {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: var(--esp-6);
+  vertical-align: baseline;
+}
+
+/* ---------------------------------------------------------------- gráfico */
+.grafico {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.grafico__linha {
+  fill: none;
+  stroke: var(--serie-1);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.grafico__area {
+  fill: var(--serie-1);
+  fill-opacity: 0.2;
+  stroke: none;
+}
+
+.grafico__grade {
+  stroke: var(--grade);
+  stroke-width: 1;
+}
+
+.grafico__eixo {
+  fill: var(--ink-2);
+  font-family: var(--fonte-dados);
+  font-size: 10px;
+}
+
+.grafico__ponto {
+  fill: var(--surface);
+  stroke: var(--serie-1);
+  stroke-width: 2;
+}
+
+.grafico__cruz {
+  stroke: var(--ink-3);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.grafico__rotulo-final {
+  fill: var(--ink);
+  font-family: var(--fonte-dados);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.grafico__dica {
+  position: absolute;
+  padding: var(--esp-6) var(--esp-8);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-controle);
+  background: var(--surface);
+  box-shadow: 0 4px 12px rgb(16 24 38 / 12%);
+  font-size: var(--txt-12);
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.grafico__moldura {
+  position: relative;
+  padding: var(--esp-16);
+}
+
+.grafico__legenda-lacuna {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-6);
+  margin-top: var(--esp-8);
+  font-size: var(--txt-11);
+  color: var(--ink-2);
+}
