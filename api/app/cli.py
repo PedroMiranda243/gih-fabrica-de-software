@@ -2,21 +2,34 @@
 
 Uso:
     python -m app.cli criar-admin        # só cria se não houver nenhum administrador
+    python -m app.cli criar-usuario --login pedro --nome "Pedro" --perfil GESTOR
+    python -m app.cli redefinir-senha --login admin
+
+Nos dois últimos a senha é **digitada no terminal**, nunca passada como argumento.
+Com o ambiente no ar:
+
+    docker compose exec api python -m app.cli criar-usuario --login ... --nome ...
 
 Existe por causa do ovo e da galinha: sem usuário no banco não há como entrar, e
 criar usuário exige estar autenticado como Administrador (RF03).
 """
 from __future__ import annotations
 
+import argparse
+import getpass
+import os
 import secrets
 import sys
 
 from sqlalchemy import func, select
 
+from app import auditoria, sessoes
+from app.auditoria import Acao
 from app.config import config
 from app.db import Sessao
+from app.esquemas import NovoUsuario
 from app.modelos import Perfil, Usuario
-from app.seguranca import gerar_hash
+from app.seguranca import SenhaFraca, gerar_hash, validar_forca
 
 
 def criar_admin() -> int:
@@ -68,14 +81,150 @@ def criar_admin() -> int:
         s.close()
 
 
-COMANDOS = {"criar-admin": criar_admin}
+def _ler_senha(login: str) -> str:
+    """A senha nova, digitada por quem roda o comando.
+
+    **Nunca por argumento de linha de comando.** Argumento fica no histórico do
+    shell e aparece na lista de processos para qualquer usuário da máquina.
+    Fora do terminal interativo (automação, CI), vem de `GIH_SENHA_NOVA`.
+    """
+    senha = os.environ.get("GIH_SENHA_NOVA")
+    if senha:
+        return senha
+    if not sys.stdin.isatty():
+        raise ValueError(
+            "Sem terminal interativo para digitar a senha. Rode com "
+            "`docker compose exec api ...` (sem -T) ou defina GIH_SENHA_NOVA."
+        )
+    primeira = getpass.getpass(f"Senha para {login}: ")
+    if getpass.getpass("Repita a senha: ") != primeira:
+        raise ValueError("As duas senhas não conferem.")
+    return primeira
+
+
+def criar_usuario(argumentos: list[str]) -> int:
+    """Cria um usuário pelo terminal.
+
+    Resolve o problema de quem acabou de clonar o projeto: a senha do
+    administrador inicial é sorteada e só aparece no log da primeira subida, e
+    importação e parceiros nem são do Administrador (UC03, UC04). Sem isto, subir
+    o ambiente terminava numa tela de login sem ninguém que pudesse passar dela.
+
+    Valida pelas **mesmas** regras da API — o esquema `NovoUsuario` e
+    `validar_forca` — em vez de repetir a política aqui, onde ela divergiria.
+    """
+    p = argparse.ArgumentParser(prog="python -m app.cli criar-usuario")
+    p.add_argument("--login", required=True)
+    p.add_argument("--nome", required=True)
+    # Parceiro fica de fora: exige vínculo com um parceiro, que é decisão de
+    # tela de administração, não de terminal.
+    p.add_argument(
+        "--perfil",
+        default=Perfil.GESTOR.value,
+        choices=[Perfil.ADMINISTRADOR.value, Perfil.GESTOR.value, Perfil.ANALISTA.value],
+    )
+    a = p.parse_args(argumentos)
+
+    try:
+        senha = _ler_senha(a.login)
+        dados = NovoUsuario(login=a.login, nome=a.nome, senha=senha, perfil=Perfil(a.perfil))
+        validar_forca(dados.senha, dados.login)
+    except (ValueError, SenhaFraca) as e:
+        # `ValidationError` do Pydantic é um `ValueError`; a mensagem dele lista
+        # o campo e o motivo.
+        print(f"Recusado: {e}", file=sys.stderr)
+        return 1
+
+    s = Sessao()
+    try:
+        if s.scalar(select(Usuario).where(Usuario.login == dados.login)):
+            print(
+                f"Já existe o login {dados.login!r}. Para trocar a senha dele, use "
+                "`redefinir-senha`.",
+                file=sys.stderr,
+            )
+            return 1
+
+        usuario = Usuario(
+            login=dados.login,
+            nome=dados.nome,
+            senha_hash=gerar_hash(dados.senha),
+            perfil=dados.perfil,
+            ativo=True,
+        )
+        s.add(usuario)
+        s.commit()
+    finally:
+        s.close()
+
+    # Criado pelo terminal continua sendo criado: a trilha precisa responder
+    # "de onde veio este usuário" mesmo quando não foi pela tela.
+    auditoria.registrar(
+        Acao.USUARIO_CRIADO,
+        detalhes={"alvo": usuario.id, "login": dados.login, "perfil": str(dados.perfil)},
+        origem="cli",
+    )
+    print(f"Usuário criado: {dados.login} ({dados.perfil})")
+    return 0
+
+
+def redefinir_senha(argumentos: list[str]) -> int:
+    """Troca a senha de um usuário pelo terminal, e derruba as sessões dele.
+
+    É o caminho de recuperação que não existia: perdida a senha sorteada do
+    administrador, não havia volta. Derrubar as sessões abertas é o mesmo que a
+    troca pela API faz (H19) — senha redefinida com sessão antiga ainda de pé
+    não revogaria o acesso de quem motivou a troca.
+    """
+    p = argparse.ArgumentParser(prog="python -m app.cli redefinir-senha")
+    p.add_argument("--login", required=True)
+    a = p.parse_args(argumentos)
+
+    s = Sessao()
+    try:
+        usuario = s.scalar(select(Usuario).where(Usuario.login == a.login))
+        if usuario is None:
+            print(f"Não existe o login {a.login!r}.", file=sys.stderr)
+            return 1
+
+        try:
+            senha = _ler_senha(a.login)
+            validar_forca(senha, a.login)
+        except (ValueError, SenhaFraca) as e:
+            print(f"Recusado: {e}", file=sys.stderr)
+            return 1
+
+        usuario.senha_hash = gerar_hash(senha)
+        derrubadas = sessoes.revogar_do_usuario(s, usuario.id, "senha_redefinida_no_terminal")
+        s.commit()
+        usuario_id = usuario.id
+    finally:
+        s.close()
+
+    auditoria.registrar(
+        Acao.SENHA_ALTERADA,
+        usuario_id=usuario_id,
+        detalhes={"via": "cli", "sessoes_encerradas": derrubadas},
+        origem="cli",
+    )
+    print(f"Senha redefinida para {a.login}. Sessões encerradas: {derrubadas}.")
+    return 0
+
+
+# Cada comando recebe o resto da linha de comando. `criar-admin` não tem
+# argumentos e é chamado pelo entrypoint a cada subida.
+COMANDOS = {
+    "criar-admin": lambda _argumentos: criar_admin(),
+    "criar-usuario": criar_usuario,
+    "redefinir-senha": redefinir_senha,
+}
 
 
 def main() -> int:
     if len(sys.argv) < 2 or sys.argv[1] not in COMANDOS:
         print(f"Comandos: {', '.join(COMANDOS)}", file=sys.stderr)
         return 2
-    return COMANDOS[sys.argv[1]]()
+    return COMANDOS[sys.argv[1]](sys.argv[2:])
 
 
 if __name__ == "__main__":

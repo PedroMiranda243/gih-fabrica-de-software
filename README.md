@@ -145,12 +145,34 @@ docker compose up
 ```
 
 É só isso. O compose sobe o PostgreSQL, espera ele ficar saudável, **aplica as migrações**, cria o
-administrador inicial se não houver nenhum, e serve a API.
+administrador inicial se não houver nenhum, serve a API e sobe a interface.
+
+**A aplicação fica em `http://localhost:5173`.** A interface e a API dividem a mesma origem — o `/api`
+é repassado pelo servidor da interface — e é isso que deixa o cookie de sessão funcionar sem abrir CORS
+na API.
 
 Verificação: `http://localhost:8000/api/health` deve responder `banco: "ok"`.
 Documentação da API em `http://localhost:8000/api/docs`.
 
 ### Primeiro acesso
+
+**O jeito mais direto de entrar é criar o seu próprio usuário pelo terminal**, com o ambiente no ar:
+
+```
+docker compose exec api python -m app.cli criar-usuario --login seu.login --nome "Seu Nome"
+```
+
+A senha é **digitada no terminal**, duas vezes — nunca passada como argumento, que ficaria no histórico
+do shell. O perfil padrão é **Gestor**, que é o que usa painel, importação e parceiros; passe
+`--perfil ANALISTA` ou `--perfil ADMINISTRADOR` se precisar de outro. Esqueceu a senha:
+
+```
+docker compose exec api python -m app.cli redefinir-senha --login seu.login
+```
+
+A redefinição encerra as sessões abertas daquele usuário, como a troca pela tela faz.
+
+#### O administrador inicial
 
 **Não existe senha padrão.** Este repositório é público, e um `admin/admin` no código seria porta aberta
 em qualquer implantação que esquecesse de trocá-la. Na primeira subida, o sistema sorteia uma senha e a
@@ -163,8 +185,7 @@ docker compose logs api | grep "Senha sorteada"
 Anote: ela não é gravada em lugar nenhum e não pode ser recuperada. Troque no primeiro acesso, em
 `POST /api/sessao/senha`. Para definir a senha de antemão, preencha `ADMIN_SENHA` no `.env` antes de subir.
 
-Perdeu a senha e não há outro administrador? Apague o usuário direto no banco e suba de novo — o comando
-`python -m app.cli criar-admin` recria quando não existe nenhum administrador ativo.
+Perdeu a senha do administrador? `redefinir-senha --login admin`, como acima.
 
 ### Desenvolvendo a API fora do container
 
