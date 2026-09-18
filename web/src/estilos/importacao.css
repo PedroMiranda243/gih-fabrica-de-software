@@ -1,0 +1,64 @@
+/* Tela de importação. */
+
+.importacao__corpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-16);
+  padding: var(--esp-16);
+}
+
+.importacao__periodo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--esp-12);
+}
+
+/* Explicação de regra de negócio: fica em tinta secundária para não competir
+   com o campo, mas presente — é a diferença entre corrigir e tentar de novo do
+   mesmo jeito. */
+.importacao__nota {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+  line-height: 1.55;
+}
+
+.importacao__arquivo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-8);
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+}
+
+.importacao__remover {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--acao-ink);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* O caminho destrutivo ganha respiro e borda próprios: não pode parecer só
+   mais um botão da tela. */
+.importacao__conflito {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--esp-12);
+  margin-top: var(--esp-12);
+  padding-top: var(--esp-12);
+  border-top: 1px solid var(--border);
+  font-size: var(--txt-13);
+}
+
+.importacao__conflito p {
+  margin: 0;
+}
+
+.aviso--sucesso {
+  border-left-color: var(--seg-ascensao);
+}

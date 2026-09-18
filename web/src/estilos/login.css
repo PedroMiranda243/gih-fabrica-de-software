@@ -1,0 +1,68 @@
+/*
+ * Tela de entrada.
+ *
+ * Um cartão centrado sobre o fundo da página, com o dobro de respiro interno do
+ * resto da aplicação: é a única tela sem densidade de painel, porque é a única
+ * em que a pessoa faz uma coisa só.
+ */
+
+.entrada {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--esp-24) var(--esp-16);
+  /* Fundo neutro. Nenhuma cor com trabalho definido é gasta em decoração:
+     a de ação significa "clicável", a de série significa "dado". */
+  background:
+    radial-gradient(60rem 30rem at 50% -10%, var(--surface-2), transparent),
+    var(--ground);
+}
+
+.entrada__cartao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-16);
+  width: 100%;
+  max-width: 24rem;
+  padding: var(--esp-24);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-painel);
+  box-shadow: 0 8px 28px rgb(16 24 38 / 8%);
+}
+
+.entrada__marca {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-4);
+  margin-bottom: var(--esp-4);
+}
+
+/* A sigla em tinta cheia, e não em âmbar. O âmbar é a cor de ação, e o
+   `docs/09` registra que usá-la também como marca foi o erro do projeto
+   anterior: quando uma cor significa tudo, não significa nada. */
+.entrada__sigla {
+  font-size: var(--txt-22);
+  font-weight: var(--peso-marca);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.entrada__titulo {
+  font-size: var(--txt-19);
+  font-weight: var(--peso-nome);
+}
+
+.entrada__subtitulo {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--txt-13);
+}
+
+.entrada__rodape {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--txt-11);
+  line-height: 1.45;
+}

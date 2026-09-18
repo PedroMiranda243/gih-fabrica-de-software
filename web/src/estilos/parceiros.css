@@ -1,0 +1,35 @@
+/* Filtros da lista de parceiros. */
+
+/* Uma linha só acima da tabela, como painel de dados pede — filtro escondido
+   atrás de um botão faz a pessoa esquecer que ele está aplicado. */
+.filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--esp-12);
+  padding: var(--esp-16);
+}
+
+/* A busca merece mais espaço que os seletores: é o que se usa primeiro. */
+.filtros__busca {
+  grid-column: span 2;
+}
+
+.ponto-situacao {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: var(--esp-6);
+  border: 1.5px solid var(--ink-2);
+  border-radius: 50%;
+  background: var(--ink-2);
+}
+
+.ponto-situacao--inativo {
+  background: transparent;
+}
+
+@media (max-width: 700px) {
+  .filtros__busca {
+    grid-column: span 1;
+  }
+}
