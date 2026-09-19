@@ -15,24 +15,17 @@
 import { useId, useMemo, useState } from "react";
 
 import { comoDiaMes, comoDinheiro, comoInteiro, comoPeriodo } from "../formato";
-
-const LARGURA = 720;
-const ALTURA = 220;
-/* Sobra à direita para o rótulo do último ponto caber dentro do `viewBox`.
-   Rótulo cortado na borda é o defeito mais comum de gráfico em SVG. */
-const MARGEM = { topo: 16, direita: 64, baixo: 28, esquerda: 60 };
-
-const AREA = {
-  largura: LARGURA - MARGEM.esquerda - MARGEM.direita,
-  altura: ALTURA - MARGEM.topo - MARGEM.baixo,
-};
-
-/** Um teto "redondo" acima do máximo, para a grade cair em número legível. */
-function tetoBonito(maximo) {
-  if (maximo <= 0) return 1;
-  const magnitude = 10 ** Math.floor(Math.log10(maximo));
-  return Math.ceil(maximo / magnitude) * magnitude;
-}
+import {
+  ALTURA,
+  AREA,
+  FOLGA_EIXO,
+  FOLGA_ROTULO_FINAL,
+  FRACOES_DA_GRADE,
+  LARGURA,
+  MARGEM,
+  rotuloCompacto,
+  tetoBonito,
+} from "./escalaSerie";
 
 /** Quebra a série em trechos contínuos — cada buraco separa dois trechos. */
 function trechosContinuos(coordenadas) {
@@ -96,7 +89,6 @@ export default function SerieHistorica({ pontos, rotulo = "Faturamento" }) {
     setEmFoco(maisPerto);
   }
 
-  const linhasDeGrade = [0, 0.25, 0.5, 0.75, 1];
 
   return (
     <div className="grafico__moldura">
@@ -117,7 +109,7 @@ export default function SerieHistorica({ pontos, rotulo = "Faturamento" }) {
         </defs>
 
         {/* Grade recessiva: existe para ser ignorada. A linha é que fala. */}
-        {linhasDeGrade.map((fracao) => {
+        {FRACOES_DA_GRADE.map((fracao) => {
           const y = MARGEM.topo + AREA.altura * fracao;
           return (
             <g key={fracao}>
@@ -128,8 +120,13 @@ export default function SerieHistorica({ pontos, rotulo = "Faturamento" }) {
                 x2={LARGURA - MARGEM.direita}
                 y2={y}
               />
-              <text className="grafico__eixo" x={MARGEM.esquerda - 8} y={y + 3} textAnchor="end">
-                {comoDinheiro(teto * (1 - fracao), { compacto: true })}
+              <text
+                className="grafico__eixo"
+                x={MARGEM.esquerda - FOLGA_EIXO}
+                y={y + 3}
+                textAnchor="end"
+              >
+                {rotuloCompacto(teto * (1 - fracao))}
               </text>
             </g>
           );
@@ -181,8 +178,12 @@ export default function SerieHistorica({ pontos, rotulo = "Faturamento" }) {
         {/* Rótulo direto **só no último ponto**. Número sobre cada marca vira
             ruído e some dentro do próprio gráfico. */}
         {ultimo && (
-          <text className="grafico__rotulo-final" x={ultimo.x + 10} y={ultimo.y + 4}>
-            {comoDinheiro(ultimo.valor, { compacto: true })}
+          <text
+            className="grafico__rotulo-final"
+            x={ultimo.x + FOLGA_ROTULO_FINAL}
+            y={ultimo.y + 4}
+          >
+            {rotuloCompacto(ultimo.valor)}
           </text>
         )}
 
