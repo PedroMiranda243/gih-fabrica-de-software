@@ -169,6 +169,16 @@ function montar() {
     + 'por migração versionada no repositório, o que permite a qualquer integrante chegar ao mesmo estado '
     + 'a partir de um clone limpo.',
   ));
+  // A Parte II mostra o retrato da Sprint 02 — 34 índices, outra revisão de
+  // migração. Sem esta frase, quem compara as duas partes vê números
+  // diferentes e não sabe qual está certo; os dois estão, cada um na sua época.
+  c.push(p(
+    `Desde a Sprint 02 o esquema recebeu uma migração: a busca de parceiro sem diferenciar acento `
+    + `acrescentou uma coluna normalizada e um índice. É por isso que a Parte II mostra 34 índices e outra `
+    + `revisão, e esta parte mostra ${medida('indices')} — os dois retratos estão corretos, cada um na sua `
+    + 'entrega.',
+    { size: 19 },
+  ));
 
   c.push(quebra());
   c.push(h2('2.3 O dado entrando pela interface'));
@@ -381,6 +391,10 @@ function montar() {
   c.push(evidencia('interface-parceiros'));
   c.push(legenda('Tela de parceiros com a busca "praca" encontrando "Praça" — as primeiras doze linhas do resultado.'));
 
+  // Quebra antes, e não depois: sem ela o título e o parágrafo ficam no pé da
+  // página da figura anterior, e a captura do Swagger vai sozinha para a
+  // seguinte — visto no PDF da entrega de 19/09.
+  c.push(quebra());
   c.push(h2('6.6 Documentação interativa'));
   c.push(p(
     'A especificação da API é gerada automaticamente e permite executar qualquer operação pelo navegador. '
