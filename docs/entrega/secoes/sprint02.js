@@ -534,7 +534,7 @@ function montar() {
     ['docs/', 'Toda a documentação técnica, diagramas, protótipo e o gerador deste documento'],
     ['scripts/', 'Gerador de dados sintéticos e comando de reinicialização do banco'],
     ['.github/', 'Integração contínua e mapa de responsáveis por revisão'],
-    ['web/', 'Interface — prevista para a próxima sprint'],
+    ['web/', 'Interface: login, painel, importação e parceiros (construída na Sprint 03)'],
   ], { zebra: true, boldCol: 0 }));
 
   c.push(h2('7.2 Evidências de evolução'));
@@ -553,8 +553,8 @@ function montar() {
     ['Autenticação, perfis e auditoria', 'Concluído', 'Testes cobrindo cada endpoint contra cada perfil'],
     ['Importação de relatório com prévia', 'Concluído', 'Interpretador tolerante, com testes próprios'],
     ['Núcleo em GPU', 'Risco retirado', 'Ganho medido de até 100x sobre o baseline serial'],
-    ['Protótipo das telas', 'Em validação', 'Quatro telas navegáveis, paleta validada'],
-    ['Interface em React', 'Próxima sprint', '—'],
+    ['Protótipo das telas', 'Aprovado', 'Aprovado pela equipe em 17/09/2026 — quatro telas, paleta validada'],
+    ['Interface em React', 'Concluído', 'Construída na Sprint 03 sobre o protótipo aprovado — ver a Parte III'],
   ], { zebra: true, boldCol: 0, align: [null, AlignmentType.CENTER] }));
 
   c.push(espaco(200));

@@ -7,20 +7,20 @@ Preparação — um analista, que é quem gerencia parceiros (UC04)
 
 $ POST /api/usuarios
   > {
-  >   "login": "t41435.analista",
+  >   "login": "t94926.analista",
   >   "nome": "Analista da Evidência",
   >   "senha": "********",
   >   "perfil": "ANALISTA"
   > }
   201 Created
   < {
-  <   "id": 66,
-  <   "login": "t41435.analista",
+  <   "id": 28,
+  <   "login": "t94926.analista",
   <   "nome": "Analista da Evidência",
   <   "perfil": "ANALISTA",
   <   "ativo": true,
   <   "parceiro_id": null,
-  <   "criado_em": "2026-09-17T05:09:02.323704Z"
+  <   "criado_em": "2026-09-19T01:08:26.642762Z"
   < }
 
 ==============================================================================
@@ -29,21 +29,21 @@ Login — item 2 da entrega
 
 $ POST /api/sessao
   > {
-  >   "login": "t41435.analista",
+  >   "login": "t94926.analista",
   >   "senha": "********"
   > }
   201 Created
   < {
   <   "usuario": {
-  <     "id": 66,
-  <     "login": "t41435.analista",
+  <     "id": 28,
+  <     "login": "t94926.analista",
   <     "nome": "Analista da Evidência",
   <     "perfil": "ANALISTA",
   <     "ativo": true,
   <     "parceiro_id": null,
-  <     "criado_em": "2026-09-17T05:09:02.323704Z"
+  <     "criado_em": "2026-09-19T01:08:26.642762Z"
   <   },
-  <   "expira_em": "2026-09-17T13:09:04.748622Z"
+  <   "expira_em": "2026-09-19T09:08:29.040466Z"
   < }
 
 ==============================================================================
@@ -52,62 +52,62 @@ CADASTRAR — item 5 da entrega
 
 $ POST /api/categorias
   > {
-  >   "nome": "Categoria t41435"
+  >   "nome": "Categoria t94926"
   > }
   201 Created
   < {
-  <   "id": 43,
-  <   "nome": "Categoria t41435",
+  <   "id": 20,
+  <   "nome": "Categoria t94926",
   <   "ativa": true
   < }
 
 $ POST /api/parceiros
   > {
-  >   "nome": "Comércio t41435",
+  >   "nome": "Comércio t94926",
   >   "status": "PROSPECCAO",
   >   "contato": "contato@exemplo.test"
   > }
   201 Created
   < {
-  <   "id": 468,
-  <   "nome": "Comércio t41435",
+  <   "id": 549,
+  <   "nome": "Comércio t94926",
   <   "categoria": null,
   <   "origem_categoria": null,
   <   "status": "PROSPECCAO",
   <   "contato": "contato@exemplo.test",
   <   "ativo": true,
-  <   "criado_em": "2026-09-17T05:09:04.766023Z"
+  <   "criado_em": "2026-09-19T01:08:29.087865Z"
   < }
 
 ==============================================================================
 CONSULTAR
 ==============================================================================
 
-$ GET /api/parceiros/468
+$ GET /api/parceiros/549
   200 OK
   < {
-  <   "id": 468,
-  <   "nome": "Comércio t41435",
+  <   "id": 549,
+  <   "nome": "Comércio t94926",
   <   "categoria": null,
   <   "origem_categoria": null,
   <   "status": "PROSPECCAO",
   <   "contato": "contato@exemplo.test",
   <   "ativo": true,
-  <   "criado_em": "2026-09-17T05:09:04.766023Z"
+  <   "criado_em": "2026-09-19T01:08:29.087865Z"
   < }
 
-$ GET /api/parceiros?busca=t41435
+$ GET /api/parceiros?busca=t94926
   200 OK
   < [
   <   {
-  <     "id": 468,
-  <     "nome": "Comércio t41435",
+  <     "id": 549,
+  <     "nome": "Comércio t94926",
   <     "categoria": null,
   <     "origem_categoria": null,
   <     "status": "PROSPECCAO",
   <     "contato": "contato@exemplo.test",
   <     "ativo": true,
-  <     "criado_em": "2026-09-17T05:09:04.766023Z"
+  <     "criado_em": "2026-09-19T01:08:29.087865Z"
   <   }
   < ]
 
@@ -115,25 +115,25 @@ $ GET /api/parceiros?busca=t41435
 ATUALIZAR
 ==============================================================================
 
-$ PATCH /api/parceiros/468
+$ PATCH /api/parceiros/549
   > {
   >   "status": "ATIVO",
-  >   "categoria_id": 43
+  >   "categoria_id": 20
   > }
   200 OK
   < {
-  <   "id": 468,
-  <   "nome": "Comércio t41435",
+  <   "id": 549,
+  <   "nome": "Comércio t94926",
   <   "categoria": {
-  <     "id": 43,
-  <     "nome": "Categoria t41435",
+  <     "id": 20,
+  <     "nome": "Categoria t94926",
   <     "ativa": true
   <   },
   <   "origem_categoria": "MANUAL",
   <   "status": "ATIVO",
   <   "contato": "contato@exemplo.test",
   <   "ativo": true,
-  <   "criado_em": "2026-09-17T05:09:04.766023Z"
+  <   "criado_em": "2026-09-19T01:08:29.087865Z"
   < }
 
 ==============================================================================
@@ -142,22 +142,22 @@ Nome repetido é recusado — a unicidade é garantida pelo banco
 
 $ POST /api/parceiros
   > {
-  >   "nome": "Comércio t41435"
+  >   "nome": "Comércio t94926"
   > }
   409 Conflict
   < {
-  <   "detail": "Já existe um parceiro com o nome 'Comércio t41435'."
+  <   "detail": "Já existe um parceiro com o nome 'Comércio t94926'."
   < }
 
 ==============================================================================
 EXCLUIR — sem histórico, a exclusão acontece
 ==============================================================================
 
-$ DELETE /api/parceiros/468
+$ DELETE /api/parceiros/549
   204 No Content
   < (sem conteúdo)
 
-$ GET /api/parceiros/468
+$ GET /api/parceiros/549
   404 Not Found
   < {
   <   "detail": "Parceiro não encontrado."
@@ -171,13 +171,63 @@ Primeiro uma importação, para o parceiro passar a ter faturamento:
 
 $ POST /api/importacoes
   > {
-  >   "periodo_inicio": "2028-03-17",
-  >   "periodo_fim": "2028-03-23",
-  >   "texto": "Parceiro;Faturamento;Pedidos\nComércio t41435 hist;12500,40;312\n"
+  >   "periodo_inicio": "2042-10-18",
+  >   "periodo_fim": "2042-10-24",
+  >   "texto": "Parceiro;Faturamento;Pedidos\nComércio t94926 hist;12500,40;312\n"
   > }
+  201 Created
+  < {
+  <   "id": 43,
+  <   "periodo": {
+  <     "id": 36,
+  <     "data_inicio": "2042-10-18",
+  <     "data_fim": "2042-10-24"
+  <   },
+  <   "autor": {
+  <     "id": 28,
+  <     "nome": "Analista da Evidência"
+  <   },
+  <   "origem": "TEXTO",
+  <   "total_gravado": 1,
+  <   "total_rejeitado": 0,
+  <   "enviado_em": "2026-09-19T01:08:29.169613Z",
+  <   "metricas_vigentes": 0
+  < }
+
+$ DELETE /api/parceiros/551
   409 Conflict
   < {
-  <   "detail": "Este período já foi importado. Substituir os dados existentes exige uma decisão explícita, que ainda não está disponível — por ora, cancele ou informe outro período."
+  <   "detail": {
+  <     "erro": "O parceiro 'Comércio t94926 hist' tem histórico e não pode ser excluído.",
+  <     "ajuda": "Excluir apagaria registros que outros períodos já contabilizam. Para tirá-lo de circulação sem perder o histórico, desative-o: PATCH neste mesmo endereço com {\"ativo\": false}.",
+  <     "vinculos": {
+  <       "metricas": 1,
+  <       "segmentos": 0,
+  <       "previsoes": 0,
+  <       "itens_de_plano": 0,
+  <       "mensagens": 0,
+  <       "usuarios": 0
+  <     }
+  <   }
+  < }
+
+  Apagar um parceiro com faturamento importado falsearia as séries dos
+  períodos já fechados. A recusa diz o que impede e aponta a desativação.
+
+$ PATCH /api/parceiros/551
+  > {
+  >   "ativo": false
+  > }
+  200 OK
+  < {
+  <   "id": 551,
+  <   "nome": "Comércio t94926 hist",
+  <   "categoria": null,
+  <   "origem_categoria": null,
+  <   "status": "ATIVO",
+  <   "contato": null,
+  <   "ativo": false,
+  <   "criado_em": "2026-09-19T01:08:29.169613Z"
   < }
 
 ==============================================================================
