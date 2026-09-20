@@ -12,7 +12,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import event
+from sqlalchemy import event, select
 from sqlalchemy.engine import Engine
 
 from app.db import Sessao
@@ -445,6 +445,227 @@ def test_o_ranking_nao_faz_uma_consulta_por_linha(gestor, semear, quantos):
         f"{len(do_painel)} consultas para {quantos} linhas — "
         "o número precisa ser fixo, não proporcional à página"
     )
+
+
+# ============================== H33 · distribuição por segmento no painel
+def _segmentar(limiares=None):
+    """Roda a segmentação sobre tudo que `semear` colocou no banco.
+
+    `semear` escreve direto no banco, sem passar pela importação — que é o que
+    torna os testes independentes da ingestão, mas também o que deixa os
+    períodos sem segmento até isto rodar.
+    """
+    from app.servico_segmentacao import PADRAO, reprocessar_tudo
+
+    s = Sessao()
+    try:
+        reprocessar_tudo(s, limiares or PADRAO)
+        s.commit()
+    finally:
+        s.close()
+
+
+def test_sem_segmentacao_calculada_a_distribuicao_vem_vazia(gestor, semear):
+    """Vazio, e não seis zeros.
+
+    Seis zeros desenhariam um gráfico afirmando uma distribuição plana que
+    ninguém mediu — e o gestor não teria como saber a diferença.
+    """
+    semear({"Alfa": ("1000.00", 10)})
+
+    corpo = gestor.get("/api/painel/segmentos").json()
+
+    assert corpo["itens"] == []
+    assert corpo["total"] == 0
+
+
+def test_distribuicao_conta_os_parceiros_por_segmento(gestor, semear):
+    semear(
+        {"Subindo": ("100.00", 1), "Caindo": ("1000.00", 1), "Parado": ("500.00", 1)},
+        {"Subindo": ("200.00", 1), "Caindo": ("900.00", 1), "Parado": ("500.00", 1)},
+        {"Subindo": ("300.00", 1), "Caindo": ("800.00", 1), "Parado": ("500.00", 1)},
+    )
+    _segmentar()
+
+    corpo = gestor.get("/api/painel/segmentos").json()
+
+    assert corpo["total"] == 3
+    # Os três cabem no Top 15, e o de maior faturamento cai — risco vence topo.
+    contagem = {i["segmento"]: i["total"] for i in corpo["itens"]}
+    assert contagem["EM_RISCO"] == 1
+    assert contagem["TOP"] == 2
+
+
+def test_a_distribuicao_vem_do_maior_para_o_menor(gestor, semear):
+    semear(
+        {f"P{i}": ("1000.00", 1) for i in range(4)},
+        {f"P{i}": ("1000.00", 1) for i in range(4)},
+        {f"P{i}": (f"{1000 - i}.00", 1) for i in range(4)},
+    )
+    _segmentar()
+
+    totais = [i["total"] for i in gestor.get("/api/painel/segmentos").json()["itens"]]
+
+    assert totais == sorted(totais, reverse=True)
+
+
+def test_o_ranking_traz_o_segmento_de_cada_linha(gestor, semear):
+    semear({"Alfa": ("1000.00", 10)}, {"Alfa": ("2000.00", 20)})
+    _segmentar()
+
+    linha = gestor.get("/api/painel/ranking").json()["itens"][0]
+
+    assert linha["segmento"] == "RECEM_CHEGADO"
+
+
+def test_sem_segmentacao_o_ranking_continua_respondendo(gestor, semear):
+    """Faltar a coluna é aceitável; sumir com o ranking porque a classificação
+    não rodou, não."""
+    semear({"Alfa": ("1000.00", 10)})
+
+    itens = gestor.get("/api/painel/ranking").json()["itens"]
+
+    assert len(itens) == 1
+    assert itens[0]["segmento"] is None
+
+
+def test_em_risco_e_nulo_enquanto_nao_ha_segmentacao(gestor, semear):
+    """Zero diria "ninguém em risco"; nulo diz "ainda não sei".
+
+    Num painel que existe para apontar risco, confundir os dois deixa a tela
+    tranquila justamente quando ela não sabe de nada.
+    """
+    semear({"Alfa": ("1000.00", 10)})
+
+    assert gestor.get("/api/painel/indicadores").json()["em_risco"] is None
+
+
+def test_em_risco_traz_a_diferenca_absoluta_contra_o_periodo_anterior(gestor, semear):
+    semear(
+        {"Alfa": ("1000.00", 1), "Beta": ("900.00", 1)},
+        {"Alfa": ("900.00", 1), "Beta": ("900.00", 1)},
+        {"Alfa": ("800.00", 1), "Beta": ("800.00", 1)},
+    )
+    _segmentar()
+
+    em_risco = gestor.get("/api/painel/indicadores").json()["em_risco"]
+
+    # "Alfa" cai desde o começo; "Beta" só na última semana, e uma queda só não
+    # basta. No período anterior, ninguém tinha duas quedas seguidas ainda.
+    assert em_risco == {"total": 1, "delta": 1}
+
+
+# ================================================= H35 · mobilidade do Top N
+def _rede_de_dezessete(trocar: bool) -> dict[str, tuple[str, int]]:
+    """Dezessete parceiros com faturamentos distintos, opcionalmente trocando o
+    15º pelo 16º de lugar.
+
+    Dezessete, e não dois: o Top N do endpoint é o da regra, **15**, e não um
+    parâmetro de teste. Montar o cenário com dois parceiros faria os dois
+    caberem no topo nos dois períodos, e a mobilidade sairia vazia por falta de
+    fronteira, não por acerto.
+    """
+    valores = {f"P{i:02d}": 1700 - 100 * i for i in range(17)}
+    if trocar:
+        valores["P14"], valores["P15"] = valores["P15"], valores["P14"]
+    return {nome: (f"{valor}.00", 1) for nome, valor in valores.items()}
+
+
+def test_mobilidade_lista_quem_entrou_e_quem_saiu(gestor, semear):
+    semear(_rede_de_dezessete(trocar=False), _rede_de_dezessete(trocar=True))
+
+    corpo = gestor.get("/api/painel/mobilidade").json()
+
+    assert corpo["top_n"] == 15
+    assert [m["nome"] for m in corpo["entradas"]] == ["P15"]
+    assert [m["nome"] for m in corpo["saidas"]] == ["P14"]
+    # A posição anterior do entrante vem do ranking inteiro, não do Top N: sem
+    # ela, "entrou" não diria de onde.
+    assert corpo["entradas"][0]["posicao_anterior"] == 16
+    assert corpo["saidas"][0]["posicao"] == 16
+
+
+def test_mobilidade_nao_inventa_movimento_no_periodo_unico(gestor, semear):
+    """UC05, A2 — sem período anterior ninguém entrou nem saiu de lugar nenhum.
+
+    Listar o Top N inteiro como "entradas" seria anunciar uma mobilidade que
+    não aconteceu, logo na primeira semana de uso.
+    """
+    semear({"Alfa": ("1000.00", 10)})
+
+    corpo = gestor.get("/api/painel/mobilidade").json()
+
+    assert corpo["periodo_anterior"] is None
+    assert corpo["entradas"] == []
+    assert corpo["saidas"] == []
+
+
+def test_mobilidade_com_base_vazia(gestor):
+    corpo = gestor.get("/api/painel/mobilidade").json()
+
+    assert corpo["periodo"] is None
+    assert corpo["entradas"] == [] and corpo["saidas"] == []
+
+
+def test_quem_some_do_periodo_conta_como_saida(gestor, semear):
+    primeira = _rede_de_dezessete(trocar=False)
+    segunda = {nome: valor for nome, valor in primeira.items() if nome != "P00"}
+    semear(primeira, segunda)
+
+    corpo = gestor.get("/api/painel/mobilidade").json()
+
+    saida = next(m for m in corpo["saidas"] if m["nome"] == "P00")
+    # Não faturou no período: é diferente de ter caído para a 16ª posição, e a
+    # tela precisa poder dizer qual dos dois aconteceu.
+    assert saida["posicao"] is None
+    assert saida["posicao_anterior"] == 1
+
+
+def test_top_em_queda_nao_aparece_como_saida(gestor, semear):
+    """**RN02, o teste que expõe a diferença.**
+
+    O cenário é montado para que o segmento do líder **mude** de TOP para
+    EM_RISCO entre os dois períodos, enquanto a posição dele no ranking não sai
+    do primeiro lugar. Uma mobilidade derivada do segmento veria "era TOP, não é
+    mais" e anunciaria uma saída; a derivada do ranking vê que ele nunca saiu.
+
+    Se este teste reprovar porque alguém trocou a fonte da mobilidade, é essa a
+    consequência: o painel passa a anunciar saídas do Top N que não aconteceram,
+    e ninguém percebe, porque a tela continua plausível.
+    """
+    # Quatro semanas, e não três: com três, no período anterior o líder ainda
+    # teria histórico curto e sairia RECEM_CHEGADO em vez de TOP — e o teste
+    # não mostraria a troca de segmento que ele existe para mostrar.
+    semear(
+        {"Lider": ("1000.00", 1), "Segundo": ("10.00", 1)},
+        {"Lider": ("1100.00", 1), "Segundo": ("10.00", 1)},
+        {"Lider": ("1000.00", 1), "Segundo": ("10.00", 1)},  # uma queda só: TOP
+        {"Lider": ("900.00", 1), "Segundo": ("10.00", 1)},  # a segunda: EM_RISCO
+    )
+    _segmentar()
+
+    ranking = gestor.get("/api/painel/ranking").json()["itens"]
+    lider = next(i for i in ranking if i["nome"] == "Lider")
+    mobilidade = gestor.get("/api/painel/mobilidade").json()
+
+    assert _segmento_gravado("Lider", mobilidade["periodo_anterior"]["id"]) == "TOP"
+    assert lider["segmento"] == "EM_RISCO"  # mudou de TOP para EM_RISCO (RN01)
+    assert lider["posicao"] == 1  # e continua no primeiro lugar do ranking
+    assert mobilidade["saidas"] == []  # logo, não saiu de lugar nenhum
+
+
+def _segmento_gravado(nome: str, periodo_id: int) -> str:
+    from app.modelos import HistoricoSegmento
+
+    s = Sessao()
+    try:
+        return s.scalar(
+            select(HistoricoSegmento.segmento)
+            .join(Parceiro, Parceiro.id == HistoricoSegmento.parceiro_id)
+            .where(Parceiro.nome == nome, HistoricoSegmento.periodo_id == periodo_id)
+        ).value
+    finally:
+        s.close()
 
 
 # ========================================================== apoio dos testes

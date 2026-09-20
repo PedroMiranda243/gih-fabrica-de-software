@@ -1,5 +1,6 @@
 import { comoDinheiro, comoInteiro, comoPercentual, sentidoDa, TRACO } from "../formato";
 import { IconeVariacao } from "./Icones";
+import Segmento from "./Segmento";
 
 /**
  * O ranking do período.
@@ -56,6 +57,7 @@ export default function TabelaRanking({ itens }) {
             <th scope="col">Posição</th>
             <th scope="col">Parceiro</th>
             <th scope="col">Categoria</th>
+            <th scope="col">Segmento</th>
             <th scope="col" className="numerica">
               Faturamento
             </th>
@@ -84,6 +86,9 @@ export default function TabelaRanking({ itens }) {
                 </td>
                 <td className="nome">{item.nome}</td>
                 <td className="secundaria">{item.categoria ?? "sem categoria"}</td>
+                <td className="secundaria">
+                  <Segmento valor={item.segmento} />
+                </td>
                 <td className="numerica">{comoDinheiro(item.faturamento)}</td>
                 <td className="numerica">{comoInteiro(item.pedidos)}</td>
                 <td className="numerica secundaria">{comoDinheiro(item.ticket_medio)}</td>

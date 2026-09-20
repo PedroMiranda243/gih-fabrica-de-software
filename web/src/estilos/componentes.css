@@ -70,10 +70,25 @@
 /* ------------------------------------------------------------ indicadores */
 .indicadores {
   display: grid;
-  /* Fluido de verdade: as colunas se ajustam sem ponto de quebra escrito à
-     mão, e nenhum cartão fica sozinho numa linha esticado. */
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  /* **Três colunas, e não `auto-fit`.** Com seis indicadores, o encaixe
+     automático punha cinco na primeira linha e deixava o sexto sozinho na
+     segunda, esticado pela linha inteira — medido em 1440 px. Três divide seis
+     em duas linhas cheias, e os pontos de quebra abaixo mantêm isso: 3, 2 e 1
+     são todos divisores de 6, então nunca sobra um cartão solto. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--esp-12);
+}
+
+@media (max-width: 900px) {
+  .indicadores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .indicadores {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .indicador {
@@ -132,6 +147,153 @@
 
 .indicador__variacao--indefinida {
   color: var(--ink-2);
+}
+
+/* A nota substitui a variação quando não há o que comparar — ou quando o que
+   o indicador tem a dizer não é um número. Neutra: não é medição. */
+.indicador__nota {
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+}
+
+/* ------------------------------------------------------------- segmentos */
+/* **Ponto, nunca texto.** A cor do segmento identifica; o rótulo ao lado
+   informa. A regra 1.1 do `docs/09` reserva a cor de segmento para ponto ou
+   barra, e a RNF22 proíbe informação transmitida só por cor — as duas apontam
+   para a mesma solução. */
+.segmento {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-6);
+  white-space: nowrap;
+}
+
+.segmento__ponto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--seg-estavel);
+}
+
+.segmento__ponto--top {
+  background: var(--seg-top);
+}
+.segmento__ponto--em_ascensao {
+  background: var(--seg-ascensao);
+}
+.segmento__ponto--em_risco {
+  background: var(--seg-risco);
+}
+.segmento__ponto--recem_chegado {
+  background: var(--seg-recem);
+}
+.segmento__ponto--prospeccao {
+  background: var(--seg-prosp);
+}
+.segmento__ponto--estavel {
+  background: var(--seg-estavel);
+}
+
+/* --------------------------------------------- distribuição por segmento */
+.distribuicao {
+  display: grid;
+  gap: var(--esp-12);
+  padding: var(--esp-16);
+  margin: 0;
+  list-style: none;
+}
+
+/* Rótulo à esquerda, barra no meio, número à direita. A coluna do rótulo é
+   fixa para as barras começarem todas na mesma linha de base: barra que começa
+   em lugar diferente não dá para comparar de relance, que é a única coisa que
+   este gráfico existe para permitir. */
+.distribuicao__linha {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr) 3.5rem;
+  align-items: center;
+  gap: var(--esp-10);
+}
+
+.distribuicao__rotulo {
+  font-size: var(--txt-13);
+  color: var(--ink-2);
+}
+
+/* O trilho é recessivo, um passo da superfície: ele mostra a escala sem
+   competir com o dado. */
+.distribuicao__trilho {
+  height: 14px;
+  border-radius: 2px;
+  background: var(--grade);
+  overflow: hidden;
+}
+
+/* Extremidade do dado arredondada, base reta: a barra cresce de uma linha de
+   base comum, e o canto redondo marca onde o valor termina. */
+.distribuicao__barra {
+  display: block;
+  height: 100%;
+  min-width: 3px; /* um parceiro só ainda precisa aparecer */
+  border-radius: 0 4px 4px 0;
+  background: var(--seg-estavel);
+  transition: width var(--transicao);
+}
+
+.distribuicao__barra--top {
+  background: var(--seg-top);
+}
+.distribuicao__barra--em_ascensao {
+  background: var(--seg-ascensao);
+}
+.distribuicao__barra--em_risco {
+  background: var(--seg-risco);
+}
+.distribuicao__barra--recem_chegado {
+  background: var(--seg-recem);
+}
+.distribuicao__barra--prospeccao {
+  background: var(--seg-prosp);
+}
+.distribuicao__barra--estavel {
+  background: var(--seg-estavel);
+}
+
+.distribuicao__valor {
+  font-size: var(--txt-13);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------- gráfico + distribuição */
+.painel-duplo {
+  display: grid;
+  gap: var(--esp-12);
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  /* Cada cartão com a altura do que tem dentro. Esticado, o da distribuição
+     ficava com 130 px de conteúdo em 353 px de cartão — medido — e mais da
+     metade dele era vazio com borda em volta, o que lê como algo faltando. */
+  align-items: start;
+}
+
+/* Abaixo disto a distribuição fica estreita demais para as barras dizerem
+   alguma coisa, e o gráfico perde o eixo. Empilhar é melhor que espremer. */
+@media (max-width: 1000px) {
+  .painel-duplo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  /* Num telefone, 9,5rem de rótulo não sobra largura para a barra. O rótulo
+     sobe, e a barra fica com a linha inteira. */
+  .distribuicao__linha {
+    grid-template-columns: minmax(0, 1fr) 3.5rem;
+  }
+
+  .distribuicao__rotulo {
+    grid-column: 1 / -1;
+  }
 }
 
 /* ---------------------------------------------------------------- tabela */

@@ -125,6 +125,18 @@ MEDICOES = (
         ),
     ),
     Medicao(
+        nome="segmentos",
+        caminho="/api/painel/segmentos",
+        proposito="Distribuição por segmento do período (H33).",
+        sem_seq_scan_em=("historico_segmento",),
+    ),
+    Medicao(
+        nome="mobilidade",
+        caminho="/api/painel/mobilidade",
+        proposito="Quem entrou e quem saiu do Top N (H35).",
+        sem_seq_scan_em=("metrica",),
+    ),
+    Medicao(
         nome="busca",
         caminho="/api/parceiros?busca=praca",
         proposito="Busca por nome, sem sensibilidade a acentuação (H37).",
@@ -203,6 +215,28 @@ def _rodar(comando: list[str], cwd: Path, url: str) -> None:
         raise SystemExit(f"Falhou: {' '.join(comando)}\n{r.stdout}\n{r.stderr}")
 
 
+def _segmentar() -> None:
+    """Classifica a base recém-gerada (H33).
+
+    O gerador grava métrica, não segmento. Sem este passo o painel mediria uma
+    base sem classificação: a distribuição viria vazia e o `EXPLAIN` da consulta
+    de segmentos explicaria uma tabela sem linhas — que é medir outra coisa.
+
+    Importado aqui dentro, e não no topo: `app` só pode ser importado depois de
+    `DATABASE_URL` apontar para o banco de medição.
+    """
+    from app.db import Sessao
+    from app.servico_segmentacao import reprocessar_tudo
+
+    s = Sessao()
+    try:
+        periodos = reprocessar_tudo(s)
+        s.commit()
+        print(f"  segmentação calculada em {periodos} período(s)")
+    finally:
+        s.close()
+
+
 def _analisar(url: str) -> None:
     from sqlalchemy import create_engine, text
 
@@ -240,6 +274,7 @@ def preparar(url: str, parceiros: int, periodos: int, semente: int) -> None:
     # teve tempo de rodar: o planejador estimaria uma linha onde há cinco mil e
     # escolheria planos que não são os de um banco em regime. Medir plano
     # escolhido a partir de estatística velha é medir outro sistema.
+    _segmentar()
     _analisar(url)
     print("  estatísticas atualizadas (ANALYZE)")
 

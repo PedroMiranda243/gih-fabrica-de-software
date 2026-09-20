@@ -68,6 +68,8 @@ PERMISSOES: dict[tuple[str, str], object] = {
     },
     ("GET", "/api/painel/ranking"): {Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/painel/series"): {Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/painel/segmentos"): {Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/painel/mobilidade"): {Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA},
     # UC14 — Auditar ações: só Administrador
     ("GET", "/api/auditoria"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/auditoria/acoes"): {Perfil.ADMINISTRADOR},
