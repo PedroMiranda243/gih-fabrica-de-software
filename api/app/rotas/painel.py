@@ -48,7 +48,7 @@ from app.modelos import (
     Segmento,
 )
 from app.ranking import posicoes
-from app.servico_segmentacao import PADRAO as LIMIARES
+from app.servico_segmentacao import limiares_vigentes
 
 router = APIRouter(
     prefix="/api/painel",
@@ -432,14 +432,15 @@ def mobilidade(
     um lado e não no outro. Comparar as duas listas em Python exigiria trazer os
     dois rankings inteiros para a aplicação.
     """
+    # O Top N vem da configuração, não de uma constante (RF21, H34): baixar o
+    # Top de 15 para 10 e ver o painel continuar contando quinze faria o
+    # administrador achar que a mudança não pegou.
+    n = limiares_vigentes(s).top_n
+
     alvo = _periodo_alvo(s, periodo_id)
     if alvo is None:
         return MobilidadeTopN(
-            periodo=None,
-            periodo_anterior=None,
-            top_n=LIMIARES.top_n,
-            entradas=[],
-            saidas=[],
+            periodo=None, periodo_anterior=None, top_n=n, entradas=[], saidas=[]
         )
 
     anterior = _periodo_anterior(s, alvo)
@@ -450,12 +451,11 @@ def mobilidade(
         return MobilidadeTopN(
             periodo=PeriodoResposta.model_validate(alvo),
             periodo_anterior=None,
-            top_n=LIMIARES.top_n,
+            top_n=n,
             entradas=[],
             saidas=[],
         )
 
-    n = LIMIARES.top_n
     atual = posicoes(alvo.id).subquery("atual")
     passado = posicoes(anterior.id).subquery("passado")
     parceiro_id = func.coalesce(atual.c.parceiro_id, passado.c.parceiro_id)

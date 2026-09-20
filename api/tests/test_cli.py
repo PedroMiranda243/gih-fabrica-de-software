@@ -277,3 +277,36 @@ def test_reprocessar_segmentos_aceita_um_periodo_so(criar_usuario, capsys):
 def test_reprocessar_segmentos_recusa_periodo_inexistente(capsys):
     assert cli.reprocessar_segmentos(["--periodo-id", "999999"]) == 1
     assert "Não existe" in capsys.readouterr().err
+
+
+# ========================================= configurar-segmentacao (H34)
+def test_configurar_segmentacao_sem_argumento_so_mostra(capsys):
+    assert cli.configurar_segmentacao([]) == 0
+
+    saida = capsys.readouterr().out
+    assert "top_n" in saida and "15" in saida
+
+
+def test_configurar_segmentacao_altera_o_limiar(capsys):
+    from app.modelos import ConfiguracaoSegmentacao
+
+    assert cli.configurar_segmentacao(["--top-n", "8"]) == 0
+
+    with Sessao() as s:
+        assert s.get(ConfiguracaoSegmentacao, 1).top_n == 8
+    saida = capsys.readouterr().out
+    # Dizer o valor antigo ao lado do novo é o que permite conferir que a
+    # mudança foi a pretendida, sem consultar o banco.
+    assert "(era 15)" in saida
+
+
+def test_configurar_segmentacao_recusa_valor_sem_sentido(capsys):
+    assert cli.configurar_segmentacao(["--top-n", "0"]) == 1
+    assert "Recusado" in capsys.readouterr().err
+
+
+def test_configurar_segmentacao_avisa_que_o_historico_fica_velho(capsys):
+    """Sem o aviso, quem muda o limiar acha que a base inteira acompanhou."""
+    cli.configurar_segmentacao(["--periodos-novato", "5"])
+
+    assert "mantêm a classificação antiga" in capsys.readouterr().out

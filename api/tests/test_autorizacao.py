@@ -70,6 +70,11 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("GET", "/api/painel/series"): {Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/painel/segmentos"): {Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/painel/mobilidade"): {Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA},
+    # RF21 — Configuração da segmentação: só Administrador. É a única rota que
+    # muda como todo o resto classifica; o Gestor decide campanha, o
+    # Administrador decide a régua.
+    ("GET", "/api/configuracao/segmentacao"): {Perfil.ADMINISTRADOR},
+    ("PUT", "/api/configuracao/segmentacao"): {Perfil.ADMINISTRADOR},
     # UC14 — Auditar ações: só Administrador
     ("GET", "/api/auditoria"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/auditoria/acoes"): {Perfil.ADMINISTRADOR},

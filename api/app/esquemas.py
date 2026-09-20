@@ -501,6 +501,43 @@ class MobilidadeTopN(BaseModel):
     saidas: list[MovimentoTopN]
 
 
+class LimiaresSegmentacao(BaseModel):
+    """Os limiares de RN01, configuráveis sem alterar código (RF21, H34).
+
+    Os mínimos não são preciosismo: Top 0 não tem ninguém dentro, e tendência de
+    0 períodos classificaria a rede inteira como em risco **e** em ascensão ao
+    mesmo tempo. O banco cobra os mesmos limites por `CHECK` — a validação aqui
+    existe para a mensagem ser útil, não para ser a única.
+    """
+
+    top_n: int = Field(ge=1, le=1000, description="Quantos parceiros formam o Top N.")
+    periodos_tendencia: int = Field(
+        ge=1,
+        le=52,
+        description="Períodos consecutivos de queda (ou de alta) para caracterizar tendência.",
+    )
+    periodos_novato: int = Field(
+        ge=1,
+        le=52,
+        description="Períodos de histórico abaixo dos quais o parceiro é recém-chegado.",
+    )
+
+
+class ConfiguracaoSegmentacaoResposta(LimiaresSegmentacao):
+    atualizado_em: datetime
+    atualizado_por: str | None = Field(
+        default=None, description="Quem mudou por último. Nulo quando são os valores de fábrica."
+    )
+    periodos_reprocessados: int = Field(
+        default=0,
+        description=(
+            "Quantos períodos foram reclassificados agora. Mudar um limiar só "
+            "reprocessa o período mais recente — os anteriores mantêm a "
+            "classificação antiga até o comando de terminal rodar."
+        ),
+    )
+
+
 class PontoSerie(BaseModel):
     """Um período na série (RF19, H32).
 

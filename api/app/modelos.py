@@ -326,6 +326,41 @@ class Metrica(Base):
     )
 
 
+class ConfiguracaoSegmentacao(Base):
+    """Os limiares da segmentacao, configuraveis sem alterar codigo (RF21, H34).
+
+    **Uma linha so**, garantida pelo `CHECK id = 1`. Configuracao global sem
+    essa trava vira duas linhas na primeira gravacao concorrente, e a regra
+    passa a depender de qual delas o `SELECT` devolver primeiro — um defeito que
+    nao quebra nada na hora e classifica errado para sempre.
+
+    Os valores nascem em `app.servico_segmentacao.Limiares`, que continua sendo
+    o padrao usado quando esta linha nao existe.
+    """
+
+    __tablename__ = "configuracao_segmentacao"
+
+    id: Mapped[int] = mapped_column(primary_key=True, default=1)
+    top_n: Mapped[int] = mapped_column(Integer)
+    periodos_tendencia: Mapped[int] = mapped_column(Integer)
+    periodos_novato: Mapped[int] = mapped_column(Integer)
+
+    atualizado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    atualizado_por_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id"))
+
+    __table_args__ = (
+        CheckConstraint("id = 1", name="ck_configuracao_linha_unica"),
+        # Zero ou negativo nao e "mais permissivo", e sem sentido: Top 0 nao
+        # tem ninguem dentro, e tendencia de 0 periodos classificaria a rede
+        # inteira como em risco e em ascensao ao mesmo tempo.
+        CheckConstraint("top_n >= 1", name="ck_configuracao_top_n"),
+        CheckConstraint("periodos_tendencia >= 1", name="ck_configuracao_tendencia"),
+        CheckConstraint("periodos_novato >= 1", name="ck_configuracao_novato"),
+    )
+
+
 class HistoricoSegmento(Base):
     """Segmento atribuído a um parceiro em um período.
 

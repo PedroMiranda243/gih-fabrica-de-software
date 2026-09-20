@@ -43,6 +43,11 @@ class Acao(enum.StrEnum):
     PARCEIRO_REATIVADO = "PARCEIRO_REATIVADO"
     PARCEIRO_EXCLUIDO = "PARCEIRO_EXCLUIDO"
     CATEGORIA_CRIADA = "CATEGORIA_CRIADA"
+    # Muda como o sistema inteiro classifica: quem mexe aqui reescreve o
+    # significado de "em risco" para a rede toda. A trilha guarda o valor
+    # anterior junto do novo — sem ele, "alterou a configuração" não responde
+    # à pergunta que a auditoria existe para responder.
+    SEGMENTACAO_CONFIGURADA = "SEGMENTACAO_CONFIGURADA"
     USUARIO_CRIADO = "USUARIO_CRIADO"
     USUARIO_EDITADO = "USUARIO_EDITADO"
     USUARIO_DESATIVADO = "USUARIO_DESATIVADO"
