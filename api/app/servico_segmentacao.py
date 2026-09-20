@@ -33,6 +33,7 @@ from sqlalchemy.dialects.postgresql import aggregate_order_by
 from sqlalchemy.orm import Session
 
 from app.modelos import (
+    ConfiguracaoSegmentacao,
     HistoricoSegmento,
     Metrica,
     Parceiro,
@@ -75,6 +76,26 @@ class Limiares:
 
 
 PADRAO = Limiares()
+
+
+def limiares_vigentes(s: Session) -> Limiares:
+    """Os limiares configurados (RF21, H34), ou o padrão se a linha não existir.
+
+    A ausência da linha não é erro: um banco migrado a partir de uma versão
+    anterior ainda não a tem, e recusar a segmentação por causa disso pararia o
+    painel inteiro por uma configuração que tem padrão conhecido.
+
+    Quem chama em laço — `reprocessar_tudo` — lê **uma vez** e passa adiante.
+    Resolver por período faria uma consulta por período para ler a mesma linha.
+    """
+    configuracao = s.get(ConfiguracaoSegmentacao, 1)
+    if configuracao is None:
+        return PADRAO
+    return Limiares(
+        top_n=configuracao.top_n,
+        periodos_tendencia=configuracao.periodos_tendencia,
+        periodos_novato=configuracao.periodos_novato,
+    )
 
 
 # ------------------------------------------------------------- a regra, pura
@@ -201,7 +222,7 @@ def _consulta(periodo: Periodo, limiares: Limiares) -> Select:
 
 # ----------------------------------------------------------- o reprocessamento
 def reprocessar(
-    s: Session, periodo_id: int, limiares: Limiares = PADRAO
+    s: Session, periodo_id: int, limiares: Limiares | None = None
 ) -> Counter[Segmento]:
     """Recalcula e grava o segmento de todos os parceiros de um período.
 
@@ -213,6 +234,7 @@ def reprocessar(
     Devolve a distribuição por segmento, que é o que o comando de terminal
     imprime e o que o teste confere.
     """
+    limiares = limiares or limiares_vigentes(s)
     periodo = s.get(Periodo, periodo_id)
     if periodo is None:
         raise ValueError(f"Período {periodo_id} não existe.")
@@ -241,7 +263,7 @@ def reprocessar(
     return distribuicao
 
 
-def reprocessar_desde(s: Session, periodo_id: int, limiares: Limiares = PADRAO) -> int:
+def reprocessar_desde(s: Session, periodo_id: int, limiares: Limiares | None = None) -> int:
     """Reprocessa o período e **todos os posteriores**, devolvendo quantos foram.
 
     Importar um período antigo muda o histórico de todos os que vieram depois:
@@ -249,6 +271,7 @@ def reprocessar_desde(s: Session, periodo_id: int, limiares: Limiares = PADRAO) 
     seguida. Recalcular só o período importado deixaria o painel mostrando
     classificação de um histórico que não existe mais — e, pior, sem avisar.
     """
+    limiares = limiares or limiares_vigentes(s)
     base = s.get(Periodo, periodo_id)
     if base is None:
         raise ValueError(f"Período {periodo_id} não existe.")
@@ -263,8 +286,9 @@ def reprocessar_desde(s: Session, periodo_id: int, limiares: Limiares = PADRAO) 
     return len(posteriores)
 
 
-def reprocessar_tudo(s: Session, limiares: Limiares = PADRAO) -> int:
+def reprocessar_tudo(s: Session, limiares: Limiares | None = None) -> int:
     """Reprocessa a base inteira. É o que o comando de terminal usa."""
+    limiares = limiares or limiares_vigentes(s)
     periodos = s.scalars(select(Periodo.id).order_by(Periodo.data_inicio)).all()
     for periodo_id in periodos:
         reprocessar(s, periodo_id, limiares)

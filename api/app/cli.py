@@ -27,10 +27,15 @@ from app import auditoria, sessoes
 from app.auditoria import Acao
 from app.config import config
 from app.db import Sessao
-from app.esquemas import NovoUsuario
-from app.modelos import Perfil, Periodo, Usuario
+from app.esquemas import LimiaresSegmentacao, NovoUsuario
+from app.modelos import ConfiguracaoSegmentacao, Perfil, Periodo, Usuario
 from app.seguranca import SenhaFraca, gerar_hash, validar_forca
-from app.servico_segmentacao import reprocessar, reprocessar_tudo
+from app.servico_segmentacao import (
+    Limiares,
+    limiares_vigentes,
+    reprocessar,
+    reprocessar_tudo,
+)
 
 
 def criar_admin() -> int:
@@ -254,6 +259,106 @@ def reprocessar_segmentos(argumentos: list[str]) -> int:
         s.close()
 
 
+def configurar_segmentacao(argumentos: list[str]) -> int:
+    """Lê ou altera os limiares da segmentação pelo terminal (RF21, H34).
+
+    Existe porque **não há tela de administração**: sem ele, mudar um limiar
+    exigiria montar a requisição à mão contra a API. Sem argumento nenhum, só
+    mostra o que está em vigor.
+
+    Valida pelo **mesmo** esquema da API, `LimiaresSegmentacao`, em vez de
+    repetir os limites aqui, onde eles divergiriam na primeira mudança.
+    """
+    p = argparse.ArgumentParser(prog="python -m app.cli configurar-segmentacao")
+    p.add_argument("--top-n", type=int, help="Quantos parceiros formam o Top N.")
+    p.add_argument("--periodos-tendencia", type=int, help="Períodos consecutivos de queda ou alta.")
+    p.add_argument("--periodos-novato", type=int, help="Abaixo disto, o parceiro é recém-chegado.")
+    p.add_argument(
+        "--reprocessar",
+        action="store_true",
+        help="Reclassifica a base inteira depois de alterar. Sem isto, só o painel mais recente"
+        " muda na próxima importação.",
+    )
+    a = p.parse_args(argumentos)
+
+    s = Sessao()
+    try:
+        vigentes = limiares_vigentes(s)
+        mudancas = {
+            campo: valor
+            for campo, valor in (
+                ("top_n", a.top_n),
+                ("periodos_tendencia", a.periodos_tendencia),
+                ("periodos_novato", a.periodos_novato),
+            )
+            if valor is not None
+        }
+
+        if not mudancas:
+            print("Limiares em vigor:")
+            print(f"  top_n                {vigentes.top_n}")
+            print(f"  periodos_tendencia   {vigentes.periodos_tendencia}")
+            print(f"  periodos_novato      {vigentes.periodos_novato}")
+            return 0
+
+        try:
+            novos = LimiaresSegmentacao(
+                top_n=mudancas.get("top_n", vigentes.top_n),
+                periodos_tendencia=mudancas.get(
+                    "periodos_tendencia", vigentes.periodos_tendencia
+                ),
+                periodos_novato=mudancas.get("periodos_novato", vigentes.periodos_novato),
+            )
+        except ValueError as e:
+            print(f"Recusado: {e}", file=sys.stderr)
+            return 1
+
+        configuracao = s.get(ConfiguracaoSegmentacao, 1)
+        if configuracao is None:
+            configuracao = ConfiguracaoSegmentacao(id=1, **novos.model_dump())
+            s.add(configuracao)
+        else:
+            for campo, valor in novos.model_dump().items():
+                setattr(configuracao, campo, valor)
+        s.flush()
+
+        periodos = 0
+        if a.reprocessar:
+            periodos = reprocessar_tudo(s, Limiares(**novos.model_dump()))
+        s.commit()
+    finally:
+        s.close()
+
+    auditoria.registrar(
+        Acao.SEGMENTACAO_CONFIGURADA,
+        detalhes={
+            "anterior": {
+                "top_n": vigentes.top_n,
+                "periodos_tendencia": vigentes.periodos_tendencia,
+                "periodos_novato": vigentes.periodos_novato,
+            },
+            "novo": novos.model_dump(),
+            "via": "cli",
+            "periodos": periodos,
+        },
+        origem="cli",
+    )
+
+    print("Limiares atualizados:")
+    for campo, valor in novos.model_dump().items():
+        anterior = getattr(vigentes, campo)
+        marca = "" if anterior == valor else f"  (era {anterior})"
+        print(f"  {campo:<20} {valor}{marca}")
+    if a.reprocessar:
+        print(f"Segmentação recalculada em {periodos} período(s).")
+    else:
+        print(
+            "Os períodos já classificados mantêm a classificação antiga. "
+            "Use --reprocessar, ou o comando reprocessar-segmentos."
+        )
+    return 0
+
+
 # Cada comando recebe o resto da linha de comando. `criar-admin` não tem
 # argumentos e é chamado pelo entrypoint a cada subida.
 COMANDOS = {
@@ -261,6 +366,7 @@ COMANDOS = {
     "criar-usuario": criar_usuario,
     "redefinir-senha": redefinir_senha,
     "reprocessar-segmentos": reprocessar_segmentos,
+    "configurar-segmentacao": configurar_segmentacao,
 }
 
 

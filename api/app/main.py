@@ -18,6 +18,7 @@ from app.rotas import (
     auditoria,
     autenticacao,
     categorias,
+    configuracao,
     importacoes,
     painel,
     parceiros,
@@ -43,6 +44,7 @@ app.include_router(parceiros.router)
 app.include_router(categorias.router)
 app.include_router(importacoes.router)
 app.include_router(painel.router)
+app.include_router(configuracao.router)
 app.include_router(auditoria.router)
 
 
