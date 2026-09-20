@@ -16,7 +16,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.config import config
-from app.modelos import OrigemCategoria, OrigemImportacao, Perfil, StatusComercial
+from app.modelos import OrigemCategoria, OrigemImportacao, Perfil, Segmento, StatusComercial
 
 # Senha longa demais é trabalho de hash caro sem ganho nenhum — o Argon2 leva o
 # tempo que for pedido dele. O teto é proteção de recurso (RNF15).
@@ -391,6 +391,28 @@ class IndicadoresPainel(BaseModel):
     ticket_medio: Decimal | None
     parceiros_ativos: int
     variacao: VariacaoIndicadores | None
+    em_risco: ContagemSegmento | None = Field(
+        default=None,
+        description=(
+            "Nulo quando o período não tem segmentação calculada. Zero seria "
+            "mentira: diria 'ninguém em risco' onde o certo é 'ainda não sei'."
+        ),
+    )
+
+
+class ContagemSegmento(BaseModel):
+    """Quantos parceiros num segmento, e o movimento contra o período anterior.
+
+    O delta é **absoluto**, e não percentual: "6 a mais" responde a pergunta do
+    gestor melhor que "+19%", e nesta contagem o percentual esconde a escala —
+    de 1 para 2 também é +100%.
+    """
+
+    total: int
+    delta: int | None = Field(
+        default=None,
+        description="Nulo quando não há período anterior segmentado para comparar.",
+    )
 
 
 class LinhaRanking(BaseModel):
@@ -399,6 +421,13 @@ class LinhaRanking(BaseModel):
     parceiro_id: int
     nome: str
     categoria: str | None
+    segmento: Segmento | None = Field(
+        default=None,
+        description=(
+            "Nulo quando a segmentação ainda não foi calculada para o período. "
+            "É diferente de ESTAVEL: um diz 'não sei', o outro diz 'sem tendência'."
+        ),
+    )
     posicao: int
     posicao_anterior: int | None
     faturamento: Decimal
@@ -420,6 +449,56 @@ class PaginaRanking(BaseModel):
     total: int
     pagina: int
     tamanho: int
+
+
+class FatiaSegmento(BaseModel):
+    segmento: Segmento
+    total: int
+
+
+class DistribuicaoSegmentos(BaseModel):
+    """Quantos parceiros em cada segmento no período (RF20, H33).
+
+    `itens` vem **vazio** quando o período não tem segmentação calculada, e não
+    com seis zeros: seis zeros desenham um gráfico que afirma uma distribuição
+    plana que ninguém mediu.
+    """
+
+    periodo: PeriodoResposta | None
+    total: int
+    itens: list[FatiaSegmento]
+
+
+class MovimentoTopN(BaseModel):
+    """Um parceiro que entrou ou saiu do Top N."""
+
+    parceiro_id: int
+    nome: str
+    posicao: int | None = Field(
+        default=None, description="Nula quando o parceiro não faturou no período."
+    )
+    posicao_anterior: int | None = Field(
+        default=None, description="Nula quando não havia métrica no período anterior."
+    )
+
+
+class MobilidadeTopN(BaseModel):
+    """Quem entrou e quem saiu do Top N entre dois períodos (RF22, H35, RN02).
+
+    **Derivada do ranking, nunca do segmento armazenado.** Como Em Risco vence
+    Top na precedência de RN01, um parceiro entre os N maiores mas em queda fica
+    gravado como EM_RISCO — lê-lo de lá faria o painel anunciar uma saída que
+    não aconteceu.
+
+    Sem período anterior, as duas listas vêm vazias: ninguém entrou nem saiu de
+    lugar nenhum quando não há de onde sair.
+    """
+
+    periodo: PeriodoResposta | None
+    periodo_anterior: PeriodoResposta | None
+    top_n: int
+    entradas: list[MovimentoTopN]
+    saidas: list[MovimentoTopN]
 
 
 class PontoSerie(BaseModel):

@@ -20,21 +20,35 @@ from decimal import ROUND_HALF_UP, Decimal
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.dependencias import Banco, exigir
 from app.esquemas import (
+    ContagemSegmento,
+    DistribuicaoSegmentos,
+    FatiaSegmento,
     IndicadoresPainel,
     LinhaRanking,
+    MobilidadeTopN,
+    MovimentoTopN,
     PaginaRanking,
     PeriodoResposta,
     PontoSerie,
     SerieHistorica,
     VariacaoIndicadores,
 )
-from app.modelos import Categoria, Metrica, Parceiro, Perfil, Periodo
+from app.modelos import (
+    Categoria,
+    HistoricoSegmento,
+    Metrica,
+    Parceiro,
+    Perfil,
+    Periodo,
+    Segmento,
+)
 from app.ranking import posicoes
+from app.servico_segmentacao import PADRAO as LIMIARES
 
 router = APIRouter(
     prefix="/api/painel",
@@ -126,6 +140,23 @@ def _totais(s: Session, periodo_id: int) -> tuple[Decimal, int, int]:
     return Decimal(faturamento), int(pedidos), int(parceiros)
 
 
+def _contar_segmento(s: Session, periodo_id: int, segmento: Segmento) -> int | None:
+    """Quantos parceiros naquele segmento — ou `None` se o período não tem segmentação.
+
+    A distinção não é preciosismo. Zero afirma "ninguém em risco"; `None` diz
+    "ainda não calculei". Num painel que existe para apontar risco, confundir os
+    dois é a forma cara de errar: a tela fica tranquila justamente quando não
+    sabe de nada.
+    """
+    total, no_segmento = s.execute(
+        select(
+            func.count(),
+            func.count().filter(HistoricoSegmento.segmento == segmento),
+        ).where(HistoricoSegmento.periodo_id == periodo_id)
+    ).one()
+    return int(no_segmento) if total else None
+
+
 # ------------------------------------------------------- 1. indicadores (H30)
 @router.get("/indicadores", response_model=IndicadoresPainel)
 def indicadores(
@@ -149,6 +180,17 @@ def indicadores(
     faturamento, pedidos, parceiros = _totais(s, alvo.id)
     anterior = _periodo_anterior(s, alvo)
 
+    em_risco = None
+    risco_agora = _contar_segmento(s, alvo.id, Segmento.EM_RISCO)
+    if risco_agora is not None:
+        risco_antes = (
+            _contar_segmento(s, anterior.id, Segmento.EM_RISCO) if anterior is not None else None
+        )
+        em_risco = ContagemSegmento(
+            total=risco_agora,
+            delta=None if risco_antes is None else risco_agora - risco_antes,
+        )
+
     variacao = None
     if anterior is not None:
         fat_ant, ped_ant, par_ant = _totais(s, anterior.id)
@@ -168,6 +210,7 @@ def indicadores(
         ticket_medio=_ticket(faturamento, pedidos),
         parceiros_ativos=parceiros,
         variacao=variacao,
+        em_risco=em_risco,
     )
 
 
@@ -202,9 +245,19 @@ def ranking(
     total = s.scalar(select(func.count()).select_from(atual)) or 0
 
     linhas = s.execute(
-        select(atual, Parceiro.nome, Categoria.nome)
+        select(atual, Parceiro.nome, Categoria.nome, HistoricoSegmento.segmento)
         .join(Parceiro, Parceiro.id == atual.c.parceiro_id)
         .outerjoin(Categoria, Categoria.id == Parceiro.categoria_id)
+        # `outerjoin`, e não `join`: período sem segmentação calculada ainda
+        # precisa devolver o ranking. Faltar a coluna é aceitável; sumir com as
+        # linhas do painel porque a classificação não rodou, não.
+        .outerjoin(
+            HistoricoSegmento,
+            and_(
+                HistoricoSegmento.parceiro_id == atual.c.parceiro_id,
+                HistoricoSegmento.periodo_id == alvo.id,
+            ),
+        )
         .order_by(atual.c.posicao)
         .offset((pagina - 1) * tamanho)
         .limit(tamanho)
@@ -227,13 +280,14 @@ def ranking(
     for linha in linhas:
         # Nome e categoria vêm posicionais porque as duas colunas se chamam
         # `nome`; desempacotar aqui deixa o resto do laço legível.
-        nome, categoria = linha[-2], linha[-1]
+        nome, categoria, segmento = linha[-3], linha[-2], linha[-1]
         passada = antes.get(linha.parceiro_id)
         itens.append(
             LinhaRanking(
                 parceiro_id=linha.parceiro_id,
                 nome=nome,
                 categoria=categoria,
+                segmento=segmento,
                 posicao=linha.posicao,
                 posicao_anterior=passada[0] if passada else None,
                 faturamento=linha.faturamento,
@@ -321,4 +375,133 @@ def series(
         parceiro_id=parceiro.id if parceiro else None,
         parceiro_nome=parceiro.nome if parceiro else None,
         pontos=pontos,
+    )
+
+
+# --------------------------------------------- 4. distribuição por segmento (H33)
+@router.get("/segmentos", response_model=DistribuicaoSegmentos)
+def segmentos(
+    s: Banco,
+    periodo_id: Annotated[int | None, Query(description="Padrão: o período mais recente.")] = None,
+) -> DistribuicaoSegmentos:
+    """Quantos parceiros em cada segmento no período (RF20, H33).
+
+    Devolve **só os segmentos com parceiros**, ordenados do maior para o menor.
+    Preencher os seis com zero desenharia barras vazias que não dizem nada e
+    roubariam espaço das que dizem.
+
+    Período sem segmentação calculada devolve a lista vazia, e não seis zeros:
+    seis zeros afirmam uma distribuição plana que ninguém mediu.
+    """
+    alvo = _periodo_alvo(s, periodo_id)
+    if alvo is None:
+        return DistribuicaoSegmentos(periodo=None, total=0, itens=[])
+
+    linhas = s.execute(
+        select(HistoricoSegmento.segmento, func.count())
+        .where(HistoricoSegmento.periodo_id == alvo.id)
+        .group_by(HistoricoSegmento.segmento)
+        # O desempate por nome do segmento não é enfeite: sem ele, dois
+        # segmentos com a mesma contagem trocariam de lugar entre recargas, e o
+        # gráfico pareceria mudar sem nada ter mudado.
+        .order_by(func.count().desc(), HistoricoSegmento.segmento)
+    ).all()
+
+    return DistribuicaoSegmentos(
+        periodo=PeriodoResposta.model_validate(alvo),
+        total=sum(quantos for _, quantos in linhas),
+        itens=[FatiaSegmento(segmento=segmento, total=quantos) for segmento, quantos in linhas],
+    )
+
+
+# ------------------------------------------------ 5. mobilidade do Top N (H35)
+@router.get("/mobilidade", response_model=MobilidadeTopN)
+def mobilidade(
+    s: Banco,
+    periodo_id: Annotated[int | None, Query(description="Padrão: o período mais recente.")] = None,
+) -> MobilidadeTopN:
+    """Quem entrou e quem saiu do Top N entre dois períodos (RF22, H35).
+
+    **RN02: isto lê o ranking, nunca o segmento armazenado.** Como Em Risco
+    vence Top na precedência de RN01, um parceiro entre os N maiores mas em
+    queda fica gravado como EM_RISCO. Derivar a mobilidade dali faria o painel
+    anunciar que ele saiu do Top N enquanto continua lá — e o erro passaria
+    despercebido, porque a tela continuaria plausível.
+
+    Uma consulta só, com junção externa completa dos dois rankings: quem está em
+    um lado e não no outro. Comparar as duas listas em Python exigiria trazer os
+    dois rankings inteiros para a aplicação.
+    """
+    alvo = _periodo_alvo(s, periodo_id)
+    if alvo is None:
+        return MobilidadeTopN(
+            periodo=None,
+            periodo_anterior=None,
+            top_n=LIMIARES.top_n,
+            entradas=[],
+            saidas=[],
+        )
+
+    anterior = _periodo_anterior(s, alvo)
+    if anterior is None:
+        # UC05, A2 — período único. Ninguém entrou nem saiu de lugar nenhum
+        # quando não há de onde sair; listar o Top N inteiro como "entradas"
+        # seria inventar movimento.
+        return MobilidadeTopN(
+            periodo=PeriodoResposta.model_validate(alvo),
+            periodo_anterior=None,
+            top_n=LIMIARES.top_n,
+            entradas=[],
+            saidas=[],
+        )
+
+    n = LIMIARES.top_n
+    atual = posicoes(alvo.id).subquery("atual")
+    passado = posicoes(anterior.id).subquery("passado")
+    parceiro_id = func.coalesce(atual.c.parceiro_id, passado.c.parceiro_id)
+
+    entrou = and_(
+        atual.c.posicao <= n,
+        or_(passado.c.posicao.is_(None), passado.c.posicao > n),
+    )
+    saiu = and_(
+        passado.c.posicao <= n,
+        or_(atual.c.posicao.is_(None), atual.c.posicao > n),
+    )
+
+    linhas = s.execute(
+        select(
+            parceiro_id.label("parceiro_id"),
+            Parceiro.nome,
+            atual.c.posicao.label("posicao"),
+            passado.c.posicao.label("posicao_anterior"),
+        )
+        .select_from(
+            atual.outerjoin(
+                passado, atual.c.parceiro_id == passado.c.parceiro_id, full=True
+            ).join(Parceiro, Parceiro.id == parceiro_id)
+        )
+        .where(or_(entrou, saiu))
+        # Quem entrou mais alto primeiro; entre as saídas, quem ocupava a
+        # posição mais alta — é a ordem em que a notícia importa.
+        .order_by(func.coalesce(atual.c.posicao, passado.c.posicao))
+    ).all()
+
+    entradas, saidas = [], []
+    for linha in linhas:
+        movimento = MovimentoTopN(
+            parceiro_id=linha.parceiro_id,
+            nome=linha.nome,
+            posicao=linha.posicao,
+            posicao_anterior=linha.posicao_anterior,
+        )
+        destino = entradas if linha.posicao is not None and linha.posicao <= n else saidas
+        destino.append(movimento)
+
+    return MobilidadeTopN(
+        periodo=PeriodoResposta.model_validate(alvo),
+        periodo_anterior=PeriodoResposta.model_validate(anterior),
+        top_n=n,
+        entradas=entradas,
+        saidas=saidas,
     )
