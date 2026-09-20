@@ -85,3 +85,34 @@ export function comoPeriodo(periodo) {
   if (!periodo) return TRACO;
   return `${comoData(periodo.data_inicio)} a ${comoData(periodo.data_fim)}`;
 }
+
+/**
+ * O rótulo de cada segmento, em texto.
+ *
+ * O rótulo é **neutro** de propósito: a cor do segmento vai no ponto ou na
+ * barra ao lado, nunca no texto (`docs/09`, regra 1.1). "Top 15" repetido doze
+ * vezes em cor é ruído puro — e cor como único canal reprovaria a RNF22.
+ */
+export const ROTULO_SEGMENTO = {
+  TOP: "Top 15",
+  EM_ASCENSAO: "Em ascensão",
+  EM_RISCO: "Em risco",
+  RECEM_CHEGADO: "Recém-chegado",
+  PROSPECCAO: "Prospecção",
+  ESTAVEL: "Estável",
+};
+
+/**
+ * Uma diferença de contagem, em palavras: "6 a mais", "2 a menos", "igual".
+ *
+ * Contagem pede diferença absoluta, e não percentual: de 1 para 2 também é
+ * +100%, e o gestor que lê "+100% em risco" entende outra coisa do que
+ * aconteceu.
+ */
+export function comoDelta(valor) {
+  if (valor === null || valor === undefined) return TRACO;
+  const numero = Number(valor);
+  if (Number.isNaN(numero)) return TRACO;
+  if (numero === 0) return "igual ao anterior";
+  return `${Math.abs(numero)} a ${numero > 0 ? "mais" : "menos"}`;
+}

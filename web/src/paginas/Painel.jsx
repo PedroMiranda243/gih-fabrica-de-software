@@ -13,10 +13,11 @@ import { useEffect, useState } from "react";
 import { api } from "../api/cliente";
 import { Esqueleto } from "../componentes/Carregando";
 import EstadoVazio from "../componentes/EstadoVazio";
+import DistribuicaoSegmentos from "../componentes/DistribuicaoSegmentos";
 import Indicador from "../componentes/Indicador";
 import SerieHistorica from "../componentes/SerieHistorica";
 import TabelaRanking from "../componentes/TabelaRanking";
-import { comoDinheiro, comoInteiro, comoPeriodo } from "../formato";
+import { comoDinheiro, comoInteiro, comoPeriodo, TRACO } from "../formato";
 
 export default function Painel() {
   const [dados, setDados] = useState(null);
@@ -29,9 +30,11 @@ export default function Painel() {
       api.get("/api/painel/indicadores"),
       api.get("/api/painel/ranking", { tamanho: 25 }),
       api.get("/api/painel/series"),
+      api.get("/api/painel/segmentos"),
+      api.get("/api/painel/mobilidade"),
     ])
-      .then(([indicadores, ranking, serie]) => {
-        if (vivo) setDados({ indicadores, ranking, serie });
+      .then(([indicadores, ranking, serie, segmentos, mobilidade]) => {
+        if (vivo) setDados({ indicadores, ranking, serie, segmentos, mobilidade });
       })
       .catch((e) => {
         if (vivo) setErro(e);
@@ -56,7 +59,7 @@ export default function Painel() {
 
   if (!dados) return <PainelCarregando />;
 
-  const { indicadores, ranking, serie } = dados;
+  const { indicadores, ranking, serie, segmentos, mobilidade } = dados;
 
   /* UC05, A1 — base vazia. Não é erro: é quem ainda não importou nada. */
   if (!indicadores.periodo) {
@@ -107,23 +110,65 @@ export default function Painel() {
           valor={comoInteiro(indicadores.parceiros_ativos)}
           variacao={indicadores.variacao?.parceiros_ativos}
         />
+        {/* Mais parceiros em risco é a única notícia ruim da fileira: a seta
+            continua dizendo que o número subiu, mas a cor deixa de ser a de
+            crescimento. Sem `subirEBom={false}`, o painel pintaria de verde
+            justamente o indicador que pede ação. */}
+        <Indicador
+          rotulo="Em risco"
+          valor={indicadores.em_risco ? comoInteiro(indicadores.em_risco.total) : TRACO}
+          variacao={indicadores.em_risco?.delta}
+          absoluta
+          subirEBom={false}
+          nota={
+            indicadores.em_risco
+              ? undefined
+              : "Segmentação ainda não calculada para este período"
+          }
+        />
+        <Indicador
+          rotulo={`Mobilidade Top ${mobilidade.top_n}`}
+          valor={comoInteiro(mobilidade.entradas.length)}
+          nota={
+            mobilidade.periodo_anterior
+              ? `entraram · ${mobilidade.saidas.length} saíram`
+              : "exige um período anterior para comparar"
+          }
+        />
       </section>
 
-      <section className="painel" aria-labelledby="titulo-serie">
-        <div className="painel__cabecalho">
-          <h2 className="painel__titulo" id="titulo-serie">
-            Faturamento da rede
-          </h2>
-          <span className="painel__nota">
-            {serie.pontos.length} {serie.pontos.length === 1 ? "período" : "períodos"}
-          </span>
-        </div>
-        {serie.pontos.length ? (
-          <SerieHistorica pontos={serie.pontos} />
-        ) : (
-          <EstadoVazio titulo="Sem série para mostrar" texto="Nenhum período importado ainda." />
-        )}
-      </section>
+      {/* O gráfico ocupa o dobro da distribuição: a série tem doze pontos e um
+          eixo, a distribuição tem meia dúzia de barras. Abaixo de 1000 px as
+          duas empilham — ver `componentes.css`. */}
+      <div className="painel-duplo">
+        <section className="painel" aria-labelledby="titulo-serie">
+          <div className="painel__cabecalho">
+            <h2 className="painel__titulo" id="titulo-serie">
+              Faturamento da rede
+            </h2>
+            <span className="painel__nota">
+              {serie.pontos.length} {serie.pontos.length === 1 ? "período" : "períodos"}
+            </span>
+          </div>
+          {serie.pontos.length ? (
+            <SerieHistorica pontos={serie.pontos} />
+          ) : (
+            <EstadoVazio titulo="Sem série para mostrar" texto="Nenhum período importado ainda." />
+          )}
+        </section>
+
+        <section className="painel" aria-labelledby="titulo-segmentos">
+          <div className="painel__cabecalho">
+            <h2 className="painel__titulo" id="titulo-segmentos">
+              Distribuição por segmento
+            </h2>
+            <span className="painel__nota">
+              {segmentos.total ? `${comoInteiro(segmentos.total)} parceiros` : ""}
+            </span>
+          </div>
+          <DistribuicaoSegmentos itens={segmentos.itens} total={segmentos.total} />
+        </section>
+      </div>
 
       <section className="painel" aria-labelledby="titulo-ranking">
         <div className="painel__cabecalho">
