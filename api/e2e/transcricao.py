@@ -179,7 +179,7 @@ def transcrever_crud(url: str, marca: str, analista: str) -> None:
             "periodo_fim": (inicio + timedelta(days=6)).isoformat(),
             "texto": f"Parceiro;Faturamento;Pedidos\nComércio {marca} hist;12500,40;312\n",
         })
-        comhist = c.get(f"/api/parceiros?busca={marca} hist").json()
+        comhist = c.get(f"/api/parceiros?busca={marca} hist").json()["itens"]
         if comhist:
             troca(c, "DELETE", f'/api/parceiros/{comhist[0]["id"]}')
             print("\n  Apagar um parceiro com faturamento importado falsearia as séries dos")
