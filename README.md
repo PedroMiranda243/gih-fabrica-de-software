@@ -237,7 +237,8 @@ limpo o banco errado.
 > A porta do Postgres no host é **5433** por padrão (`POSTGRES_PORT` no `.env`), porque a 5432 costuma já
 > estar ocupada por outro Postgres na máquina.
 
-A interface (`web/`) entra na Sprint 3.
+A interface (`web/`) sobe junto: `docker compose up` entrega banco, API e aplicação em
+`http://localhost:5173`.
 
 ### Dados de demonstração
 
@@ -262,6 +263,18 @@ benchmark do otimizador, que precisa de escala para evidenciar o ganho de parale
 
 O `resetar_banco.py` reverte as migrações, reaplica e repovoa — é o ciclo que se usa dezenas de vezes por
 dia durante o desenvolvimento.
+
+### Medição de desempenho
+
+```bash
+api/.venv/Scripts/python scripts/medir_painel.py
+```
+
+Mede o tempo de resposta do painel com 5.000 parceiros (H40, RNF03) e confere por `EXPLAIN` que as
+consultas têm índice que as atenda. Cria o banco `gih_medicao` na mesma instância e gera a massa lá — **o
+banco de trabalho não é tocado**, então dá para medir com a aplicação aberta em outra janela.
+
+O resultado é gravado em [`docs/medicoes/`](docs/medicoes/), com o comando e a semente que o produzem.
 
 ---
 
