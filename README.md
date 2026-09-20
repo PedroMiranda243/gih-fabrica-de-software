@@ -172,6 +172,29 @@ docker compose exec api python -m app.cli redefinir-senha --login seu.login
 
 A redefinição encerra as sessões abertas daquele usuário, como a troca pela tela faz.
 
+### Administração pelo terminal
+
+**Não há tela de administração**, e a lacuna é declarada: usuários e configuração vivem na API e nos
+comandos abaixo. A tela não está no protótipo aprovado (H08).
+
+Os limiares da segmentação (RF21) — tamanho do Top N, períodos de queda para caracterizar risco e
+períodos de histórico para o parceiro ainda ser recém-chegado:
+
+```
+docker compose exec api python -m app.cli configurar-segmentacao
+docker compose exec api python -m app.cli configurar-segmentacao --top-n 20 --reprocessar
+```
+
+Sem argumento, mostra o que está em vigor. Alterar reclassifica **só o período mais recente**; os
+anteriores mantêm a classificação antiga até `--reprocessar` ou:
+
+```
+docker compose exec api python -m app.cli reprocessar-segmentos
+```
+
+Esse último é também o que classifica uma base carregada antes da segmentação existir — sem ele, o painel
+mostra a distribuição vazia sem dizer por quê.
+
 #### O administrador inicial
 
 **Não existe senha padrão.** Este repositório é público, e um `admin/admin` no código seria porta aberta
