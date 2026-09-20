@@ -103,6 +103,23 @@ jobs:
           DATABASE_URL: postgresql+psycopg://gih:gih@localhost:5432/gih
         run: pytest --cov=app --cov-report=term-missing
 
+      # O núcleo de regras tem um piso próprio, e reprova o PR que o furar
+      # (RNF24, história H69). Cobertura que não é cobrada decai: o número
+      # medido hoje é 99%, e o piso fica no que o requisito exige, 70% — largo
+      # de propósito, porque piso colado no valor atual reprova por qualquer
+      # refatoração honesta.
+      #
+      # **Relê os dados do passo anterior**, em vez de rodar a suíte de novo.
+      # A primeira versão rodava, e o trabalho da API foi de 1m30 para 3m12 —
+      # o dobro de CI para conferir um número que já estava medido.
+      - name: Cobertura do núcleo de regras
+        if: steps.existe.outputs.pronto == 'sim'
+        working-directory: api
+        run: >-
+          coverage report
+          --include=app/servico_segmentacao.py,app/ranking.py,app/rotas/painel.py,app/calculos.py
+          --fail-under=70
+
       - name: Módulo ainda não criado
         if: steps.existe.outputs.pronto == 'nao'
         run: echo "Diretório api/ ainda não existe — previsto para a Sprint 3 (história H09)."

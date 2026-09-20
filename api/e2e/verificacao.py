@@ -32,6 +32,8 @@ A senha do administrador sai no log do contêiner na primeira subida:
 from __future__ import annotations
 
 import argparse
+import csv
+import io
 import os
 import secrets
 import sys
@@ -305,7 +307,7 @@ def item_crud(r: Relatorio, url: str, criados: dict[str, str], marca: str) -> No
 
         busca = c.get("/api/parceiros", params={"busca": marca})
         r.checar("consultar pela busca por nome",
-                 busca.status_code == 200 and any(p["id"] == alvo for p in busca.json()))
+                 busca.status_code == 200 and any(p["id"] == alvo for p in busca.json()["itens"]))
 
         categoria = c.post("/api/categorias", json={"nome": f"Categoria {marca}"})
         r.checar("cadastrar categoria", categoria.status_code == 201)
@@ -339,7 +341,9 @@ def item_crud(r: Relatorio, url: str, criados: dict[str, str], marca: str) -> No
             json={**periodo_de(marca, 0), "texto": relatorio_de(marca, " hist")},
         )
         if importacao.status_code == 201:
-            com_historico = c.get("/api/parceiros", params={"busca": f"{marca} hist"}).json()
+            com_historico = c.get(
+                "/api/parceiros", params={"busca": f"{marca} hist"}
+            ).json()["itens"]
             if com_historico:
                 recusa = c.delete(f'/api/parceiros/{com_historico[0]["id"]}')
                 r.checar(
@@ -453,7 +457,7 @@ def item_ingestao(r: Relatorio, url: str, criados: dict[str, str], marca: str) -
         r.checar("a documentação interativa está no ar", documentacao.status_code == 200,
                  "/api/docs")
 
-    r.nota("o recálculo da segmentação entra na Sprint 7 e ainda não existe")
+    r.nota("a segmentação do período importado é conferida no bloco de segmentação")
 
     # O id do período volta para a verificação do painel poder consultar
     # **este** período. Sem ele restaria consultar "o mais recente", que numa
@@ -538,6 +542,243 @@ def item_painel(r: Relatorio, url: str, criados: dict[str, str], periodo_id: int
             and len(individual.json()["pontos"]) == len(pontos)
             and individual.json()["escopo"] == "parceiro",
             "período sem medição vem nulo, não sumido",
+        )
+
+
+# --------------------------------------------------------------------- extra
+def item_segmentacao(
+    r: Relatorio, url: str, criados: dict[str, str], periodo_id: int | None
+) -> None:
+    """Segmentação, distribuição e mobilidade (UC05 · H33, H35 · RN01, RN02).
+
+    O que esta seção prova, e o `pytest` não: que a regra chega **até a resposta
+    HTTP**, com a segmentação que a importação disparou na mesma transação. O
+    período foi importado dois blocos acima e ninguém chamou reprocessamento
+    nenhum — se o segmento não estiver lá, o gancho da importação quebrou.
+    """
+    r.secao("Segmentação, distribuição e mobilidade")
+
+    login = criados.get("GESTOR")
+    if not login or periodo_id is None:
+        r.checar("há gestor e período para conferir a segmentação", False)
+        return
+
+    with sessao(url) as c:
+        if not entrar(c, login, SENHA):
+            r.checar("o gestor autentica", False)
+            return
+
+        rank = c.get("/api/painel/ranking", params={"periodo_id": periodo_id})
+        itens = rank.json().get("itens", []) if rank.status_code == 200 else []
+        r.checar(
+            "a importação já deixou o período segmentado",
+            bool(itens) and all(i.get("segmento") for i in itens),
+            "sem reprocessamento manual",
+        )
+
+        dist = c.get("/api/painel/segmentos", params={"periodo_id": periodo_id})
+        corpo = dist.json() if dist.status_code == 200 else {}
+        fatias = corpo.get("itens", [])
+        totais = [f["total"] for f in fatias]
+        r.checar(
+            "a distribuição soma os parceiros do período",
+            corpo.get("total") == sum(totais) == len(itens),
+            f"{corpo.get('total')} classificados em "
+            f"{len(fatias)} segmento{'s' if len(fatias) != 1 else ''}",
+        )
+        r.checar(
+            "a distribuição vem do maior para o menor",
+            totais == sorted(totais, reverse=True),
+            "sem desempate estável, o gráfico parece mudar sem nada ter mudado",
+        )
+
+        # RN01: cada parceiro em **exatamente um** segmento. O banco impede a
+        # dupla classificação por restrição de unicidade; isto confirma pelo
+        # lado de fora, que é onde o usuário veria o efeito.
+        r.checar(
+            "cada parceiro recebe exatamente um segmento",
+            len({i["parceiro_id"] for i in itens}) == len(itens),
+            "RN01",
+        )
+
+        mob = c.get("/api/painel/mobilidade", params={"periodo_id": periodo_id})
+        mobilidade = mob.json() if mob.status_code == 200 else {}
+        n = mobilidade.get("top_n")
+        r.checar(
+            "a mobilidade responde com o Top N configurado",
+            mob.status_code == 200 and isinstance(n, int) and n >= 1,
+            f"Top {n}",
+        )
+
+        # **RN02, pelo lado de fora.** Quem está dentro do Top N pelo ranking não
+        # pode aparecer entre as saídas, mesmo quando o segmento gravado dele é
+        # EM_RISCO — que é o caso que a precedência de RN01 cria. Derivar a
+        # mobilidade do segmento faria esta verificação falhar.
+        dentro = {i["parceiro_id"] for i in itens if i["posicao"] <= (n or 0)}
+        saidas = {m["parceiro_id"] for m in mobilidade.get("saidas", [])}
+        r.checar(
+            "ninguém que está no Top N aparece como saída",
+            not (dentro & saidas),
+            "RN02 — a mobilidade lê o ranking, não o segmento",
+        )
+
+
+# --------------------------------------------------------------------- extra
+def item_recorte(r: Relatorio, url: str, criados: dict[str, str], marca: str) -> None:
+    """Filtro, ordenação, paginação e exportação (H36, H38 · RF23, RF25).
+
+    A exportação é conferida **pelo conteúdo do arquivo**, comparada com a lista
+    da tela sob os mesmos parâmetros: é a única forma de pegar o dia em que um
+    filtro novo entrar numa e não na outra.
+    """
+    r.secao("Parceiros — recorte, ordenação e exportação")
+
+    login = criados.get("ANALISTA")
+    if not login:
+        r.checar("há analista para consultar a lista", False)
+        return
+
+    with sessao(url) as c:
+        if not entrar(c, login, SENHA):
+            r.checar("o analista autentica", False)
+            return
+
+        pagina = c.get("/api/parceiros", params={"tamanho": 2})
+        corpo = pagina.json() if pagina.status_code == 200 else {}
+        r.checar(
+            "a lista vem paginada, com o total do recorte",
+            pagina.status_code == 200
+            and len(corpo.get("itens", [])) <= 2
+            and corpo.get("total", 0) >= len(corpo.get("itens", [])),
+            f"{len(corpo.get('itens', []))} de {corpo.get('total')}",
+        )
+
+        ordenada = c.get(
+            "/api/parceiros",
+            params={"ordenar_por": "faturamento", "descendente": True, "tamanho": 200},
+        )
+        linhas = ordenada.json().get("itens", []) if ordenada.status_code == 200 else []
+        com_metrica = [
+            Decimal(i["desempenho"]["faturamento"])
+            for i in linhas
+            if i["desempenho"]["faturamento"] is not None
+        ]
+        r.checar(
+            "a ordenação por faturamento respeita o sentido pedido",
+            bool(com_metrica) and com_metrica == sorted(com_metrica, reverse=True),
+            f"{len(com_metrica)} com movimento",
+        )
+        r.checar(
+            "quem não teve métrica no período vai para o fim",
+            len(com_metrica) == len(linhas)
+            or linhas[-1]["desempenho"]["faturamento"] is None,
+            "não é o melhor nem o pior",
+        )
+        r.checar(
+            "ordenar por coluna desconhecida é recusado",
+            c.get("/api/parceiros", params={"ordenar_por": "senha_hash"}).status_code == 422,
+            "o valor entra num ORDER BY",
+        )
+
+        # O mesmo recorte, pelos dois caminhos.
+        recorte = {"busca": marca, "ordenar_por": "faturamento", "descendente": True}
+        na_tela = [
+            i["nome"] for i in c.get("/api/parceiros", params=recorte).json().get("itens", [])
+        ]
+        arquivo = c.get("/api/parceiros/exportacao.csv", params=recorte)
+        no_arquivo = [
+            linha["Parceiro"]
+            for linha in csv.DictReader(
+                io.StringIO(arquivo.content.decode("utf-8-sig")), delimiter=";"
+            )
+        ]
+        r.checar(
+            "o arquivo exportado traz exatamente o recorte da tela",
+            arquivo.status_code == 200 and bool(na_tela) and no_arquivo == na_tela,
+            f"{len(no_arquivo)} linhas",
+        )
+        r.checar(
+            "o arquivo vem pronto para a planilha",
+            arquivo.content.startswith(b"\xef\xbb\xbf")
+            and "attachment" in arquivo.headers.get("content-disposition", ""),
+            "BOM de UTF-8, senão 'Praça' abre como 'PraÃ§a'",
+        )
+
+
+# --------------------------------------------------------------------- extra
+def item_configuracao(
+    r: Relatorio, url: str, admin: httpx.Client, criados: dict[str, str]
+) -> None:
+    """Limiares da segmentação (H34 · RF21).
+
+    **Altera e devolve.** O limiar é configuração global: deixá-lo mudado faria a
+    próxima execução — e a demonstração — classificar por uma régua que ninguém
+    escolheu. A devolução acontece no `finally` e é **conferida**, porque limpeza
+    que não se verifica é limpeza que se presume.
+    """
+    r.secao("Configuração da segmentação")
+
+    atual = admin.get("/api/configuracao/segmentacao")
+    original = atual.json() if atual.status_code == 200 else {}
+    r.checar(
+        "o administrador lê os limiares em vigor",
+        atual.status_code == 200 and original.get("top_n", 0) >= 1,
+        f"Top {original.get('top_n')} · tendência {original.get('periodos_tendencia')}",
+    )
+    if atual.status_code != 200:
+        return
+
+    limiares = {c: original[c] for c in ("top_n", "periodos_tendencia", "periodos_novato")}
+
+    gestor = criados.get("GESTOR")
+    if gestor:
+        with sessao(url) as c:
+            entrar(c, gestor, SENHA)
+            r.checar(
+                "o gestor não altera a régua da segmentação",
+                c.put("/api/configuracao/segmentacao", json=limiares).status_code == 403,
+                "quem mexe aqui reescreve o que 'em risco' significa para a rede",
+            )
+
+    r.checar(
+        "limiar sem sentido é recusado",
+        admin.put(
+            "/api/configuracao/segmentacao", json={**limiares, "top_n": 0}
+        ).status_code
+        == 422,
+        "Top 0 não tem ninguém dentro",
+    )
+
+    try:
+        mudado = admin.put(
+            "/api/configuracao/segmentacao",
+            json={**limiares, "top_n": limiares["top_n"] + 1},
+        )
+        corpo = mudado.json() if mudado.status_code == 200 else {}
+        r.checar(
+            "alterar o limiar reclassifica o período mais recente",
+            mudado.status_code == 200
+            and corpo.get("top_n") == limiares["top_n"] + 1
+            and corpo.get("periodos_reprocessados") == 1,
+            "configuração que não se reflete na tela engana quem a mudou",
+        )
+
+        trilha = admin.get("/api/auditoria", params={"acao": "SEGMENTACAO_CONFIGURADA"})
+        registros = trilha.json().get("itens", []) if trilha.status_code == 200 else []
+        r.checar(
+            "a alteração fica na trilha, com o valor anterior",
+            bool(registros)
+            and registros[0].get("detalhes", {}).get("anterior", {}).get("top_n")
+            == limiares["top_n"],
+            "sem dizer o que era antes, a trilha não responde nada",
+        )
+    finally:
+        admin.put("/api/configuracao/segmentacao", json=limiares)
+        devolvido = admin.get("/api/configuracao/segmentacao").json()
+        r.checar(
+            "o limiar volta ao que era antes da verificação",
+            {c: devolvido.get(c) for c in limiares} == limiares,
+            "configuração é global: resíduo aqui muda a próxima execução",
         )
 
 
@@ -634,6 +875,9 @@ def main() -> int:
             item_crud(r, a.url, criados, marca)
             periodo_id = item_ingestao(r, a.url, criados, marca)
             item_painel(r, a.url, criados, periodo_id)
+            item_segmentacao(r, a.url, criados, periodo_id)
+            item_recorte(r, a.url, criados, marca)
+            item_configuracao(r, a.url, admin, criados)
         finally:
             # No `finally`: a execução interrompida por uma exceção é justamente
             # a que deixaria mais para trás — período no futuro no painel e
