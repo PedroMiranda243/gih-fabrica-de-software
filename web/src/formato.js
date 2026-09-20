@@ -103,6 +103,20 @@ export const ROTULO_SEGMENTO = {
 };
 
 /**
+ * O rótulo do status comercial.
+ *
+ * A tabela mostrava o valor interno — "PROSPECCAO", em caixa alta e sem
+ * acento — como se fosse texto para o usuário ler. **Precisa bater com
+ * `api/app/rotas/parceiros.py`**, que escreve os mesmos rótulos no CSV: o
+ * usuário exporta o que está vendo.
+ */
+export const ROTULO_STATUS = {
+  ATIVO: "Ativo",
+  PROSPECCAO: "Prospecção",
+  INATIVO: "Inativo",
+};
+
+/**
  * Uma diferença de contagem, em palavras: "6 a mais", "2 a menos", "igual".
  *
  * Contagem pede diferença absoluta, e não percentual: de 1 para 2 também é

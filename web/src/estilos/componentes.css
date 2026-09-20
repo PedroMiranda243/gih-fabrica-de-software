@@ -212,7 +212,7 @@
   display: grid;
   grid-template-columns: 9.5rem minmax(0, 1fr) 3.5rem;
   align-items: center;
-  gap: var(--esp-10);
+  gap: var(--esp-12);
 }
 
 .distribuicao__rotulo {
@@ -352,11 +352,16 @@
 
 /* O nome é o **único** elemento em peso alto e tinta cheia. É assim que o olho
    encontra a linha sem precisar de contraste extra. */
+/* A quebra continua permitida — nome de parceiro não tem teto — mas o mínimo
+   sobe para caber a massa real: medido nos 500 parceiros gerados, a mediana é
+   15 caracteres, o p95 é 18 e o máximo é 19. Com 18ch, quatro linhas em cada
+   duzentas quebravam em duas, e linha de altura diferente no meio de uma
+   tabela densa faz o olho perder a linha. */
 .tabela .nome {
   font-weight: var(--peso-nome);
   color: var(--ink);
   white-space: normal;
-  min-width: 18ch;
+  min-width: 20ch;
 }
 
 .tabela .secundaria {
