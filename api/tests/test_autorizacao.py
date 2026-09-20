@@ -60,6 +60,10 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("POST", "/api/importacoes/arquivo"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("POST", "/api/importacoes/arquivo/previa"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/importacoes"): {Perfil.GESTOR, Perfil.ANALISTA},
+    # RF25 — A exportação carrega os mesmos dados da listagem, então tem a
+    # mesma permissão. Deixá-la mais frouxa seria um caminho lateral para ler
+    # a base inteira.
+    ("GET", "/api/parceiros/exportacao.csv"): {Perfil.GESTOR, Perfil.ANALISTA},
     # UC05 — Painel e ranking: Gestor e Analista executam, Administrador só lê.
     # Como aqui tudo é leitura, ele entra — diferente do UC03 e do UC04, onde a
     # matriz lhe nega acesso. A distinção é da tabela, não uma escolha do código.
