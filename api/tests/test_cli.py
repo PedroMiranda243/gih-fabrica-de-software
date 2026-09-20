@@ -196,3 +196,84 @@ def test_redefinir_derruba_as_sessoes_abertas(senha, criar_usuario, autenticar):
 
 def test_redefinir_login_inexistente_e_recusado(senha):
     assert cli.redefinir_senha(["--login", "ninguem"]) == 1
+
+
+# =========================================== reprocessar-segmentos (H33)
+def _semear_uma_semana(criar_usuario) -> int:
+    """Um período com um parceiro, direto no banco, sem passar pela importação.
+
+    Pela importação o período já sairia segmentado — e o teste não provaria
+    nada sobre o comando.
+    """
+    from datetime import date
+    from decimal import Decimal
+
+    from app.modelos import Importacao, Metrica, OrigemImportacao, Parceiro, Periodo
+
+    autor_id = criar_usuario(login="semeador", perfil=Perfil.ANALISTA)
+    s = Sessao()
+    try:
+        periodo = Periodo(data_inicio=date(2026, 9, 7), data_fim=date(2026, 9, 13))
+        s.add(periodo)
+        parceiro = Parceiro(nome="Casa Azul")
+        s.add(parceiro)
+        s.flush()
+        importacao = Importacao(
+            periodo_id=periodo.id,
+            usuario_id=autor_id,
+            origem=OrigemImportacao.TEXTO,
+            total_gravado=1,
+            total_rejeitado=0,
+        )
+        s.add(importacao)
+        s.flush()
+        s.add(
+            Metrica(
+                parceiro_id=parceiro.id,
+                periodo_id=periodo.id,
+                importacao_id=importacao.id,
+                faturamento=Decimal("1000.00"),
+                pedidos=10,
+            )
+        )
+        s.commit()
+        return periodo.id
+    finally:
+        s.close()
+
+
+def _quantos_segmentos() -> int:
+    from app.modelos import HistoricoSegmento
+
+    s = Sessao()
+    try:
+        return len(s.scalars(select(HistoricoSegmento.id)).all())
+    finally:
+        s.close()
+
+
+def test_reprocessar_segmentos_classifica_a_base_inteira(criar_usuario, capsys):
+    """Quem já tinha dados antes da H33 ficaria sem segmento nenhum, e o painel
+    mostraria a distribuição vazia sem dizer por quê."""
+    _semear_uma_semana(criar_usuario)
+    assert _quantos_segmentos() == 0
+
+    assert cli.reprocessar_segmentos([]) == 0
+
+    assert _quantos_segmentos() == 1
+    assert "1 período" in capsys.readouterr().out
+
+
+def test_reprocessar_segmentos_aceita_um_periodo_so(criar_usuario, capsys):
+    periodo_id = _semear_uma_semana(criar_usuario)
+
+    assert cli.reprocessar_segmentos(["--periodo-id", str(periodo_id)]) == 0
+
+    saida = capsys.readouterr().out
+    # Uma semana só de histórico: recém-chegado é a classificação certa.
+    assert "RECEM_CHEGADO" in saida
+
+
+def test_reprocessar_segmentos_recusa_periodo_inexistente(capsys):
+    assert cli.reprocessar_segmentos(["--periodo-id", "999999"]) == 1
+    assert "Não existe" in capsys.readouterr().err
