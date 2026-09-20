@@ -24,6 +24,7 @@ from app.modelos import (
     Previsao,
     Usuario,
 )
+from app.servico_segmentacao import reprocessar_desde
 from app.texto import normalizar
 
 
@@ -187,6 +188,16 @@ def gravar(
 
     importacao.total_gravado = len(analise.leitura.reconhecidos)
     s.flush()
+
+    # A segmentação corre **na mesma transação** (H33): ou o período entra com
+    # métrica e classificação, ou não entra. Período gravado sem segmento
+    # deixaria o painel mostrando uma distribuição que não inclui a semana que
+    # o usuário acabou de importar, sem nenhum erro na tela.
+    #
+    # `reprocessar_desde`, e não `reprocessar`, porque importar um período
+    # antigo muda o histórico dos posteriores: um parceiro deixa de ser
+    # recém-chegado, uma queda passa a ser a segunda seguida.
+    reprocessar_desde(s, periodo.id)
     return importacao, analise
 
 
