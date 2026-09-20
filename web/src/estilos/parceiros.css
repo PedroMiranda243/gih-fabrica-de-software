@@ -2,9 +2,13 @@
 
 /* Uma linha só acima da tabela, como painel de dados pede — filtro escondido
    atrás de um botão faz a pessoa esquecer que ele está aplicado. */
+/* **Três colunas, e não `auto-fit`.** São seis unidades — a busca ocupa duas e
+   os quatro seletores uma cada — e três divide seis em duas linhas cheias. Com
+   o encaixe automático, "Situação" sobrava sozinha numa segunda linha,
+   esticada; medido em 1440 px. */
 .filtros {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--esp-12);
   padding: var(--esp-16);
 }
@@ -12,6 +16,12 @@
 /* A busca merece mais espaço que os seletores: é o que se usa primeiro. */
 .filtros__busca {
   grid-column: span 2;
+}
+
+@media (max-width: 900px) {
+  .filtros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .ponto-situacao {
@@ -28,8 +38,70 @@
   background: transparent;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 560px) {
+  .filtros {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .filtros__busca {
     grid-column: span 1;
   }
+}
+
+/* ------------------------------------------------- cabeçalho que ordena */
+/* Botão, e não `th` clicável: quem navega por teclado precisa alcançar e
+   acionar a ordenação, e só elemento focável recebe Tab e Enter de graça. */
+.ordenavel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-4);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.ordenavel:hover {
+  color: var(--ink);
+}
+
+.ordenavel--ativa {
+  color: var(--ink);
+}
+
+/* A seta herda a cor do texto, e não a de segmento: ela diz direção de
+   ordenação, não tendência de faturamento. Pintá-la de verde ou vermelho
+   diria que ordenar por faturamento crescente é uma notícia boa. */
+.ordenavel svg {
+  color: currentColor;
+}
+
+/* --------------------------------------------------------- paginação */
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--esp-8);
+  padding: var(--esp-12) var(--esp-16);
+  border-top: 1px solid var(--border);
+}
+
+/* A posição fica à esquerda dos botões e **empurra** os dois para a direita:
+   "51–100 de 500" antes de "Anterior" responde onde se está antes de oferecer
+   para onde ir. */
+.paginacao__posicao {
+  margin-right: auto;
+  font-size: var(--txt-13);
+  color: var(--ink-2);
+}
+
+/* ------------------------------------------------ ações do cabeçalho */
+.parceiros__acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-12);
 }

@@ -16,13 +16,15 @@ zero — estão documentadas em `app/esquemas.py`, na seção do painel.
 from __future__ import annotations
 
 from datetime import date
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
+from app.calculos import ticket_medio as _ticket
+from app.calculos import variacao_percentual as _variacao
 from app.dependencias import Banco, exigir
 from app.esquemas import (
     ContagemSegmento,
@@ -57,7 +59,6 @@ router = APIRouter(
 )
 
 TAMANHO_MAXIMO_PAGINA = 200
-CENTAVOS = Decimal("0.01")
 
 
 # --------------------------------------------------------------------- apoio
@@ -95,30 +96,6 @@ def _periodo_anterior(s: Session, alvo: Periodo) -> Periodo | None:
         .order_by(Periodo.data_inicio.desc(), Periodo.id.desc())
         .limit(1)
     )
-
-
-def _ticket(faturamento: Decimal | None, pedidos: int | None) -> Decimal | None:
-    """Ticket médio, derivado na consulta (RN04).
-
-    Sem pedidos não há ticket: devolver zero afirmaria que cada pedido valeu
-    nada, quando o que houve foi ausência de pedido.
-    """
-    if not pedidos or faturamento is None:
-        return None
-    return (Decimal(faturamento) / Decimal(pedidos)).quantize(CENTAVOS, ROUND_HALF_UP)
-
-
-def _variacao(atual, anterior) -> Decimal | None:
-    """Variação percentual, ou nulo quando ela não é definível.
-
-    Nulo **não** é zero. Zero diz "não mudou"; nulo diz "não dá para dizer" — sem
-    período anterior, ou com base anterior zerada, em que a divisão é indefinida.
-    Devolver zero nesses casos desenharia estabilidade que ninguém mediu.
-    """
-    if atual is None or anterior is None or Decimal(anterior) == 0:
-        return None
-    variacao = (Decimal(atual) - Decimal(anterior)) / Decimal(anterior) * 100
-    return variacao.quantize(CENTAVOS, ROUND_HALF_UP)
 
 
 def _totais(s: Session, periodo_id: int) -> tuple[Decimal, int, int]:

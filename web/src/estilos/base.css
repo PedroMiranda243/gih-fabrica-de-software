@@ -73,6 +73,10 @@ h3 {
   font-family: inherit;
   font-size: var(--txt-13);
   font-weight: var(--peso-rotulo);
+  /* A classe também veste `<a>` — a exportação é um link, porque o navegador
+     já sabe baixar arquivo. Sem isto ele sai sublinhado, com cara de link de
+     texto no meio de uma fileira de botões. */
+  text-decoration: none;
   cursor: pointer;
   transition: filter var(--transicao);
 }

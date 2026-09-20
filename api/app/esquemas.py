@@ -10,6 +10,7 @@ campo a campo, em vez de serializarem a entidade inteira.
 """
 from __future__ import annotations
 
+import enum
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -326,6 +327,61 @@ class ParceiroResposta(BaseModel):
     contato: str | None
     ativo: bool
     criado_em: datetime
+
+
+class Ordenacao(enum.StrEnum):
+    """Por onde a lista de parceiros pode ser ordenada (RF23).
+
+    Enum, e não texto livre: o valor entra num `ORDER BY`, e interpolar o que
+    chegar na URL é injeção. Sendo enum, o FastAPI recusa qualquer outra coisa
+    antes de a consulta existir — e o Swagger ainda lista as opções.
+    """
+
+    NOME = "nome"
+    FATURAMENTO = "faturamento"
+    PEDIDOS = "pedidos"
+    TICKET_MEDIO = "ticket_medio"
+    VARIACAO = "variacao"
+
+
+class DesempenhoParceiro(BaseModel):
+    """O que o parceiro fez no período mais recente (RF23).
+
+    Vem **junto da lista** porque a H36 deixa ordenar por estes valores, e
+    ordenar por um número que a tela não mostra é pedir para o usuário confiar
+    numa ordem que ele não consegue conferir.
+
+    Todos nulos quando o parceiro não teve métrica no período — que é diferente
+    de ter faturado zero.
+    """
+
+    segmento: Segmento | None = None
+    faturamento: Decimal | None = None
+    pedidos: int | None = None
+    ticket_medio: Decimal | None = None
+    variacao_percentual: Decimal | None = None
+
+
+class ParceiroComDesempenho(ParceiroResposta):
+    desempenho: DesempenhoParceiro
+
+
+class PaginaParceiros(BaseModel):
+    """A lista de parceiros, paginada (RF23, H36).
+
+    Paginada porque a base chega a 10.000 (RNF04): medido antes desta história,
+    devolver tudo levava 141 ms com 5.000 parceiros e 295 ms com 10.000 — a
+    única consulta do painel que crescia com o tamanho da base.
+    """
+
+    itens: list[ParceiroComDesempenho]
+    total: int
+    pagina: int
+    tamanho: int
+    periodo: PeriodoResposta | None = Field(
+        default=None,
+        description="Período de onde vem o desempenho. Nulo quando não há nenhum importado.",
+    )
 
 
 class VinculoParceiro(BaseModel):

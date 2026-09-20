@@ -26,6 +26,16 @@ from app.modelos import (
 )
 
 
+def _itens(resposta) -> list[dict]:
+    """A lista dentro da página.
+
+    A H36 trocou a resposta de lista para página: `{itens, total, pagina,
+    tamanho}`. Passar por aqui deixa o teste falar do que ele testa, em vez de
+    repetir a forma do envelope em trinta lugares.
+    """
+    return resposta.json()["itens"]
+
+
 @pytest.fixture
 def analista(criar_usuario, autenticar, cliente):
     """Gestor e Analista são quem gerencia parceiros (UC04)."""
@@ -170,7 +180,7 @@ def test_lista_ordenada_por_nome(analista):
     for nome in ("Comércio Gama", "Comércio Alfa", "Comércio Beta"):
         analista.post("/api/parceiros", json={"nome": nome})
 
-    nomes = [p["nome"] for p in analista.get("/api/parceiros").json()]
+    nomes = [p["nome"] for p in _itens(analista.get("/api/parceiros"))]
 
     assert nomes == ["Comércio Alfa", "Comércio Beta", "Comércio Gama"]
 
@@ -181,7 +191,7 @@ def test_busca_por_trecho_do_nome(analista):
 
     r = analista.get("/api/parceiros", params={"busca": "padaria"})
 
-    assert [p["nome"] for p in r.json()] == ["Padaria do Centro"]
+    assert [p["nome"] for p in _itens(r)] == ["Padaria do Centro"]
 
 
 # ============================================= H37 · busca sem acentuação
@@ -200,7 +210,7 @@ def test_busca_ignora_acentuacao_e_caixa(analista, termo):
 
     r = analista.get("/api/parceiros", params={"busca": termo})
 
-    assert [p["nome"] for p in r.json()] == ["Comércio Órion"]
+    assert [p["nome"] for p in _itens(r)] == ["Comércio Órion"]
 
 
 def test_busca_encontra_por_trecho_no_meio_do_nome(analista):
@@ -209,7 +219,7 @@ def test_busca_encontra_por_trecho_no_meio_do_nome(analista):
 
     r = analista.get("/api/parceiros", params={"busca": "sabor"})
 
-    assert len(r.json()) == 1
+    assert len(_itens(r)) == 1
 
 
 def test_renomear_mantem_a_busca_correta(analista):
@@ -223,8 +233,8 @@ def test_renomear_mantem_a_busca_correta(analista):
 
     analista.patch(f"/api/parceiros/{alvo}", json={"nome": "Café Renomeado"})
 
-    assert len(analista.get("/api/parceiros", params={"busca": "cafe"}).json()) == 1
-    assert analista.get("/api/parceiros", params={"busca": "antigo"}).json() == []
+    assert len(_itens(analista.get("/api/parceiros", params={"busca": "cafe"}))) == 1
+    assert _itens(analista.get("/api/parceiros", params={"busca": "antigo"})) == []
 
 
 @pytest.mark.parametrize("curinga", ["%", "_", "%%", "a%"])
@@ -239,7 +249,7 @@ def test_curinga_digitado_e_texto_e_nao_padrao(analista, curinga):
 
     r = analista.get("/api/parceiros", params={"busca": curinga})
 
-    assert r.json() == []
+    assert _itens(r) == []
 
 
 def test_parceiro_criado_pela_importacao_tambem_e_encontrado(analista):
@@ -259,7 +269,7 @@ def test_parceiro_criado_pela_importacao_tambem_e_encontrado(analista):
 
     r = analista.get("/api/parceiros", params={"busca": "emporio agua"})
 
-    assert [p["nome"] for p in r.json()] == ["Empório Água Verde"]
+    assert [p["nome"] for p in _itens(r)] == ["Empório Água Verde"]
 
 
 def test_filtra_por_situacao_e_por_categoria(analista, categoria):
@@ -267,8 +277,8 @@ def test_filtra_por_situacao_e_por_categoria(analista, categoria):
     inativo = analista.post("/api/parceiros", json={"nome": "Sem categoria"}).json()["id"]
     analista.patch(f"/api/parceiros/{inativo}", json={"ativo": False})
 
-    ativos = analista.get("/api/parceiros", params={"ativo": True}).json()
-    por_categoria = analista.get("/api/parceiros", params={"categoria_id": categoria}).json()
+    ativos = _itens(analista.get("/api/parceiros", params={"ativo": True}))
+    por_categoria = _itens(analista.get("/api/parceiros", params={"categoria_id": categoria}))
 
     assert [p["nome"] for p in ativos] == ["Com categoria"]
     assert [p["nome"] for p in por_categoria] == ["Com categoria"]
@@ -282,7 +292,7 @@ def test_filtra_os_pendentes_de_classificacao(analista, categoria):
 
     r = analista.get("/api/parceiros", params={"sem_categoria": True})
 
-    assert [p["nome"] for p in r.json()] == ["Pendente"]
+    assert [p["nome"] for p in _itens(r)] == ["Pendente"]
 
 
 # ============================================================ atualizar
@@ -444,8 +454,8 @@ def test_parceiro_criado_pela_importacao_aparece_sem_categoria(analista, criar_u
 
     r = analista.get("/api/parceiros", params={"sem_categoria": True})
 
-    assert [p["nome"] for p in r.json()] == ["Veio da importação"]
-    assert r.json()[0]["origem_categoria"] is None
+    assert [p["nome"] for p in _itens(r)] == ["Veio da importação"]
+    assert _itens(r)[0]["origem_categoria"] is None
 
 
 def test_origem_categoria_nao_e_aceita_do_cliente(analista, categoria):
