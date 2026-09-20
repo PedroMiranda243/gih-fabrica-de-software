@@ -34,6 +34,7 @@ from app.esquemas import (
     VariacaoIndicadores,
 )
 from app.modelos import Categoria, Metrica, Parceiro, Perfil, Periodo
+from app.ranking import posicoes
 
 router = APIRouter(
     prefix="/api/painel",
@@ -125,33 +126,6 @@ def _totais(s: Session, periodo_id: int) -> tuple[Decimal, int, int]:
     return Decimal(faturamento), int(pedidos), int(parceiros)
 
 
-def _posicoes(periodo_id: int):
-    """Ranking do período, com a posição calculada por função de janela.
-
-    **O desempate é explícito e estável**: faturamento decrescente e, em caso de
-    empate, nome crescente. Sem o segundo critério o banco fica livre para
-    devolver os empatados em qualquer ordem, e a mesma base produziria posições
-    diferentes entre duas execuções — o painel anunciaria subida e queda que não
-    aconteceram.
-
-    `row_number` em vez de `rank`: posições distintas, sem buracos. A mobilidade
-    do Top N (H35) vai comparar posição com posição, e posição repetida tornaria
-    "entrou" e "saiu" ambíguos.
-    """
-    return (
-        select(
-            Metrica.parceiro_id.label("parceiro_id"),
-            Metrica.faturamento.label("faturamento"),
-            Metrica.pedidos.label("pedidos"),
-            func.row_number()
-            .over(order_by=(Metrica.faturamento.desc(), Parceiro.nome.asc()))
-            .label("posicao"),
-        )
-        .join(Parceiro, Parceiro.id == Metrica.parceiro_id)
-        .where(Metrica.periodo_id == periodo_id)
-    )
-
-
 # ------------------------------------------------------- 1. indicadores (H30)
 @router.get("/indicadores", response_model=IndicadoresPainel)
 def indicadores(
@@ -224,7 +198,7 @@ def ranking(
             pagina=pagina, tamanho=tamanho,
         )
 
-    atual = _posicoes(alvo.id).subquery("atual")
+    atual = posicoes(alvo.id).subquery("atual")
     total = s.scalar(select(func.count()).select_from(atual)) or 0
 
     linhas = s.execute(
@@ -239,7 +213,7 @@ def ranking(
     anterior = _periodo_anterior(s, alvo)
     antes: dict[int, tuple[int, Decimal]] = {}
     if anterior is not None and linhas:
-        passado = _posicoes(anterior.id).subquery("anterior")
+        passado = posicoes(anterior.id).subquery("anterior")
         antes = {
             pid: (posicao, faturamento)
             for pid, posicao, faturamento in s.execute(

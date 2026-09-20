@@ -28,8 +28,9 @@ from app.auditoria import Acao
 from app.config import config
 from app.db import Sessao
 from app.esquemas import NovoUsuario
-from app.modelos import Perfil, Usuario
+from app.modelos import Perfil, Periodo, Usuario
 from app.seguranca import SenhaFraca, gerar_hash, validar_forca
+from app.servico_segmentacao import reprocessar, reprocessar_tudo
 
 
 def criar_admin() -> int:
@@ -211,12 +212,55 @@ def redefinir_senha(argumentos: list[str]) -> int:
     return 0
 
 
+def reprocessar_segmentos(argumentos: list[str]) -> int:
+    """Recalcula a segmentação de uma base já carregada (H33).
+
+    A importação segmenta o que ela grava, mas quem já tinha dados antes desta
+    história ficaria sem segmento nenhum até importar de novo — e o painel
+    mostraria a distribuição vazia sem dizer por quê. Este comando fecha essa
+    porta.
+
+    Serve também para depois de mudar um limiar (H34) e para reconstruir a
+    classificação quando a regra muda: como `reprocessar` é idempotente, rodar
+    à toa não faz mal.
+    """
+    p = argparse.ArgumentParser(prog="python -m app.cli reprocessar-segmentos")
+    p.add_argument(
+        "--periodo-id",
+        type=int,
+        help="Só este período. O padrão é a base inteira.",
+    )
+    a = p.parse_args(argumentos)
+
+    s = Sessao()
+    try:
+        if a.periodo_id is None:
+            periodos = reprocessar_tudo(s)
+            s.commit()
+            print(f"Segmentação recalculada em {periodos} período(s).")
+            return 0
+
+        if s.get(Periodo, a.periodo_id) is None:
+            print(f"Não existe o período {a.periodo_id}.", file=sys.stderr)
+            return 1
+
+        distribuicao = reprocessar(s, a.periodo_id)
+        s.commit()
+        print(f"Segmentação recalculada no período {a.periodo_id}:")
+        for segmento, quantos in sorted(distribuicao.items(), key=lambda kv: -kv[1]):
+            print(f"  {segmento.value:<14} {quantos}")
+        return 0
+    finally:
+        s.close()
+
+
 # Cada comando recebe o resto da linha de comando. `criar-admin` não tem
 # argumentos e é chamado pelo entrypoint a cada subida.
 COMANDOS = {
     "criar-admin": lambda _argumentos: criar_admin(),
     "criar-usuario": criar_usuario,
     "redefinir-senha": redefinir_senha,
+    "reprocessar-segmentos": reprocessar_segmentos,
 }
 
 
