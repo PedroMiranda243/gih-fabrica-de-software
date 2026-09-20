@@ -108,16 +108,17 @@ jobs:
       # medido hoje é 99%, e o piso fica no que o requisito exige, 70% — largo
       # de propósito, porque piso colado no valor atual reprova por qualquer
       # refatoração honesta.
+      #
+      # **Relê os dados do passo anterior**, em vez de rodar a suíte de novo.
+      # A primeira versão rodava, e o trabalho da API foi de 1m30 para 3m12 —
+      # o dobro de CI para conferir um número que já estava medido.
       - name: Cobertura do núcleo de regras
         if: steps.existe.outputs.pronto == 'sim'
         working-directory: api
-        env:
-          DATABASE_URL: postgresql+psycopg://gih:gih@localhost:5432/gih
         run: >-
-          pytest -q
-          --cov=app.servico_segmentacao --cov=app.ranking
-          --cov=app.rotas.painel --cov=app.calculos
-          --cov-report=term --cov-fail-under=70
+          coverage report
+          --include=app/servico_segmentacao.py,app/ranking.py,app/rotas/painel.py,app/calculos.py
+          --fail-under=70
 
       - name: Módulo ainda não criado
         if: steps.existe.outputs.pronto == 'nao'
