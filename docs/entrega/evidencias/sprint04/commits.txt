@@ -1,0 +1,77 @@
+Commits do repositório
+https://github.com/PedroMiranda243/gih-fabrica-de-software
+Referência origin/main em 883bcd5 · de 2026-09-03 a 2026-09-21
+Gerado a partir do git log; nenhum número foi escrito à mão.
+
+Totais
+------
+  commits de trabalho              103
+  Pull Requests incorporados        27
+  commits direto na main            22   (até 15/09, antes de a main ser protegida)
+
+Por tipo (Conventional Commits)
+-------------------------------
+  docs       31   30%
+  feat       27   26%
+  test       21   20%
+  fix        12   12%
+  ci          6    6%
+  perf        2    2%
+  spike       2    2%
+  chore       1    1%
+  fora        1  (fora da convenção:)
+             2026-09-15  Revert "docs: corta a central de comunicação e torna o assistente…
+
+Por semana (segunda a domingo)
+------------------------------
+  31/08 a 06/09    7  ████
+  07/09 a 13/09    0  
+  14/09 a 20/09   72  ████████████████████████████████████████
+  21/09 a 27/09   24  █████████████
+
+Autoria e coautoria
+-------------------
+  Cada commit tem um autor e, por área, o colega responsável como coautor
+  (trailer Co-authored-by, que o GitHub credita ao coautor).
+  autor     Pedro Miranda                             103
+  coautor   João Pedro Nunes de França                 39
+  coautor   Marcio Maycom                              22
+  coautor   Ingryd Vitoria de Araújo Barbosa           12
+  coautor   Thiago José Falcão de Freitas               9
+  sem coautor                                         26
+
+Pull Requests incorporados, por janela de entrega
+-------------------------------------------------
+
+  Sprint 01 — até 05/09: 0
+
+  Sprints 02 e 03 — 06/09 a 19/09: 11
+    #26  16/09  feat: autentica por sessão com estado no servidor, perfis e auditoria
+    #25  16/09  spike: valida o toolchain nativo e mede OpenMP contra CUDA
+    #31  16/09  feat: autorização verificada em cada endpoint e ingestão por texto
+    #32  17/09  docs: entrega da Sprint 02 acadêmica — arquitetura, classes, MER e modelo…
+    #36  17/09  feat: CRUD de parceiros, verificação de ponta a ponta e entrega da Sprint 03
+    #45  17/09  feat: ingestão completa — arquivo CSV, substituição de período e histórico…
+    #46  17/09  feat: painel — indicadores consolidados, ranking com variação e séries…
+    #47  17/09  feat: busca de parceiro sem sensibilidade a acentuação, com índice de trigrama
+    #49  18/09  feat: interface web — login, painel, importação e parceiros
+    #50  18/09  fix: verificação de ponta a ponta não deixa resíduo no banco da equipe
+    #51  19/09  docs: entrega da Sprint 03 atualizada — interface, números remedidos e…
+
+  Sprint 04 — 20/09 a 26/09: 16
+    #61  20/09  Segmenta cada parceiro por regra determinística (H33)
+    #52  20/09  Mede o tempo de resposta do painel com base grande (H40)
+    #62  20/09  Mobilidade do Top N e o painel com paridade com o protótipo (H35)
+    #63  20/09  Limiares da segmentação configuráveis sem alterar código (H34)
+    #64  20/09  Filtrar, ordenar e exportar a lista de parceiros (H36, H38)
+    #65  20/09  Verificação de ponta a ponta do núcleo de regras, e piso de cobertura (H69)
+    #66  21/09  Sazonalidade do gerador sem viés de direção nem de calendário (#60)
+    #67  21/09  As recusas do cadastro de parceiro dizem o que aconteceu (UC04)
+    #69  21/09  Tela de cadastro de parceiro — reaberta: a #68 não chegou à main
+    #70  21/09  Os contêineres voltam sozinhos quando o Docker volta
+    #71  21/09  Modelagem atualizada e mapa de navegação entre as telas
+    #72  21/09  A recusa do período já importado fala com quem usa a tela
+    #73  21/09  As evidências da Sprint 03 ganham pasta própria, e a Parte III fica como foi…
+    #74  21/09  Geradores das evidências da Sprint 04 — persistência, validações, capturas e…
+    #75  21/09  A importação concluída leva ao painel
+    #76  21/09  Nenhuma mensagem de validação sai em inglês, e o 500 ganha teste

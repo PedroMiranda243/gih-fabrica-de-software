@@ -1,0 +1,96 @@
+Verificação de ponta a ponta · http://localhost:8000
+
+[1/6] Banco de dados conectado
+      ok   a API responde à verificação de saúde
+      ok   a API confirma o banco no ar  banco='ok'
+      ok   o banco tem registros gravados pela aplicação  121 eventos na trilha
+
+[2/6] Login funcional
+      ok   credencial válida abre sessão
+      ok   o cookie de sessão vem protegido  HttpOnly presente
+      ok   a resposta não devolve senha
+      ok   a sessão identifica o usuário
+      ok   encerrar invalida a sessão no servidor
+      ok   senha errada é recusada
+      ok   usuário inexistente responde igual a senha errada  indistinguível, como pede o RNF11
+
+[3/6] Cadastro de usuários
+      ok   cria usuário com perfil ADMINISTRADOR  e2e39906.administrador
+      ok   cria usuário com perfil GESTOR  e2e39906.gestor
+      ok   cria usuário com perfil ANALISTA  e2e39906.analista
+      ok   os usuários criados estão persistidos
+      ok   a listagem não expõe hash de senha
+
+[4/6] Controle de perfis
+      ·    30 rotas conferidas contra 3 perfis, a partir da matriz de docs/03-casos-de-uso.md
+      ok   sem sessão, todo endpoint protegido responde 401
+      ok   perfil ADMINISTRADOR só acessa o que a matriz permite
+      ok   perfil GESTOR só acessa o que a matriz permite
+      ok   perfil ANALISTA só acessa o que a matriz permite
+
+[5/6] CRUD principal — parceiros
+      ok   cadastrar  Comércio e2e39906
+      ok   consultar
+      ok   consultar pela busca por nome
+      ok   cadastrar categoria
+      ok   atualizar
+      ok   a categoria confirmada por pessoa é gravada como MANUAL  RN05
+      ok   nome repetido é recusado
+      ok   a recusa aponta o parceiro que já usa o nome  UC04-E1 — a tela oferece abrir o cadastro existente
+      ok   categoria inexistente é erro do campo, e não nome duplicado  o usuário corrige o campo certo
+      ok   excluir
+      ok   o excluído some da consulta
+      ok   excluir parceiro com histórico é recusado  409
+      ok   a recusa diz quantos registros impedem e aponta a desativação
+
+[6/6] Ingestão e execução local
+      ok   importação sem período é recusada  RN03
+      ok   a recusa explica por que o período é obrigatório
+      ok   a prévia lista reconhecidos e rejeitados
+      ok   a importação grava as métricas  2 gravadas
+      ok   reimportar o mesmo período é recusado  RF12
+      ok   a recusa diz quantos registros seriam apagados e quem os trouxe  H25
+      ok   com substituir, o período é trocado e não somado  H25
+      ok   importa por arquivo enviado  H22
+      ok   o histórico traz o autor de cada importação  RF13
+      ok   a importação substituída fica no histórico, com zero métrica vigente  o rastro sobrevive ao dado
+      ok   a documentação interativa está no ar  /api/docs
+      ·    a segmentação do período importado é conferida no bloco de segmentação
+
+[  + ] Painel — indicadores, ranking e séries
+      ok   os indicadores consolidam o período importado  21440.40 em 513 pedidos
+      ok   o ticket médio é a razão dos totais, e não coluna guardada  RN04
+      ok   o ranking ordena por faturamento, com posições sem buraco  2 parceiros
+      ok   a série da rede sai em ordem cronológica  15 períodos
+      ok   a série individual cobre todos os períodos, com lacuna explícita  período sem medição vem nulo, não sumido
+
+[  + ] Segmentação, distribuição e mobilidade
+      ok   a importação já deixou o período segmentado  sem reprocessamento manual
+      ok   a distribuição soma os parceiros do período  2 classificados em 1 segmento
+      ok   a distribuição vem do maior para o menor  sem desempate estável, o gráfico parece mudar sem nada ter mudado
+      ok   cada parceiro recebe exatamente um segmento  RN01
+      ok   a mobilidade responde com o Top N configurado  Top 15
+      ok   ninguém que está no Top N aparece como saída  RN02 — a mobilidade lê o ranking, não o segmento
+
+[  + ] Parceiros — recorte, ordenação e exportação
+      ok   a lista vem paginada, com o total do recorte  2 de 504
+      ok   a ordenação por faturamento respeita o sentido pedido  2 com movimento
+      ok   quem não teve métrica no período vai para o fim  não é o melhor nem o pior
+      ok   ordenar por coluna desconhecida é recusado  o valor entra num ORDER BY
+      ok   o arquivo exportado traz exatamente o recorte da tela  4 linhas
+      ok   o arquivo vem pronto para a planilha  BOM de UTF-8, senão 'Praça' abre como 'PraÃ§a'
+
+[  + ] Configuração da segmentação
+      ok   o administrador lê os limiares em vigor  Top 15 · tendência 2
+      ok   o gestor não altera a régua da segmentação  quem mexe aqui reescreve o que 'em risco' significa para a rede
+      ok   limiar sem sentido é recusado  Top 0 não tem ninguém dentro
+      ok   alterar o limiar reclassifica o período mais recente  configuração que não se reflete na tela engana quem a mudou
+      ok   a alteração fica na trilha, com o valor anterior  sem dizer o que era antes, a trilha não responde nada
+      ok   o limiar volta ao que era antes da verificação  configuração é global: resíduo aqui muda a próxima execução
+
+[  + ] Limpeza — o banco volta ao que era antes da execução
+      ok   remove do banco o que a execução gravou  3 períodos, 4 importações, 5 métricas, 4 parceiros, 1 categoria
+      ok   o painel volta a abrir no mesmo período, com os mesmos totais  período de 2026-09-14
+      ·    os usuários da execução ficam, desativados: a trilha de auditoria aponta para eles
+
+As 68 verificações passaram.
