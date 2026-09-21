@@ -191,7 +191,7 @@ direto — tudo isso depende de a tela estar na URL, e não num estado escondido
 
 <!-- diagrama: navegacao-telas -->
 ```mermaid
-flowchart LR
+flowchart TD
     Login["Login<br/>/entrar"]
     Painel["Painel<br/>/"]
     Importacao["Importação<br/>/importacao"]

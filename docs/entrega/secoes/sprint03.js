@@ -169,16 +169,12 @@ function montar() {
     + 'por migração versionada no repositório, o que permite a qualquer integrante chegar ao mesmo estado '
     + 'a partir de um clone limpo.',
   ));
-  // A Parte II mostra o retrato da Sprint 02 — 34 índices, outra revisão de
-  // migração. Sem esta frase, quem compara as duas partes vê números
-  // diferentes e não sabe qual está certo; os dois estão, cada um na sua época.
-  c.push(p(
-    `Desde a Sprint 02 o esquema recebeu uma migração: a busca de parceiro sem diferenciar acento `
-    + `acrescentou uma coluna normalizada e um índice. É por isso que a Parte II mostra 34 índices e outra `
-    + `revisão, e esta parte mostra ${medida('indices')} — os dois retratos estão corretos, cada um na sua `
-    + 'entrega.',
-    { size: 19 },
-  ));
+  // Aqui havia um parágrafo comparando os índices desta parte com os da Parte
+  // II. Ele entrou na fonte 25 segundos depois do commit do PDF entregue em
+  // 19/09 — o PDF nunca o teve —, e hoje seria falso: a Parte II passou a
+  // mostrar o modelo atual. A Parte III é retrato da entrega, e volta a gerar
+  // exatamente o que foi entregue. A diferença entre as partes é explicada na
+  // seção 10 da Parte IV.
 
   c.push(quebra());
   c.push(h2('2.3 O dado entrando pela interface'));
