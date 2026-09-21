@@ -178,6 +178,17 @@ h3 {
   font-size: var(--txt-13);
 }
 
+/* **Mora aqui, colada em `.aviso`, e não na folha da importação.** Lá ela era
+   carregada antes desta folha; com a mesma especificidade, o atalho
+   `border-left` de `.aviso`, que vem depois, apagava a cor — e todo aviso de
+   sucesso do sistema saía com a barra vermelha de erro. Medido no navegador:
+   `.aviso--sucesso` na folha 0, `.aviso` na folha 3, barra em rgb(208, 59, 59).
+   Na mesma folha, a ordem é a do arquivo e deixa de depender de quem importa
+   primeiro. */
+.aviso--sucesso {
+  border-left-color: var(--seg-ascensao);
+}
+
 .aviso__titulo {
   font-weight: var(--peso-nome);
   margin-bottom: var(--esp-4);
