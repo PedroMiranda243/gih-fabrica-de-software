@@ -275,3 +275,11 @@ def test_sem_periodo_importado_a_alteracao_nao_reprocessa_nada(administrador):
 
     assert corpo["periodos_reprocessados"] == 0
     assert corpo["top_n"] == 9
+
+
+def test_limiar_abaixo_do_minimo_diz_o_minimo(administrador):
+    corpo = administrador.put(
+        "/api/configuracao/segmentacao", json={**PADRAO_ESPERADO, "top_n": 0}
+    ).json()
+
+    assert corpo["campos"][0]["mensagem"] == "Use um valor a partir de 1."

@@ -555,3 +555,28 @@ def test_recusa_de_exclusao_fala_com_o_usuario_e_nao_com_a_api(analista):
     ajuda = r.json()["detail"]["ajuda"]
     assert "desativ" in ajuda.lower()
     assert "PATCH" not in ajuda and "{" not in ajuda
+
+
+# ================================================= mensagens que dizem o limite
+def test_nome_vazio_diz_que_e_obrigatorio_e_quanto_falta(analista):
+    """"Valor curto demais." não dizia nem que o campo é obrigatório nem quanto
+    falta — a pessoa corrige às cegas."""
+    campos = analista.post("/api/parceiros", json={"nome": ""}).json()["campos"]
+
+    assert campos[0]["campo"] == "nome"
+    assert campos[0]["mensagem"] == "Obrigatório: informe ao menos 2 caracteres."
+
+
+def test_nome_curto_diz_o_minimo(analista):
+    campos = analista.post("/api/parceiros", json={"nome": "A"}).json()["campos"]
+
+    assert campos[0]["mensagem"] == "Curto demais: use ao menos 2 caracteres."
+
+
+def test_contato_longo_diz_o_maximo(analista):
+    campos = analista.post(
+        "/api/parceiros", json={"nome": "Nome Bom", "contato": "x" * 121}
+    ).json()["campos"]
+
+    assert campos[0]["campo"] == "contato"
+    assert campos[0]["mensagem"] == "Longo demais: use no máximo 120 caracteres."
