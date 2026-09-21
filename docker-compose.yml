@@ -4,6 +4,15 @@
 services:
   postgres:
     image: postgres:16-alpine
+    # Os três serviços voltam sozinhos quando o Docker volta. Sem isto, cada
+    # vez que o Docker Desktop reiniciava — e nesta máquina ele reinicia sozinho
+    # quando fica ocioso — os contêineres ficavam parados com "exited", e a
+    # aplicação só voltava com um `docker compose up` à mão. Aconteceu três
+    # vezes numa semana; no dia da demonstração, não pode acontecer.
+    #
+    # `unless-stopped`, e não `always`: quem para de propósito com `docker
+    # compose stop` continua parado depois de reiniciar a máquina.
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-gih}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gih}
@@ -23,6 +32,7 @@ services:
 
   api:
     build: ./api
+    restart: unless-stopped
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-gih}:${POSTGRES_PASSWORD:-gih}@postgres:5432/${POSTGRES_DB:-gih}
       # O filtro por data da auditoria usa o dia do relógio de quem consulta.
@@ -44,6 +54,7 @@ services:
   # funciona sem abrir CORS na API — ver web/vite.config.js.
   web:
     build: ./web
+    restart: unless-stopped
     ports:
       - "127.0.0.1:5173:5173"
     depends_on:
