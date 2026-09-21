@@ -35,6 +35,11 @@ function mensagemDe(corpo) {
   const detalhe = corpo?.detail;
   if (typeof detalhe === "string") return detalhe;
   if (detalhe?.erro) return detalhe.erro;
+  /* O erro de validação traz o resumo no topo do corpo, e os campos à parte.
+     Usar a mensagem do primeiro campo como título fazia ela aparecer duas
+     vezes na tela — no alerta e embaixo do campo — e escondia que podia haver
+     mais de um campo errado. */
+  if (corpo?.erro) return corpo.erro;
   if (corpo?.campos?.length) return corpo.campos[0].mensagem ?? "Confira os campos.";
   return null;
 }
