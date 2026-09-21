@@ -226,7 +226,7 @@ function montar() {
     'Gravado, o aviso diz quantos registros entraram e leva ao painel: a importação termina segmentando a '
     + 'base, na mesma transação, e é lá que o resultado aparece.',
   ));
-  c.push(evidencia('sprint04/fluxo-5-importacao-concluida', 520));
+  c.push(evidencia('sprint04/fluxo-5-importacao-concluida'));
   c.push(legenda('A importação concluída, com o caminho para o painel.'));
 
   // =========================================== 3. PERSISTÊNCIA
@@ -366,7 +366,7 @@ function montar() {
     'Período já importado: o padrão é cancelar. A substituição só é oferecida depois de dizer quantos '
     + 'registros seriam apagados e quem os trouxe — destruir dado não pode ser um clique distraído.',
   ));
-  c.push(evidencia('sprint04/erro-4-periodo-ja-importado', 560));
+  c.push(evidencia('sprint04/erro-4-periodo-ja-importado'));
   c.push(legenda('Importação recusada por período repetido, com o que a substituição apagaria.'));
 
   c.push(quebra());
