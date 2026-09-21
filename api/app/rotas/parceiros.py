@@ -14,6 +14,7 @@ import io
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, literal, nullslast, select
 from sqlalchemy.exc import IntegrityError
@@ -36,6 +37,7 @@ from app.esquemas import (
     VinculoParceiro,
 )
 from app.modelos import (
+    Categoria,
     HistoricoSegmento,
     ItemPlano,
     Mensagem,
@@ -465,6 +467,7 @@ def criar(
     s: Banco,
     autor: UsuarioAtual,
 ) -> Parceiro:
+    _categoria_existe(s, dados.categoria_id)
     parceiro = Parceiro(
         nome=dados.nome,
         categoria_id=dados.categoria_id,
@@ -484,10 +487,9 @@ def criar(
         # janela entre a conferência e a gravação — deixar o banco recusar é o
         # único jeito sem corrida (UC04, E1).
         s.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Já existe um parceiro com o nome {dados.nome!r}.",
-        ) from e
+        if _violou_o_nome(e):
+            raise _nome_em_uso(s, dados.nome) from e
+        raise
 
     auditoria.registrar(
         Acao.PARCEIRO_CRIADO,
@@ -530,6 +532,7 @@ def editar(
     # `categoria_id` é o único campo em que o nulo tem significado próprio:
     # ausente quer dizer "não mexa", nulo quer dizer "desclassifique".
     if "categoria_id" in informados:
+        _categoria_existe(s, dados.categoria_id)
         parceiro.categoria_id = dados.categoria_id
         parceiro.origem_categoria = (
             OrigemCategoria.MANUAL if dados.categoria_id is not None else None
@@ -539,10 +542,9 @@ def editar(
         s.flush()
     except IntegrityError as e:
         s.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Já existe um parceiro com este nome.",
-        ) from e
+        if _violou_o_nome(e):
+            raise _nome_em_uso(s, dados.nome) from e
+        raise
 
     _auditar_edicao(parceiro, anterior, autor_id=autor.id, origem=origem)
     return parceiro
@@ -574,10 +576,12 @@ def excluir(
             status_code=status.HTTP_409_CONFLICT,
             detail={
                 "erro": f"O parceiro {parceiro.nome!r} tem histórico e não pode ser excluído.",
+                # A mensagem aparece na tela, para quem usa o sistema. A versão
+                # anterior dizia "PATCH neste mesmo endereço" — instrução para
+                # quem escreve cliente de API. A tela oferece o botão.
                 "ajuda": (
                     "Excluir apagaria registros que outros períodos já contabilizam. "
-                    "Para tirá-lo de circulação sem perder o histórico, desative-o: "
-                    "PATCH neste mesmo endereço com {\"ativo\": false}."
+                    "Para tirá-lo de circulação sem perder o histórico, desative o parceiro."
                 ),
                 "vinculos": vinculos.model_dump(),
             },
@@ -597,6 +601,61 @@ def excluir(
 
 
 # --------------------------------------------------------------------- apoio
+# O nome da restrição de unicidade, como o Postgres a batizou na migração
+# inicial. É por ele que se distingue "nome em uso" de qualquer outra violação.
+RESTRICAO_DO_NOME = "parceiro_nome_key"
+
+
+def _violou_o_nome(erro: IntegrityError) -> bool:
+    """A violação foi a do nome único — e não outra.
+
+    O `except` antigo tratava **qualquer** violação de integridade como nome
+    duplicado. Uma categoria inexistente estoura a chave estrangeira, e a
+    resposta dizia "já existe um parceiro com esse nome": o usuário iria
+    corrigir o campo errado.
+    """
+    diagnostico = getattr(erro.orig, "diag", None)
+    return getattr(diagnostico, "constraint_name", None) == RESTRICAO_DO_NOME
+
+
+def _categoria_existe(s: Session, categoria_id: int | None) -> None:
+    """Categoria inexistente é erro **do campo**, e sai como os outros erros de campo.
+
+    Levantar `RequestValidationError`, em vez de montar a resposta aqui, faz a
+    mensagem passar pelo mesmo tradutor de `app/erros.py` que todo 422 usa: a
+    tela recebe o formato de sempre e marca o campo certo.
+    """
+    if categoria_id is not None and s.get(Categoria, categoria_id) is None:
+        raise RequestValidationError(
+            [
+                {
+                    "type": "value_error",
+                    "loc": ("body", "categoria_id"),
+                    "msg": "Value error, Categoria não encontrada. "
+                    "Escolha uma da lista ou deixe o parceiro sem categoria.",
+                    "input": categoria_id,
+                }
+            ]
+        )
+
+
+def _nome_em_uso(s: Session, nome: str) -> HTTPException:
+    """A recusa **aponta o parceiro que já usa o nome** (UC04, E1).
+
+    Sem isso, o usuário fica entre duas adivinhações: se o outro cadastro é o
+    mesmo parceiro, ou se é outro com nome parecido. Com o existente na
+    resposta, a tela oferece abri-lo.
+    """
+    existente = s.scalar(select(Parceiro).where(Parceiro.nome == nome))
+    detalhe = {
+        "erro": f"Já existe um parceiro com o nome {nome!r}.",
+        "ajuda": "Corrija o nome, ou abra o cadastro existente e edite-o em vez de criar outro.",
+    }
+    if existente is not None:
+        detalhe["existente"] = {"id": existente.id, "nome": existente.nome}
+    return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detalhe)
+
+
 def _buscar(s: Session, parceiro_id: int) -> Parceiro:
     parceiro = s.get(Parceiro, parceiro_id)
     if parceiro is None:
