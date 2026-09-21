@@ -39,7 +39,21 @@ MENSAGENS = {
     "date_parsing": "Informe uma data válida, no formato AAAA-MM-DD.",
     "greater_than_equal": "Valor abaixo do mínimo permitido.",
     "less_than_equal": "Valor acima do máximo permitido.",
+    "int_from_float": "Informe um número inteiro, sem casas decimais.",
+    "int_type": "Informe um número inteiro.",
+    "bool_parsing": "Informe verdadeiro ou falso.",
+    "bool_type": "Informe verdadeiro ou falso.",
+    "string_type": "Informe um texto.",
+    "enum": "Escolha uma das opções permitidas.",
+    "json_invalid": "O conteúdo enviado não está num formato que o sistema consiga ler.",
 }
+
+# O que o Pydantic diz de um tipo que ainda não está na tabela acima. A frase
+# dele vem em inglês ("Input should be a valid boolean"), e o RNF20 pede a
+# interface inteira em português: uma frase genérica é pior que uma específica,
+# mas não sai em outra língua. Achado na Sprint 04 — o `enum` do status, a
+# ordenação e o filtro de situação respondiam em inglês.
+GENERICA = "Valor inválido para este campo."
 
 
 # Mensagens que dizem **o limite**. O Pydantic manda o limite violado em
@@ -51,9 +65,15 @@ MENSAGENS_COM_LIMITE = {
     "string_too_long": "Longo demais: use no máximo {max_length} caracteres.",
     "greater_than_equal": "Use um valor a partir de {ge}.",
     "less_than_equal": "Use um valor até {le}.",
+    "enum": "Escolha uma destas opções: {expected}.",
 }
 
 VAZIO_OBRIGATORIO = "Obrigatório: informe ao menos {min_length} caracteres."
+
+
+def _opcoes(esperado: str) -> str:
+    """`'A', 'B' or 'C'`, como o Pydantic escreve, vira `A, B ou C`."""
+    return esperado.replace("' or '", "' ou '").replace("'", "")
 
 
 def mensagem_de(erro: dict) -> str:
@@ -65,6 +85,8 @@ def mensagem_de(erro: dict) -> str:
         return erro["msg"].removeprefix("Value error, ")
 
     contexto = erro.get("ctx") or {}
+    if "expected" in contexto:
+        contexto = {**contexto, "expected": _opcoes(str(contexto["expected"]))}
     if tipo == "string_too_short" and not str(erro.get("input") or "").strip():
         modelo = VAZIO_OBRIGATORIO
     else:
@@ -74,7 +96,7 @@ def mensagem_de(erro: dict) -> str:
             return modelo.format(**contexto)
         except KeyError:
             pass  # sem o limite no contexto, fica a frase genérica abaixo
-    return MENSAGENS.get(tipo, erro["msg"])
+    return MENSAGENS.get(tipo, GENERICA)
 
 
 def nome_do_campo(loc: tuple) -> str:
