@@ -80,6 +80,10 @@ def _conflito_de_periodo(existente: PeriodoExistente) -> HTTPException:
     A alternativa oferecida apaga dados. Por isso a recusa vem com o número na
     frente: quem decide precisa saber quantos registros desaparecem, quem os
     trouxe e quando — e não descobrir isso depois.
+
+    A `ajuda` aparece na tela de importação, e por isso fala da ação, não do
+    campo: `"substituir": true` é instrução para quem escreve cliente de API, e
+    esse está documentado no esquema, em `/docs`.
     """
     return HTTPException(
         status_code=status.HTTP_409_CONFLICT,
@@ -87,7 +91,7 @@ def _conflito_de_periodo(existente: PeriodoExistente) -> HTTPException:
             "erro": "Este período já foi importado.",
             "ajuda": (
                 "O padrão é cancelar, para não duplicar nem apagar dados sem querer. "
-                'Para trocar o conteúdo do período, repita o envio com "substituir": true — '
+                "Para trocar o conteúdo do período, substitua a importação anterior: "
                 "as métricas atuais deste período serão apagadas antes da gravação."
             ),
             "ja_existe": {

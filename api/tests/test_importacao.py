@@ -403,7 +403,18 @@ def test_a_recusa_diz_o_que_seria_apagado(analista):
 
     assert detalhe["ja_existe"]["metricas_que_serao_apagadas"] == 3
     assert detalhe["ja_existe"]["autor"] == "Analista"
-    assert "substituir" in detalhe["ajuda"]
+    assert "substitua" in detalhe["ajuda"]
+
+
+def test_a_recusa_do_periodo_fala_com_o_usuario_e_nao_com_a_api(analista):
+    """A `ajuda` aparece na tela de importação. `"substituir": true` é instrução
+    para quem escreve cliente de API, não para quem usa o sistema."""
+    importar(analista)
+
+    ajuda = importar(analista).json()["detail"]["ajuda"]
+
+    assert '"substituir"' not in ajuda
+    assert "true" not in ajuda and "{" not in ajuda
 
 
 def test_substituir_troca_as_metricas_sem_duplicar(analista):
