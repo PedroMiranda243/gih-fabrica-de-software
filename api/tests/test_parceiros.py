@@ -23,6 +23,7 @@ from app.modelos import (
     Perfil,
     Periodo,
     StatusComercial,
+    Usuario,
 )
 
 
@@ -155,7 +156,7 @@ def test_nome_repetido_e_recusado(analista):
     r = analista.post("/api/parceiros", json=novo())
 
     assert r.status_code == 409
-    assert "Comércio Alfa" in r.json()["detail"]
+    assert "Comércio Alfa" in r.json()["detail"]["erro"]
 
 
 def test_nome_curto_demais_e_recusado(analista):
@@ -468,3 +469,89 @@ def test_origem_categoria_nao_e_aceita_do_cliente(analista, categoria):
 
     assert r.status_code == 201
     assert r.json()["origem_categoria"] == "MANUAL"
+
+
+# ================================================ UC04 — mensagens do cadastro
+def test_nome_duplicado_aponta_o_parceiro_existente(analista):
+    """UC04-E1: a recusa **mostra o parceiro existente**, para o usuário decidir
+    entre corrigir o nome e editar o registro que já existe."""
+    existente = analista.post("/api/parceiros", json={"nome": "Casa Azul"}).json()["id"]
+
+    r = analista.post("/api/parceiros", json={"nome": "Casa Azul"})
+
+    assert r.status_code == 409
+    detalhe = r.json()["detail"]
+    assert detalhe["existente"] == {"id": existente, "nome": "Casa Azul"}
+    assert "Casa Azul" in detalhe["erro"]
+    assert detalhe["ajuda"]
+
+
+def test_renomear_para_nome_em_uso_tambem_aponta_o_existente(analista):
+    existente = analista.post("/api/parceiros", json={"nome": "Casa Azul"}).json()["id"]
+    outro = analista.post("/api/parceiros", json={"nome": "Casa Verde"}).json()["id"]
+
+    r = analista.patch(f"/api/parceiros/{outro}", json={"nome": "Casa Azul"})
+
+    assert r.status_code == 409
+    assert r.json()["detail"]["existente"]["id"] == existente
+
+
+def test_categoria_inexistente_nao_vira_nome_duplicado(analista):
+    """Qualquer violação de integridade era lida como nome duplicado.
+
+    Uma categoria que não existe estoura a chave estrangeira, e a resposta dizia
+    "já existe um parceiro com esse nome" — o usuário corrigiria o campo errado.
+    """
+    r = analista.post("/api/parceiros", json={"nome": "Nome Novo", "categoria_id": 999999})
+
+    assert r.status_code == 422
+    assert r.json()["campos"][0]["campo"] == "categoria_id"
+
+
+def test_editar_para_categoria_inexistente_e_recusado_no_campo(analista):
+    alvo = analista.post("/api/parceiros", json={"nome": "Nome Novo"}).json()["id"]
+
+    r = analista.patch(f"/api/parceiros/{alvo}", json={"categoria_id": 999999})
+
+    assert r.status_code == 422
+    assert r.json()["campos"][0]["campo"] == "categoria_id"
+
+
+def test_recusa_de_exclusao_fala_com_o_usuario_e_nao_com_a_api(analista):
+    """A mensagem aparece na tela. "PATCH neste mesmo endereço" é instrução para
+    quem escreve cliente de API, não para quem usa o sistema."""
+    alvo = analista.post("/api/parceiros", json={"nome": "Com Historico"}).json()["id"]
+    s = Sessao()
+    try:
+        periodo = Periodo(data_inicio=date(2026, 3, 2), data_fim=date(2026, 3, 8))
+        s.add(periodo)
+        s.flush()
+        autor = s.scalar(select(Usuario.id).where(Usuario.login == "analista"))
+        importacao = Importacao(
+            periodo_id=periodo.id,
+            usuario_id=autor,
+            origem=OrigemImportacao.TEXTO,
+            total_gravado=1,
+            total_rejeitado=0,
+        )
+        s.add(importacao)
+        s.flush()
+        s.add(
+            Metrica(
+                parceiro_id=alvo,
+                periodo_id=periodo.id,
+                importacao_id=importacao.id,
+                faturamento=Decimal("10.00"),
+                pedidos=1,
+            )
+        )
+        s.commit()
+    finally:
+        s.close()
+
+    r = analista.delete(f"/api/parceiros/{alvo}")
+
+    assert r.status_code == 409
+    ajuda = r.json()["detail"]["ajuda"]
+    assert "desativ" in ajuda.lower()
+    assert "PATCH" not in ajuda and "{" not in ajuda
