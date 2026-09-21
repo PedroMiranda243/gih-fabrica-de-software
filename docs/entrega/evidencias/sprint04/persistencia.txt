@@ -1,0 +1,223 @@
+Persistência: os dados sobrevivem a desligar e religar a aplicação · http://localhost:8000
+Dados sintéticos; nenhum nome real de empresa ou pessoa.
+
+==============================================================================
+Preparação — um analista, que é quem gerencia parceiros (UC04)
+==============================================================================
+
+$ POST /api/usuarios
+  > {
+  >   "login": "t72202.analista",
+  >   "nome": "Analista da Evidência",
+  >   "senha": "********",
+  >   "perfil": "ANALISTA"
+  > }
+  201 Created
+  < {
+  <   "id": 19,
+  <   "login": "t72202.analista",
+  <   "nome": "Analista da Evidência",
+  <   "perfil": "ANALISTA",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-09-21T21:20:22.749823Z"
+  < }
+
+==============================================================================
+[1/4] Antes de desligar — o analista cadastra e altera um parceiro
+==============================================================================
+
+$ POST /api/sessao
+  > {
+  >   "login": "t72202.analista",
+  >   "senha": "********"
+  > }
+  201 Created
+  < {
+  <   "usuario": {
+  <     "id": 19,
+  <     "login": "t72202.analista",
+  <     "nome": "Analista da Evidência",
+  <     "perfil": "ANALISTA",
+  <     "ativo": true,
+  <     "parceiro_id": null,
+  <     "criado_em": "2026-09-21T21:20:22.749823Z"
+  <   },
+  <   "expira_em": "2026-09-22T05:20:25.152318Z"
+  < }
+
+$ POST /api/categorias
+  > {
+  >   "nome": "Categoria t72202"
+  > }
+  201 Created
+  < {
+  <   "id": 15,
+  <   "nome": "Categoria t72202",
+  <   "ativa": true
+  < }
+
+$ POST /api/parceiros
+  > {
+  >   "nome": "Comércio t72202",
+  >   "status": "PROSPECCAO"
+  > }
+  201 Created
+  < {
+  <   "id": 526,
+  <   "nome": "Comércio t72202",
+  <   "categoria": null,
+  <   "origem_categoria": null,
+  <   "status": "PROSPECCAO",
+  <   "contato": null,
+  <   "ativo": true,
+  <   "criado_em": "2026-09-21T21:20:25.171581Z"
+  < }
+
+$ PATCH /api/parceiros/526
+  > {
+  >   "status": "ATIVO",
+  >   "categoria_id": 15,
+  >   "contato": "contato@exemplo.test"
+  > }
+  200 OK
+  < {
+  <   "id": 526,
+  <   "nome": "Comércio t72202",
+  <   "categoria": {
+  <     "id": 15,
+  <     "nome": "Categoria t72202",
+  <     "ativa": true
+  <   },
+  <   "origem_categoria": "MANUAL",
+  <   "status": "ATIVO",
+  <   "contato": "contato@exemplo.test",
+  <   "ativo": true,
+  <   "criado_em": "2026-09-21T21:20:25.171581Z"
+  < }
+
+O estado anotado para comparar depois:
+  parceiro           Comércio t72202 · ATIVO · contato@exemplo.test · Categoria t72202
+  parceiros na base  501
+  painel             2026-09-14 a 2026-09-20 · faturamento 1839707.96 · 41974 pedidos
+  limiares           Top 15 · tendência em 2 períodos · recém-chegado até 3
+
+Contêineres em execução:
+  api        5cd60abfbc28
+  postgres   58bc554eca60
+  web        7ace60ef98ba
+
+Volume do banco: growth-intelligence-hub_dados_postgres, criado em 2026-09-15T20:18:27Z
+
+==============================================================================
+[2/4] Desligar — docker compose down
+==============================================================================
+
+$ docker compose down
+   Container growth-intelligence-hub-web-1 Stopping 
+   Container growth-intelligence-hub-web-1 Stopped 
+   Container growth-intelligence-hub-web-1 Removing 
+   Container growth-intelligence-hub-web-1 Removed 
+   Container growth-intelligence-hub-api-1 Stopping 
+   Container growth-intelligence-hub-api-1 Stopped 
+   Container growth-intelligence-hub-api-1 Removing 
+   Container growth-intelligence-hub-api-1 Removed 
+   Container growth-intelligence-hub-postgres-1 Stopping 
+   Container growth-intelligence-hub-postgres-1 Stopped 
+   Container growth-intelligence-hub-postgres-1 Removing 
+   Container growth-intelligence-hub-postgres-1 Removed 
+   Network growth-intelligence-hub_default Removing 
+   Network growth-intelligence-hub_default Removed 
+
+A API responde? não
+Contêineres depois do down:
+  (nenhum contêiner)
+Volume do banco: growth-intelligence-hub_dados_postgres, criado em 2026-09-15T20:18:27Z
+
+==============================================================================
+[3/4] Religar — docker compose up -d
+==============================================================================
+
+$ docker compose up -d
+   Network growth-intelligence-hub_default Creating 
+   Network growth-intelligence-hub_default Created 
+   Container growth-intelligence-hub-postgres-1 Creating 
+   Container growth-intelligence-hub-postgres-1 Created 
+   Container growth-intelligence-hub-api-1 Creating 
+   Container growth-intelligence-hub-api-1 Created 
+   Container growth-intelligence-hub-web-1 Creating 
+   Container growth-intelligence-hub-web-1 Created 
+   Container growth-intelligence-hub-postgres-1 Starting 
+   Container growth-intelligence-hub-postgres-1 Started 
+   Container growth-intelligence-hub-postgres-1 Waiting 
+   Container growth-intelligence-hub-postgres-1 Healthy 
+   Container growth-intelligence-hub-api-1 Starting 
+   Container growth-intelligence-hub-api-1 Started 
+   Container growth-intelligence-hub-web-1 Starting 
+   Container growth-intelligence-hub-web-1 Started 
+
+A API voltou a responder em 2 s.
+Contêineres novos:
+  api        32500f4d6700
+  postgres   9ed1e87f21fb
+  web        66ecf528d041
+
+==============================================================================
+[4/4] Depois de religar — o mesmo cookie de antes, sem novo login
+==============================================================================
+
+$ GET /api/sessao/atual
+  200 OK
+  < {
+  <   "id": 19,
+  <   "login": "t72202.analista",
+  <   "nome": "Analista da Evidência",
+  <   "perfil": "ANALISTA",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-09-21T21:20:22.749823Z"
+  < }
+
+$ GET /api/parceiros/526
+  200 OK
+  < {
+  <   "id": 526,
+  <   "nome": "Comércio t72202",
+  <   "categoria": {
+  <     "id": 15,
+  <     "nome": "Categoria t72202",
+  <     "ativa": true
+  <   },
+  <   "origem_categoria": "MANUAL",
+  <   "status": "ATIVO",
+  <   "contato": "contato@exemplo.test",
+  <   "ativo": true,
+  <   "criado_em": "2026-09-21T21:20:25.171581Z",
+  <   "desempenho": {
+  <     "segmento": null,
+  <     "faturamento": null,
+  <     "pedidos": null,
+  <     "ticket_medio": null,
+  <     "variacao_percentual": null
+  <   }
+  < }
+
+O estado lido agora:
+  parceiro           Comércio t72202 · ATIVO · contato@exemplo.test · Categoria t72202
+  parceiros na base  501
+  painel             2026-09-14 a 2026-09-20 · faturamento 1839707.96 · 41974 pedidos
+  limiares           Top 15 · tendência em 2 períodos · recém-chegado até 3
+
+Conferências:
+  ok    o down removeu os contêineres, e a API parou de responder
+  ok    o up criou contêineres novos — não é o mesmo processo de antes
+  ok    o volume do banco é o mesmo, com a mesma data de criação
+  ok    a sessão aberta antes de desligar continua valendo
+  ok    o parceiro voltou com todos os campos iguais
+  ok    a alteração feita antes de desligar continua lá
+  ok    a base tem o mesmo número de parceiros
+  ok    o painel mostra os mesmos indicadores
+  ok    os limiares da segmentação são os mesmos
+
+==============================================================================
+Resultado: 9 de 9 conferências passaram.

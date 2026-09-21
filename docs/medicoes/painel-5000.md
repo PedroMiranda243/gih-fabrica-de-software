@@ -8,7 +8,7 @@ O RNF03 fixa **2 s** como teto de resposta e a H40 cobra isso com 5.000 parceiro
 
 | Item | Valor |
 |---|---|
-| Data | 20/09/2026 02:07 |
+| Data | 21/09/2026 17:45 |
 | Banco | `gih_medicao` — **separado do banco de trabalho** |
 | PostgreSQL | PostgreSQL 16.14 on x86_64-pc-linux-musl |
 | Python | 3.11.9 |
@@ -27,14 +27,14 @@ api/.venv/Scripts/python scripts/medir_painel.py --parceiros 5000 --periodos 12 
 
 | Consulta | Chamadas | Mediana | p95 | Dispersão | Resposta | Dentro de 2 s |
 |---|--:|--:|--:|--:|--:|:--:|
-| `indicadores` | 300 | 15.2 ms | 16.8 ms | 10% | 380 B | sim |
-| `ranking-25` | 192 | 29.3 ms | 31.7 ms | 8% | 6 kB | sim |
-| `ranking-200` | 181 | 34.0 ms | 36.7 ms | 8% | 47 kB | sim |
-| `serie` | 300 | 21.0 ms | 22.6 ms | 8% | 2 kB | sim |
-| `segmentos` | 300 | 8.7 ms | 9.5 ms | 9% | 278 B | sim |
-| `mobilidade` | 241 | 20.8 ms | 23.3 ms | 12% | 351 B | sim |
-| `busca` | 300 | 15.7 ms | 38.7 ms | 147% | 63 kB | sim |
-| `lista-completa` | 44 | 140.0 ms | 178.9 ms | 28% | 1011 kB | sim |
+| `indicadores` | 300 | 14.1 ms | 17.0 ms | 21% | 381 B | sim |
+| `ranking-25` | 210 | 28.2 ms | 32.5 ms | 15% | 6 kB | sim |
+| `ranking-200` | 191 | 32.3 ms | 36.4 ms | 13% | 47 kB | sim |
+| `serie` | 273 | 18.8 ms | 21.4 ms | 13% | 2 kB | sim |
+| `segmentos` | 300 | 8.0 ms | 9.1 ms | 13% | 279 B | sim |
+| `mobilidade` | 269 | 20.8 ms | 22.9 ms | 10% | 515 B | sim |
+| `busca` | 300 | 14.7 ms | 16.4 ms | 12% | 17 kB | sim |
+| `lista-completa` | 300 | 14.9 ms | 16.7 ms | 12% | 16 kB | sim |
 
 A dispersão é o quanto o p95 se afasta da mediana. Vai junto de propósito: um número só de tempo esconde a variação, e foi exatamente isso que enganou a equipe na validação do toolchain (H47).
 
@@ -60,18 +60,18 @@ Cada consulta abaixo foi **capturada do SQLAlchemy durante a chamada** e passada
 A consulta filtra `metrica`. Se o planejador varrer, a conferência abaixo diz se foi escolha dele ou falta de índice.
 
 - `SELECT periodo.id, periodo.data_inicio, periodo.data_fim FROM periodo ORDER BY periodo.data_inicio DESC, peri…`
-  - tempo no banco: **0.04 ms** · varredura: `periodo`
+  - tempo no banco: **0.02 ms** · varredura: `periodo`
 - `SELECT coalesce(sum(metrica.faturamento), %(coalesce_2)s::INTEGER) AS coalesce_1, coalesce(sum(metrica.pedido…`
-  - tempo no banco: **1.62 ms** · varredura: nenhuma
+  - tempo no banco: **1.28 ms** · varredura: nenhuma
 - `SELECT periodo.id, periodo.data_inicio, periodo.data_fim FROM periodo WHERE periodo.data_inicio < %(data_inic…`
   - tempo no banco: **0.02 ms** · varredura: `periodo`
 - `SELECT count(*) AS count_1, count(*) FILTER (WHERE historico_segmento.segmento = %(segmento_1)s) AS anon_1 FR…`
-  - tempo no banco: **0.57 ms** · varredura: nenhuma
+  - tempo no banco: **0.59 ms** · varredura: nenhuma
 
 <details><summary>Plano completo</summary>
 
 ```
-Limit  (cost=1.18..1.18 rows=1 width=12) (actual time=0.009..0.010 rows=1 loops=1)
+Limit  (cost=1.18..1.18 rows=1 width=12) (actual time=0.010..0.010 rows=1 loops=1)
   Buffers: shared hit=1
   ->  Sort  (cost=1.18..1.21 rows=12 width=12) (actual time=0.009..0.009 rows=1 loops=1)
         Sort Key: data_inicio DESC, id DESC
@@ -79,8 +79,8 @@ Limit  (cost=1.18..1.18 rows=1 width=12) (actual time=0.009..0.010 rows=1 loops=
         Buffers: shared hit=1
         ->  Seq Scan on periodo  (cost=0.00..1.12 rows=12 width=12) (actual time=0.004..0.005 rows=12 loops=1)
               Buffers: shared hit=1
-Planning Time: 0.035 ms
-Execution Time: 0.039 ms
+Planning Time: 0.050 ms
+Execution Time: 0.018 ms
 ```
 
 </details>
@@ -88,17 +88,17 @@ Execution Time: 0.039 ms
 <details><summary>Plano completo</summary>
 
 ```
-Aggregate  (cost=718.02..718.03 rows=1 width=48) (actual time=1.542..1.543 rows=1 loops=1)
-  Buffers: shared hit=504
-  ->  Bitmap Heap Scan on metrica  (cost=138.75..680.79 rows=4963 width=11) (actual time=0.322..1.022 rows=5000 loops=1)
+Aggregate  (cost=718.35..718.36 rows=1 width=48) (actual time=1.222..1.223 rows=1 loops=1)
+  Buffers: shared hit=505
+  ->  Bitmap Heap Scan on metrica  (cost=138.85..681.03 rows=4975 width=11) (actual time=0.226..0.797 rows=5000 loops=1)
         Recheck Cond: (periodo_id = 12)
         Heap Blocks: exact=480
-        Buffers: shared hit=504
-        ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..137.51 rows=4963 width=0) (actual time=0.250..0.250 rows=5000 loops=1)
+        Buffers: shared hit=505
+        ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..137.60 rows=4975 width=0) (actual time=0.189..0.190 rows=5000 loops=1)
               Index Cond: (periodo_id = 12)
-              Buffers: shared hit=24
-Planning Time: 0.049 ms
-Execution Time: 1.617 ms
+              Buffers: shared hit=25
+Planning Time: 0.046 ms
+Execution Time: 1.276 ms
 ```
 
 </details>
@@ -106,20 +106,20 @@ Execution Time: 1.617 ms
 <details><summary>Plano completo</summary>
 
 ```
-Limit  (cost=1.20..1.21 rows=1 width=12) (actual time=0.007..0.007 rows=1 loops=1)
+Limit  (cost=1.20..1.21 rows=1 width=12) (actual time=0.008..0.008 rows=1 loops=1)
   Buffers: shared hit=1
   ->  Sort  (cost=1.20..1.23 rows=11 width=12) (actual time=0.007..0.007 rows=1 loops=1)
         Sort Key: data_inicio DESC, id DESC
         Sort Method: top-N heapsort  Memory: 25kB
         Buffers: shared hit=1
         ->  Seq Scan on periodo  (cost=0.00..1.15 rows=11 width=12) (actual time=0.003..0.004 rows=11 loops=1)
-              Filter: (data_inicio < '2026-09-07'::date)
+              Filter: (data_inicio < '2026-09-14'::date)
               Rows Removed by Filter: 1
               Buffers: shared hit=1
 Planning:
   Buffers: shared hit=2
-Planning Time: 0.062 ms
-Execution Time: 0.016 ms
+Planning Time: 0.077 ms
+Execution Time: 0.017 ms
 ```
 
 </details>
@@ -127,17 +127,17 @@ Execution Time: 0.016 ms
 <details><summary>Plano completo</summary>
 
 ```
-Aggregate  (cost=519.71..519.72 rows=1 width=16) (actual time=0.534..0.535 rows=1 loops=1)
+Aggregate  (cost=522.82..522.83 rows=1 width=16) (actual time=0.550..0.550 rows=1 loops=1)
   Buffers: shared hit=39
-  ->  Bitmap Heap Scan on historico_segmento  (cost=58.39..482.84 rows=4916 width=4) (actual time=0.072..0.306 rows=5000 loops=1)
+  ->  Bitmap Heap Scan on historico_segmento  (cost=59.26..485.11 rows=5028 width=4) (actual time=0.074..0.314 rows=5000 loops=1)
         Recheck Cond: (periodo_id = 12)
         Heap Blocks: exact=33
         Buffers: shared hit=39
-        ->  Bitmap Index Scan on ix_segmento_periodo_segmento  (cost=0.00..57.16 rows=4916 width=0) (actual time=0.061..0.061 rows=5000 loops=1)
+        ->  Bitmap Index Scan on ix_segmento_periodo_segmento  (cost=0.00..58.00 rows=5028 width=0) (actual time=0.063..0.063 rows=5000 loops=1)
               Index Cond: (periodo_id = 12)
               Buffers: shared hit=6
-Planning Time: 0.030 ms
-Execution Time: 0.569 ms
+Planning Time: 0.035 ms
+Execution Time: 0.589 ms
 ```
 
 </details>
@@ -147,144 +147,28 @@ Execution Time: 0.569 ms
 A consulta filtra `metrica`. Se o planejador varrer, a conferência abaixo diz se foi escolha dele ou falta de índice.
 
 - `SELECT periodo.id, periodo.data_inicio, periodo.data_fim FROM periodo ORDER BY periodo.data_inicio DESC, peri…`
-  - tempo no banco: **0.03 ms** · varredura: `periodo`
-- `SELECT count(*) AS count_1 FROM (SELECT metrica.parceiro_id AS parceiro_id, metrica.faturamento AS faturament…`
-  - tempo no banco: **2.71 ms** · varredura: `parceiro`
-- `SELECT atual.parceiro_id, atual.faturamento, atual.pedidos, atual.posicao, parceiro.nome, categoria.nome AS n…`
-  - tempo no banco: **11.09 ms** · varredura: `categoria`, `parceiro`
-- `SELECT periodo.id, periodo.data_inicio, periodo.data_fim FROM periodo WHERE periodo.data_inicio < %(data_inic…`
   - tempo no banco: **0.04 ms** · varredura: `periodo`
+- `SELECT count(*) AS count_1 FROM (SELECT metrica.parceiro_id AS parceiro_id, metrica.faturamento AS faturament…`
+  - tempo no banco: **2.75 ms** · varredura: `parceiro`
+- `SELECT atual.parceiro_id, atual.faturamento, atual.pedidos, atual.posicao, parceiro.nome, categoria.nome AS n…`
+  - tempo no banco: **9.96 ms** · varredura: `categoria`, `parceiro`
+- `SELECT periodo.id, periodo.data_inicio, periodo.data_fim FROM periodo WHERE periodo.data_inicio < %(data_inic…`
+  - tempo no banco: **0.03 ms** · varredura: `periodo`
 - `SELECT anterior.parceiro_id, anterior.posicao, anterior.faturamento FROM (SELECT metrica.parceiro_id AS parce…`
-  - tempo no banco: **5.84 ms** · varredura: `parceiro`
+  - tempo no banco: **4.75 ms** · varredura: `parceiro`
 
 <details><summary>Plano completo</summary>
 
 ```
-Limit  (cost=1.18..1.18 rows=1 width=12) (actual time=0.015..0.016 rows=1 loops=1)
+Limit  (cost=1.18..1.18 rows=1 width=12) (actual time=0.017..0.017 rows=1 loops=1)
   Buffers: shared hit=1
-  ->  Sort  (cost=1.18..1.21 rows=12 width=12) (actual time=0.015..0.015 rows=1 loops=1)
+  ->  Sort  (cost=1.18..1.21 rows=12 width=12) (actual time=0.016..0.017 rows=1 loops=1)
         Sort Key: data_inicio DESC, id DESC
         Sort Method: top-N heapsort  Memory: 25kB
         Buffers: shared hit=1
-        ->  Seq Scan on periodo  (cost=0.00..1.12 rows=12 width=12) (actual time=0.003..0.004 rows=12 loops=1)
+        ->  Seq Scan on periodo  (cost=0.00..1.12 rows=12 width=12) (actual time=0.004..0.005 rows=12 loops=1)
               Buffers: shared hit=1
-Planning Time: 0.034 ms
-Execution Time: 0.032 ms
-```
-
-</details>
-
-<details><summary>Plano completo</summary>
-
-```
-Aggregate  (cost=934.37..934.38 rows=1 width=8) (actual time=2.582..2.583 rows=1 loops=1)
-  Buffers: shared hit=570
-  ->  Hash Join  (cost=317.25..872.33 rows=4963 width=40) (actual time=1.193..2.417 rows=5000 loops=1)
-        Hash Cond: (metrica.parceiro_id = parceiro.id)
-        Buffers: shared hit=570
-        ->  Bitmap Heap Scan on metrica  (cost=138.75..680.79 rows=4963 width=11) (actual time=0.258..0.811 rows=5000 loops=1)
-              Recheck Cond: (periodo_id = 12)
-              Heap Blocks: exact=480
-              Buffers: shared hit=504
-              ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..137.51 rows=4963 width=0) (actual time=0.217..0.217 rows=5000 loops=1)
-                    Index Cond: (periodo_id = 12)
-                    Buffers: shared hit=24
-        ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=0.888..0.888 rows=5000 loops=1)
-              Buckets: 8192  Batches: 1  Memory Usage: 333kB
-              Buffers: shared hit=66
-              ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.004..0.317 rows=5000 loops=1)
-                    Buffers: shared hit=66
-Planning:
-  Buffers: shared hit=12
-Planning Time: 0.329 ms
-Execution Time: 2.715 ms
-```
-
-</details>
-
-<details><summary>Plano completo</summary>
-
-```
-Limit  (cost=2234.56..2234.63 rows=25 width=54) (actual time=10.647..10.651 rows=25 loops=1)
-  Buffers: shared hit=676
-  ->  Sort  (cost=2234.56..2246.97 rows=4963 width=54) (actual time=10.646..10.649 rows=25 loops=1)
-        Sort Key: (row_number() OVER (?))
-        Sort Method: top-N heapsort  Memory: 28kB
-        Buffers: shared hit=676
-        ->  Hash Left Join  (cost=1901.00..2094.51 rows=4963 width=54) (actual time=6.667..10.025 rows=5000 loops=1)
-              Hash Cond: (metrica.parceiro_id = historico_segmento.parceiro_id)
-              Buffers: shared hit=676
-              ->  Hash Left Join  (cost=1356.71..1537.18 rows=4963 width=50) (actual time=5.523..8.202 rows=5000 loops=1)
-                    Hash Cond: (parceiro.categoria_id = categoria.id)
-                    Buffers: shared hit=637
-                    ->  Hash Join  (cost=1355.48..1517.41 rows=4963 width=44) (actual time=5.497..7.646 rows=5000 loops=1)
-                          Hash Cond: (metrica.parceiro_id = parceiro.id)
-                          Buffers: shared hit=636
-                          ->  WindowAgg  (cost=1176.98..1276.24 rows=4963 width=40) (actual time=4.264..5.635 rows=5000 loops=1)
-                                Buffers: shared hit=570
-                                ->  Sort  (cost=1176.98..1189.39 rows=4963 width=32) (actual time=4.255..4.522 rows=5000 loops=1)
-                                      Sort Key: metrica.faturamento DESC, parceiro_1.nome
-                                      Sort Method: quicksort  Memory: 488kB
-                                      Buffers: shared hit=570
-                                      ->  Hash Join  (cost=317.25..872.33 rows=4963 width=32) (actual time=1.466..2.767 rows=5000 loops=1)
-                                            Hash Cond: (metrica.parceiro_id = parceiro_1.id)
-                                            Buffers: shared hit=570
-                                            ->  Bitmap Heap Scan on metrica  (cost=138.75..680.79 rows=4963 width=15) (actual time=0.303..0.904 rows=5000 loops=1)
-                                                  Recheck Cond: (periodo_id = 12)
-                                                  Heap Blocks: exact=480
-                                                  Buffers: shared hit=504
-                                                  ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..137.51 rows=4963 width=0) (actual time=0.265..0.265 rows=5000 loops=1)
-                                                        Index Cond: (periodo_id = 12)
-                                                        Buffers: shared hit=24
-                                            ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=1.124..1.124 rows=5000 loops=1)
-                                                  Buckets: 8192  Batches: 1  Memory Usage: 333kB
-                                                  Buffers: shared hit=66
-                                                  ->  Seq Scan on parceiro parceiro_1  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.003..0.276 rows=5000 loops=1)
-                                                        Buffers: shared hit=66
-                          ->  Hash  (cost=116.00..116.00 rows=5000 width=25) (actual time=1.195..1.195 rows=5000 loops=1)
-                                Buckets: 8192  Batches: 1  Memory Usage: 352kB
-                                Buffers: shared hit=66
-                                ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=25) (actual time=0.003..0.390 rows=5000 loops=1)
-                                      Buffers: shared hit=66
-                    ->  Hash  (cost=1.10..1.10 rows=10 width=14) (actual time=0.017..0.017 rows=10 loops=1)
-                          Buckets: 1024  Batches: 1  Memory Usage: 9kB
-                          Buffers: shared hit=1
-                          ->  Seq Scan on categoria  (cost=0.00..1.10 rows=10 width=14) (actual time=0.004..0.004 rows=10 loops=1)
-                                Buffers: shared hit=1
-              ->  Hash  (cost=482.84..482.84 rows=4916 width=8) (actual time=1.106..1.107 rows=5000 loops=1)
-                    Buckets: 8192  Batches: 1  Memory Usage: 260kB
-                    Buffers: shared hit=39
-                    ->  Bitmap Heap Scan on historico_segmento  (cost=58.39..482.84 rows=4916 width=8) (actual time=0.274..0.593 rows=5000 loops=1)
-                          Recheck Cond: (periodo_id = 12)
-                          Heap Blocks: exact=33
-                          Buffers: shared hit=39
-                          ->  Bitmap Index Scan on ix_segmento_periodo_segmento  (cost=0.00..57.16 rows=4916 width=0) (actual time=0.268..0.268 rows=5000 loops=1)
-                                Index Cond: (periodo_id = 12)
-                                Buffers: shared hit=6
-Planning:
-  Buffers: shared hit=28
-Planning Time: 0.583 ms
-Execution Time: 11.090 ms
-```
-
-</details>
-
-<details><summary>Plano completo</summary>
-
-```
-Limit  (cost=1.20..1.21 rows=1 width=12) (actual time=0.018..0.018 rows=1 loops=1)
-  Buffers: shared hit=1
-  ->  Sort  (cost=1.20..1.23 rows=11 width=12) (actual time=0.017..0.017 rows=1 loops=1)
-        Sort Key: data_inicio DESC, id DESC
-        Sort Method: top-N heapsort  Memory: 25kB
-        Buffers: shared hit=1
-        ->  Seq Scan on periodo  (cost=0.00..1.15 rows=11 width=12) (actual time=0.004..0.005 rows=11 loops=1)
-              Filter: (data_inicio < '2026-09-07'::date)
-              Rows Removed by Filter: 1
-              Buffers: shared hit=1
-Planning:
-  Buffers: shared hit=2
-Planning Time: 0.095 ms
+Planning Time: 0.046 ms
 Execution Time: 0.035 ms
 ```
 
@@ -293,35 +177,151 @@ Execution Time: 0.035 ms
 <details><summary>Plano completo</summary>
 
 ```
-Subquery Scan on anterior  (cost=1167.72..1337.86 rows=25 width=19) (actual time=4.337..5.656 rows=25 loops=1)
-  Filter: (anterior.parceiro_id = ANY ('{2118,4133,4648,2515,1682,1577,2384,4544,3134,246,4155,3103,924,3997,3194,460,2744,2149,4254,4101,1563,1823,4982,4676,4468}'::integer[]))
+Aggregate  (cost=934.79..934.80 rows=1 width=8) (actual time=2.589..2.590 rows=1 loops=1)
+  Buffers: shared hit=571
+  ->  Hash Join  (cost=317.35..872.60 rows=4975 width=40) (actual time=1.143..2.425 rows=5000 loops=1)
+        Hash Cond: (metrica.parceiro_id = parceiro.id)
+        Buffers: shared hit=571
+        ->  Bitmap Heap Scan on metrica  (cost=138.85..681.03 rows=4975 width=11) (actual time=0.266..0.864 rows=5000 loops=1)
+              Recheck Cond: (periodo_id = 12)
+              Heap Blocks: exact=480
+              Buffers: shared hit=505
+              ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..137.60 rows=4975 width=0) (actual time=0.225..0.225 rows=5000 loops=1)
+                    Index Cond: (periodo_id = 12)
+                    Buffers: shared hit=25
+        ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=0.838..0.838 rows=5000 loops=1)
+              Buckets: 8192  Batches: 1  Memory Usage: 333kB
+              Buffers: shared hit=66
+              ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.003..0.281 rows=5000 loops=1)
+                    Buffers: shared hit=66
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.236 ms
+Execution Time: 2.746 ms
+```
+
+</details>
+
+<details><summary>Plano completo</summary>
+
+```
+Limit  (cost=2242.85..2242.92 rows=25 width=54) (actual time=9.544..9.548 rows=25 loops=1)
+  Buffers: shared hit=677
+  ->  Sort  (cost=2242.85..2255.53 rows=5071 width=54) (actual time=9.543..9.545 rows=25 loops=1)
+        Sort Key: (row_number() OVER (?))
+        Sort Method: top-N heapsort  Memory: 28kB
+        Buffers: shared hit=677
+        ->  Hash Left Join  (cost=1905.76..2099.75 rows=5071 width=54) (actual time=5.935..8.938 rows=5000 loops=1)
+              Hash Cond: (metrica.parceiro_id = historico_segmento.parceiro_id)
+              Buffers: shared hit=677
+              ->  Hash Left Join  (cost=1357.81..1538.73 rows=4975 width=50) (actual time=5.036..7.418 rows=5000 loops=1)
+                    Hash Cond: (parceiro.categoria_id = categoria.id)
+                    Buffers: shared hit=638
+                    ->  Hash Join  (cost=1356.58..1518.90 rows=4975 width=44) (actual time=5.014..6.848 rows=5000 loops=1)
+                          Hash Cond: (metrica.parceiro_id = parceiro.id)
+                          Buffers: shared hit=637
+                          ->  WindowAgg  (cost=1178.08..1277.58 rows=4975 width=40) (actual time=3.847..4.869 rows=5000 loops=1)
+                                Buffers: shared hit=571
+                                ->  Sort  (cost=1178.08..1190.52 rows=4975 width=32) (actual time=3.840..4.053 rows=5000 loops=1)
+                                      Sort Key: metrica.faturamento DESC, parceiro_1.nome
+                                      Sort Method: quicksort  Memory: 488kB
+                                      Buffers: shared hit=571
+                                      ->  Hash Join  (cost=317.35..872.60 rows=4975 width=32) (actual time=1.257..2.590 rows=5000 loops=1)
+                                            Hash Cond: (metrica.parceiro_id = parceiro_1.id)
+                                            Buffers: shared hit=571
+                                            ->  Bitmap Heap Scan on metrica  (cost=138.85..681.03 rows=4975 width=15) (actual time=0.259..0.913 rows=5000 loops=1)
+                                                  Recheck Cond: (periodo_id = 12)
+                                                  Heap Blocks: exact=480
+                                                  Buffers: shared hit=505
+                                                  ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..137.60 rows=4975 width=0) (actual time=0.222..0.222 rows=5000 loops=1)
+                                                        Index Cond: (periodo_id = 12)
+                                                        Buffers: shared hit=25
+                                            ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=0.956..0.956 rows=5000 loops=1)
+                                                  Buckets: 8192  Batches: 1  Memory Usage: 333kB
+                                                  Buffers: shared hit=66
+                                                  ->  Seq Scan on parceiro parceiro_1  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.003..0.305 rows=5000 loops=1)
+                                                        Buffers: shared hit=66
+                          ->  Hash  (cost=116.00..116.00 rows=5000 width=25) (actual time=1.122..1.122 rows=5000 loops=1)
+                                Buckets: 8192  Batches: 1  Memory Usage: 352kB
+                                Buffers: shared hit=66
+                                ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=25) (actual time=0.006..0.362 rows=5000 loops=1)
+                                      Buffers: shared hit=66
+                    ->  Hash  (cost=1.10..1.10 rows=10 width=14) (actual time=0.014..0.014 rows=10 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                          Buffers: shared hit=1
+                          ->  Seq Scan on categoria  (cost=0.00..1.10 rows=10 width=14) (actual time=0.003..0.004 rows=10 loops=1)
+                                Buffers: shared hit=1
+              ->  Hash  (cost=485.11..485.11 rows=5028 width=8) (actual time=0.863..0.863 rows=5000 loops=1)
+                    Buckets: 8192  Batches: 1  Memory Usage: 260kB
+                    Buffers: shared hit=39
+                    ->  Bitmap Heap Scan on historico_segmento  (cost=59.26..485.11 rows=5028 width=8) (actual time=0.075..0.394 rows=5000 loops=1)
+                          Recheck Cond: (periodo_id = 12)
+                          Heap Blocks: exact=33
+                          Buffers: shared hit=39
+                          ->  Bitmap Index Scan on ix_segmento_periodo_segmento  (cost=0.00..58.00 rows=5028 width=0) (actual time=0.069..0.069 rows=5000 loops=1)
+                                Index Cond: (periodo_id = 12)
+                                Buffers: shared hit=6
+Planning:
+  Buffers: shared hit=28
+Planning Time: 0.683 ms
+Execution Time: 9.960 ms
+```
+
+</details>
+
+<details><summary>Plano completo</summary>
+
+```
+Limit  (cost=1.20..1.21 rows=1 width=12) (actual time=0.015..0.015 rows=1 loops=1)
+  Buffers: shared hit=1
+  ->  Sort  (cost=1.20..1.23 rows=11 width=12) (actual time=0.014..0.015 rows=1 loops=1)
+        Sort Key: data_inicio DESC, id DESC
+        Sort Method: top-N heapsort  Memory: 25kB
+        Buffers: shared hit=1
+        ->  Seq Scan on periodo  (cost=0.00..1.15 rows=11 width=12) (actual time=0.003..0.004 rows=11 loops=1)
+              Filter: (data_inicio < '2026-09-14'::date)
+              Rows Removed by Filter: 1
+              Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=2
+Planning Time: 0.077 ms
+Execution Time: 0.029 ms
+```
+
+</details>
+
+<details><summary>Plano completo</summary>
+
+```
+Subquery Scan on anterior  (cost=1168.36..1338.74 rows=25 width=19) (actual time=3.535..4.574 rows=25 loops=1)
+  Filter: (anterior.parceiro_id = ANY ('{2118,4133,4648,1577,2515,1682,2384,4544,3134,246,4155,3997,924,3103,4101,3194,460,2744,2149,4982,1823,4254,1563,1917,4468}'::integer[]))
   Rows Removed by Filter: 4870
   Buffers: shared hit=569
-  ->  WindowAgg  (cost=1167.66..1264.88 rows=4861 width=40) (actual time=4.333..5.190 rows=4895 loops=1)
+  ->  WindowAgg  (cost=1168.30..1265.66 rows=4868 width=40) (actual time=3.532..4.337 rows=4895 loops=1)
         Buffers: shared hit=569
-        ->  Sort  (cost=1167.66..1179.81 rows=4861 width=28) (actual time=4.320..4.482 rows=4895 loops=1)
+        ->  Sort  (cost=1168.30..1180.47 rows=4868 width=28) (actual time=3.520..3.684 rows=4895 loops=1)
               Sort Key: metrica.faturamento DESC, parceiro.nome
               Sort Method: quicksort  Memory: 460kB
               Buffers: shared hit=569
-              ->  Hash Join  (cost=316.46..870.00 rows=4861 width=28) (actual time=1.426..2.814 rows=4895 loops=1)
+              ->  Hash Join  (cost=316.52..870.16 rows=4868 width=28) (actual time=1.130..2.356 rows=4895 loops=1)
                     Hash Cond: (metrica.parceiro_id = parceiro.id)
                     Buffers: shared hit=569
-                    ->  Bitmap Heap Scan on metrica  (cost=137.96..678.73 rows=4861 width=11) (actual time=0.337..1.000 rows=4895 loops=1)
+                    ->  Bitmap Heap Scan on metrica  (cost=138.02..678.87 rows=4868 width=11) (actual time=0.259..0.856 rows=4895 loops=1)
                           Recheck Cond: (periodo_id = 11)
                           Heap Blocks: exact=480
                           Buffers: shared hit=503
-                          ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..136.75 rows=4861 width=0) (actual time=0.288..0.288 rows=4895 loops=1)
+                          ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..136.80 rows=4868 width=0) (actual time=0.222..0.222 rows=4895 loops=1)
                                 Index Cond: (periodo_id = 11)
                                 Buffers: shared hit=23
-                    ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=1.048..1.048 rows=5000 loops=1)
+                    ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=0.834..0.834 rows=5000 loops=1)
                           Buckets: 8192  Batches: 1  Memory Usage: 333kB
                           Buffers: shared hit=66
-                          ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.005..0.359 rows=5000 loops=1)
+                          ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.003..0.276 rows=5000 loops=1)
                                 Buffers: shared hit=66
 Planning:
   Buffers: shared hit=12
-Planning Time: 0.262 ms
-Execution Time: 5.843 ms
+Planning Time: 0.204 ms
+Execution Time: 4.754 ms
 ```
 
 </details>
@@ -333,27 +333,27 @@ A consulta filtra `metrica`. Se o planejador varrer, a conferência abaixo diz s
 - `SELECT periodo.id, periodo.data_inicio, periodo.data_fim FROM periodo ORDER BY periodo.data_inicio DESC, peri…`
   - tempo no banco: **0.04 ms** · varredura: `periodo`
 - `SELECT count(*) AS count_1 FROM (SELECT metrica.parceiro_id AS parceiro_id, metrica.faturamento AS faturament…`
-  - tempo no banco: **3.29 ms** · varredura: `parceiro`
+  - tempo no banco: **3.39 ms** · varredura: `parceiro`
 - `SELECT atual.parceiro_id, atual.faturamento, atual.pedidos, atual.posicao, parceiro.nome, categoria.nome AS n…`
-  - tempo no banco: **9.56 ms** · varredura: `categoria`, `parceiro`
+  - tempo no banco: **10.02 ms** · varredura: `categoria`, `parceiro`
 - `SELECT periodo.id, periodo.data_inicio, periodo.data_fim FROM periodo WHERE periodo.data_inicio < %(data_inic…`
-  - tempo no banco: **0.03 ms** · varredura: `periodo`
+  - tempo no banco: **0.08 ms** · varredura: `periodo`
 - `SELECT anterior.parceiro_id, anterior.posicao, anterior.faturamento FROM (SELECT metrica.parceiro_id AS parce…`
-  - tempo no banco: **5.79 ms** · varredura: `parceiro`
+  - tempo no banco: **6.02 ms** · varredura: `parceiro`
 
 <details><summary>Plano completo</summary>
 
 ```
-Limit  (cost=1.18..1.18 rows=1 width=12) (actual time=0.019..0.019 rows=1 loops=1)
+Limit  (cost=1.18..1.18 rows=1 width=12) (actual time=0.017..0.018 rows=1 loops=1)
   Buffers: shared hit=1
-  ->  Sort  (cost=1.18..1.21 rows=12 width=12) (actual time=0.018..0.019 rows=1 loops=1)
+  ->  Sort  (cost=1.18..1.21 rows=12 width=12) (actual time=0.017..0.017 rows=1 loops=1)
         Sort Key: data_inicio DESC, id DESC
         Sort Method: top-N heapsort  Memory: 25kB
         Buffers: shared hit=1
-        ->  Seq Scan on periodo  (cost=0.00..1.12 rows=12 width=12) (actual time=0.004..0.005 rows=12 loops=1)
+        ->  Seq Scan on periodo  (cost=0.00..1.12 rows=12 width=12) (actual time=0.005..0.005 rows=12 loops=1)
               Buffers: shared hit=1
-Planning Time: 0.042 ms
-Execution Time: 0.040 ms
+Planning Time: 0.045 ms
+Execution Time: 0.038 ms
 ```
 
 </details>
@@ -361,27 +361,27 @@ Execution Time: 0.040 ms
 <details><summary>Plano completo</summary>
 
 ```
-Aggregate  (cost=934.37..934.38 rows=1 width=8) (actual time=3.141..3.142 rows=1 loops=1)
-  Buffers: shared hit=570
-  ->  Hash Join  (cost=317.25..872.33 rows=4963 width=40) (actual time=1.461..2.935 rows=5000 loops=1)
+Aggregate  (cost=934.79..934.80 rows=1 width=8) (actual time=3.233..3.234 rows=1 loops=1)
+  Buffers: shared hit=571
+  ->  Hash Join  (cost=317.35..872.60 rows=4975 width=40) (actual time=1.479..3.062 rows=5000 loops=1)
         Hash Cond: (metrica.parceiro_id = parceiro.id)
-        Buffers: shared hit=570
-        ->  Bitmap Heap Scan on metrica  (cost=138.75..680.79 rows=4963 width=11) (actual time=0.342..1.005 rows=5000 loops=1)
+        Buffers: shared hit=571
+        ->  Bitmap Heap Scan on metrica  (cost=138.85..681.03 rows=4975 width=11) (actual time=0.535..1.420 rows=5000 loops=1)
               Recheck Cond: (periodo_id = 12)
               Heap Blocks: exact=480
-              Buffers: shared hit=504
-              ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..137.51 rows=4963 width=0) (actual time=0.285..0.285 rows=5000 loops=1)
+              Buffers: shared hit=505
+              ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..137.60 rows=4975 width=0) (actual time=0.483..0.483 rows=5000 loops=1)
                     Index Cond: (periodo_id = 12)
-                    Buffers: shared hit=24
-        ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=1.071..1.071 rows=5000 loops=1)
+                    Buffers: shared hit=25
+        ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=0.909..0.909 rows=5000 loops=1)
               Buckets: 8192  Batches: 1  Memory Usage: 333kB
               Buffers: shared hit=66
-              ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.004..0.382 rows=5000 loops=1)
+              ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.003..0.327 rows=5000 loops=1)
                     Buffers: shared hit=66
 Planning:
   Buffers: shared hit=12
-Planning Time: 0.259 ms
-Execution Time: 3.294 ms
+Planning Time: 0.223 ms
+Execution Time: 3.388 ms
 ```
 
 </details>
@@ -389,66 +389,66 @@ Execution Time: 3.294 ms
 <details><summary>Plano completo</summary>
 
 ```
-Limit  (cost=2309.01..2309.51 rows=200 width=54) (actual time=9.122..9.139 rows=200 loops=1)
-  Buffers: shared hit=676
-  ->  Sort  (cost=2309.01..2321.42 rows=4963 width=54) (actual time=9.122..9.129 rows=200 loops=1)
+Limit  (cost=2318.92..2319.42 rows=200 width=54) (actual time=9.545..9.564 rows=200 loops=1)
+  Buffers: shared hit=677
+  ->  Sort  (cost=2318.92..2331.60 rows=5071 width=54) (actual time=9.544..9.553 rows=200 loops=1)
         Sort Key: (row_number() OVER (?))
         Sort Method: top-N heapsort  Memory: 51kB
-        Buffers: shared hit=676
-        ->  Hash Left Join  (cost=1901.00..2094.51 rows=4963 width=54) (actual time=5.654..8.473 rows=5000 loops=1)
+        Buffers: shared hit=677
+        ->  Hash Left Join  (cost=1905.76..2099.75 rows=5071 width=54) (actual time=5.751..8.881 rows=5000 loops=1)
               Hash Cond: (metrica.parceiro_id = historico_segmento.parceiro_id)
-              Buffers: shared hit=676
-              ->  Hash Left Join  (cost=1356.71..1537.18 rows=4963 width=50) (actual time=4.732..6.958 rows=5000 loops=1)
+              Buffers: shared hit=677
+              ->  Hash Left Join  (cost=1357.81..1538.73 rows=4975 width=50) (actual time=4.812..7.297 rows=5000 loops=1)
                     Hash Cond: (parceiro.categoria_id = categoria.id)
-                    Buffers: shared hit=637
-                    ->  Hash Join  (cost=1355.48..1517.41 rows=4963 width=44) (actual time=4.712..6.415 rows=5000 loops=1)
+                    Buffers: shared hit=638
+                    ->  Hash Join  (cost=1356.58..1518.90 rows=4975 width=44) (actual time=4.790..6.746 rows=5000 loops=1)
                           Hash Cond: (metrica.parceiro_id = parceiro.id)
-                          Buffers: shared hit=636
-                          ->  WindowAgg  (cost=1176.98..1276.24 rows=4963 width=40) (actual time=3.732..4.701 rows=5000 loops=1)
-                                Buffers: shared hit=570
-                                ->  Sort  (cost=1176.98..1189.39 rows=4963 width=32) (actual time=3.724..3.908 rows=5000 loops=1)
+                          Buffers: shared hit=637
+                          ->  WindowAgg  (cost=1178.08..1277.58 rows=4975 width=40) (actual time=3.825..4.881 rows=5000 loops=1)
+                                Buffers: shared hit=571
+                                ->  Sort  (cost=1178.08..1190.52 rows=4975 width=32) (actual time=3.817..4.060 rows=5000 loops=1)
                                       Sort Key: metrica.faturamento DESC, parceiro_1.nome
                                       Sort Method: quicksort  Memory: 488kB
-                                      Buffers: shared hit=570
-                                      ->  Hash Join  (cost=317.25..872.33 rows=4963 width=32) (actual time=1.135..2.465 rows=5000 loops=1)
+                                      Buffers: shared hit=571
+                                      ->  Hash Join  (cost=317.35..872.60 rows=4975 width=32) (actual time=1.195..2.561 rows=5000 loops=1)
                                             Hash Cond: (metrica.parceiro_id = parceiro_1.id)
-                                            Buffers: shared hit=570
-                                            ->  Bitmap Heap Scan on metrica  (cost=138.75..680.79 rows=4963 width=15) (actual time=0.269..0.926 rows=5000 loops=1)
+                                            Buffers: shared hit=571
+                                            ->  Bitmap Heap Scan on metrica  (cost=138.85..681.03 rows=4975 width=15) (actual time=0.269..0.950 rows=5000 loops=1)
                                                   Recheck Cond: (periodo_id = 12)
                                                   Heap Blocks: exact=480
-                                                  Buffers: shared hit=504
-                                                  ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..137.51 rows=4963 width=0) (actual time=0.233..0.233 rows=5000 loops=1)
+                                                  Buffers: shared hit=505
+                                                  ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..137.60 rows=4975 width=0) (actual time=0.232..0.232 rows=5000 loops=1)
                                                         Index Cond: (periodo_id = 12)
-                                                        Buffers: shared hit=24
-                                            ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=0.827..0.827 rows=5000 loops=1)
+                                                        Buffers: shared hit=25
+                                            ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=0.886..0.887 rows=5000 loops=1)
                                                   Buckets: 8192  Batches: 1  Memory Usage: 333kB
                                                   Buffers: shared hit=66
-                                                  ->  Seq Scan on parceiro parceiro_1  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.003..0.270 rows=5000 loops=1)
+                                                  ->  Seq Scan on parceiro parceiro_1  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.002..0.263 rows=5000 loops=1)
                                                         Buffers: shared hit=66
-                          ->  Hash  (cost=116.00..116.00 rows=5000 width=25) (actual time=0.933..0.933 rows=5000 loops=1)
+                          ->  Hash  (cost=116.00..116.00 rows=5000 width=25) (actual time=0.930..0.930 rows=5000 loops=1)
                                 Buckets: 8192  Batches: 1  Memory Usage: 352kB
                                 Buffers: shared hit=66
-                                ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=25) (actual time=0.005..0.339 rows=5000 loops=1)
+                                ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=25) (actual time=0.004..0.310 rows=5000 loops=1)
                                       Buffers: shared hit=66
-                    ->  Hash  (cost=1.10..1.10 rows=10 width=14) (actual time=0.012..0.012 rows=10 loops=1)
+                    ->  Hash  (cost=1.10..1.10 rows=10 width=14) (actual time=0.013..0.013 rows=10 loops=1)
                           Buckets: 1024  Batches: 1  Memory Usage: 9kB
                           Buffers: shared hit=1
-                          ->  Seq Scan on categoria  (cost=0.00..1.10 rows=10 width=14) (actual time=0.003..0.004 rows=10 loops=1)
+                          ->  Seq Scan on categoria  (cost=0.00..1.10 rows=10 width=14) (actual time=0.004..0.005 rows=10 loops=1)
                                 Buffers: shared hit=1
-              ->  Hash  (cost=482.84..482.84 rows=4916 width=8) (actual time=0.885..0.885 rows=5000 loops=1)
+              ->  Hash  (cost=485.11..485.11 rows=5028 width=8) (actual time=0.902..0.902 rows=5000 loops=1)
                     Buckets: 8192  Batches: 1  Memory Usage: 260kB
                     Buffers: shared hit=39
-                    ->  Bitmap Heap Scan on historico_segmento  (cost=58.39..482.84 rows=4916 width=8) (actual time=0.078..0.392 rows=5000 loops=1)
+                    ->  Bitmap Heap Scan on historico_segmento  (cost=59.26..485.11 rows=5028 width=8) (actual time=0.072..0.402 rows=5000 loops=1)
                           Recheck Cond: (periodo_id = 12)
                           Heap Blocks: exact=33
                           Buffers: shared hit=39
-                          ->  Bitmap Index Scan on ix_segmento_periodo_segmento  (cost=0.00..57.16 rows=4916 width=0) (actual time=0.072..0.072 rows=5000 loops=1)
+                          ->  Bitmap Index Scan on ix_segmento_periodo_segmento  (cost=0.00..58.00 rows=5028 width=0) (actual time=0.067..0.067 rows=5000 loops=1)
                                 Index Cond: (periodo_id = 12)
                                 Buffers: shared hit=6
 Planning:
   Buffers: shared hit=28
-Planning Time: 0.512 ms
-Execution Time: 9.561 ms
+Planning Time: 0.527 ms
+Execution Time: 10.018 ms
 ```
 
 </details>
@@ -456,20 +456,20 @@ Execution Time: 9.561 ms
 <details><summary>Plano completo</summary>
 
 ```
-Limit  (cost=1.20..1.21 rows=1 width=12) (actual time=0.014..0.014 rows=1 loops=1)
+Limit  (cost=1.20..1.21 rows=1 width=12) (actual time=0.026..0.026 rows=1 loops=1)
   Buffers: shared hit=1
-  ->  Sort  (cost=1.20..1.23 rows=11 width=12) (actual time=0.014..0.014 rows=1 loops=1)
+  ->  Sort  (cost=1.20..1.23 rows=11 width=12) (actual time=0.025..0.025 rows=1 loops=1)
         Sort Key: data_inicio DESC, id DESC
         Sort Method: top-N heapsort  Memory: 25kB
         Buffers: shared hit=1
-        ->  Seq Scan on periodo  (cost=0.00..1.15 rows=11 width=12) (actual time=0.003..0.004 rows=11 loops=1)
-              Filter: (data_inicio < '2026-09-07'::date)
+        ->  Seq Scan on periodo  (cost=0.00..1.15 rows=11 width=12) (actual time=0.005..0.006 rows=11 loops=1)
+              Filter: (data_inicio < '2026-09-14'::date)
               Rows Removed by Filter: 1
               Buffers: shared hit=1
 Planning:
   Buffers: shared hit=2
-Planning Time: 0.098 ms
-Execution Time: 0.028 ms
+Planning Time: 0.110 ms
+Execution Time: 0.080 ms
 ```
 
 </details>
@@ -477,35 +477,35 @@ Execution Time: 0.028 ms
 <details><summary>Plano completo</summary>
 
 ```
-Subquery Scan on anterior  (cost=1168.16..1338.30 rows=197 width=19) (actual time=4.228..5.402 rows=196 loops=1)
-  Filter: (anterior.parceiro_id = ANY ('{2118,4133,4648,2515,1682,1577,2384,4544,3134,246,4155,3103,924,3997,3194,460,2744,2149,4254,4101,1563,1823,4982,4676,4468,1917,2272,4729,983,1242,1660,1307,2260,2864,3721,3217,2999,3270,2050,3662,152,4716,3453,1754,1936,1793,2044,4654,2470,4885,3621,2336,3133,4340,1395,3736,613,823,2311,600,2314,181,860,1265,2134,3415,381,1019,2666,3389,959,510,2539,1067,885,2074,1586,3049,4890,484,214,1896,74,4268,2125,1663,2085,3090,2296,3857,733,1825,4156,1348,906,3579,3758,1393,4171,3095,4179,630,1010,3461,3737,1596,2828,3629,3211,4695,2053,1382,1782,2520,1458,2512,524,1238,2232,549,4059,1503,3273,2108,3623,3517,4044,3097,1304,1763,572,3384,2914,2980,2759,1443,2073,1757,4670,339,2618,4920,1311,3343,2821,639,4793,2404,4980,2968,2127,263,4691,3619,3860,3667,4420,757,4580,3204,4115,4618,2880,1972,654,3754,1084,927,1417,1440,4574,3657,3221,2936,2267,2834,7,528,589,3813,1683,3094,4009,2231,3433,1377,2363,2831,3016,1148,1959,775,3576,4886,1533,1281,2036,3403,800,4304}'::integer[]))
+Subquery Scan on anterior  (cost=1168.80..1339.18 rows=198 width=19) (actual time=4.140..5.479 rows=196 loops=1)
+  Filter: (anterior.parceiro_id = ANY ('{2118,4133,4648,1577,2515,1682,2384,4544,3134,246,4155,3997,924,3103,4101,3194,460,2744,2149,4982,1823,4254,1563,1917,4468,4729,4676,1660,983,2272,2864,1242,1307,2260,3721,2999,3662,3453,3217,4716,4654,1936,4885,2050,3270,1793,152,1395,2044,823,2314,2470,1754,860,2311,600,2336,181,4340,3621,3736,613,3133,3415,3389,1019,959,381,2666,2539,885,1265,2134,1067,510,1663,1896,214,2125,2074,3090,4890,4171,1393,74,1586,3049,2828,906,484,3461,3211,3579,1382,1348,1782,1238,2085,630,524,4059,4268,733,2512,549,4156,1825,2296,3857,3737,2232,4044,3629,1763,2914,3758,3095,572,2053,2759,4179,1596,3384,3273,4695,1458,2073,1010,2980,2618,1757,339,1503,1443,2520,3619,263,3623,2108,3860,2127,4580,2821,2404,757,4115,4618,3097,927,3517,639,4691,4574,3204,1304,3657,3221,4920,654,4670,1084,4420,3343,1440,3813,2968,7,2834,2231,4793,2267,1377,1311,4980,3576,2880,1959,4886,4009,589,3016,2936,3667,3433,1566,800,2049,1972,1533,1417,3754,4432,2036,1303,2241,3094,2363,3403,1281,80}'::integer[]))
   Rows Removed by Filter: 4699
   Buffers: shared hit=569
-  ->  WindowAgg  (cost=1167.66..1264.88 rows=4861 width=40) (actual time=4.221..5.062 rows=4895 loops=1)
+  ->  WindowAgg  (cost=1168.30..1265.66 rows=4868 width=40) (actual time=4.133..5.209 rows=4895 loops=1)
         Buffers: shared hit=569
-        ->  Sort  (cost=1167.66..1179.81 rows=4861 width=28) (actual time=4.215..4.375 rows=4895 loops=1)
+        ->  Sort  (cost=1168.30..1180.47 rows=4868 width=28) (actual time=4.124..4.306 rows=4895 loops=1)
               Sort Key: metrica.faturamento DESC, parceiro.nome
               Sort Method: quicksort  Memory: 460kB
               Buffers: shared hit=569
-              ->  Hash Join  (cost=316.46..870.00 rows=4861 width=28) (actual time=1.503..2.810 rows=4895 loops=1)
+              ->  Hash Join  (cost=316.52..870.16 rows=4868 width=28) (actual time=1.384..2.907 rows=4895 loops=1)
                     Hash Cond: (metrica.parceiro_id = parceiro.id)
                     Buffers: shared hit=569
-                    ->  Bitmap Heap Scan on metrica  (cost=137.96..678.73 rows=4861 width=11) (actual time=0.489..1.106 rows=4895 loops=1)
+                    ->  Bitmap Heap Scan on metrica  (cost=138.02..678.87 rows=4868 width=11) (actual time=0.271..0.964 rows=4895 loops=1)
                           Recheck Cond: (periodo_id = 11)
                           Heap Blocks: exact=480
                           Buffers: shared hit=503
-                          ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..136.75 rows=4861 width=0) (actual time=0.257..0.257 rows=4895 loops=1)
+                          ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..136.80 rows=4868 width=0) (actual time=0.235..0.235 rows=4895 loops=1)
                                 Index Cond: (periodo_id = 11)
                                 Buffers: shared hit=23
-                    ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=0.980..0.980 rows=5000 loops=1)
+                    ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=1.074..1.074 rows=5000 loops=1)
                           Buckets: 8192  Batches: 1  Memory Usage: 333kB
                           Buffers: shared hit=66
-                          ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.003..0.312 rows=5000 loops=1)
+                          ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.004..0.471 rows=5000 loops=1)
                                 Buffers: shared hit=66
 Planning:
   Buffers: shared hit=12
-Planning Time: 0.527 ms
-Execution Time: 5.791 ms
+Planning Time: 0.544 ms
+Execution Time: 6.020 ms
 ```
 
 </details>
@@ -515,33 +515,33 @@ Execution Time: 5.791 ms
 A série agrega **todos** os períodos: a consulta lê a tabela inteira por definição, e varrer é o plano certo.
 
 - `SELECT periodo.id, periodo.data_inicio, periodo.data_fim, sum(metrica.faturamento) AS sum_1, sum(metrica.pedi…`
-  - tempo no banco: **17.57 ms** · varredura: `metrica`, `periodo`
+  - tempo no banco: **15.91 ms** · varredura: `metrica`, `periodo`
 
 <details><summary>Plano completo</summary>
 
 ```
-Sort  (cost=1678.96..1678.99 rows=12 width=52) (actual time=17.515..17.516 rows=12 loops=1)
+Sort  (cost=1678.96..1678.99 rows=12 width=52) (actual time=15.868..15.870 rows=12 loops=1)
   Sort Key: periodo.data_inicio, periodo.id
   Sort Method: quicksort  Memory: 25kB
   Buffers: shared hit=481
-  ->  HashAggregate  (cost=1678.59..1678.74 rows=12 width=52) (actual time=17.506..17.510 rows=12 loops=1)
+  ->  HashAggregate  (cost=1678.59..1678.74 rows=12 width=52) (actual time=15.859..15.863 rows=12 loops=1)
         Group Key: periodo.id
         Batches: 1  Memory Usage: 24kB
         Buffers: shared hit=481
-        ->  Hash Right Join  (cost=1.27..1252.04 rows=56874 width=23) (actual time=0.028..10.259 rows=56874 loops=1)
+        ->  Hash Right Join  (cost=1.27..1252.04 rows=56874 width=23) (actual time=0.021..9.223 rows=56874 loops=1)
               Hash Cond: (metrica.periodo_id = periodo.id)
               Buffers: shared hit=481
-              ->  Seq Scan on metrica  (cost=0.00..1048.74 rows=56874 width=15) (actual time=0.003..2.637 rows=56874 loops=1)
+              ->  Seq Scan on metrica  (cost=0.00..1048.74 rows=56874 width=15) (actual time=0.002..2.173 rows=56874 loops=1)
                     Buffers: shared hit=480
-              ->  Hash  (cost=1.12..1.12 rows=12 width=12) (actual time=0.015..0.015 rows=12 loops=1)
+              ->  Hash  (cost=1.12..1.12 rows=12 width=12) (actual time=0.014..0.015 rows=12 loops=1)
                     Buckets: 1024  Batches: 1  Memory Usage: 9kB
                     Buffers: shared hit=1
-                    ->  Seq Scan on periodo  (cost=0.00..1.12 rows=12 width=12) (actual time=0.003..0.004 rows=12 loops=1)
+                    ->  Seq Scan on periodo  (cost=0.00..1.12 rows=12 width=12) (actual time=0.004..0.004 rows=12 loops=1)
                           Buffers: shared hit=1
 Planning:
   Buffers: shared hit=4
-Planning Time: 0.178 ms
-Execution Time: 17.567 ms
+Planning Time: 0.148 ms
+Execution Time: 15.908 ms
 ```
 
 </details>
@@ -551,23 +551,23 @@ Execution Time: 17.567 ms
 A consulta filtra `historico_segmento`. Se o planejador varrer, a conferência abaixo diz se foi escolha dele ou falta de índice.
 
 - `SELECT periodo.id, periodo.data_inicio, periodo.data_fim FROM periodo ORDER BY periodo.data_inicio DESC, peri…`
-  - tempo no banco: **0.02 ms** · varredura: `periodo`
+  - tempo no banco: **0.01 ms** · varredura: `periodo`
 - `SELECT historico_segmento.segmento, count(*) AS count_1 FROM historico_segmento WHERE historico_segmento.peri…`
-  - tempo no banco: **0.95 ms** · varredura: nenhuma
+  - tempo no banco: **0.94 ms** · varredura: nenhuma
 
 <details><summary>Plano completo</summary>
 
 ```
-Limit  (cost=1.18..1.18 rows=1 width=12) (actual time=0.011..0.011 rows=1 loops=1)
+Limit  (cost=1.18..1.18 rows=1 width=12) (actual time=0.007..0.008 rows=1 loops=1)
   Buffers: shared hit=1
-  ->  Sort  (cost=1.18..1.21 rows=12 width=12) (actual time=0.010..0.010 rows=1 loops=1)
+  ->  Sort  (cost=1.18..1.21 rows=12 width=12) (actual time=0.007..0.007 rows=1 loops=1)
         Sort Key: data_inicio DESC, id DESC
         Sort Method: top-N heapsort  Memory: 25kB
         Buffers: shared hit=1
-        ->  Seq Scan on periodo  (cost=0.00..1.12 rows=12 width=12) (actual time=0.005..0.005 rows=12 loops=1)
+        ->  Seq Scan on periodo  (cost=0.00..1.12 rows=12 width=12) (actual time=0.003..0.004 rows=12 loops=1)
               Buffers: shared hit=1
-Planning Time: 0.042 ms
-Execution Time: 0.018 ms
+Planning Time: 0.043 ms
+Execution Time: 0.012 ms
 ```
 
 </details>
@@ -575,23 +575,23 @@ Execution Time: 0.018 ms
 <details><summary>Plano completo</summary>
 
 ```
-Sort  (cost=507.53..507.54 rows=5 width=12) (actual time=0.893..0.893 rows=5 loops=1)
+Sort  (cost=510.36..510.37 rows=5 width=12) (actual time=0.898..0.899 rows=5 loops=1)
   Sort Key: (count(*)) DESC, segmento
   Sort Method: quicksort  Memory: 25kB
   Buffers: shared hit=39
-  ->  HashAggregate  (cost=507.42..507.47 rows=5 width=12) (actual time=0.888..0.890 rows=5 loops=1)
+  ->  HashAggregate  (cost=510.25..510.30 rows=5 width=12) (actual time=0.895..0.896 rows=5 loops=1)
         Group Key: segmento
         Batches: 1  Memory Usage: 24kB
         Buffers: shared hit=39
-        ->  Bitmap Heap Scan on historico_segmento  (cost=58.39..482.84 rows=4916 width=4) (actual time=0.075..0.308 rows=5000 loops=1)
+        ->  Bitmap Heap Scan on historico_segmento  (cost=59.26..485.11 rows=5028 width=4) (actual time=0.076..0.374 rows=5000 loops=1)
               Recheck Cond: (periodo_id = 12)
               Heap Blocks: exact=33
               Buffers: shared hit=39
-              ->  Bitmap Index Scan on ix_segmento_periodo_segmento  (cost=0.00..57.16 rows=4916 width=0) (actual time=0.070..0.070 rows=5000 loops=1)
+              ->  Bitmap Index Scan on ix_segmento_periodo_segmento  (cost=0.00..58.00 rows=5028 width=0) (actual time=0.070..0.070 rows=5000 loops=1)
                     Index Cond: (periodo_id = 12)
                     Buffers: shared hit=6
-Planning Time: 0.083 ms
-Execution Time: 0.955 ms
+Planning Time: 0.052 ms
+Execution Time: 0.942 ms
 ```
 
 </details>
@@ -601,25 +601,25 @@ Execution Time: 0.955 ms
 A consulta filtra `metrica`. Se o planejador varrer, a conferência abaixo diz se foi escolha dele ou falta de índice.
 
 - `SELECT periodo.id, periodo.data_inicio, periodo.data_fim FROM periodo ORDER BY periodo.data_inicio DESC, peri…`
-  - tempo no banco: **0.02 ms** · varredura: `periodo`
+  - tempo no banco: **0.01 ms** · varredura: `periodo`
 - `SELECT periodo.id, periodo.data_inicio, periodo.data_fim FROM periodo WHERE periodo.data_inicio < %(data_inic…`
   - tempo no banco: **0.01 ms** · varredura: `periodo`
 - `SELECT coalesce(atual.parceiro_id, passado.parceiro_id) AS parceiro_id, parceiro.nome, atual.posicao AS posic…`
-  - tempo no banco: **11.86 ms** · varredura: `parceiro`
+  - tempo no banco: **12.02 ms** · varredura: `parceiro`
 
 <details><summary>Plano completo</summary>
 
 ```
-Limit  (cost=1.18..1.18 rows=1 width=12) (actual time=0.010..0.011 rows=1 loops=1)
+Limit  (cost=1.18..1.18 rows=1 width=12) (actual time=0.008..0.008 rows=1 loops=1)
   Buffers: shared hit=1
-  ->  Sort  (cost=1.18..1.21 rows=12 width=12) (actual time=0.010..0.010 rows=1 loops=1)
+  ->  Sort  (cost=1.18..1.21 rows=12 width=12) (actual time=0.007..0.008 rows=1 loops=1)
         Sort Key: data_inicio DESC, id DESC
         Sort Method: top-N heapsort  Memory: 25kB
         Buffers: shared hit=1
-        ->  Seq Scan on periodo  (cost=0.00..1.12 rows=12 width=12) (actual time=0.005..0.005 rows=12 loops=1)
+        ->  Seq Scan on periodo  (cost=0.00..1.12 rows=12 width=12) (actual time=0.003..0.004 rows=12 loops=1)
               Buffers: shared hit=1
-Planning Time: 0.234 ms
-Execution Time: 0.017 ms
+Planning Time: 0.045 ms
+Execution Time: 0.013 ms
 ```
 
 </details>
@@ -633,14 +633,14 @@ Limit  (cost=1.20..1.21 rows=1 width=12) (actual time=0.006..0.007 rows=1 loops=
         Sort Key: data_inicio DESC, id DESC
         Sort Method: top-N heapsort  Memory: 25kB
         Buffers: shared hit=1
-        ->  Seq Scan on periodo  (cost=0.00..1.15 rows=11 width=12) (actual time=0.002..0.003 rows=11 loops=1)
-              Filter: (data_inicio < '2026-09-07'::date)
+        ->  Seq Scan on periodo  (cost=0.00..1.15 rows=11 width=12) (actual time=0.003..0.004 rows=11 loops=1)
+              Filter: (data_inicio < '2026-09-14'::date)
               Rows Removed by Filter: 1
               Buffers: shared hit=1
 Planning:
   Buffers: shared hit=2
-Planning Time: 0.077 ms
-Execution Time: 0.012 ms
+Planning Time: 0.084 ms
+Execution Time: 0.013 ms
 ```
 
 </details>
@@ -648,74 +648,74 @@ Execution Time: 0.012 ms
 <details><summary>Plano completo</summary>
 
 ```
-Sort  (cost=3056.83..3059.46 rows=1051 width=45) (actual time=11.228..11.230 rows=2 loops=1)
+Sort  (cost=3059.96..3062.60 rows=1054 width=45) (actual time=11.432..11.435 rows=4 loops=1)
   Sort Key: (COALESCE((row_number() OVER (?)), passado.posicao))
   Sort Method: quicksort  Memory: 25kB
-  Buffers: shared hit=1205
-  ->  Hash Join  (cost=2729.74..3004.08 rows=1051 width=45) (actual time=9.748..11.222 rows=2 loops=1)
+  Buffers: shared hit=1206
+  ->  Hash Join  (cost=2731.77..3007.04 rows=1054 width=45) (actual time=9.776..11.430 rows=4 loops=1)
         Hash Cond: (COALESCE(metrica.parceiro_id, passado.parceiro_id) = parceiro.id)
-        Buffers: shared hit=1205
-        ->  Hash Full Join  (cost=2551.24..2822.82 rows=1051 width=24) (actual time=8.827..10.301 rows=2 loops=1)
+        Buffers: shared hit=1206
+        ->  Hash Full Join  (cost=2553.27..2825.78 rows=1054 width=24) (actual time=8.839..10.491 rows=4 loops=1)
               Hash Cond: (metrica.parceiro_id = passado.parceiro_id)
               Filter: ((((row_number() OVER (?)) <= 15) AND ((passado.posicao IS NULL) OR (passado.posicao > 15))) OR ((passado.posicao <= 15) AND (((row_number() OVER (?)) IS NULL) OR ((row_number() OVER (?)) > 15))))
-              Rows Removed by Filter: 4998
-              Buffers: shared hit=1139
-              ->  WindowAgg  (cost=1176.98..1276.24 rows=4963 width=40) (actual time=3.505..4.400 rows=5000 loops=1)
-                    Buffers: shared hit=570
-                    ->  Sort  (cost=1176.98..1189.39 rows=4963 width=28) (actual time=3.497..3.673 rows=5000 loops=1)
+              Rows Removed by Filter: 4996
+              Buffers: shared hit=1140
+              ->  WindowAgg  (cost=1178.08..1277.58 rows=4975 width=40) (actual time=3.485..4.427 rows=5000 loops=1)
+                    Buffers: shared hit=571
+                    ->  Sort  (cost=1178.08..1190.52 rows=4975 width=28) (actual time=3.471..3.669 rows=5000 loops=1)
                           Sort Key: metrica.faturamento DESC, parceiro_1.nome
                           Sort Method: quicksort  Memory: 465kB
-                          Buffers: shared hit=570
-                          ->  Hash Join  (cost=317.25..872.33 rows=4963 width=28) (actual time=1.117..2.268 rows=5000 loops=1)
+                          Buffers: shared hit=571
+                          ->  Hash Join  (cost=317.35..872.60 rows=4975 width=28) (actual time=1.072..2.257 rows=5000 loops=1)
                                 Hash Cond: (metrica.parceiro_id = parceiro_1.id)
-                                Buffers: shared hit=570
-                                ->  Bitmap Heap Scan on metrica  (cost=138.75..680.79 rows=4963 width=11) (actual time=0.229..0.736 rows=5000 loops=1)
+                                Buffers: shared hit=571
+                                ->  Bitmap Heap Scan on metrica  (cost=138.85..681.03 rows=4975 width=11) (actual time=0.225..0.757 rows=5000 loops=1)
                                       Recheck Cond: (periodo_id = 12)
                                       Heap Blocks: exact=480
-                                      Buffers: shared hit=504
-                                      ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..137.51 rows=4963 width=0) (actual time=0.195..0.195 rows=5000 loops=1)
+                                      Buffers: shared hit=505
+                                      ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..137.60 rows=4975 width=0) (actual time=0.190..0.190 rows=5000 loops=1)
                                             Index Cond: (periodo_id = 12)
-                                            Buffers: shared hit=24
-                                ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=0.850..0.850 rows=5000 loops=1)
+                                            Buffers: shared hit=25
+                                ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=0.813..0.813 rows=5000 loops=1)
                                       Buckets: 8192  Batches: 1  Memory Usage: 333kB
                                       Buffers: shared hit=66
-                                      ->  Seq Scan on parceiro parceiro_1  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.004..0.273 rows=5000 loops=1)
+                                      ->  Seq Scan on parceiro parceiro_1  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.003..0.253 rows=5000 loops=1)
                                             Buffers: shared hit=66
-              ->  Hash  (cost=1313.49..1313.49 rows=4861 width=12) (actual time=5.277..5.278 rows=4895 loops=1)
+              ->  Hash  (cost=1314.34..1314.34 rows=4868 width=12) (actual time=5.309..5.310 rows=4895 loops=1)
                     Buckets: 8192  Batches: 1  Memory Usage: 294kB
                     Buffers: shared hit=569
-                    ->  Subquery Scan on passado  (cost=1167.66..1313.49 rows=4861 width=12) (actual time=3.604..4.758 rows=4895 loops=1)
+                    ->  Subquery Scan on passado  (cost=1168.30..1314.34 rows=4868 width=12) (actual time=3.489..4.708 rows=4895 loops=1)
                           Buffers: shared hit=569
-                          ->  WindowAgg  (cost=1167.66..1264.88 rows=4861 width=40) (actual time=3.604..4.483 rows=4895 loops=1)
+                          ->  WindowAgg  (cost=1168.30..1265.66 rows=4868 width=40) (actual time=3.488..4.433 rows=4895 loops=1)
                                 Buffers: shared hit=569
-                                ->  Sort  (cost=1167.66..1179.81 rows=4861 width=28) (actual time=3.598..3.769 rows=4895 loops=1)
+                                ->  Sort  (cost=1168.30..1180.47 rows=4868 width=28) (actual time=3.480..3.691 rows=4895 loops=1)
                                       Sort Key: metrica_1.faturamento DESC, parceiro_2.nome
                                       Sort Method: quicksort  Memory: 460kB
                                       Buffers: shared hit=569
-                                      ->  Hash Join  (cost=316.46..870.00 rows=4861 width=28) (actual time=1.100..2.363 rows=4895 loops=1)
+                                      ->  Hash Join  (cost=316.52..870.16 rows=4868 width=28) (actual time=1.096..2.282 rows=4895 loops=1)
                                             Hash Cond: (metrica_1.parceiro_id = parceiro_2.id)
                                             Buffers: shared hit=569
-                                            ->  Bitmap Heap Scan on metrica metrica_1  (cost=137.96..678.73 rows=4861 width=11) (actual time=0.233..0.856 rows=4895 loops=1)
+                                            ->  Bitmap Heap Scan on metrica metrica_1  (cost=138.02..678.87 rows=4868 width=11) (actual time=0.230..0.778 rows=4895 loops=1)
                                                   Recheck Cond: (periodo_id = 11)
                                                   Heap Blocks: exact=480
                                                   Buffers: shared hit=503
-                                                  ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..136.75 rows=4861 width=0) (actual time=0.197..0.197 rows=4895 loops=1)
+                                                  ->  Bitmap Index Scan on ix_metrica_periodo_faturamento  (cost=0.00..136.80 rows=4868 width=0) (actual time=0.195..0.195 rows=4895 loops=1)
                                                         Index Cond: (periodo_id = 11)
                                                         Buffers: shared hit=23
                                             ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=0.829..0.829 rows=5000 loops=1)
                                                   Buckets: 8192  Batches: 1  Memory Usage: 333kB
                                                   Buffers: shared hit=66
-                                                  ->  Seq Scan on parceiro parceiro_2  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.004..0.269 rows=5000 loops=1)
+                                                  ->  Seq Scan on parceiro parceiro_2  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.002..0.252 rows=5000 loops=1)
                                                         Buffers: shared hit=66
-        ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=0.885..0.885 rows=5000 loops=1)
+        ->  Hash  (cost=116.00..116.00 rows=5000 width=21) (actual time=0.899..0.900 rows=5000 loops=1)
               Buckets: 8192  Batches: 1  Memory Usage: 333kB
               Buffers: shared hit=66
-              ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.003..0.314 rows=5000 loops=1)
+              ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=21) (actual time=0.003..0.316 rows=5000 loops=1)
                     Buffers: shared hit=66
 Planning:
   Buffers: shared hit=24
-Planning Time: 0.627 ms
-Execution Time: 11.859 ms
+Planning Time: 0.567 ms
+Execution Time: 12.020 ms
 ```
 
 </details>
@@ -724,25 +724,102 @@ Execution Time: 11.859 ms
 
 A consulta filtra `parceiro`. Se o planejador varrer, a conferência abaixo diz se foi escolha dele ou falta de índice.
 
+- `SELECT periodo.id, periodo.data_inicio, periodo.data_fim FROM periodo ORDER BY periodo.data_inicio DESC, peri…`
+  - tempo no banco: **0.01 ms** · varredura: `periodo`
+- `SELECT periodo.id, periodo.data_inicio, periodo.data_fim FROM periodo WHERE periodo.data_inicio < %(data_inic…`
+  - tempo no banco: **0.01 ms** · varredura: `periodo`
+- `SELECT count(*) AS count_1 FROM (SELECT parceiro.id AS id, parceiro.nome AS nome, parceiro.nome_normalizado A…`
+  - tempo no banco: **0.21 ms** · varredura: nenhuma
 - `SELECT parceiro.id, parceiro.nome, parceiro.nome_normalizado, parceiro.categoria_id, parceiro.origem_categori…`
-  - tempo no banco: **0.69 ms** · varredura: `parceiro`
-  - a varredura em `parceiro` é **escolha do planejador**: com `enable_seqscan = off` o mesmo filtro usa `ix_parceiro_nome` e leva 1.47 ms. O índice cobre a consulta.
+  - tempo no banco: **0.62 ms** · varredura: nenhuma
 
 <details><summary>Plano completo</summary>
 
 ```
-Sort  (cost=140.99..141.75 rows=303 width=317) (actual time=0.672..0.680 rows=307 loops=1)
-  Sort Key: nome
-  Sort Method: quicksort  Memory: 55kB
-  Buffers: shared hit=66
-  ->  Seq Scan on parceiro  (cost=0.00..128.50 rows=303 width=317) (actual time=0.008..0.514 rows=307 loops=1)
-        Filter: ((nome_normalizado)::text ~~ '%praca%'::text)
-        Rows Removed by Filter: 4693
-        Buffers: shared hit=66
+Sort  (cost=1.34..1.37 rows=12 width=12) (actual time=0.008..0.008 rows=12 loops=1)
+  Sort Key: data_inicio DESC, id DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=1
+  ->  Seq Scan on periodo  (cost=0.00..1.12 rows=12 width=12) (actual time=0.003..0.004 rows=12 loops=1)
+        Buffers: shared hit=1
+Planning Time: 0.043 ms
+Execution Time: 0.014 ms
+```
+
+</details>
+
+<details><summary>Plano completo</summary>
+
+```
+Sort  (cost=1.34..1.37 rows=11 width=12) (actual time=0.007..0.008 rows=11 loops=1)
+  Sort Key: data_inicio DESC, id DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=1
+  ->  Seq Scan on periodo  (cost=0.00..1.15 rows=11 width=12) (actual time=0.003..0.004 rows=11 loops=1)
+        Filter: (data_inicio < '2026-09-14'::date)
+        Rows Removed by Filter: 1
+        Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=2
+Planning Time: 0.085 ms
+Execution Time: 0.014 ms
+```
+
+</details>
+
+<details><summary>Plano completo</summary>
+
+```
+Aggregate  (cost=102.26..102.27 rows=1 width=8) (actual time=0.164..0.164 rows=1 loops=1)
+  Buffers: shared hit=72
+  ->  Bitmap Heap Scan on parceiro  (cost=31.72..101.51 rows=303 width=0) (actual time=0.077..0.152 rows=307 loops=1)
+        Recheck Cond: ((nome_normalizado)::text ~~ '%praca%'::text)
+        Heap Blocks: exact=65
+        Buffers: shared hit=72
+        ->  Bitmap Index Scan on ix_parceiro_nome_normalizado_trgm  (cost=0.00..31.64 rows=303 width=0) (actual time=0.071..0.071 rows=307 loops=1)
+              Index Cond: ((nome_normalizado)::text ~~ '%praca%'::text)
+              Buffers: shared hit=7
 Planning:
   Buffers: shared hit=1
-Planning Time: 0.078 ms
-Execution Time: 0.694 ms
+Planning Time: 0.125 ms
+Execution Time: 0.211 ms
+```
+
+</details>
+
+<details><summary>Plano completo</summary>
+
+```
+Limit  (cost=19.12..910.28 rows=50 width=339) (actual time=0.359..0.531 rows=50 loops=1)
+  Buffers: shared hit=1370
+  ->  Incremental Sort  (cost=19.12..5455.23 rows=305 width=339) (actual time=0.359..0.528 rows=50 loops=1)
+        Sort Key: parceiro.nome, parceiro.id
+        Presorted Key: parceiro.nome
+        Full-sort Groups: 2  Sort Method: quicksort  Average Memory: 29kB  Peak Memory: 29kB
+        Buffers: shared hit=1370
+        ->  Nested Loop Left Join  (cost=1.15..5441.57 rows=305 width=339) (actual time=0.108..0.509 rows=51 loops=1)
+              Buffers: shared hit=1370
+              ->  Nested Loop Left Join  (cost=0.86..3787.64 rows=303 width=335) (actual time=0.097..0.408 rows=51 loops=1)
+                    Buffers: shared hit=1217
+                    ->  Nested Loop Left Join  (cost=0.57..2145.71 rows=303 width=328) (actual time=0.089..0.357 rows=51 loops=1)
+                          Buffers: shared hit=1064
+                          ->  Index Scan using ix_parceiro_nome on parceiro  (cost=0.28..503.78 rows=303 width=317) (actual time=0.077..0.251 rows=51 loops=1)
+                                Filter: ((nome_normalizado)::text ~~ '%praca%'::text)
+                                Rows Removed by Filter: 896
+                                Buffers: shared hit=911
+                          ->  Index Scan using uq_metrica_parceiro_periodo on metrica  (cost=0.29..5.42 rows=1 width=15) (actual time=0.002..0.002 rows=1 loops=51)
+                                Index Cond: ((parceiro_id = parceiro.id) AND (periodo_id = 12))
+                                Buffers: shared hit=153
+                    ->  Index Scan using uq_metrica_parceiro_periodo on metrica metrica_1  (cost=0.29..5.42 rows=1 width=11) (actual time=0.001..0.001 rows=1 loops=51)
+                          Index Cond: ((parceiro_id = parceiro.id) AND (periodo_id = 11))
+                          Buffers: shared hit=153
+              ->  Index Scan using uq_segmento_parceiro_periodo on historico_segmento  (cost=0.29..5.46 rows=1 width=8) (actual time=0.002..0.002 rows=1 loops=51)
+                    Index Cond: ((parceiro_id = parceiro.id) AND (periodo_id = 12))
+                    Buffers: shared hit=153
+Planning:
+  Buffers: shared hit=37
+Planning Time: 0.758 ms
+Execution Time: 0.619 ms
 ```
 
 </details>
@@ -751,20 +828,93 @@ Execution Time: 0.694 ms
 
 Sem filtro, a resposta é a tabela inteira; o custo está no volume, não no plano. É o caso que a paginação da H36 precisa resolver.
 
+- `SELECT periodo.id, periodo.data_inicio, periodo.data_fim FROM periodo ORDER BY periodo.data_inicio DESC, peri…`
+  - tempo no banco: **0.01 ms** · varredura: `periodo`
+- `SELECT periodo.id, periodo.data_inicio, periodo.data_fim FROM periodo WHERE periodo.data_inicio < %(data_inic…`
+  - tempo no banco: **0.01 ms** · varredura: `periodo`
+- `SELECT count(*) AS count_1 FROM (SELECT parceiro.id AS id, parceiro.nome AS nome, parceiro.nome_normalizado A…`
+  - tempo no banco: **0.41 ms** · varredura: `parceiro`
 - `SELECT parceiro.id, parceiro.nome, parceiro.nome_normalizado, parceiro.categoria_id, parceiro.origem_categori…`
-  - tempo no banco: **4.83 ms** · varredura: `parceiro`
+  - tempo no banco: **0.40 ms** · varredura: nenhuma
 
 <details><summary>Plano completo</summary>
 
 ```
-Sort  (cost=423.19..435.69 rows=5000 width=317) (actual time=4.453..4.610 rows=5000 loops=1)
-  Sort Key: nome
-  Sort Method: quicksort  Memory: 672kB
+Sort  (cost=1.34..1.37 rows=12 width=12) (actual time=0.007..0.007 rows=12 loops=1)
+  Sort Key: data_inicio DESC, id DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=1
+  ->  Seq Scan on periodo  (cost=0.00..1.12 rows=12 width=12) (actual time=0.003..0.004 rows=12 loops=1)
+        Buffers: shared hit=1
+Planning Time: 0.027 ms
+Execution Time: 0.012 ms
+```
+
+</details>
+
+<details><summary>Plano completo</summary>
+
+```
+Sort  (cost=1.34..1.37 rows=11 width=12) (actual time=0.006..0.007 rows=11 loops=1)
+  Sort Key: data_inicio DESC, id DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=1
+  ->  Seq Scan on periodo  (cost=0.00..1.15 rows=11 width=12) (actual time=0.003..0.004 rows=11 loops=1)
+        Filter: (data_inicio < '2026-09-14'::date)
+        Rows Removed by Filter: 1
+        Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=2
+Planning Time: 0.057 ms
+Execution Time: 0.012 ms
+```
+
+</details>
+
+<details><summary>Plano completo</summary>
+
+```
+Aggregate  (cost=128.50..128.51 rows=1 width=8) (actual time=0.380..0.380 rows=1 loops=1)
   Buffers: shared hit=66
-  ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=317) (actual time=0.007..0.469 rows=5000 loops=1)
+  ->  Seq Scan on parceiro  (cost=0.00..116.00 rows=5000 width=0) (actual time=0.003..0.209 rows=5000 loops=1)
         Buffers: shared hit=66
-Planning Time: 0.059 ms
-Execution Time: 4.826 ms
+Planning Time: 0.088 ms
+Execution Time: 0.408 ms
+```
+
+</details>
+
+<details><summary>Plano completo</summary>
+
+```
+Limit  (cost=3.67..130.57 rows=50 width=339) (actual time=0.227..0.321 rows=50 loops=1)
+  Buffers: shared hit=509
+  ->  Incremental Sort  (cost=3.67..12765.02 rows=5028 width=339) (actual time=0.227..0.318 rows=50 loops=1)
+        Sort Key: parceiro.nome, parceiro.id
+        Presorted Key: parceiro.nome
+        Full-sort Groups: 2  Sort Method: quicksort  Average Memory: 29kB  Peak Memory: 29kB
+        Buffers: shared hit=509
+        ->  Nested Loop Left Join  (cost=1.15..12539.74 rows=5028 width=339) (actual time=0.047..0.299 rows=51 loops=1)
+              Buffers: shared hit=509
+              ->  Nested Loop Left Join  (cost=0.86..8702.22 rows=5000 width=335) (actual time=0.036..0.195 rows=51 loops=1)
+                    Buffers: shared hit=356
+                    ->  Nested Loop Left Join  (cost=0.57..4596.75 rows=5000 width=328) (actual time=0.026..0.143 rows=51 loops=1)
+                          Buffers: shared hit=204
+                          ->  Index Scan using ix_parceiro_nome on parceiro  (cost=0.28..491.28 rows=5000 width=317) (actual time=0.012..0.028 rows=51 loops=1)
+                                Buffers: shared hit=51
+                          ->  Index Scan using uq_metrica_parceiro_periodo on metrica  (cost=0.29..0.82 rows=1 width=15) (actual time=0.002..0.002 rows=1 loops=51)
+                                Index Cond: ((parceiro_id = parceiro.id) AND (periodo_id = 12))
+                                Buffers: shared hit=153
+                    ->  Index Scan using uq_metrica_parceiro_periodo on metrica metrica_1  (cost=0.29..0.82 rows=1 width=11) (actual time=0.001..0.001 rows=1 loops=51)
+                          Index Cond: ((parceiro_id = parceiro.id) AND (periodo_id = 11))
+                          Buffers: shared hit=152
+              ->  Index Scan using uq_segmento_parceiro_periodo on historico_segmento  (cost=0.29..0.77 rows=1 width=8) (actual time=0.002..0.002 rows=1 loops=51)
+                    Index Cond: ((parceiro_id = parceiro.id) AND (periodo_id = 12))
+                    Buffers: shared hit=153
+Planning:
+  Buffers: shared hit=36
+Planning Time: 0.759 ms
+Execution Time: 0.404 ms
 ```
 
 </details>
@@ -772,5 +922,9 @@ Execution Time: 4.826 ms
 ## Índices em uso
 
 - `ix_metrica_periodo_faturamento`
+- `ix_parceiro_nome`
+- `ix_parceiro_nome_normalizado_trgm`
 - `ix_segmento_periodo_segmento`
+- `uq_metrica_parceiro_periodo`
+- `uq_segmento_parceiro_periodo`
 
