@@ -11,6 +11,7 @@
  * `ajuda` explicando o que fazer, e é essa explicação que a tela mostra.
  */
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { comoDinheiro, comoInteiro } from "../formato";
@@ -107,6 +108,12 @@ export default function Importacao() {
             {resultado.total_rejeitado > 0
               ? `${comoInteiro(resultado.total_rejeitado)} linha(s) rejeitada(s) não entraram.`
               : "Nenhuma linha rejeitada."}
+          </p>
+          {/* A importação termina segmentando a base, e o resultado disso está no
+              painel, não aqui. Sem o link, o passo seguinte ficava por conta de
+              achar o menu. */}
+          <p className="aviso__acao">
+            <Link to="/">Ver no painel</Link>
           </p>
         </div>
       )}

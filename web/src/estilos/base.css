@@ -201,6 +201,20 @@ h3 {
   font-size: var(--txt-12);
 }
 
+/* O próximo passo, quando o aviso tem um. Mora aqui, e não na folha de quem o
+   usou primeiro, pelo mesmo motivo de `.aviso--sucesso`: o cadastro de parceiro
+   e a importação usam o mesmo aviso. O link vai na cor de tinta da ação — é a
+   cor que significa "responde ao clique" (regra 1.1 do `docs/09`). */
+.aviso__acao {
+  margin: var(--esp-8) 0 0;
+  font-size: var(--txt-13);
+}
+
+.aviso__acao a {
+  color: var(--acao-ink);
+  font-weight: var(--peso-rotulo);
+}
+
 /* ---------------------------------------------------------------- números */
 /* Toda coluna numérica. `tabular-nums` é o que faz os dígitos alinharem em
    coluna; sem isso o olho precisa reler para comparar. */
