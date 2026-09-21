@@ -14,7 +14,7 @@
  * segmento vêm prontos da API, do período mais recente.
  */
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { Esqueleto } from "../componentes/Carregando";
@@ -66,6 +66,10 @@ const TAMANHO_PAGINA = 50;
 
 export default function Parceiros() {
   const [parametros, setParametros] = useSearchParams();
+  const lugar = useLocation();
+  /* O endereço completo da lista, com o filtro. Vai junto para o cadastro, e é
+     o que faz o "Voltar" de lá devolver este mesmo recorte. */
+  const aqui = lugar.pathname + lugar.search;
   const [resultado, setResultado] = useState({ consulta: null, pagina: null });
   const [categorias, setCategorias] = useState([]);
   const [erro, setErro] = useState(null);
@@ -223,6 +227,12 @@ export default function Parceiros() {
         </div>
       </section>
 
+      {lugar.state?.aviso && (
+        <div className="aviso aviso--sucesso" role="status">
+          <p className="aviso__titulo">{lugar.state.aviso}</p>
+        </div>
+      )}
+
       {erro && (
         <div className="aviso" role="alert">
           <p className="aviso__titulo">{erro.message}</p>
@@ -252,6 +262,9 @@ export default function Parceiros() {
             >
               Exportar CSV
             </a>
+            <Link className="botao" to="/parceiros/novo" state={{ lista: aqui }}>
+              Novo parceiro
+            </Link>
           </div>
         </div>
 
@@ -312,7 +325,7 @@ export default function Parceiros() {
                 </thead>
                 <tbody>
                   {dados.itens.map((p) => (
-                    <Linha key={p.id} parceiro={p} />
+                    <Linha key={p.id} parceiro={p} lista={aqui} />
                   ))}
                 </tbody>
               </table>
@@ -371,13 +384,17 @@ function Cabecalho({ coluna, ordenarPor, descendente, aoOrdenar }) {
   );
 }
 
-function Linha({ parceiro }) {
+function Linha({ parceiro, lista }) {
   const { desempenho } = parceiro;
   const sentido = sentidoDa(desempenho.variacao_percentual);
 
   return (
     <tr>
-      <td className="nome">{parceiro.nome}</td>
+      <td className="nome">
+        <Link className="nome__link" to={`/parceiros/${parceiro.id}`} state={{ lista }}>
+          {parceiro.nome}
+        </Link>
+      </td>
       <td className="secundaria">{parceiro.categoria?.nome ?? "sem categoria"}</td>
       <td className="secundaria">
         <Segmento valor={desempenho.segmento} />
