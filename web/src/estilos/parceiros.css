@@ -121,8 +121,7 @@
 /* Link de texto na cor de tinta da ação: é a cor que significa "responde ao
    clique" (regra 1.1 do `docs/09`), no tom escuro que passa em contraste como
    texto. Sem isto o navegador pinta de azul padrão, fora da paleta. */
-.trilha a,
-.aviso__acao a {
+.trilha a {
   color: var(--acao-ink);
   font-weight: var(--peso-rotulo);
 }
@@ -231,11 +230,6 @@
 
 .aviso__lista a {
   color: var(--acao-ink);
-}
-
-.aviso__acao {
-  margin: var(--esp-8) 0 0;
-  font-size: var(--txt-13);
 }
 
 /* -------------------------------------------------------- desempenho */
