@@ -103,12 +103,13 @@ node docs/entrega/gerar.js                  # monta o .docx
 powershell -ExecutionPolicy Bypass -File docs/entrega/converter_pdf.ps1
 ```
 
-As evidências de execução vêm de execuções reais, e não são transcritas à mão:
+As evidências de execução vêm de execuções reais, e não são transcritas à mão. Cada entrega grava na
+sua própria pasta, e **a pasta de uma sprint já entregue não se regera** — é o retrato daquela data:
 
 ```bash
 cd api
-GIH_ADMIN_SENHA=... python e2e/verificacao.py > ../docs/entrega/evidencias/verificacao.txt
-GIH_ADMIN_SENHA=... python e2e/transcricao.py > ../docs/entrega/evidencias/crud.txt
+GIH_ADMIN_SENHA=... python e2e/verificacao.py > ../docs/entrega/evidencias/sprint03/verificacao.txt
+GIH_ADMIN_SENHA=... python e2e/transcricao.py > ../docs/entrega/evidencias/sprint03/crud.txt
 ```
 
 > As sprints da disciplina não são as mesmas da equipe: trabalhamos em 13 sprints semanais, e a entrega de

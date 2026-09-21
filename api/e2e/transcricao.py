@@ -13,7 +13,7 @@ limpeza vai para a saída de erro, e não para a transcrição — ele não é p
 evidência.
 
 Uso:
-    GIH_ADMIN_SENHA=... python e2e/transcricao.py > ../docs/entrega/evidencias/crud.txt
+    GIH_ADMIN_SENHA=... python e2e/transcricao.py > ../docs/entrega/evidencias/sprint03/crud.txt
 """
 from __future__ import annotations
 

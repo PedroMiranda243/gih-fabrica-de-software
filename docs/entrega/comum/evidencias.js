@@ -5,9 +5,15 @@
  * e não transcrita à mão. Se alguém reescrever um trecho para ficar mais bonito,
  * a evidência deixa de ser evidência.
  *
- * Os arquivos vêm de:
- *   python api/e2e/verificacao.py  > docs/entrega/evidencias/verificacao.txt
- *   python api/e2e/transcricao.py  > docs/entrega/evidencias/crud.txt
+ * **Cada entrega tem a sua pasta** — `evidencias/sprint03/`, `evidencias/sprint04/`
+ * — e o nome passado a `ler()` e a `trecho()` inclui a pasta. Na Sprint 03 as
+ * evidências ficavam soltas em `evidencias/`, e regerá-las para a Sprint 04
+ * teria reescrito em silêncio a Parte III, que já foi entregue: evidência de
+ * execução é retrato da data em que foi tirada, não documento vivo.
+ *
+ * Os da Sprint 03 vieram de:
+ *   python api/e2e/verificacao.py  > docs/entrega/evidencias/sprint03/verificacao.txt
+ *   python api/e2e/transcricao.py  > docs/entrega/evidencias/sprint03/crud.txt
  */
 const fs = require('fs');
 const path = require('path');
