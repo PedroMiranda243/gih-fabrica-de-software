@@ -24,12 +24,12 @@ const REPO = 'github.com/PedroMiranda243/gih-fabrica-de-software';
  * geração recusa: um documento com número estimado não é evidência.
  */
 const MEDIDAS = {
-  testesApi: null, // pytest --collect-only -q, na main
-  testesInterface: null, // npm test, na main
-  coberturaNucleo: null, // o portão da CI: servico_segmentacao, ranking, rotas/painel, calculos
-  verificacoes: null, // e2e/verificacao.py contra a API no ar
-  operacoes: null, // app.openapi(), lido da própria aplicação
-  tabelas: null, // \dt, sem alembic_version
+  testesApi: 475, // pytest --collect-only -q, na main, 21/09
+  testesInterface: 64, // npm test, na main, 21/09
+  coberturaNucleo: '99%', // o portão da CI: servico_segmentacao, ranking, rotas/painel, calculos
+  verificacoes: 68, // e2e/verificacao.py contra a API no ar — evidencias/sprint04/verificacao.txt
+  operacoes: 31, // app.openapi(), lido da própria aplicação
+  tabelas: 17, // pg_tables do schema public, sem alembic_version
   painelPiorMediana: '32,3 ms', // docs/medicoes/painel-5000.md, 21/09 — ranking de 200
   painelPiorP95: '36,4 ms', // idem
 };
