@@ -82,6 +82,13 @@ def main() -> None:
         cwd=RAIZ,
     )
 
+    # O gerador grava métrica, não segmento: a segmentação só roda quando a
+    # importação acontece, e o gerador não passa por ela. Sem este passo, todo
+    # reset deixava o painel abrindo com a distribuição vazia e "segmentação
+    # ainda não calculada" — correto, mas não é o que se quer demonstrar.
+    print("\nSegmentando...")
+    rodar([py, "-m", "app.cli", "reprocessar-segmentos"], cwd=API)
+
 
 if __name__ == "__main__":
     main()
