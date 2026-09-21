@@ -16,9 +16,18 @@
 #   3. Se persistir, abra o .docx no Word e use Arquivo > Exportar > Criar PDF.
 #      O resultado e o mesmo; o script so poupa os cliques.
 #
-# Uso:  powershell -ExecutionPolicy Bypass -File docs/entrega/converter_pdf.ps1
+# Uso:  powershell -ExecutionPolicy Bypass -File docs/entrega/converter_pdf.ps1 -Nome GRUPO-18-GIH-SPRINT-04
+#
+# O nome e parametro, e nao fixo: na Sprint 03 ele estava escrito aqui dentro,
+# e cada entrega nova exigiria editar o script antes de converter.
 
-$nome = 'GRUPO-18-GIH-SPRINT-03'
+param(
+    [Parameter(Mandatory = $true)]
+    [ValidatePattern('^GRUPO-\d+-GIH-SPRINT-\d{2}$')]
+    [string]$Nome
+)
+
+$nome = $Nome
 $raiz = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $origem = Join-Path $raiz "docs\entregas\$nome.docx"
 $destino = Join-Path $raiz "docs\entregas\$nome.pdf"
