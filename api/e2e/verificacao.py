@@ -325,6 +325,22 @@ def item_crud(r: Relatorio, url: str, criados: dict[str, str], marca: str) -> No
 
         duplicado = c.post("/api/parceiros", json={"nome": f"{nome} Ltda"})
         r.checar("nome repetido é recusado", duplicado.status_code == 409)
+        existente = (duplicado.json().get("detail") or {}).get("existente") or {}
+        r.checar(
+            "a recusa aponta o parceiro que já usa o nome",
+            existente.get("id") == alvo,
+            "UC04-E1 — a tela oferece abrir o cadastro existente",
+        )
+
+        sem_categoria = c.post(
+            "/api/parceiros", json={"nome": f"Outro {marca}", "categoria_id": 999999}
+        )
+        r.checar(
+            "categoria inexistente é erro do campo, e não nome duplicado",
+            sem_categoria.status_code == 422
+            and sem_categoria.json()["campos"][0]["campo"] == "categoria_id",
+            "o usuário corrige o campo certo",
+        )
 
         exclusao = c.delete(f"/api/parceiros/{alvo}")
         r.checar("excluir", exclusao.status_code == 204)
