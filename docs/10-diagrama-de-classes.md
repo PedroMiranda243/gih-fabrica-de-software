@@ -168,6 +168,7 @@ classDiagram
     class Parceiro {
         +int id
         +str nome
+        +str nome_normalizado
         +int categoria_id
         +OrigemCategoria origem_categoria
         +StatusComercial status
@@ -210,6 +211,15 @@ classDiagram
         +datetime calculado_em
     }
 
+    class ConfiguracaoSegmentacao {
+        +int id = 1
+        +int top_n
+        +int periodos_tendencia
+        +int periodos_novato
+        +datetime atualizado_em
+        +int atualizado_por_id
+    }
+
     Usuario "1" --> "0..*" Importacao : realiza
     Categoria "0..1" --> "0..*" Parceiro : classifica
     Periodo "1" --> "0..*" Importacao : cobre
@@ -217,6 +227,8 @@ classDiagram
     Parceiro "1" --> "0..*" Metrica : tem
     Parceiro "1" --> "0..*" HistoricoSegmento : recebe
     Periodo "1" --> "0..*" HistoricoSegmento : delimita
+    Usuario "0..1" --> "0..1" ConfiguracaoSegmentacao : ajusta
+    ConfiguracaoSegmentacao ..> HistoricoSegmento : limiares de
 ```
 
 *`Usuario` aparece reduzido ao identificador: o detalhe dele está no diagrama anterior.*
@@ -235,6 +247,14 @@ série e corromper a segmentação por tendência.
 **`Periodo` é obrigatório e não tem valor padrão.** O relatório de origem não carrega datas; sem o período
 informado, as métricas ficam órfãs na linha do tempo e a segmentação classifica errado **sem emitir erro**
 (RN03). Já aconteceu num projeto anterior do mesmo domínio.
+
+**`ConfiguracaoSegmentacao` entrou na Sprint 7** (H34, RF21): os três limiares de RN01 saíram do código e
+passaram a mudar sem alteração de código. **Uma instância só** — o banco cobra `id = 1` —, e a seta
+tracejada até `HistoricoSegmento` é dependência, não associação: os limiares decidem o segmento que é
+gravado, mas nenhum histórico aponta para a configuração que o produziu.
+
+**`Parceiro.nome_normalizado` entrou na Sprint 6** (H37): o nome sem acento e sem caixa, gravado pela
+aplicação, que é o que permite a busca sem acento usar índice.
 
 **`HistoricoSegmento` guarda o segmento já resolvido pela precedência de RN01.** Por isso a mobilidade do
 Top N **não** pode ser derivada dele: um parceiro entre os N maiores mas em queda fica gravado como

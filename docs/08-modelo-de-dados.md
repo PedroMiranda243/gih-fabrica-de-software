@@ -28,6 +28,7 @@ erDiagram
     USUARIO ||--o{ EXECUCAO_OTIMIZADOR : dispara
     USUARIO ||--o{ MENSAGEM : decide
     USUARIO }o--o| PARCEIRO : representa
+    USUARIO |o--o| CONFIGURACAO_SEGMENTACAO : ajusta
 
     CATEGORIA ||--o{ PARCEIRO : classifica
 
@@ -55,7 +56,7 @@ tentativas de autenticação inclusive contra logins que não existem, e por iss
 estrangeira para `USUARIO`. Ligá-la quebraria justamente o caso que ela existe para cobrir — o ataque por
 dicionário usa login desconhecido (RNF11).
 
-Os atributos de cada entidade estão na tabela abaixo, e não dentro das caixas do desenho: com dezesseis
+Os atributos de cada entidade estão na tabela abaixo, e não dentro das caixas do desenho: com dezessete
 entidades e mais de cem atributos, a figura ficaria ilegível impressa, que é critério de aceite da entrega.
 
 ### Entidades e atributos, na linguagem do negócio
@@ -72,6 +73,7 @@ entidades e mais de cem atributos, a figura ficaria ilegível impressa, que é c
 | **Importacao** | Uma carga de relatório | período coberto, autor, origem, total gravado, total rejeitado, momento |
 | **Metrica** | Desempenho de um parceiro em um período | faturamento, número de pedidos, projeção |
 | **HistoricoSegmento** | Classificação de um parceiro em um período | segmento, momento do cálculo |
+| **ConfiguracaoSegmentacao** | Os limiares de RN01, configuráveis (RF21) | tamanho do Top N, períodos de tendência, períodos para ser recém-chegado, quem alterou e quando |
 | **Previsao** | Estimativa do modelo para um parceiro | faturamento previsto, probabilidade de queda, versão do modelo |
 | **AcaoComercial** | Tipo de ação que a campanha pode alocar | nome, custo unitário, uplift esperado, situação |
 | **ExecucaoOtimizador** | Uma rodada do otimizador | modo, parâmetros, viabilidade, restrição violada, uplift, custo, tempo |
@@ -104,12 +106,15 @@ tentativa_login(id, login, origem, sucesso, ocorrido_em)
 auditoria(id, usuario_id*, acao, detalhes, origem, ocorrido_em)
 
 categoria(id, nome, ativa)
-parceiro(id, nome, categoria_id*, origem_categoria, status, contato, ativo, criado_em)
+parceiro(id, nome, nome_normalizado, categoria_id*, origem_categoria, status, contato, ativo,
+         criado_em)
 
 periodo(id, data_inicio, data_fim)
 importacao(id, periodo_id*, usuario_id*, origem, total_gravado, total_rejeitado, enviado_em)
 metrica(id, parceiro_id*, periodo_id*, importacao_id*, faturamento, pedidos, projecao)
 historico_segmento(id, parceiro_id*, periodo_id*, segmento, calculado_em)
+configuracao_segmentacao(id, top_n, periodos_tendencia, periodos_novato, atualizado_em,
+                         atualizado_por_id*)
 
 previsao(id, parceiro_id*, periodo_base_id*, faturamento_previsto, probabilidade_queda,
          modelo_versao, gerada_em)
@@ -196,6 +201,7 @@ mesma condição, nos dois sentidos.
 |---|---|---|---|
 | id | serial | **PK** | |
 | nome | varchar(160) | | **único**, indexado |
+| nome_normalizado | varchar(160) | | sem acento e sem caixa; índice de trigrama (RF24) |
 | categoria_id | integer | **FK** → categoria | nulo permitido |
 | origem_categoria | enum | | INFERIDA, SUGERIDA_IA, MANUAL |
 | status | enum | | ATIVO, INATIVO, PROSPECCAO |
@@ -205,6 +211,11 @@ mesma condição, nos dois sentidos.
 
 `CHECK (categoria_id IS NULL) = (origem_categoria IS NULL)` — categoria sem origem seria uma classificação
 sem procedência, e RN05 depende de saber se ela foi confirmada por alguém.
+
+**`nome_normalizado` entrou na Sprint 6** (H37). `unaccent(lower(nome))` na consulta resolveria o acento e
+impediria qualquer índice de servir, porque a função é aplicada linha a linha. A forma normalizada é coluna,
+gravada pela aplicação a cada alteração do nome, e o índice GIN de trigrama é o único que faz
+`LIKE '%termo%'` usar índice em qualquer posição do nome.
 
 ### 2.3 Dados de desempenho
 
@@ -252,6 +263,22 @@ Como coluna, divergiria das parcelas que o originam na primeira correção de da
 | periodo_id | integer | **FK** → periodo | |
 | segmento | enum | | TOP, EM_ASCENSAO, EM_RISCO, RECEM_CHEGADO, ESTAVEL, PROSPECCAO |
 | calculado_em | timestamptz | | padrão `now()` |
+
+**configuracao_segmentacao** — entrou na Sprint 7 (H34)
+
+| Coluna | Tipo | Chave | Restrição |
+|---|---|---|---|
+| id | integer | **PK** | `CHECK id = 1` — uma linha só |
+| top_n | integer | | `CHECK >= 1` |
+| periodos_tendencia | integer | | `CHECK >= 1` |
+| periodos_novato | integer | | `CHECK >= 1` |
+| atualizado_em | timestamptz | | padrão `now()` |
+| atualizado_por_id | integer | **FK** → usuario | nulo nos valores de fábrica |
+
+**Uma linha só, garantida pelo banco.** Configuração global sem essa trava vira duas linhas na primeira
+gravação concorrente, e a regra passa a depender de qual delas o `SELECT` devolver primeiro. A linha nasce
+com a migração, com os valores de RN01: Top 15, 2 períodos de tendência, 3 períodos para ser recém-chegado
+— este último ainda sem aval do PO (issue #59).
 
 ### 2.4 Núcleo computacional
 
@@ -344,7 +371,8 @@ Cada índice existe por causa de uma consulta concreta, não por precaução (RN
 
 | Índice | Tabela | Colunas | Serve a |
 |---|---|---|---|
-| `ix_parceiro_nome` | parceiro | nome | Busca por nome no painel e casamento na importação |
+| `ix_parceiro_nome` | parceiro | nome | Casamento de nome na importação |
+| `ix_parceiro_nome_normalizado_trgm` | parceiro | nome_normalizado (GIN, trigrama) | Busca sem acento em qualquer posição do nome (RF24) |
 | `ix_metrica_periodo_faturamento` | metrica | periodo_id, faturamento | Ranking do período sem varrer a tabela (RF17) |
 | `ix_segmento_periodo_segmento` | historico_segmento | periodo_id, segmento | Filtro por segmento no painel (RF21) |
 | `ix_auditoria_ocorrido_em` | auditoria | ocorrido_em | Consulta da trilha por intervalo (RF08) |
@@ -403,48 +431,53 @@ O esquema não está só desenhado: está aplicado e em uso. O ambiente sobe com
 
 ```
 $ docker compose exec api alembic current
-77b3651bd03d (head)
+b7d4e1f90c23 (head)
 ```
 
 **Tabelas criadas** (`docker compose exec postgres psql -U gih -d gih -c "\dt"`):
 
 ```
- Schema |        Name         | Type  | Owner
---------+---------------------+-------+-------
- public | acao_comercial      | table | gih
- public | alembic_version     | table | gih
- public | auditoria           | table | gih
- public | categoria           | table | gih
- public | execucao_otimizador | table | gih
- public | historico_segmento  | table | gih
- public | importacao          | table | gih
- public | item_plano          | table | gih
- public | mensagem            | table | gih
- public | metrica             | table | gih
- public | parceiro            | table | gih
- public | periodo             | table | gih
- public | plano_campanha      | table | gih
- public | previsao            | table | gih
- public | sessao_acesso       | table | gih
- public | tentativa_login     | table | gih
- public | usuario             | table | gih
-(17 rows)
+ Schema |           Name           | Type  | Owner 
+--------+--------------------------+-------+-------
+ public | acao_comercial           | table | gih
+ public | alembic_version          | table | gih
+ public | auditoria                | table | gih
+ public | categoria                | table | gih
+ public | configuracao_segmentacao | table | gih
+ public | execucao_otimizador      | table | gih
+ public | historico_segmento       | table | gih
+ public | importacao               | table | gih
+ public | item_plano               | table | gih
+ public | mensagem                 | table | gih
+ public | metrica                  | table | gih
+ public | parceiro                 | table | gih
+ public | periodo                  | table | gih
+ public | plano_campanha           | table | gih
+ public | previsao                 | table | gih
+ public | sessao_acesso            | table | gih
+ public | tentativa_login          | table | gih
+ public | usuario                  | table | gih
+(18 rows)
 ```
 
-São as 16 tabelas de domínio mais `alembic_version`, que é da própria ferramenta de migração e registra
+São as 17 tabelas de domínio mais `alembic_version`, que é da própria ferramenta de migração e registra
 qual versão do esquema está aplicada.
 
 **Contagem por consulta ao catálogo do PostgreSQL:**
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas de domínio | 16 |
-| Chaves primárias | 16 |
-| Chaves estrangeiras | 21 |
+| Tabelas de domínio | 17 |
+| Chaves primárias | 17 |
+| Chaves estrangeiras | 22 |
 | Restrições `UNIQUE` | 11 |
-| Restrições `CHECK` declaradas | 9 |
-| Índices | 34 |
+| Restrições `CHECK` declaradas | 13 |
+| Índices | 36 |
 | Tipos `ENUM` | 7 |
+
+Medido em 21/09/2026, contra o banco no ar. **Na Sprint 02 eram 16, 16, 21, 11, 9, 34 e 7.** A diferença é
+de duas migrações: o nome normalizado do parceiro com o índice de trigrama (Sprint 6, +1 índice) e a
+configuração da segmentação (Sprint 7, +1 tabela, +1 chave estrangeira, +4 `CHECK`, +1 índice).
 
 **O esquema é gerado por migração versionada, não por script solto.** Isso é o que permite qualquer
 integrante chegar ao mesmo estado a partir de um clone limpo, e é o que torna a evolução do banco
