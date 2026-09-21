@@ -16,7 +16,10 @@ const path = require('path');
 const puppeteer = require('puppeteer');
 
 const URL = process.env.GIH_URL || 'http://localhost:8000';
-const SAIDA = path.join(__dirname, 'evidencias');
+/* A Sprint 03 capturou estas telas, e a Parte III as lê daqui. Rodar de novo
+   reescreve o retrato de uma entrega já feita — só faz sentido para corrigir a
+   própria Parte III. Ver `comum/evidencias.js`. */
+const SAIDA = path.join(__dirname, 'evidencias', 'sprint03');
 const JANELA = { width: 1280, height: 900, deviceScaleFactor: 2 };
 
 async function esperar(ms) {
@@ -82,7 +85,7 @@ async function main() {
     await navegador.close();
   }
 
-  console.log('\nevidências em docs/entrega/evidencias/');
+  console.log('\nevidências em docs/entrega/evidencias/sprint03/');
 }
 
 main().catch((e) => {

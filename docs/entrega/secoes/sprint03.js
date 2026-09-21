@@ -126,7 +126,7 @@ function montar() {
     + 'calculado no navegador: variação, ticket médio e posição vêm prontos da API, e a interface só formata '
     + 'e desenha.',
   ));
-  c.push(evidencia('interface-painel'));
+  c.push(evidencia('sprint03/interface-painel'));
   c.push(legenda('Painel com os dados do banco: indicadores do período com a variação, série histórica e ranking.'));
 
   // ============================================== 2. BANCO CONECTADO
@@ -146,7 +146,7 @@ function montar() {
     { size: 19 },
   ));
   c.push(espaco(60));
-  c.push(...mono(trecho('verificacao.txt', '[1/6]', '[2/6]')));
+  c.push(...mono(trecho('sprint03/verificacao.txt', '[1/6]', '[2/6]')));
   c.push(espaco(120));
 
   c.push(h2('2.2 Estrutura aplicada'));
@@ -187,7 +187,7 @@ function montar() {
     + 'obrigatório, prévia antes de gravar, e a rejeição de cada linha com o motivo. Na captura, a linha '
     + 'com faturamento "abacaxi" é recusada e dita — e as outras três seguem para gravação.',
   ));
-  c.push(evidencia('interface-importacao'));
+  c.push(evidencia('sprint03/interface-importacao'));
   c.push(legenda('Importação com a prévia aberta: três linhas reconhecidas, uma rejeitada com o motivo e um parceiro novo.'));
 
   // =================================================== 3. LOGIN
@@ -208,13 +208,13 @@ function montar() {
 
   c.push(h2('3.2 Verificação executada'));
   c.push(espaco(40));
-  c.push(...mono(trecho('verificacao.txt', '[2/6]', '[3/6]')));
+  c.push(...mono(trecho('sprint03/verificacao.txt', '[2/6]', '[3/6]')));
   c.push(espaco(120));
 
   c.push(h2('3.3 A requisição e a resposta'));
   c.push(p('Transcrição de uma autenticação real. A senha aparece mascarada de propósito:', { size: 19 }));
   c.push(espaco(40));
-  c.push(...mono(trecho('crud.txt', 'Login — item 2', 'CADASTRAR')));
+  c.push(...mono(trecho('sprint03/crud.txt', 'Login — item 2', 'CADASTRAR')));
 
   c.push(quebra());
   c.push(h2('3.4 A tela de login'));
@@ -223,7 +223,7 @@ function montar() {
     + 'mostra a mensagem que recebeu em vez de tentar ser prestativa. O contorno em destaque é o foco do '
     + 'teclado, visível em todo controle.',
   ));
-  c.push(evidencia('interface-login', 480));
+  c.push(evidencia('sprint03/interface-login', 480));
   c.push(legenda('Tela de login da aplicação, com o foco no primeiro campo.'));
 
   // =============================================== 4. CADASTRO
@@ -237,12 +237,12 @@ function montar() {
 
   c.push(h2('4.1 Verificação executada'));
   c.push(espaco(40));
-  c.push(...mono(trecho('verificacao.txt', '[3/6]', '[4/6]')));
+  c.push(...mono(trecho('sprint03/verificacao.txt', '[3/6]', '[4/6]')));
   c.push(espaco(120));
 
   c.push(h2('4.2 A requisição e a resposta'));
   c.push(espaco(40));
-  c.push(...mono(trecho('crud.txt', 'Preparação — um analista', 'Login — item 2')));
+  c.push(...mono(trecho('sprint03/crud.txt', 'Preparação — um analista', 'Login — item 2')));
   c.push(espaco(60));
   c.push(rich([
     { t: 'A resposta não devolve a senha nem o hash dela. ', b: true, s: 19 },
@@ -320,13 +320,13 @@ function montar() {
     { size: 19 },
   ));
   c.push(espaco(40));
-  c.push(...mono(trecho('verificacao.txt', '[4/6]', '[5/6]')));
+  c.push(...mono(trecho('sprint03/verificacao.txt', '[4/6]', '[5/6]')));
   c.push(espaco(120));
 
   c.push(h2('5.3 A negação, na prática'));
   c.push(p('Um analista tentando a área de usuários, que é exclusiva do Administrador:', { size: 19 }));
   c.push(espaco(40));
-  c.push(...mono(trecho('crud.txt', 'Controle de perfis — item 4', 'Fim da transcrição')));
+  c.push(...mono(trecho('sprint03/crud.txt', 'Controle de perfis — item 4', 'Fim da transcrição')));
 
   // ================================================== 6. CRUD
   c.push(quebra());
@@ -350,15 +350,15 @@ function montar() {
 
   c.push(h2('6.2 Verificação executada'));
   c.push(espaco(40));
-  c.push(...mono(trecho('verificacao.txt', '[5/6]', '[6/6]')));
+  c.push(...mono(trecho('sprint03/verificacao.txt', '[5/6]', '[6/6]')));
 
   c.push(quebra());
   c.push(h2('6.3 Cadastrar, consultar e atualizar'));
   c.push(p('Transcrição das requisições reais, com o corpo enviado e o corpo recebido:', { size: 19 }));
   c.push(espaco(40));
-  c.push(...mono(trecho('crud.txt', 'CADASTRAR — item 5', 'CONSULTAR')));
+  c.push(...mono(trecho('sprint03/crud.txt', 'CADASTRAR — item 5', 'CONSULTAR')));
   c.push(espaco(100));
-  c.push(...mono(trecho('crud.txt', 'ATUALIZAR', 'Nome repetido')));
+  c.push(...mono(trecho('sprint03/crud.txt', 'ATUALIZAR', 'Nome repetido')));
 
   c.push(quebra());
   c.push(h2('6.4 A exclusão, e por que ela tem duas saídas'));
@@ -373,12 +373,12 @@ function montar() {
     + 'desativação — que resolve o problema real, que é tirar o parceiro de circulação.',
   ));
   c.push(espaco(60));
-  c.push(...mono(trecho('crud.txt', 'EXCLUIR — sem histórico', 'EXCLUIR — com histórico')));
+  c.push(...mono(trecho('sprint03/crud.txt', 'EXCLUIR — sem histórico', 'EXCLUIR — com histórico')));
 
   c.push(quebra());
   c.push(p('E o caminho que protege o histórico:', { size: 19 }));
   c.push(espaco(40));
-  c.push(...mono(trecho('crud.txt', '$ DELETE /api/parceiros', 'Controle de perfis — item 4')));
+  c.push(...mono(trecho('sprint03/crud.txt', '$ DELETE /api/parceiros', 'Controle de perfis — item 4')));
 
   c.push(quebra());
   c.push(h2('6.5 Na interface'));
@@ -388,7 +388,7 @@ function montar() {
     + 'função aplicada linha a linha viraria varredura completa. Os filtros ficam no endereço da página, '
     + 'então um recorte pode ser mandado para outra pessoa por link.',
   ));
-  c.push(evidencia('interface-parceiros'));
+  c.push(evidencia('sprint03/interface-parceiros'));
   c.push(legenda('Tela de parceiros com a busca "praca" encontrando "Praça" — as primeiras doze linhas do resultado.'));
 
   // Quebra antes, e não depois: sem ela o título e o parágrafo ficam no pé da
@@ -400,11 +400,11 @@ function montar() {
     'A especificação da API é gerada automaticamente e permite executar qualquer operação pelo navegador. '
     + 'É o contrato que a interface consome: a tela foi escrita contra ela, e não contra a implementação.',
   ));
-  c.push(evidencia('swagger-geral'));
+  c.push(evidencia('sprint03/swagger-geral'));
   c.push(legenda(`Documentação interativa em /api/docs: as ${medida('operacoes')} operações, agrupadas por assunto.`));
 
   c.push(quebra());
-  c.push(evidencia('swagger-parceiros'));
+  c.push(evidencia('sprint03/swagger-parceiros'));
   c.push(legenda('Contrato de entrada e saída da listagem de parceiros, com os filtros disponíveis.'));
 
   // ============================================== 7. EXECUÇÃO LOCAL

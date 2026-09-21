@@ -26,7 +26,10 @@ const puppeteer = require('puppeteer');
 const URL = process.env.GIH_WEB_URL || 'http://localhost:5173';
 const LOGIN = process.env.GIH_CAPTURA_LOGIN;
 const SENHA = process.env.GIH_CAPTURA_SENHA;
-const SAIDA = path.join(__dirname, 'evidencias');
+/* A Sprint 03 capturou estas telas, e a Parte III as lê daqui. Rodar de novo
+   reescreve o retrato de uma entrega já feita — só faz sentido para corrigir a
+   própria Parte III. Ver `comum/evidencias.js`. */
+const SAIDA = path.join(__dirname, 'evidencias', 'sprint03');
 
 /* Termo que demonstra a busca sem acento **com os dados que o gerador produz**:
    "praca" acha "Casa da Praça". A primeira escolha foi "comercio", e o gerador
@@ -169,7 +172,7 @@ async function main() {
   } finally {
     await navegador.close();
   }
-  console.log('\ncapturas em docs/entrega/evidencias/');
+  console.log('\ncapturas em docs/entrega/evidencias/sprint03/');
 }
 
 main().catch((e) => {

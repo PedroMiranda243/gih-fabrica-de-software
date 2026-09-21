@@ -11,8 +11,9 @@
  *   node docs/entrega/capturar_evidencias.js      # a documentação da API, com ela no ar
  *   node docs/entrega/gerar.js                    # este arquivo
  *
- * As evidências de execução (`evidencias/*.txt`) vêm dos scripts de `api/e2e/`,
- * e são geradas com a API no ar. Ver o README.
+ * As evidências de execução (`evidencias/<sprint>/*.txt`) vêm dos scripts de
+ * `api/e2e/`, e são geradas com a API no ar. Ver o README. A pasta de cada
+ * sprint é retrato da entrega: não se regera a de uma sprint já entregue.
  *
  * Depois, converter para PDF pelo Word (Arquivo > Exportar > Criar PDF).
  */
