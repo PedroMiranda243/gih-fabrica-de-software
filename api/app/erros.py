@@ -42,6 +42,41 @@ MENSAGENS = {
 }
 
 
+# Mensagens que dizem **o limite**. O Pydantic manda o limite violado em
+# `ctx`, e dizê-lo é o que transforma "está errado" em "faça assim" — um nome
+# vazio recebia "Valor curto demais.", que não diz nem que o campo é
+# obrigatório nem quanto falta.
+MENSAGENS_COM_LIMITE = {
+    "string_too_short": "Curto demais: use ao menos {min_length} caracteres.",
+    "string_too_long": "Longo demais: use no máximo {max_length} caracteres.",
+    "greater_than_equal": "Use um valor a partir de {ge}.",
+    "less_than_equal": "Use um valor até {le}.",
+}
+
+VAZIO_OBRIGATORIO = "Obrigatório: informe ao menos {min_length} caracteres."
+
+
+def mensagem_de(erro: dict) -> str:
+    """A mensagem em português de um erro do Pydantic, com o limite quando houver."""
+    tipo = erro["type"]
+    # `value_error` vem de validador escrito por nós, e a mensagem dele já
+    # está em português — traduzir por cima apagaria o que foi explicado.
+    if tipo == "value_error":
+        return erro["msg"].removeprefix("Value error, ")
+
+    contexto = erro.get("ctx") or {}
+    if tipo == "string_too_short" and not str(erro.get("input") or "").strip():
+        modelo = VAZIO_OBRIGATORIO
+    else:
+        modelo = MENSAGENS_COM_LIMITE.get(tipo)
+    if modelo:
+        try:
+            return modelo.format(**contexto)
+        except KeyError:
+            pass  # sem o limite no contexto, fica a frase genérica abaixo
+    return MENSAGENS.get(tipo, erro["msg"])
+
+
 def nome_do_campo(loc: tuple) -> str:
     """O último trecho utilizável do caminho do erro.
 
@@ -57,14 +92,7 @@ async def erro_de_validacao(request: Request, exc: RequestValidationError) -> JS
     campos = []
     for e in exc.errors():
         campo = nome_do_campo(e["loc"])
-        # `value_error` vem de validador escrito por nós, e a mensagem dele já
-        # está em português — traduzir por cima apagaria o que foi explicado.
-        if e["type"] == "value_error":
-            mensagem = e["msg"].removeprefix("Value error, ")
-        else:
-            mensagem = MENSAGENS.get(e["type"], e["msg"])
-
-        item = {"campo": campo, "mensagem": mensagem}
+        item = {"campo": campo, "mensagem": mensagem_de(e)}
         if campo in AJUDA_POR_CAMPO:
             item["ajuda"] = AJUDA_POR_CAMPO[campo]
         campos.append(item)
