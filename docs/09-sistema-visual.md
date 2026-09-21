@@ -180,3 +180,52 @@ Abra o [protótipo](prototipo/index.html), percorra as quatro telas e responda:
 5. Algo parece decorativo em vez de informativo?
 
 Aprovação registrada na issue **#8**. Só depois disso começa o CSS em `web/`.
+
+---
+
+## 9. Telas e navegação
+
+Seis telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
+passo, um recorte filtrado precisa poder ser mandado por link, e um cadastro precisa poder ser aberto
+direto — tudo isso depende de a tela estar na URL, e não num estado escondido da página.
+
+<!-- diagrama: navegacao-telas -->
+```mermaid
+flowchart LR
+    Login["Login<br/>/entrar"]
+    Painel["Painel<br/>/"]
+    Importacao["Importação<br/>/importacao"]
+    Parceiros["Parceiros<br/>/parceiros"]
+    Novo["Novo parceiro<br/>/parceiros/novo"]
+    Cadastro["Cadastro do parceiro<br/>/parceiros/:id"]
+    CSV[("arquivo CSV")]
+    Menu(["Menu lateral<br/>em toda tela"])
+
+    Login -- "entrar" --> Menu
+    Menu -.-> Painel
+    Menu -.-> Importacao
+    Menu -.-> Parceiros
+    Painel -- "base vazia:<br/>importar um relatório" --> Importacao
+    Importacao -- "importação concluída:<br/>ver no painel" --> Painel
+    Parceiros -- "nome do parceiro" --> Cadastro
+    Parceiros -- "novo parceiro" --> Novo
+    Parceiros -- "exportar" --> CSV
+    Novo -- "cadastrar" --> Cadastro
+    Cadastro -- "nome em uso:<br/>abrir o existente" --> Cadastro
+    Cadastro -- "voltar, com o<br/>mesmo filtro" --> Parceiros
+    Cadastro -- "excluir" --> Parceiros
+```
+
+**O menu lateral aparece como um nó só**, com setas tracejadas: ele fica visível em todas as telas depois do
+login e leva a qualquer uma das três principais. Desenhá-lo como setas de cada tela para cada tela faria o
+mapa virar uma teia — e, sem ele, o desenho saía em dois grupos soltos, sem mostrar como se vai do painel à
+lista de parceiros. As setas cheias são os caminhos que **a própria tela** oferece.
+
+Três comportamentos que o desenho não mostra, e que valem para todas as telas:
+
+- **Sessão encerrada leva ao login, e o login devolve ao lugar de antes.** Quem abre um link direto sem
+  estar autenticado entra e cai na tela que pediu, e não no painel genérico.
+- **O filtro da lista vive na URL.** Por isso "voltar" do cadastro devolve o mesmo recorte, e o link de
+  exportar é a mesma consulta em outro formato.
+- **Toda tela vazia oferece a saída.** Base sem dados leva à importação; parceiro inexistente leva de volta
+  à lista — nunca uma tela em branco sem explicação (seção 6).
