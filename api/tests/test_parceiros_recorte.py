@@ -360,3 +360,24 @@ def test_a_categoria_sai_pelo_nome(analista, rede):
     rede({"Com Categoria": ("10.00", 1)})
 
     assert _ler_csv(analista.get("/api/parceiros/exportacao.csv"))[0]["Categoria"] == "Padaria"
+
+
+# ======================================================= o cadastro individual
+def test_o_cadastro_individual_traz_o_mesmo_desempenho_da_lista(analista, rede):
+    """A tela de cadastro e a lista não podem discordar sobre o mesmo parceiro."""
+    rede({"Alfa": ("1000.00", 10)}, {"Alfa": ("1500.00", 20)})
+
+    na_lista = analista.get("/api/parceiros").json()["itens"][0]
+    individual = analista.get(f"/api/parceiros/{na_lista['id']}").json()
+
+    assert individual["desempenho"] == na_lista["desempenho"]
+    assert individual["desempenho"]["faturamento"] == "1500.00"
+
+
+def test_o_cadastro_individual_sem_metrica_responde_sem_desempenho(analista):
+    alvo = analista.post("/api/parceiros", json={"nome": "Sozinho"}).json()["id"]
+
+    corpo = analista.get(f"/api/parceiros/{alvo}").json()
+
+    assert corpo["nome"] == "Sozinho"
+    assert corpo["desempenho"]["faturamento"] is None
