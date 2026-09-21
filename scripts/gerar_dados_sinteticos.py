@@ -24,6 +24,7 @@ Uso:
 from __future__ import annotations
 
 import argparse
+import math
 import random
 import sys
 from collections import Counter
@@ -220,7 +221,14 @@ def gerar(n_parceiros: int, n_periodos: int, semente: int, limpar: bool) -> None
         volatilidade = {p[0]: p[3] for p in PERFIS}
         linhas = []
 
+        # A fase da sazonalidade sai de um gerador **próprio**, derivado da
+        # semente. Tirá-la do `rng` principal deslocaria todos os sorteios
+        # seguintes, e a mesma semente passaria a produzir outra rede — nomes,
+        # perfis e ruído diferentes — só por causa desta correção.
+        rng_fase = random.Random(f"{semente}-sazonalidade")
+
         for parceiro, cat, perfil, base in parceiros:
+            fase = rng_fase.uniform(0, 2 * math.pi)
             ticket = CATEGORIAS[cat][0] * rng.uniform(0.8, 1.25)
             # Recém-chegado só aparece nos períodos finais.
             entra_em = (
@@ -234,7 +242,28 @@ def gerar(n_parceiros: int, n_periodos: int, semente: int, limpar: bool) -> None
                     continue
                 passos = i - entra_em
                 fator_tendencia = (1 + tendencia[perfil]) ** passos
-                sazonal = 1 + 0.08 * ((i % 4) - 1.5) / 1.5
+                # **Cosseno, e com fase por parceiro.** A versão anterior era um
+                # dente de serra comum à rede inteira: subia em três passos de
+                # cada quatro e caía de uma vez no quarto. Como a segmentação
+                # olha os três últimos períodos, a rede toda saía "em
+                # ascensão" ou "em risco" conforme o número de semanas —
+                # medido com 5.000 parceiros: 42% em ascensão com 12 semanas,
+                # 24% em risco com 13 (#60).
+                #
+                # As duas mudanças são necessárias, e isso foi medido — 5.000
+                # parceiros, semente 42, ascensão / risco:
+                #
+                #                        12 semanas     13 semanas
+                #   dente de serra       42,3 /  4,0    2,6 / 24,1
+                #   só cosseno           12,5 / 11,8   56,5 /  2,2
+                #   só fase              22,8 / 13,0   23,3 / 13,7
+                #   cosseno + fase       20,5 / 20,4   21,4 / 20,0
+                #
+                # O cosseno sobe e desce em passos iguais e tira o viés de
+                # direção; a fase desalinha a rede e tira a dependência do
+                # número de semanas. Só o cosseno — que foi a primeira ideia —
+                # é a pior das quatro com 13 semanas.
+                sazonal = 1 + 0.08 * math.cos(2 * math.pi * i / 4 + fase)
                 ruido = rng.gauss(1.0, volatilidade[perfil])
                 faturamento = max(50.0, base * fator_tendencia * sazonal * ruido)
                 pedidos = max(1, round(faturamento / ticket))
