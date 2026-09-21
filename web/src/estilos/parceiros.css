@@ -105,3 +105,196 @@
   align-items: center;
   gap: var(--esp-12);
 }
+
+/* ================================================ cadastro de parceiro */
+
+/* ---------------------------------------------------------- trilha */
+.trilha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--esp-6);
+  font-size: var(--txt-13);
+  color: var(--ink-2);
+}
+
+/* Link de texto na cor de tinta da ação: é a cor que significa "responde ao
+   clique" (regra 1.1 do `docs/09`), no tom escuro que passa em contraste como
+   texto. Sem isto o navegador pinta de azul padrão, fora da paleta. */
+.trilha a,
+.aviso__acao a {
+  color: var(--acao-ink);
+  font-weight: var(--peso-rotulo);
+}
+
+.trilha [aria-current="page"] {
+  color: var(--ink);
+  font-weight: var(--peso-rotulo);
+}
+
+/* ----------------------------------------------- o nome é um link */
+/* Na cor do nome, e não na da ação: vinte e cinco nomes laranja numa tabela
+   seria a mesma cor dizendo "clique" vinte e cinco vezes, e o nome deixaria
+   de ser o elemento que o olho acha primeiro (regra 1.2). O sublinhado
+   discreto é o que diz que dá para abrir; no foco e no passar do mouse, ele
+   ganha a cor da ação. */
+.nome__link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+}
+
+.nome__link:hover,
+.nome__link:focus-visible {
+  text-decoration-color: var(--acao);
+}
+
+/* ------------------------------------------------------ formulário */
+.cadastro {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--esp-16);
+  padding: var(--esp-16);
+}
+
+/* Os campos de texto livre ocupam a linha inteira, e as duas escolhas dividem
+   uma. Com o contato em meia coluna ele ficava sozinho à esquerda, com um
+   buraco do lado — visto na tela, a 1.100 px. */
+.cadastro > .campo:first-child,
+.cadastro > .campo:nth-child(4),
+.cadastro__acoes {
+  grid-column: 1 / -1;
+}
+
+.cadastro__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-8);
+}
+
+@media (max-width: 560px) {
+  .cadastro {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.campo__obrigatorio {
+  color: var(--ink-2);
+}
+
+.campo__ajuda,
+.campo__erro {
+  margin: 0;
+  font-size: var(--txt-12);
+  line-height: 1.5;
+}
+
+.campo__ajuda {
+  color: var(--ink-2);
+}
+
+/* O texto do erro é **neutro**, e a cor vai no ponto e na borda do campo — a
+   mesma regra dos segmentos (`docs/09`, 1.1). Vermelho em texto pequeno mede
+   mal em contraste, e cor sozinha não pode carregar a informação (RNF22). */
+.campo__erro {
+  display: flex;
+  gap: var(--esp-6);
+  color: var(--ink);
+}
+
+.campo__erro::before {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.3em;
+  border-radius: 50%;
+  background: var(--seg-risco);
+}
+
+.campo__erro-ajuda {
+  color: var(--ink-2);
+}
+
+.campo > [aria-invalid="true"] {
+  border-color: var(--seg-risco);
+}
+
+/* ------------------------------------------------------------ avisos */
+.aviso__lista {
+  margin: var(--esp-8) 0 0;
+  padding-left: var(--esp-16);
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+}
+
+.aviso__lista a {
+  color: var(--acao-ink);
+}
+
+.aviso__acao {
+  margin: var(--esp-8) 0 0;
+  font-size: var(--txt-13);
+}
+
+/* -------------------------------------------------------- desempenho */
+.desempenho {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--esp-12) var(--esp-16);
+  margin: 0;
+  padding: var(--esp-16);
+  align-items: center;
+}
+
+.desempenho dt {
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+}
+
+.desempenho dd {
+  margin: 0;
+  justify-self: end;
+  font-size: var(--txt-13);
+}
+
+/* ---------------------------------------------------------- situação */
+.situacao__corpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-12);
+  padding: var(--esp-16);
+}
+
+.situacao__texto {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-size: var(--txt-13);
+}
+
+.situacao__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-8);
+}
+
+/* Separada das outras ações, na ponta oposta: é a única que não tem volta, e
+   ficar colada em "Desativar" convida o clique errado. */
+.situacao__excluir {
+  margin-left: auto;
+}
+
+.confirmacao {
+  padding: var(--esp-12) var(--esp-15);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-controle);
+  background: var(--surface-2);
+}
+
+.confirmacao__texto {
+  margin: 0 0 var(--esp-8);
+  font-size: var(--txt-13);
+  font-weight: var(--peso-rotulo);
+}

@@ -13,6 +13,7 @@ import Carregando from "./componentes/Carregando";
 import Importacao from "./paginas/Importacao";
 import Login from "./paginas/Login";
 import Painel from "./paginas/Painel";
+import Parceiro from "./paginas/Parceiro";
 import Parceiros from "./paginas/Parceiros";
 
 /**
@@ -73,6 +74,11 @@ export default function App() {
         }
       >
         <Route path="/parceiros" element={<Parceiros />} />
+        {/* Cadastro e edição no mesmo componente, cada um com endereço próprio:
+            o cadastro de um parceiro precisa poder ser aberto por link, e o
+            botão voltar precisa devolver a lista com o filtro que ela tinha. */}
+        <Route path="/parceiros/novo" element={<Parceiro />} />
+        <Route path="/parceiros/:id" element={<Parceiro />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

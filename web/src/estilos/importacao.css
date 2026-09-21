@@ -59,6 +59,5 @@
   margin: 0;
 }
 
-.aviso--sucesso {
-  border-left-color: var(--seg-ascensao);
-}
+/* `.aviso--sucesso` mudou-se para `base.css`, ao lado de `.aviso` — ver o
+   comentário lá. */

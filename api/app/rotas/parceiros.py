@@ -455,9 +455,28 @@ def _linhas_csv(consulta):
         s.close()
 
 
-@router.get("/{parceiro_id}", response_model=ParceiroResposta)
-def obter(parceiro_id: int, s: Banco) -> Parceiro:
-    return _buscar(s, parceiro_id)
+@router.get("/{parceiro_id}", response_model=ParceiroComDesempenho)
+def obter(parceiro_id: int, s: Banco) -> ParceiroComDesempenho:
+    """Um parceiro, com o desempenho do período mais recente.
+
+    O mesmo formato de um item da lista, pela mesma consulta. A tela de cadastro
+    mostra o segmento e o faturamento ao lado dos dados cadastrais: é o que liga
+    o registro à análise, e o que deixa o usuário ver o efeito de desativar ou
+    reclassificar alguém. Montar isso numa segunda consulta, diferente da lista,
+    faria as duas telas discordarem sobre o mesmo parceiro.
+    """
+    _buscar(s, parceiro_id)  # 404 com a mesma mensagem de sempre
+    alvo, anterior = _recorte(s)
+    consulta, colunas = _com_desempenho(s, alvo, anterior)
+    linha = s.execute(
+        consulta.where(Parceiro.id == parceiro_id).add_columns(
+            colunas["faturamento"],
+            colunas["pedidos"],
+            colunas["anterior"],
+            colunas["segmento"],
+        )
+    ).one()
+    return _linha(linha)
 
 
 @router.post("", response_model=ParceiroResposta, status_code=status.HTTP_201_CREATED)
