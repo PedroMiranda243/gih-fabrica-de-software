@@ -37,6 +37,7 @@ const FONTES = [
   'docs/05-cronograma.md',
   'docs/07-arquitetura-preliminar.md',
   'docs/08-modelo-de-dados.md',
+  'docs/09-sistema-visual.md',
   'docs/10-diagrama-de-classes.md',
 ];
 
