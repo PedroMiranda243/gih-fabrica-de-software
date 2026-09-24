@@ -80,6 +80,28 @@ export function comoData(iso) {
   return `${dia}/${mes}/${ano}`;
 }
 
+/**
+ * Um instante, no relógio de quem está olhando: `21/09/2026 às 18:33`.
+ *
+ * Diferente de `comoData`, aqui o valor tem hora e fuso — é quando algo
+ * aconteceu, e não o dia de um período. Mostrar em UTC faria uma importação da
+ * noite aparecer no dia seguinte.
+ */
+export function comoDataHora(iso) {
+  if (!iso) return TRACO;
+  const instante = new Date(iso);
+  if (Number.isNaN(instante.getTime())) return TRACO;
+  const dia = instante.toLocaleDateString("pt-BR");
+  const hora = instante.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return `${dia} às ${hora}`;
+}
+
+/** Por onde o relatório entrou — o nome que a tela de importação usa para cada caminho. */
+export const ROTULO_ORIGEM = {
+  TEXTO: "Texto colado",
+  CSV: "Arquivo CSV",
+};
+
 /** O período inteiro, como as pessoas falam dele. */
 export function comoPeriodo(periodo) {
   if (!periodo) return TRACO;

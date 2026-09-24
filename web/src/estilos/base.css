@@ -215,6 +215,28 @@ h3 {
   font-weight: var(--peso-rotulo);
 }
 
+/* ------------------------------------------------------------- paginação */
+/* Mora na base, e não na folha da lista de parceiros: a importação também
+   pagina o histórico, e estilo compartilhado na folha de quem o usou primeiro
+   já pintou de vermelho todo aviso de sucesso do sistema (`.aviso--sucesso`). */
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--esp-8);
+  padding: var(--esp-12) var(--esp-16);
+  border-top: 1px solid var(--border);
+}
+
+/* A posição fica à esquerda dos botões e **empurra** os dois para a direita:
+   "51–100 de 500" antes de "Anterior" responde onde se está antes de oferecer
+   para onde ir. */
+.paginacao__posicao {
+  margin-right: auto;
+  font-size: var(--txt-13);
+  color: var(--ink-2);
+}
+
 /* ---------------------------------------------------------------- números */
 /* Toda coluna numérica. `tabular-nums` é o que faz os dígitos alinharem em
    coluna; sem isso o olho precisa reler para comparar. */
