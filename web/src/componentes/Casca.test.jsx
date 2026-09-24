@@ -20,14 +20,14 @@ function menu(usuario) {
 }
 
 describe("menu lateral", () => {
-  it("o Administrador não vê Parceiros, que a rota lhe recusa", () => {
+  it("o Administrador vê a configuração, e não Parceiros, que a rota lhe recusa", () => {
     const itens = menu({
       nome: "Admin",
       perfil: "ADMINISTRADOR",
       telas: ["painel", "historico_importacoes", "usuarios", "configuracao"],
     });
 
-    expect(itens).toEqual(["Painel", "Importação"]);
+    expect(itens).toEqual(["Painel", "Importação", "Configuração"]);
   });
 
   it("quem importa vê as três telas de sempre", () => {
