@@ -207,3 +207,15 @@ def test_sucesso_zera_o_contador(cliente, criar_usuario):
         assert cliente.post(
             "/api/sessao", json={"login": "gestora", "senha": "errada-mesmo"}
         ).status_code == 401
+
+
+def test_o_login_ja_traz_as_telas_do_perfil(cliente, criar_usuario):
+    """A interface guarda o usuário que o login devolve. Sem as telas aqui, o
+    menu de quem acabou de entrar sairia errado até a página ser recarregada."""
+    criar_usuario(login="gestora", perfil=Perfil.GESTOR)
+
+    r = cliente.post("/api/sessao", json={"login": "gestora", "senha": SENHA_PADRAO})
+
+    assert r.status_code == 201
+    assert "parceiros" in r.json()["usuario"]["telas"]
+    assert "usuarios" not in r.json()["usuario"]["telas"]

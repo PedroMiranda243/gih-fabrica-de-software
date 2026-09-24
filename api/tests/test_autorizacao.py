@@ -59,7 +59,10 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("POST", "/api/importacoes/previa"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("POST", "/api/importacoes/arquivo"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("POST", "/api/importacoes/arquivo/previa"): {Perfil.GESTOR, Perfil.ANALISTA},
-    ("GET", "/api/importacoes"): {Perfil.GESTOR, Perfil.ANALISTA},
+    # RF13 — o histórico das importações é também do Administrador, só para
+    # ler: o UC03 lhe dá "somente leitura", como no painel. Importar continua
+    # de Gestor e Analista.
+    ("GET", "/api/importacoes"): {Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA},
     # RF25 — A exportação carrega os mesmos dados da listagem, então tem a
     # mesma permissão. Deixá-la mais frouxa seria um caminho lateral para ler
     # a base inteira.
@@ -217,3 +220,28 @@ def _parceiro_de_teste() -> int:
         return p.id
     finally:
         s.close()
+
+
+# ---------------------------------------------------------------------------
+# O menu da interface
+# ---------------------------------------------------------------------------
+@pytest.mark.parametrize("perfil", list(Perfil), ids=str)
+def test_as_telas_de_cada_perfil_seguem_a_matriz(cliente, criar_usuario, autenticar, perfil):
+    """O menu mostra exatamente o que a matriz de `docs/03` deixa abrir.
+
+    `TELAS` diz qual rota sustenta cada tela; **quem** a abre vem de
+    `PERMISSOES`, transcrita da documentação. Se o servidor devolver uma tela
+    que a matriz nega, o menu promete o que a rota recusa; se omitir uma que
+    ela permite, some uma tela que o perfil tem direito de usar.
+    """
+    from app.dependencias import TELAS
+
+    parceiro_id = _parceiro_de_teste() if perfil == Perfil.PARCEIRO else None
+    criar_usuario(login="sujeito", perfil=perfil, parceiro_id=parceiro_id)
+    autenticar("sujeito")
+
+    esperadas = [
+        nome for nome, rota in TELAS.items()
+        if PERMISSOES[rota] is TODOS or perfil in PERMISSOES[rota]
+    ]
+    assert cliente.get("/api/sessao/atual").json()["telas"] == esperadas
