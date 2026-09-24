@@ -16,6 +16,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useSessao } from "../api/contextoSessao";
 import { useTema } from "../temas/useTema";
 import {
+  IconeConfiguracao,
   IconeImportar,
   IconePainel,
   IconeParceiros,
@@ -36,14 +37,23 @@ const TELAS = [
     exige: ["importar", "historico_importacoes"],
   },
   { para: "/parceiros", rotulo: "Parceiros", Icone: IconeParceiros, exige: ["parceiros"] },
+  {
+    para: "/configuracao",
+    rotulo: "Configuração",
+    Icone: IconeConfiguracao,
+    exige: ["configuracao"],
+  },
 ];
 
 /* Sessão aberta antes de o servidor mandar `telas` — uma aba esquecida aberta
    durante a atualização — continua vendo o menu de antes, em vez de um trilho
-   vazio. Na próxima recarga, a lista chega. */
+   vazio, e sem as telas de administração que vieram depois. Na próxima
+   recarga, a lista chega. */
+const MENU_ANTERIOR = ["painel", "importar", "parceiros"];
+
 function visiveis(usuario) {
-  if (!Array.isArray(usuario?.telas)) return TELAS;
-  return TELAS.filter(({ exige }) => exige.some((tela) => usuario.telas.includes(tela)));
+  const telas = Array.isArray(usuario?.telas) ? usuario.telas : MENU_ANTERIOR;
+  return TELAS.filter(({ exige }) => exige.some((tela) => telas.includes(tela)));
 }
 
 export default function Casca({ titulo }) {

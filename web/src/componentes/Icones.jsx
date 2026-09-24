@@ -52,6 +52,21 @@ export function IconeParceiros(props) {
   );
 }
 
+/* Três réguas com o cursor em pontos diferentes: ajuste de limiar, e não
+   engrenagem genérica de "configurações" — a tela só muda três números. */
+export function IconeConfiguracao(props) {
+  return (
+    <svg {...comuns} {...props}>
+      <path d="M2.5 4h6M11.5 4h2" />
+      <circle cx="10" cy="4" r="1.5" />
+      <path d="M2.5 8h2M7.5 8h6" />
+      <circle cx="6" cy="8" r="1.5" />
+      <path d="M2.5 12h7M12.5 12h1" />
+      <circle cx="11" cy="12" r="1.5" />
+    </svg>
+  );
+}
+
 export function IconeSair(props) {
   return (
     <svg {...comuns} {...props}>

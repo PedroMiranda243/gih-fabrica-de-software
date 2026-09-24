@@ -1,0 +1,55 @@
+/* Tela dos limiares da segmentação. */
+
+.limiares {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-16);
+  padding: var(--esp-16);
+}
+
+/* A mesma tinta secundária da nota da importação: é explicação de regra, não
+   compete com o campo, mas está ali antes de alguém mudar a régua da rede. */
+.limiares__nota {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+  line-height: 1.55;
+}
+
+/* Três colunas quando cabem, uma embaixo da outra quando não: cada campo tem
+   uma explicação de duas linhas, e espremê-las abaixo de ~220 px vira coluna de
+   palavra solta. */
+.limiares__campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--esp-16);
+  align-items: start;
+}
+
+.limiares__campos input {
+  max-width: 12ch;
+  font-family: var(--fonte-dados);
+  font-variant-numeric: tabular-nums;
+}
+
+.limiares__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-8);
+}
+
+/* O comando vai inteiro e copiável: é o próximo passo de quem salvou, e
+   reescrevê-lo de memória é onde entra o erro de digitação. */
+.limiares__comando {
+  display: block;
+  margin-top: var(--esp-8);
+  padding: var(--esp-8) var(--esp-12);
+  overflow-x: auto;
+  border-radius: var(--raio-controle);
+  background: var(--surface-2);
+  font-family: var(--fonte-dados);
+  font-size: var(--txt-12);
+  color: var(--ink);
+  white-space: nowrap;
+}

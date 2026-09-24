@@ -10,6 +10,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useSessao } from "./api/contextoSessao";
 import Casca from "./componentes/Casca";
 import Carregando from "./componentes/Carregando";
+import Configuracao from "./paginas/Configuracao";
 import Importacao from "./paginas/Importacao";
 import Login from "./paginas/Login";
 import Painel from "./paginas/Painel";
@@ -79,6 +80,16 @@ export default function App() {
             botão voltar precisa devolver a lista com o filtro que ela tinha. */}
         <Route path="/parceiros/novo" element={<Parceiro />} />
         <Route path="/parceiros/:id" element={<Parceiro />} />
+      </Route>
+
+      <Route
+        element={
+          <Protegido>
+            <Casca titulo="Configuração" />
+          </Protegido>
+        }
+      >
+        <Route path="/configuracao" element={<Configuracao />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
