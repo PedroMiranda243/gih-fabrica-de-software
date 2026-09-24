@@ -21,6 +21,7 @@ import {
   IconePainel,
   IconeParceiros,
   IconeSair,
+  IconeUsuarios,
   IconeTemaClaro,
   IconeTemaEscuro,
 } from "./Icones";
@@ -37,6 +38,7 @@ const TELAS = [
     exige: ["importar", "historico_importacoes"],
   },
   { para: "/parceiros", rotulo: "Parceiros", Icone: IconeParceiros, exige: ["parceiros"] },
+  { para: "/usuarios", rotulo: "Usuários", Icone: IconeUsuarios, exige: ["usuarios"] },
   {
     para: "/configuracao",
     rotulo: "Configuração",

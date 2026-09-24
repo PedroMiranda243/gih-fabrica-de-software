@@ -1,0 +1,24 @@
+/* Conta de usuário. */
+
+/* Duas colunas: login e nome, senha e perfil. Na edição somem login e senha,
+   e nome e perfil ficam lado a lado — a grade não precisa saber disso. */
+.conta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--esp-16);
+  padding: var(--esp-16);
+  align-items: start;
+}
+
+.conta__acoes {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-8);
+}
+
+@media (max-width: 560px) {
+  .conta {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
