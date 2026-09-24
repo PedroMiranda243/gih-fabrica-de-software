@@ -1,52 +1,5 @@
-/* Filtros da lista de parceiros. */
-
-/* Uma linha só acima da tabela, como painel de dados pede — filtro escondido
-   atrás de um botão faz a pessoa esquecer que ele está aplicado. */
-/* **Três colunas, e não `auto-fit`.** São seis unidades — a busca ocupa duas e
-   os quatro seletores uma cada — e três divide seis em duas linhas cheias. Com
-   o encaixe automático, "Situação" sobrava sozinha numa segunda linha,
-   esticada; medido em 1440 px. */
-.filtros {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--esp-12);
-  padding: var(--esp-16);
-}
-
-/* A busca merece mais espaço que os seletores: é o que se usa primeiro. */
-.filtros__busca {
-  grid-column: span 2;
-}
-
-@media (max-width: 900px) {
-  .filtros {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.ponto-situacao {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: var(--esp-6);
-  border: 1.5px solid var(--ink-2);
-  border-radius: 50%;
-  background: var(--ink-2);
-}
-
-.ponto-situacao--inativo {
-  background: transparent;
-}
-
-@media (max-width: 560px) {
-  .filtros {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .filtros__busca {
-    grid-column: span 1;
-  }
-}
+/* Lista e cadastro de parceiros — o que é só deles. Os padrões que a tela de
+   usuários também usa estão em `lista-e-cadastro.css`. */
 
 /* ------------------------------------------------- cabeçalho que ordena */
 /* Botão, e não `th` clicável: quem navega por teclado precisa alcançar e
@@ -88,48 +41,6 @@
 }
 
 /* ================================================ cadastro de parceiro */
-
-/* ---------------------------------------------------------- trilha */
-.trilha {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--esp-6);
-  font-size: var(--txt-13);
-  color: var(--ink-2);
-}
-
-/* Link de texto na cor de tinta da ação: é a cor que significa "responde ao
-   clique" (regra 1.1 do `docs/09`), no tom escuro que passa em contraste como
-   texto. Sem isto o navegador pinta de azul padrão, fora da paleta. */
-.trilha a {
-  color: var(--acao-ink);
-  font-weight: var(--peso-rotulo);
-}
-
-.trilha [aria-current="page"] {
-  color: var(--ink);
-  font-weight: var(--peso-rotulo);
-}
-
-/* ----------------------------------------------- o nome é um link */
-/* Na cor do nome, e não na da ação: vinte e cinco nomes laranja numa tabela
-   seria a mesma cor dizendo "clique" vinte e cinco vezes, e o nome deixaria
-   de ser o elemento que o olho acha primeiro (regra 1.2). O sublinhado
-   discreto é o que diz que dá para abrir; no foco e no passar do mouse, ele
-   ganha a cor da ação. */
-.nome__link {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: var(--border);
-  text-underline-offset: 3px;
-}
-
-.nome__link:hover,
-.nome__link:focus-visible {
-  text-decoration-color: var(--acao);
-}
-
 /* ------------------------------------------------------ formulário */
 .cadastro {
   display: grid;
@@ -159,18 +70,6 @@
   }
 }
 
-/* ------------------------------------------------------------ avisos */
-.aviso__lista {
-  margin: var(--esp-8) 0 0;
-  padding-left: var(--esp-16);
-  font-size: var(--txt-12);
-  color: var(--ink-2);
-}
-
-.aviso__lista a {
-  color: var(--acao-ink);
-}
-
 /* -------------------------------------------------------- desempenho */
 .desempenho {
   display: grid;
@@ -190,31 +89,4 @@
   margin: 0;
   justify-self: end;
   font-size: var(--txt-13);
-}
-
-/* ---------------------------------------------------------- situação */
-.situacao__corpo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--esp-12);
-  padding: var(--esp-16);
-}
-
-.situacao__texto {
-  display: flex;
-  align-items: center;
-  margin: 0;
-  font-size: var(--txt-13);
-}
-
-.situacao__acoes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--esp-8);
-}
-
-/* Separada das outras ações, na ponta oposta: é a única que não tem volta, e
-   ficar colada em "Desativar" convida o clique errado. */
-.situacao__excluir {
-  margin-left: auto;
 }

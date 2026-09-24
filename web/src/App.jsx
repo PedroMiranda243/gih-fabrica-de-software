@@ -16,6 +16,8 @@ import Login from "./paginas/Login";
 import Painel from "./paginas/Painel";
 import Parceiro from "./paginas/Parceiro";
 import Parceiros from "./paginas/Parceiros";
+import Usuario from "./paginas/Usuario";
+import Usuarios from "./paginas/Usuarios";
 
 /**
  * Portão de entrada.
@@ -80,6 +82,18 @@ export default function App() {
             botão voltar precisa devolver a lista com o filtro que ela tinha. */}
         <Route path="/parceiros/novo" element={<Parceiro />} />
         <Route path="/parceiros/:id" element={<Parceiro />} />
+      </Route>
+
+      <Route
+        element={
+          <Protegido>
+            <Casca titulo="Usuários" />
+          </Protegido>
+        }
+      >
+        <Route path="/usuarios" element={<Usuarios />} />
+        <Route path="/usuarios/novo" element={<Usuario />} />
+        <Route path="/usuarios/:id" element={<Usuario />} />
       </Route>
 
       <Route

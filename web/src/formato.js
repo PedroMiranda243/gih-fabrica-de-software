@@ -96,6 +96,14 @@ export function comoDataHora(iso) {
   return `${dia} às ${hora}`;
 }
 
+/** O perfil de acesso como as pessoas o chamam (RF04). */
+export const ROTULO_PERFIL = {
+  ADMINISTRADOR: "Administrador",
+  GESTOR: "Gestor",
+  ANALISTA: "Analista",
+  PARCEIRO: "Parceiro",
+};
+
 /** Por onde o relatório entrou — o nome que a tela de importação usa para cada caminho. */
 export const ROTULO_ORIGEM = {
   TEXTO: "Texto colado",

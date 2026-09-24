@@ -52,6 +52,19 @@ export function IconeParceiros(props) {
   );
 }
 
+/* Uma pessoa com um cartão de acesso ao lado: contas e perfis, e não a rede de
+   parceiros — que já usa o ícone de duas pessoas. */
+export function IconeUsuarios(props) {
+  return (
+    <svg {...comuns} {...props}>
+      <circle cx="6" cy="5" r="2.5" />
+      <path d="M1.75 13.5v-.75a3.5 3.5 0 0 1 3.5-3.5h1.5a3.5 3.5 0 0 1 3.5 3.5v.75" />
+      <rect x="11" y="3" width="3.5" height="5" rx="0.75" />
+      <path d="M12 5.5h1.5" />
+    </svg>
+  );
+}
+
 /* Três réguas com o cursor em pontos diferentes: ajuste de limiar, e não
    engrenagem genérica de "configurações" — a tela só muda três números. */
 export function IconeConfiguracao(props) {
