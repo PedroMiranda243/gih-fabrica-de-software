@@ -185,7 +185,7 @@ Aprovação registrada na issue **#8**. Só depois disso começa o CSS em `web/`
 
 ## 9. Telas e navegação
 
-Seis telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
+Dez telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
 passo, um recorte filtrado precisa poder ser mandado por link, e um cadastro precisa poder ser aberto
 direto — tudo isso depende de a tela estar na URL, e não num estado escondido da página.
 
@@ -193,18 +193,24 @@ direto — tudo isso depende de a tela estar na URL, e não num estado escondido
 ```mermaid
 flowchart TD
     Login["Login<br/>/entrar"]
+    Menu(["Menu lateral<br/>em toda tela"])
     Painel["Painel<br/>/"]
     Importacao["Importação<br/>/importacao"]
     Parceiros["Parceiros<br/>/parceiros"]
     Novo["Novo parceiro<br/>/parceiros/novo"]
     Cadastro["Cadastro do parceiro<br/>/parceiros/:id"]
     CSV[("arquivo CSV")]
-    Menu(["Menu lateral<br/>em toda tela"])
+    Usuarios["Usuários<br/>/usuarios"]
+    NovoUsuario["Novo usuário<br/>/usuarios/novo"]
+    Conta["Conta do usuário<br/>/usuarios/:id"]
+    Configuracao["Limiares<br/>/configuracao"]
 
     Login -- "entrar" --> Menu
-    Menu -.-> Painel
-    Menu -.-> Importacao
-    Menu -.-> Parceiros
+    Menu -. "todos" .-> Painel
+    Menu -. "todos" .-> Importacao
+    Menu -. "gestor e analista" .-> Parceiros
+    Menu -. "administrador" .-> Usuarios
+    Menu -. "administrador" .-> Configuracao
     Painel -- "base vazia:<br/>importar um relatório" --> Importacao
     Importacao -- "importação concluída:<br/>ver no painel" --> Painel
     Parceiros -- "nome do parceiro" --> Cadastro
@@ -214,18 +220,30 @@ flowchart TD
     Cadastro -- "nome em uso:<br/>abrir o existente" --> Cadastro
     Cadastro -- "voltar, com o<br/>mesmo filtro" --> Parceiros
     Cadastro -- "excluir" --> Parceiros
+    Usuarios -- "nome" --> Conta
+    Usuarios -- "novo usuário" --> NovoUsuario
+    NovoUsuario -- "criar" --> Conta
+    NovoUsuario -- "login em uso:<br/>abrir a conta" --> Conta
+    Conta -- "voltar, com o<br/>mesmo filtro" --> Usuarios
 ```
 
 **O menu lateral aparece como um nó só**, com setas tracejadas: ele fica visível em todas as telas depois do
-login e leva a qualquer uma das três principais. Desenhá-lo como setas de cada tela para cada tela faria o
-mapa virar uma teia — e, sem ele, o desenho saía em dois grupos soltos, sem mostrar como se vai do painel à
-lista de parceiros. As setas cheias são os caminhos que **a própria tela** oferece.
+login. Desenhá-lo como setas de cada tela para cada tela faria o mapa virar uma teia — e, sem ele, o desenho
+saía em grupos soltos, sem mostrar como se vai do painel à lista de parceiros. As setas cheias são os
+caminhos que **a própria tela** oferece.
+
+**O menu mostra só o que o perfil abre.** A lista vem do servidor — a sessão traz as telas do perfil, lidas
+das permissões das próprias rotas —, e a interface só desenha o que ouviu (regras 2.4 e 2.5 do
+`CLAUDE.md`). O Administrador vê Painel, Importação (só o histórico, pelo RF13), Usuários e Limiares; Gestor
+e Analista veem Painel, Importação e Parceiros. Esconder o item não é controle de acesso: quem abre o
+endereço direto recebe a recusa da rota.
 
 Três comportamentos que o desenho não mostra, e que valem para todas as telas:
 
 - **Sessão encerrada leva ao login, e o login devolve ao lugar de antes.** Quem abre um link direto sem
   estar autenticado entra e cai na tela que pediu, e não no painel genérico.
 - **O filtro da lista vive na URL.** Por isso "voltar" do cadastro devolve o mesmo recorte, e o link de
-  exportar é a mesma consulta em outro formato.
-- **Toda tela vazia oferece a saída.** Base sem dados leva à importação; parceiro inexistente leva de volta
-  à lista — nunca uma tela em branco sem explicação (seção 6).
+  exportar é a mesma consulta em outro formato. A lista de usuários abre nos ativos; "todas as situações"
+  tem valor próprio no endereço.
+- **Toda tela vazia oferece a saída.** Base sem dados leva à importação; parceiro ou usuário inexistente
+  leva de volta à lista — nunca uma tela em branco sem explicação (seção 6).
