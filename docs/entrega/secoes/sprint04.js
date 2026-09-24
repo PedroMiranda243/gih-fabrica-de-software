@@ -14,7 +14,7 @@
  */
 const { AlignmentType } = require('docx');
 const { p, rich, h1, h2, bullet, table, espaco, quebra, mono } = require('../comum/estilos');
-const { diagrama, evidencia, legenda } = require('../comum/figuras');
+const { evidencia, legenda } = require('../comum/figuras');
 const { todas, trecho } = require('../comum/evidencias');
 
 const REPO = 'github.com/PedroMiranda243/gih-fabrica-de-software';
@@ -410,7 +410,9 @@ function montar() {
     + 'pode ser mandado por link, e um cadastro abre direto — tudo isso depende de a tela estar no '
     + 'endereço, e não num estado escondido da página.',
   ));
-  c.push(diagrama('navegacao-telas'));
+  // O mapa como foi entregue em 26/09, e não o de `docs/09`: aquele é vivo e
+  // ganhou as telas de administração depois. Evidência é retrato da entrega.
+  c.push(evidencia('sprint04/navegacao-telas'));
   c.push(legenda('Mapa das telas. As setas cheias são os caminhos que a própria tela oferece; o menu lateral está em todas.'));
 
   c.push(h2('6.1 O percurso da demonstração'));
