@@ -1,6 +1,7 @@
 """Importação de relatório de desempenho (UC03 · H21, H22, H23, H24, H25, H29).
 
-Perfis Gestor e Analista, conforme a matriz de `docs/03-casos-de-uso.md`.
+Importar é de Gestor e Analista; ler o histórico é também do Administrador,
+conforme a matriz de `docs/03-casos-de-uso.md` e o RF13.
 
 Texto colado e arquivo enviado passam **pelo mesmo caminho**: a rota de arquivo
 decodifica os bytes e entrega texto para as mesmas funções. Duas implementações
@@ -45,11 +46,15 @@ from app.leitor_relatorio import FormatoNaoReconhecido
 from app.modelos import Importacao, Metrica, OrigemImportacao, Perfil
 from app.servico_importacao import PeriodoExistente, PeriodoJaImportado
 
-router = APIRouter(
-    prefix="/api/importacoes",
-    tags=["importação"],
-    dependencies=[Depends(exigir(Perfil.GESTOR, Perfil.ANALISTA))],
-)
+router = APIRouter(prefix="/api/importacoes", tags=["importação"])
+
+# Importar é de Gestor e Analista (UC03). **Ler o histórico** é também do
+# Administrador (RF13), que acompanha quem trouxe o quê sem importar nada — o
+# mesmo "somente leitura" que ele tem no painel. Por isso a permissão é por
+# rota, e não do roteador: uma rota nova aqui sem `dependencies` reprova o
+# `test_toda_rota_tem_permissao_declarada`.
+IMPORTAR = [Depends(exigir(Perfil.GESTOR, Perfil.ANALISTA))]
+LER_HISTORICO = [Depends(exigir(Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA))]
 
 TAMANHO_MAXIMO_PAGINA = 200
 
@@ -245,13 +250,16 @@ def _executar_importacao(
 
 
 # --------------------------------------------------------------- texto colado
-@router.post("/previa", response_model=PreviaImportacao)
+@router.post("/previa", response_model=PreviaImportacao, dependencies=IMPORTAR)
 def previa(pedido: PedidoImportacao, s: Banco) -> PreviaImportacao:
     """Mostra o que será gravado, sem gravar (RF11, H24)."""
     return _montar_previa(s, pedido)
 
 
-@router.post("", response_model=ImportacaoResposta, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", response_model=ImportacaoResposta, status_code=status.HTTP_201_CREATED,
+    dependencies=IMPORTAR,
+)
 def importar(
     pedido: PedidoImportacao,
     request: Request,
@@ -268,7 +276,7 @@ def importar(
 
 
 # ------------------------------------------------------------ arquivo enviado
-@router.post("/arquivo/previa", response_model=PreviaImportacao)
+@router.post("/arquivo/previa", response_model=PreviaImportacao, dependencies=IMPORTAR)
 def previa_de_arquivo(
     s: Banco,
     arquivo: Annotated[UploadFile, File(description="CSV ou texto, com cabeçalho.")],
@@ -286,7 +294,10 @@ def previa_de_arquivo(
     )
 
 
-@router.post("/arquivo", response_model=ImportacaoResposta, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/arquivo", response_model=ImportacaoResposta, status_code=status.HTTP_201_CREATED,
+    dependencies=IMPORTAR,
+)
 def importar_arquivo(
     request: Request,
     s: Banco,
@@ -317,7 +328,7 @@ def importar_arquivo(
 
 
 # ------------------------------------------------------------------ histórico
-@router.get("", response_model=PaginaImportacoes)
+@router.get("", response_model=PaginaImportacoes, dependencies=LER_HISTORICO)
 def historico(
     s: Banco,
     autor: Annotated[int | None, Query(description="Id de quem importou.")] = None,
