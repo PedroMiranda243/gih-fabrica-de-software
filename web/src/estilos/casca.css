@@ -74,8 +74,13 @@
 /* Abaixo de 860 px o trilho vira barra horizontal rolável, como manda o
    `docs/09`. A rolagem é dele, nunca da página. */
 @media (max-width: 860px) {
+  /* As linhas precisam ser declaradas: sem isso, numa página mais curta que a
+     janela, a grade dividia a sobra do `min-height` entre o trilho e o
+     conteúdo, e o trilho aparecia solto no meio de uma faixa vazia. As telas
+     longas escondiam o defeito; a de limiares, curta, o mostrou a 768 px. */
   .casca {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
   }
 
   .trilho {
