@@ -18,11 +18,13 @@
  * vêm da mesma consulta da lista: é o que liga o registro à análise, e o que
  * deixa ver o efeito de reclassificar ou desativar alguém.
  */
-import { cloneElement, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { Esqueleto } from "../componentes/Carregando";
+import Campo from "../componentes/Campo";
+import Confirmacao from "../componentes/Confirmacao";
 import EstadoVazio from "../componentes/EstadoVazio";
 import { IconeVariacao } from "../componentes/Icones";
 import Segmento from "../componentes/Segmento";
@@ -462,67 +464,6 @@ function paraFormulario(dados) {
   };
 }
 
-/**
- * Um campo com rótulo, ajuda e erro.
- *
- * O erro **substitui** a ajuda, embaixo do campo, e não vai só para o topo:
- * mensagem longe do campo obriga a pessoa a ligar as duas coisas de cabeça.
- * `aria-describedby` aponta para o texto que estiver visível, e é o que o
- * leitor de tela lê ao entrar no campo.
- */
-function Campo({ id, rotulo, obrigatorio = false, erro, ajuda, children }) {
-  const idTexto = erro ? `erro-${id}` : `ajuda-${id}`;
-  const controle = cloneElement(children, {
-    "aria-invalid": erro ? "true" : undefined,
-    "aria-required": obrigatorio ? "true" : undefined,
-    "aria-describedby": idTexto,
-  });
-
-  return (
-    <div className="campo">
-      <label htmlFor={`campo-${id}`}>
-        {rotulo}
-        {obrigatorio && (
-          <span className="campo__obrigatorio" aria-hidden="true">
-            {" "}
-            *
-          </span>
-        )}
-      </label>
-      {controle}
-      {erro ? (
-        <p id={idTexto} className="campo__erro">
-          {erro.mensagem}
-          {erro.ajuda && <span className="campo__erro-ajuda"> {erro.ajuda}</span>}
-        </p>
-      ) : (
-        ajuda && (
-          <p id={idTexto} className="campo__ajuda">
-            {ajuda}
-          </p>
-        )
-      )}
-    </div>
-  );
-}
-
-/** Confirmação na própria página, e não num `window.confirm`: dá para ler,
-    dá para testar, e não trava a tela inteira do navegador. */
-function Confirmacao({ texto, acao, ocupado, aoConfirmar, aoCancelar }) {
-  return (
-    <div className="confirmacao" role="group" aria-label="Confirmação">
-      <p className="confirmacao__texto">{texto}</p>
-      <div className="situacao__acoes">
-        <button type="button" className="botao" disabled={ocupado} onClick={aoConfirmar}>
-          {acao}
-        </button>
-        <button type="button" className="botao botao--secundario" onClick={aoCancelar}>
-          Cancelar
-        </button>
-      </div>
-    </div>
-  );
-}
 
 /** O desempenho do período mais recente — o mesmo que a lista mostra. */
 function Desempenho({ desempenho, serie }) {

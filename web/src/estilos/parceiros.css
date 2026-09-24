@@ -159,48 +159,6 @@
   }
 }
 
-.campo__obrigatorio {
-  color: var(--ink-2);
-}
-
-.campo__ajuda,
-.campo__erro {
-  margin: 0;
-  font-size: var(--txt-12);
-  line-height: 1.5;
-}
-
-.campo__ajuda {
-  color: var(--ink-2);
-}
-
-/* O texto do erro é **neutro**, e a cor vai no ponto e na borda do campo — a
-   mesma regra dos segmentos (`docs/09`, 1.1). Vermelho em texto pequeno mede
-   mal em contraste, e cor sozinha não pode carregar a informação (RNF22). */
-.campo__erro {
-  display: flex;
-  gap: var(--esp-6);
-  color: var(--ink);
-}
-
-.campo__erro::before {
-  content: "";
-  flex: none;
-  width: 8px;
-  height: 8px;
-  margin-top: 0.3em;
-  border-radius: 50%;
-  background: var(--seg-risco);
-}
-
-.campo__erro-ajuda {
-  color: var(--ink-2);
-}
-
-.campo > [aria-invalid="true"] {
-  border-color: var(--seg-risco);
-}
-
 /* ------------------------------------------------------------ avisos */
 .aviso__lista {
   margin: var(--esp-8) 0 0;
@@ -259,17 +217,4 @@
    ficar colada em "Desativar" convida o clique errado. */
 .situacao__excluir {
   margin-left: auto;
-}
-
-.confirmacao {
-  padding: var(--esp-12) var(--esp-15);
-  border: 1px solid var(--border);
-  border-radius: var(--raio-controle);
-  background: var(--surface-2);
-}
-
-.confirmacao__texto {
-  margin: 0 0 var(--esp-8);
-  font-size: var(--txt-13);
-  font-weight: var(--peso-rotulo);
 }
