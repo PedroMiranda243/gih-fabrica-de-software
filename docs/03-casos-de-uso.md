@@ -151,6 +151,9 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
   histórico apontando para o nada.
 - **A3 — Perfil Parceiro.** Só esse perfil aceita vínculo com um parceiro, e ele é obrigatório nesse caso.
   O banco garante a condição nos dois sentidos.
+  **Na tela, o perfil Parceiro ainda não é oferecido:** escolher o parceiro exigiria que o Administrador
+  listasse parceiros, o que a matriz não lhe dá, e o portal do parceiro (H39) ainda não existe. A API
+  aceita a criação; a tela diz por que o perfil não está na lista.
 - **A4 — Tentativa por perfil não autorizado.** Gestor, Analista ou Parceiro que chame a rota diretamente
   recebem recusa do servidor, independentemente do que a interface exiba (RNF14), e a tentativa entra na
   auditoria.
