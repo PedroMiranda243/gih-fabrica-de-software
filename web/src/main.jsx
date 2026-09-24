@@ -7,6 +7,7 @@ import App from "./App";
 import "./estilos/base.css";
 import "./estilos/casca.css";
 import "./estilos/componentes.css";
+import "./estilos/lista-e-cadastro.css";
 
 createRoot(document.getElementById("raiz")).render(
   <StrictMode>
