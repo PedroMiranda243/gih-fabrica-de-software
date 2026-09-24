@@ -69,7 +69,7 @@ mesmo que a interface já impeça a ação.
 
 ### 2.6 As regras de negócio estão escritas — não as invente
 
-RN01 a RN08 em [`docs/02-requisitos.md`](docs/02-requisitos.md), parte IV. Se o seu código precisa de uma
+RN01 a RN09 em [`docs/02-requisitos.md`](docs/02-requisitos.md), parte IV. Se o seu código precisa de uma
 regra que não está lá, **abra uma issue e pergunte**. Não escolha um comportamento razoável e siga em
 frente: quatro outras pessoas vão escolher outro.
 
@@ -431,7 +431,7 @@ frente com alguma, a resposta já está aqui.
 | Preciso de… | Está em |
 |---|---|
 | Problema, objetivos, público-alvo | [`docs/01-visao-do-produto.md`](docs/01-visao-do-produto.md) |
-| Requisitos e **regras de negócio RN01–RN08** | [`docs/02-requisitos.md`](docs/02-requisitos.md) |
+| Requisitos e **regras de negócio RN01–RN09** | [`docs/02-requisitos.md`](docs/02-requisitos.md) |
 | Casos de uso e fluxos | [`docs/03-casos-de-uso.md`](docs/03-casos-de-uso.md) |
 | O que construir e em que ordem | [`docs/04-product-backlog.md`](docs/04-product-backlog.md) |
 | Prazos, marcos e riscos | [`docs/05-cronograma.md`](docs/05-cronograma.md) |
