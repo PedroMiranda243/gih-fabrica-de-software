@@ -282,6 +282,12 @@ class CategoriaResposta(BaseModel):
     ativa: bool
 
 
+class SugestaoCategoria(BaseModel):
+    """A sugestão da RN05 para um nome — nula quando ele não aponta uma categoria só."""
+
+    categoria: CategoriaResposta | None
+
+
 class NovoParceiro(BaseModel):
     """Cadastro de parceiro (RF14).
 

@@ -18,14 +18,29 @@ from sqlalchemy.exc import IntegrityError
 from app import auditoria
 from app.auditoria import Acao
 from app.dependencias import Banco, UsuarioAtual, exigir
-from app.esquemas import CategoriaResposta, NovaCategoria
+from app.esquemas import CategoriaResposta, NovaCategoria, SugestaoCategoria
 from app.modelos import Categoria, Perfil
+from app.sugestao_categoria import categorias_ativas, sugerir
 
 router = APIRouter(
     prefix="/api/categorias",
     tags=["parceiros"],
     dependencies=[Depends(exigir(Perfil.GESTOR, Perfil.ANALISTA))],
 )
+
+
+@router.get("/sugestao", response_model=SugestaoCategoria)
+def sugestao(
+    s: Banco,
+    nome: Annotated[str, Query(min_length=1, max_length=160, description="Nome do parceiro.")],
+) -> SugestaoCategoria:
+    """A categoria que a regra da RN05 sugere para um nome (RF15, H27).
+
+    Não grava nada: é o que o cadastro manual mostra enquanto a pessoa digita,
+    para ela usar, trocar ou ignorar. `categoria` nula quer dizer que o nome não
+    aponta uma categoria só — resultado aceitável, e não erro.
+    """
+    return SugestaoCategoria(categoria=sugerir(nome, categorias_ativas(s)))
 
 
 @router.get("", response_model=list[CategoriaResposta])

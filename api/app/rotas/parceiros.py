@@ -16,7 +16,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import StreamingResponse
-from sqlalchemy import func, literal, nullslast, select
+from sqlalchemy import func, literal, nullslast, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
@@ -230,9 +230,16 @@ def _filtrar(
     if ativo is not None:
         consulta = consulta.where(Parceiro.ativo.is_(ativo))
     if sem_categoria:
-        # Parceiro criado pela importação entra sem categoria (UC04, A1); este
-        # filtro é o que permite encontrá-los para classificar.
-        consulta = consulta.where(Parceiro.categoria_id.is_(None))
+        # Pendente é quem não tem categoria **confirmada** (RN05): em branco, ou
+        # só sugerida pelo nome (H27). Sem o segundo caso, o parceiro importado
+        # com categoria inferida sairia da fila de quem precisa classificar
+        # justamente por ter recebido um palpite.
+        consulta = consulta.where(
+            or_(
+                Parceiro.categoria_id.is_(None),
+                Parceiro.origem_categoria != OrigemCategoria.MANUAL,
+            )
+        )
     if segmento is not None:
         consulta = consulta.where(colunas["segmento"] == segmento)
     return consulta
@@ -289,7 +296,8 @@ def listar(
     status_comercial: Annotated[StatusComercial | None, Query(alias="status")] = None,
     ativo: Annotated[bool | None, Query(description="Filtra por situação.")] = None,
     sem_categoria: Annotated[
-        bool | None, Query(description="Só os pendentes de classificação.")
+        bool | None,
+        Query(description="Só os pendentes: sem categoria confirmada — em branco ou só sugerida."),
     ] = None,
     segmento: Annotated[
         Segmento | None, Query(description="Segmento no período mais recente.")
