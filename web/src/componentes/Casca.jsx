@@ -5,6 +5,11 @@
  * protótipo e não entram aqui: o otimizador é a Sprint 9–10 e as mensagens são
  * a Sprint 12, então não há API atrás delas. Item de menu que leva a uma tela
  * vazia é pior que item ausente — promete e não entrega.
+ *
+ * Pela mesma razão, **cada perfil vê só o que abre**. A lista vem do servidor
+ * (`usuario.telas`), que a lê das permissões das próprias rotas: a interface
+ * não decide quem pode o quê (regra 2.4), só desenha o que ouviu. E esconder o
+ * item não é controle de acesso — a rota continua recusando (regra 2.5).
  */
 import { NavLink, Outlet } from "react-router-dom";
 
@@ -19,11 +24,27 @@ import {
   IconeTemaEscuro,
 } from "./Icones";
 
+/* `exige`: as telas do servidor que sustentam o item — basta uma. A Importação
+   aparece para quem importa **ou** só lê o histórico, que é o caso do
+   Administrador (RF13). */
 const TELAS = [
-  { para: "/", rotulo: "Painel", Icone: IconePainel, fim: true },
-  { para: "/importacao", rotulo: "Importação", Icone: IconeImportar },
-  { para: "/parceiros", rotulo: "Parceiros", Icone: IconeParceiros },
+  { para: "/", rotulo: "Painel", Icone: IconePainel, fim: true, exige: ["painel"] },
+  {
+    para: "/importacao",
+    rotulo: "Importação",
+    Icone: IconeImportar,
+    exige: ["importar", "historico_importacoes"],
+  },
+  { para: "/parceiros", rotulo: "Parceiros", Icone: IconeParceiros, exige: ["parceiros"] },
 ];
+
+/* Sessão aberta antes de o servidor mandar `telas` — uma aba esquecida aberta
+   durante a atualização — continua vendo o menu de antes, em vez de um trilho
+   vazio. Na próxima recarga, a lista chega. */
+function visiveis(usuario) {
+  if (!Array.isArray(usuario?.telas)) return TELAS;
+  return TELAS.filter(({ exige }) => exige.some((tela) => usuario.telas.includes(tela)));
+}
 
 export default function Casca({ titulo }) {
   const { usuario, sair } = useSessao();
@@ -38,7 +59,7 @@ export default function Casca({ titulo }) {
         </div>
 
         <div className="trilho__navegacao">
-          {TELAS.map(({ para, rotulo, Icone, fim }) => (
+          {visiveis(usuario).map(({ para, rotulo, Icone, fim }) => (
             <NavLink key={para} to={para} end={fim} className="trilho__item">
               <Icone />
               {rotulo}

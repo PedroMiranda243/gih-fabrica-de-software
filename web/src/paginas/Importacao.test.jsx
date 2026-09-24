@@ -1,8 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
+import { ContextoSessao } from "../api/contextoSessao";
 import { simularApi } from "../testes/preparar";
 import Importacao from "./Importacao";
 
@@ -17,11 +18,32 @@ const PREVIA = {
   total_rejeitado: 0,
 };
 
-function renderizar() {
+const QUEM_IMPORTA = ["painel", "importar", "historico_importacoes", "parceiros"];
+const ADMINISTRADOR = ["painel", "historico_importacoes", "usuarios", "configuracao"];
+
+const HISTORICO_VAZIO = { itens: [], total: 0, pagina: 1, tamanho: 10 };
+
+function importacao(id, extra = {}) {
+  return {
+    id,
+    periodo: { id, data_inicio: "2026-09-07", data_fim: "2026-09-13" },
+    autor: { id: 1, nome: "Analista de Exemplo" },
+    origem: "TEXTO",
+    total_gravado: 3,
+    total_rejeitado: 1,
+    enviado_em: "2026-09-14T13:05:00Z",
+    metricas_vigentes: 3,
+    ...extra,
+  };
+}
+
+function renderizar(telas = QUEM_IMPORTA) {
   return render(
-    <MemoryRouter>
-      <Importacao />
-    </MemoryRouter>,
+    <ContextoSessao.Provider value={{ usuario: { nome: "Quem Testa", telas } }}>
+      <MemoryRouter>
+        <Importacao />
+      </MemoryRouter>
+    </ContextoSessao.Provider>,
   );
 }
 
@@ -37,6 +59,7 @@ async function ateAPrevia(usuario) {
 describe("Importação", () => {
   it("depois de gravar, leva ao painel", async () => {
     simularApi({
+      "GET /api/importacoes": { corpo: HISTORICO_VAZIO },
       "POST /api/importacoes/previa": { corpo: PREVIA },
       "POST /api/importacoes": {
         status: 201,
@@ -56,6 +79,7 @@ describe("Importação", () => {
 
   it("período já importado: diz quanto seria apagado antes de oferecer a substituição", async () => {
     simularApi({
+      "GET /api/importacoes": { corpo: HISTORICO_VAZIO },
       "POST /api/importacoes/previa": { corpo: PREVIA },
       "POST /api/importacoes": {
         status: 409,
@@ -84,5 +108,61 @@ describe("Importação", () => {
     expect(alerta).toHaveTextContent("Já existem 480 registros neste período, trazidos por Analista de Exemplo.");
     expect(screen.getByRole("button", { name: "Substituir mesmo assim" })).toBeEnabled();
     expect(screen.queryByRole("link", { name: "Ver no painel" })).not.toBeInTheDocument();
+  });
+
+  it("o histórico lista as importações, e diz qual foi substituída", async () => {
+    simularApi({
+      "GET /api/importacoes": {
+        corpo: {
+          itens: [importacao(2), importacao(1, { metricas_vigentes: 0 })],
+          total: 2,
+          pagina: 1,
+          tamanho: 10,
+        },
+      },
+    });
+    renderizar();
+
+    const historico = await screen.findByRole("table", { name: /Importações anteriores/ });
+    const [, maisNova, maisAntiga] = within(historico).getAllByRole("row");
+    expect(maisNova).toHaveTextContent("07/09/2026 a 13/09/2026");
+    expect(maisNova).toHaveTextContent("Analista de Exemplo");
+    expect(maisNova).toHaveTextContent("Texto colado");
+    expect(maisAntiga).toHaveTextContent("substituída");
+    expect(screen.getByText("2 no total")).toBeInTheDocument();
+  });
+
+  it("quem só lê o histórico não vê o formulário de importar", async () => {
+    simularApi({ "GET /api/importacoes": { corpo: HISTORICO_VAZIO } });
+    renderizar(ADMINISTRADOR);
+
+    expect(await screen.findByText("Nenhuma importação ainda")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ver a prévia" })).not.toBeInTheDocument();
+  });
+
+  it("depois de gravar, o histórico é lido de novo", async () => {
+    let leituras = 0;
+    simularApi({
+      "GET /api/importacoes": () => {
+        leituras += 1;
+        return { corpo: HISTORICO_VAZIO };
+      },
+      "POST /api/importacoes/previa": { corpo: PREVIA },
+      "POST /api/importacoes": {
+        status: 201,
+        corpo: { id: 9, periodo: PERIODO, total_gravado: 1, total_rejeitado: 0 },
+      },
+    });
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByText("Nenhuma importação ainda");
+    const antes = leituras;
+
+    await ateAPrevia(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Gravar 1 registros" }));
+    await screen.findByRole("status");
+
+    await screen.findByText("Nenhuma importação ainda");
+    expect(leituras).toBeGreaterThan(antes);
   });
 });

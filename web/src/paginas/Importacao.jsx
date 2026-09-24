@@ -9,17 +9,51 @@
  * Duas recusas do servidor aparecem como erro de negócio, e não como falha
  * genérica: sem período (RN03) e período já importado (RF12). As duas trazem
  * `ajuda` explicando o que fazer, e é essa explicação que a tela mostra.
+ *
+ * Abaixo do formulário, o **histórico** (RF13): quem trouxe cada período e o que
+ * restou dele. O Administrador lê o histórico sem importar nada — para ele, a
+ * tela é só essa parte.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { api } from "../api/cliente";
-import { comoDinheiro, comoInteiro } from "../formato";
+import { useSessao } from "../api/contextoSessao";
+import { Esqueleto } from "../componentes/Carregando";
+import EstadoVazio from "../componentes/EstadoVazio";
+import {
+  comoDataHora,
+  comoDinheiro,
+  comoInteiro,
+  comoPeriodo,
+  ROTULO_ORIGEM,
+  TRACO,
+} from "../formato";
 import "../estilos/importacao.css";
 
 const VAZIO = { periodo_inicio: "", periodo_fim: "", texto: "" };
+const TAMANHO_HISTORICO = 10;
 
 export default function Importacao() {
+  const { usuario } = useSessao();
+  /* Quem importa vem das telas que o servidor mandou, e não de um `if` sobre o
+     perfil aqui (regra 2.4). Sessão sem `telas`, de antes da atualização, vê o
+     formulário como sempre viu — e a rota recusa se não puder. */
+  const podeImportar = !Array.isArray(usuario?.telas) || usuario.telas.includes("importar");
+
+  /* Cada importação gravada troca a chave do histórico: ele recarrega e volta
+     à primeira página, onde a importação nova aparece. */
+  const [gravadas, setGravadas] = useState(0);
+
+  return (
+    <>
+      {podeImportar && <Formulario aoGravar={() => setGravadas((n) => n + 1)} />}
+      <Historico key={gravadas} />
+    </>
+  );
+}
+
+function Formulario({ aoGravar }) {
   const [form, setForm] = useState(VAZIO);
   const [arquivo, setArquivo] = useState(null);
   const [previa, setPrevia] = useState(null);
@@ -89,6 +123,7 @@ export default function Importacao() {
       setPrevia(null);
       setForm(VAZIO);
       setArquivo(null);
+      aoGravar();
     }
   }
 
@@ -300,5 +335,140 @@ function Previa({ previa, ocupado, aoConfirmar }) {
         </button>
       </div>
     </section>
+  );
+}
+
+/**
+ * O histórico das importações (RF13, H29), da mais recente para a mais antiga.
+ *
+ * "Vigentes" é quanto daquela importação ainda está no banco, contado pela API.
+ * Zero depois de ter gravado alguma coisa é o rastro de uma **substituição**: o
+ * período foi trocado por uma importação mais nova. A tela diz isso com a
+ * palavra, porque um zero sozinho pareceria importação vazia.
+ */
+function Historico() {
+  const [pagina, setPagina] = useState(1);
+  const [estado, setEstado] = useState({ pagina: null, dados: null, erro: null });
+
+  useEffect(() => {
+    let vivo = true;
+    api
+      .get("/api/importacoes", { pagina, tamanho: TAMANHO_HISTORICO })
+      .then((dados) => vivo && setEstado({ pagina, dados, erro: null }))
+      .catch((erro) => vivo && setEstado({ pagina, dados: null, erro }));
+    return () => {
+      vivo = false;
+    };
+  }, [pagina]);
+
+  const atual = estado.pagina === pagina;
+  const dados = atual ? estado.dados : null;
+  const erro = atual ? estado.erro : null;
+  const total = dados?.total ?? 0;
+  const primeiro = (pagina - 1) * TAMANHO_HISTORICO + 1;
+  const ultimo = Math.min(pagina * TAMANHO_HISTORICO, total);
+
+  return (
+    <section className="painel historico" aria-labelledby="titulo-historico">
+      <div className="painel__cabecalho">
+        <h2 className="painel__titulo" id="titulo-historico">
+          Importações anteriores
+        </h2>
+        {dados && <span className="painel__nota">{comoInteiro(total)} no total</span>}
+      </div>
+
+      {erro && (
+        <div className="aviso" role="alert">
+          <p className="aviso__titulo">{erro.message}</p>
+          {erro.ajuda && <p className="aviso__ajuda">{erro.ajuda}</p>}
+        </div>
+      )}
+
+      {!dados && !erro && (
+        <div className="importacao__corpo" aria-hidden="true">
+          <Esqueleto altura={160} />
+        </div>
+      )}
+
+      {dados && total === 0 && (
+        <EstadoVazio
+          titulo="Nenhuma importação ainda"
+          texto="Cada relatório importado aparece aqui, com quem o trouxe e quando."
+        />
+      )}
+
+      {dados && total > 0 && (
+        <>
+          <div className="tabela-rolagem">
+            <table className="tabela">
+              <caption className="so-leitor">
+                Importações anteriores, da mais recente para a mais antiga
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Período</th>
+                  <th scope="col">Enviada em</th>
+                  <th scope="col">Por</th>
+                  <th scope="col">Origem</th>
+                  <th scope="col" className="numerica">
+                    Gravados
+                  </th>
+                  <th scope="col" className="numerica">
+                    Rejeitados
+                  </th>
+                  <th scope="col" className="numerica">
+                    Vigentes
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {dados.itens.map((i) => (
+                  <LinhaHistorico key={i.id} importacao={i} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="paginacao">
+            <span className="paginacao__posicao num">
+              {comoInteiro(primeiro)}–{comoInteiro(ultimo)} de {comoInteiro(total)}
+            </span>
+            <button
+              type="button"
+              className="botao botao--secundario"
+              disabled={pagina <= 1}
+              onClick={() => setPagina((p) => p - 1)}
+            >
+              Anterior
+            </button>
+            <button
+              type="button"
+              className="botao botao--secundario"
+              disabled={ultimo >= total}
+              onClick={() => setPagina((p) => p + 1)}
+            >
+              Próxima
+            </button>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function LinhaHistorico({ importacao: i }) {
+  const substituida = i.metricas_vigentes === 0 && i.total_gravado > 0;
+  return (
+    <tr>
+      <td className="nome">{comoPeriodo(i.periodo)}</td>
+      <td className="secundaria quando">{comoDataHora(i.enviado_em)}</td>
+      <td>{i.autor?.nome ?? TRACO}</td>
+      <td className="secundaria">{ROTULO_ORIGEM[i.origem] ?? i.origem}</td>
+      <td className="numerica">{comoInteiro(i.total_gravado)}</td>
+      <td className="numerica">{comoInteiro(i.total_rejeitado)}</td>
+      <td className="numerica">
+        {substituida ? <span className="secundaria">substituída</span> : comoInteiro(i.metricas_vigentes)}
+      </td>
+    </tr>
   );
 }

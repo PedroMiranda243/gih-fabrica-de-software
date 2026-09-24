@@ -80,25 +80,6 @@
   color: currentColor;
 }
 
-/* --------------------------------------------------------- paginação */
-.paginacao {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--esp-8);
-  padding: var(--esp-12) var(--esp-16);
-  border-top: 1px solid var(--border);
-}
-
-/* A posição fica à esquerda dos botões e **empurra** os dois para a direita:
-   "51–100 de 500" antes de "Anterior" responde onde se está antes de oferecer
-   para onde ir. */
-.paginacao__posicao {
-  margin-right: auto;
-  font-size: var(--txt-13);
-  color: var(--ink-2);
-}
-
 /* ------------------------------------------------ ações do cabeçalho */
 .parceiros__acoes {
   display: flex;

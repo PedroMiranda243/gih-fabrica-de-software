@@ -61,3 +61,16 @@
 
 /* `.aviso--sucesso` mudou-se para `base.css`, ao lado de `.aviso` — ver o
    comentário lá. */
+
+/* ------------------------------------------------------------ histórico */
+/* Período e data numa linha só. Quebrados, cada linha dobrava de altura a
+   768 px e a lista de dez importações ocupava duas telas — visto na captura.
+   A tabela rola no próprio contêiner, como a de parceiros.
+
+   Três classes, e não duas: `.tabela .nome` de `componentes.css` quebra o nome
+   do parceiro de propósito, e com a mesma especificidade a folha carregada
+   depois vencia — a primeira versão desta regra não fez efeito nenhum. */
+.historico .tabela .nome,
+.historico .tabela .quando {
+  white-space: nowrap;
+}
