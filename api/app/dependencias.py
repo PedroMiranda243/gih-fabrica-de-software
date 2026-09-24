@@ -11,10 +11,11 @@ Sprint 5. O que existe aqui é o mecanismo que ela vai exercitar.
 """
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from typing import Annotated
 
 from fastapi import Cookie, Depends, HTTPException, Request, status
+from fastapi.routing import APIRoute
 from sqlalchemy.orm import Session
 
 from app import auditoria, sessoes
@@ -96,4 +97,55 @@ def exigir(*perfis: Perfil):
             )
         return usuario
 
+    # Os perfis ficam presos à própria dependência, e não numa tabela à parte:
+    # é daqui que `telas_de` lê, e assim o menu não tem como divergir do que a
+    # rota cobra.
+    verificar.perfis = frozenset(permitidos)
     return verificar
+
+
+# As áreas que a interface desenha, cada uma com a rota que a sustenta. **Os
+# perfis de cada área não estão aqui**: vêm do `exigir` da própria rota. Mudar a
+# permissão da rota muda o menu junto — a interface não reescreve a matriz de
+# autorização, só pergunta a ela (regras 2.4 e 2.5).
+TELAS: dict[str, tuple[str, str]] = {
+    "painel": ("GET", "/api/painel/indicadores"),
+    "importar": ("POST", "/api/importacoes"),
+    "historico_importacoes": ("GET", "/api/importacoes"),
+    "parceiros": ("GET", "/api/parceiros"),
+    "usuarios": ("GET", "/api/usuarios"),
+    "configuracao": ("GET", "/api/configuracao/segmentacao"),
+}
+
+
+def perfis_da_rota(rota: APIRoute) -> frozenset[Perfil] | None:
+    """Os perfis que a rota aceita; `None` quando basta estar autenticado.
+
+    Rota com mais de um `exigir` — o do roteador e o da própria rota — só deixa
+    passar quem está em todos, então os conjuntos se cruzam.
+    """
+    conjuntos = [
+        d.dependency.perfis for d in rota.dependencies if hasattr(d.dependency, "perfis")
+    ]
+    return frozenset.intersection(*conjuntos) if conjuntos else None
+
+
+def telas_de(rotas: Iterable, perfil: Perfil) -> list[str]:
+    """As áreas que o perfil abre, na ordem de `TELAS`."""
+    indice = {
+        (metodo, rota.path): rota
+        for rota in rotas
+        if isinstance(rota, APIRoute)
+        for metodo in rota.methods
+    }
+    telas = []
+    for nome, chave in TELAS.items():
+        rota = indice.get(chave)
+        if rota is None:
+            # Falhar alto: uma tela apontando para rota que sumiu desapareceria
+            # do menu em silêncio, e ninguém saberia por quê.
+            raise RuntimeError(f"A tela {nome!r} aponta para {chave}, que não existe mais.")
+        perfis = perfis_da_rota(rota)
+        if perfis is None or perfil in perfis:
+            telas.append(nome)
+    return telas
