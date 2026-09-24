@@ -8,10 +8,11 @@ dos quais o parceiro é recém-chegado.
 classifica: quem mexe aqui reescreve o significado de "em risco" para a rede
 inteira. O Gestor decide campanha; o Administrador decide a régua.
 
-**Não há tela para isto**, e a lacuna é declarada: a administração do sistema
-— usuários e agora configuração — acontece pela API e pelo terminal. A tela não
-está no protótipo aprovado (H08), e construí-la agora seria antecipar escopo que
-ninguém validou.
+A tela é `web/src/paginas/Configuracao.jsx`. Ela não estava no protótipo
+aprovado (H08), e ficou como lacuna declarada na entrega da Sprint 04 até a
+equipe decidir fechá-la — sobre o sistema visual já aprovado, sem direção
+visual nova. O comando `configurar-segmentacao` continua existindo para quem
+administra pelo terminal.
 """
 from __future__ import annotations
 
