@@ -147,3 +147,14 @@ def test_serie_recusa_tamanhos_diferentes_e_periodos_fora_de_ordem():
         Serie(1, None, (0, 1), (1.0,), (1, 1), (False, False))
     with pytest.raises(ValueError, match="ordem"):
         Serie(1, None, (1, 0), (1.0, 2.0), (1, 1), (False, False))
+
+
+def test_importar_o_pacote_nao_carrega_o_pytorch():
+    """A API importa o pacote a cada subida; o PyTorch só pode vir quando se
+    treina ou prevê."""
+    import subprocess
+    import sys
+
+    codigo = "import sys, gih_modelo; print('torch' in sys.modules)"
+    saida = subprocess.run([sys.executable, "-c", codigo], capture_output=True, text=True)
+    assert saida.stdout.strip() == "False", saida.stderr
