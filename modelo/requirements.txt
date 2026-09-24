@@ -1,0 +1,9 @@
+# Dependências do modelo preditivo, com versão fixa.
+# Licença anotada por exigência da regra 2.8 do CLAUDE.md; registradas na issue #86.
+#
+# O PyTorch vem do índice CPU: a roda do PyPI para Linux traz as bibliotecas do
+# CUDA junto, e o modelo roda na CPU (RNF06, ADR-010). A GPU é do nucleo/.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+torch==2.14.0+cpu   # BSD-3-Clause
+numpy==2.4.6        # BSD-3-Clause — a mesma versão do nucleo/

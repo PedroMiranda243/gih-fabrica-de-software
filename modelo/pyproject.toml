@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gih-modelo"
+version = "0.1.0"
+description = "Modelo preditivo do GIH: faturamento do próximo período e risco de queda."
+requires-python = ">=3.11"
+# Só o piso. As versões exatas ficam em `api/requirements.txt`, que é quem
+# instala o pacote — e a do PyTorch precisa ser a roda CPU, que o PyPI não tem
+# (issue #86). Licenças: as duas BSD-3-Clause.
+dependencies = ["numpy>=2.0", "torch>=2.4"]
+
+[tool.setuptools]
+packages = ["gih_modelo"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
