@@ -214,4 +214,12 @@ describe("Parceiros", () => {
       "/importacao",
     );
   });
+
+  it("categoria só sugerida pelo nome aparece marcada", async () => {
+    simular(pagina([parceiro("Pizzaria Bella", { origem_categoria: "INFERIDA" })]));
+    renderizar();
+
+    expect(await screen.findByText(/Padaria · sugerida/)).toBeInTheDocument();
+  });
 });
+

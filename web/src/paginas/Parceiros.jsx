@@ -395,7 +395,12 @@ function Linha({ parceiro, lista }) {
           {parceiro.nome}
         </Link>
       </td>
-      <td className="secundaria">{parceiro.categoria?.nome ?? "sem categoria"}</td>
+      <td className="secundaria">
+        {parceiro.categoria?.nome ?? "sem categoria"}
+        {/* Categoria que só a regra do nome deu (RN05): ainda não vale para
+            ação comercial, e a lista precisa deixar isso à vista. */}
+        {parceiro.origem_categoria === "INFERIDA" && " · sugerida"}
+      </td>
       <td className="secundaria">
         <Segmento valor={desempenho.segmento} />
       </td>

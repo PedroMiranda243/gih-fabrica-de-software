@@ -205,6 +205,21 @@ h3 {
   background: var(--seg-risco);
 }
 
+/* Ação dentro do texto de ajuda — "Usar Pizzaria". Parece link porque é uma
+   oferta, e não o botão principal do formulário: na cor de ação, que é a de
+   "responde ao clique" (regra 1.1 do `docs/09`), sem borda nem fundo. */
+.campo__acao {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--acao-ink);
+  font: inherit;
+  font-weight: var(--peso-rotulo);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
 .campo__erro-ajuda {
   color: var(--ink-2);
 }

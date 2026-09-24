@@ -260,3 +260,53 @@ describe("Parceiro — cadastro existente", () => {
     expect(await screen.findByText("lista:/parceiros?segmento=EM_RISCO")).toBeVisible();
   });
 });
+
+describe("Parceiro — sugestão de categoria pelo nome (RN05, H27)", () => {
+  it("ao sair do nome, oferece a categoria que o nome aponta, e usar a preenche", async () => {
+    const perguntas = [];
+    simularApi(
+      rotasDoCadastro({
+        "GET /api/categorias/sugestao": (url) => {
+          perguntas.push(String(url));
+          return { corpo: { categoria: CATEGORIAS[0] } };
+        },
+      }),
+    );
+    const usuario = userEvent.setup();
+    renderizar("/parceiros/novo");
+
+    await usuario.type(await screen.findByLabelText(/^Nome/), "Padaria do Bairro");
+    await usuario.tab();
+
+    await usuario.click(await screen.findByRole("button", { name: "Usar Padaria" }));
+    expect(screen.getByLabelText(/^Categoria/)).toHaveValue("1");
+    expect(screen.queryByRole("button", { name: "Usar Padaria" })).not.toBeInTheDocument();
+    expect(perguntas.at(-1)).toContain("nome=Padaria");
+  });
+
+  it("nome que não aponta categoria não oferece nada", async () => {
+    simularApi(
+      rotasDoCadastro({ "GET /api/categorias/sugestao": { corpo: { categoria: null } } }),
+    );
+    const usuario = userEvent.setup();
+    renderizar("/parceiros/novo");
+
+    await usuario.type(await screen.findByLabelText(/^Nome/), "Forno Real");
+    await usuario.tab();
+
+    expect(await screen.findByText(/Escolher uma categoria confirma/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Usar/ })).not.toBeInTheDocument();
+  });
+
+  it("categoria só sugerida pela importação diz que salvar a confirma", async () => {
+    simularApi(
+      rotasDoCadastro({
+        "GET /api/parceiros/7": { corpo: { ...CASA_AZUL, origem_categoria: "INFERIDA" } },
+      }),
+    );
+    renderizar("/parceiros/7");
+
+    expect(await screen.findByText(/Sugerida pelo nome, ainda não confirmada/)).toBeInTheDocument();
+  });
+});
+

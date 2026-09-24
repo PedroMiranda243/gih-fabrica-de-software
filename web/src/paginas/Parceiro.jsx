@@ -89,6 +89,9 @@ function Cadastro({ id }) {
      que nenhum — a primeira versão fazia isso, e a recusa da exclusão
      acontecia sem ninguém ver. */
   const [avisoSituacao, setAvisoSituacao] = useState(null);
+  /* A categoria que a regra da RN05 aponta pelo nome (H27). A API decide; a
+     tela só oferece — usar, trocar ou ignorar é da pessoa. */
+  const [sugestao, setSugestao] = useState(null);
 
   const refNome = useRef(null);
   const refCategoria = useRef(null);
@@ -222,6 +225,46 @@ function Cadastro({ id }) {
   if (situacao === "carregando") return <CadastroCarregando />;
 
   const erroDoCampo = Object.fromEntries((erro?.campos ?? []).map((c) => [c.campo, c]));
+
+  /* Consulta ao sair do campo, e não a cada tecla: a sugestão depende do nome
+     inteiro, e perguntar no meio da palavra só faria a oferta piscar. Com uma
+     categoria já escolhida não há o que sugerir. */
+  function consultarSugestao() {
+    if (form.categoria_id !== "" || !form.nome.trim()) {
+      setSugestao(null);
+      return;
+    }
+    api
+      .get("/api/categorias/sugestao", { nome: form.nome })
+      .then((r) => setSugestao(r.categoria))
+      .catch(() => setSugestao(null));
+  }
+
+  function ajudaDaCategoria() {
+    if (sugestao && form.categoria_id === "") {
+      return (
+        <>
+          Pelo nome, parece <strong>{sugestao.nome}</strong>.{" "}
+          <button
+            type="button"
+            className="campo__acao"
+            onClick={() => {
+              mudar("categoria_id", String(sugestao.id));
+              setSugestao(null);
+            }}
+          >
+            Usar {sugestao.nome}
+          </button>
+        </>
+      );
+    }
+    const soSugerida =
+      parceiro?.origem_categoria === "INFERIDA" &&
+      form.categoria_id === String(parceiro.categoria?.id ?? "");
+    return soSugerida
+      ? "Sugerida pelo nome, ainda não confirmada — salvar o cadastro a confirma (RN05)."
+      : "Escolher uma categoria confirma a classificação (RN05).";
+  }
   const detalhe = erro?.corpo?.detail;
   const existente = typeof detalhe === "object" ? detalhe?.existente : null;
   const erroSituacao = avisoSituacao?.tipo === "erro" ? avisoSituacao.erro : null;
@@ -287,11 +330,12 @@ function Cadastro({ id }) {
                 maxLength={160}
                 value={form.nome}
                 onChange={(e) => mudar("nome", e.target.value)}
+                onBlur={consultarSugestao}
               />
             </Campo>
 
             <Campo id="categoria_id" rotulo="Categoria" erro={erroDoCampo.categoria_id}
-              ajuda="Escolher uma categoria confirma a classificação (RN05).">
+              ajuda={ajudaDaCategoria()}>
               <select
                 id="campo-categoria_id"
                 ref={refCategoria}
