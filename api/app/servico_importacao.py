@@ -18,6 +18,7 @@ from app.modelos import (
     HistoricoSegmento,
     Importacao,
     Metrica,
+    OrigemCategoria,
     OrigemImportacao,
     Parceiro,
     Periodo,
@@ -25,6 +26,7 @@ from app.modelos import (
     Usuario,
 )
 from app.servico_segmentacao import reprocessar_desde
+from app.sugestao_categoria import categorias_ativas, sugerir
 from app.texto import normalizar
 
 
@@ -174,11 +176,18 @@ def gravar(
     s.flush()
 
     parceiros = _indice_de_parceiros(s)
+    categorias = categorias_ativas(s)
     for nome in analise.parceiros_novos:
-        # Categoria fica em branco: a sugestão a partir do nome é a H27, e
-        # categoria inferida só vale como sugestão até alguém confirmar (RN05).
-        # Melhor vazio que palpite gravado como se fosse decisão.
-        novo = Parceiro(nome=nome)
+        # A categoria vem da regra da RN05 (H27) quando o nome aponta uma só, e
+        # entra como INFERIDA — sugestão, que só vale para ação comercial depois
+        # de alguém confirmar. Sem palavra clara no nome, fica em branco: melhor
+        # vazio que palpite gravado como se fosse decisão.
+        sugerida = sugerir(nome, categorias)
+        novo = Parceiro(
+            nome=nome,
+            categoria_id=sugerida.id if sugerida else None,
+            origem_categoria=OrigemCategoria.INFERIDA if sugerida else None,
+        )
         s.add(novo)
         parceiros[normalizar(nome)] = novo
     s.flush()

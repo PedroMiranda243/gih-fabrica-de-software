@@ -835,6 +835,42 @@ def item_telas(r: Relatorio, url: str, admin: httpx.Client, criados: dict[str, s
             )
 
 
+# ------------------------------------------------------------ sugestão
+def item_sugestao(r: Relatorio, url: str, criados: dict[str, str], marca: str) -> None:
+    """A sugestão de categoria pelo nome (RN05, H27), contra a base no ar.
+
+    Só consulta: a rota não grava nada. Depende de a base ter as categorias da
+    regra — a de demonstração tem —, e diz quando não tem, em vez de reprovar
+    por um dado que não é do código.
+    """
+    r.secao("Sugestão de categoria pelo nome")
+
+    login = criados.get("ANALISTA")
+    if not login:
+        r.checar("há analista para pedir a sugestão", False)
+        return
+    with sessao(url) as c:
+        entrar(c, login, SENHA)
+        ativas = {x["nome"] for x in c.get("/api/categorias", params={"ativa": True}).json()}
+        if "Pizzaria" not in ativas:
+            r.nota("a base não tem a categoria Pizzaria ativa — sugestão não conferida")
+            return
+        sugerida = c.get("/api/categorias/sugestao", params={"nome": f"Pizzaria {marca}"}).json()
+        r.checar(
+            "um nome com a palavra da categoria recebe a sugestão",
+            (sugerida.get("categoria") or {}).get("nome") == "Pizzaria",
+            f"Pizzaria {marca}",
+        )
+        ambiguo = c.get(
+            "/api/categorias/sugestao", params={"nome": f"Pizzaria e Lanchonete {marca}"}
+        ).json()
+        r.checar(
+            "um nome que aponta duas categorias não recebe nenhuma",
+            ambiguo.get("categoria") is None,
+            "branco é melhor que palpite",
+        )
+
+
 # --------------------------------------------------------------------- extra
 def item_limpeza(
     r: Relatorio, admin: httpx.Client, marca: str, painel_antes: httpx.Response
@@ -932,6 +968,7 @@ def main() -> int:
             item_recorte(r, a.url, criados, marca)
             item_configuracao(r, a.url, admin, criados)
             item_telas(r, a.url, admin, criados)
+            item_sugestao(r, a.url, criados, marca)
         finally:
             # No `finally`: a execução interrompida por uma exceção é justamente
             # a que deixaria mais para trás — período no futuro no painel e

@@ -248,6 +248,33 @@ Uma categoria inferida a partir do nome permanece marcada como sugestão até qu
 comerciais por categoria só consideram categorias confirmadas, o que evita que um parceiro classificado por
 engano entre numa campanha à qual não pertence.
 
+**Como a categoria é inferida** (RF15, H27 — regra aprovada na issue #35):
+
+1. O nome é comparado **sem acento e sem caixa**, por **palavra inteira** — "Pet" casa com "Pet Shop do
+   Vale", e não com "Carpete".
+2. Se as palavras apontarem para **exatamente uma** categoria, ela é sugerida, com origem `INFERIDA`.
+3. Se não apontarem para nenhuma, **ou para mais de uma**, não há sugestão. Branco é resultado aceitável.
+4. Só se sugere categoria que **existe e está ativa** na base.
+5. A sugestão acontece em dois lugares: na importação, para os parceiros novos; e no cadastro manual, como
+   sugestão que a pessoa usa, troca ou ignora. Salvar o cadastro com a categoria a confirma (`MANUAL`).
+
+| Categoria | Palavras no nome |
+|---|---|
+| Pizzaria | pizza, pizzas, pizzaria |
+| Padaria | padaria, panificadora, pão, pães |
+| Lanchonete | lanche, lanches, lanchonete, burger, hambúrguer, hamburgueria |
+| Restaurante | restaurante, marmita, marmitaria, churrascaria |
+| Açaí e sorvetes | açaí, sorvete, sorvetes, sorveteria |
+| Mercado | mercado, mercadinho, minimercado, supermercado, mercearia |
+| Bebidas | bebidas, adega |
+| Farmácia | farmácia, drogaria |
+| Petshop | pet, petshop |
+| Gás e água | gás, botijão, "água mineral" (as duas palavras juntas) |
+
+Ficam de fora, de propósito, palavras que não dizem a categoria: forno, cantina, empório, casa, esquina,
+sabor, cozinha, distribuidora, e "água" sozinha. Um parceiro "pendente de classificação" é o que não tem
+categoria **confirmada** — em branco ou só sugerida.
+
 ### RN06 — Nenhuma mensagem sai sem aprovação humana
 
 A transição de uma mensagem para o estado aprovado exige ação explícita de um usuário com perfil Gestor

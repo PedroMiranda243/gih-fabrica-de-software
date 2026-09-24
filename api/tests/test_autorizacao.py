@@ -54,6 +54,8 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("DELETE", "/api/parceiros/{parceiro_id}"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/categorias"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("POST", "/api/categorias"): {Perfil.GESTOR, Perfil.ANALISTA},
+    # RF15 — a sugestão de categoria é do cadastro, que é de Gestor e Analista.
+    ("GET", "/api/categorias/sugestao"): {Perfil.GESTOR, Perfil.ANALISTA},
     # UC03 — Importar relatório: Gestor e Analista
     ("POST", "/api/importacoes"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("POST", "/api/importacoes/previa"): {Perfil.GESTOR, Perfil.ANALISTA},
