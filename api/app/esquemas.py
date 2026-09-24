@@ -49,8 +49,20 @@ class UsuarioResposta(BaseModel):
     criado_em: datetime
 
 
+class UsuarioAtualResposta(UsuarioResposta):
+    """Quem está autenticado, e o que o perfil dele abre.
+
+    `telas` serve para a interface montar o menu — e **não** é controle de
+    acesso: cada rota continua verificando o perfil (regra 2.5). A lista é lida
+    das próprias rotas (ver `dependencias.telas_de`), para o menu nunca prometer
+    uma tela que o servidor recusa.
+    """
+
+    telas: list[str]
+
+
 class SessaoResposta(BaseModel):
-    usuario: UsuarioResposta
+    usuario: UsuarioAtualResposta
     expira_em: datetime
 
 

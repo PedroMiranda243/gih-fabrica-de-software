@@ -83,6 +83,22 @@ def test_login_repetido_e_recusado(admin, criar_usuario):
     assert r.status_code == 409
 
 
+def test_login_repetido_aponta_a_conta_que_ja_o_usa(admin, criar_usuario):
+    """UC02-E1. O caso comum é a conta desativada de quem voltou: apontá-la é o
+    que leva a reativar, em vez de inventar outro login para a mesma pessoa."""
+    criar_usuario(login="antigo", ativo=False)
+
+    detalhe = admin.post(
+        "/api/usuarios",
+        json={"login": "antigo", "nome": "Outro", "senha": SENHA_NOVA, "perfil": "GESTOR"},
+    ).json()["detail"]
+
+    assert "antigo" in detalhe["erro"]
+    assert "reative" in detalhe["ajuda"]
+    assert detalhe["existente"]["login"] == "antigo"
+    assert detalhe["existente"]["ativo"] is False
+
+
 def test_login_com_formato_invalido_e_recusado(admin):
     r = admin.post(
         "/api/usuarios",
@@ -92,11 +108,17 @@ def test_login_com_formato_invalido_e_recusado(admin):
 
 
 def test_senha_fraca_e_recusada_na_criacao(admin):
+    """Erro **do campo** senha, para a tela marcá-lo — e a senha recusada não
+    volta na resposta."""
     r = admin.post(
         "/api/usuarios",
         json={"login": "fraco", "nome": "Fraco", "senha": "123", "perfil": "GESTOR"},
     )
-    assert r.status_code == 400
+
+    assert r.status_code == 422
+    campos = {c["campo"]: c["mensagem"] for c in r.json()["campos"]}
+    assert "pelo menos" in campos["senha"]
+    assert "123" not in r.text
 
 
 # ------------------------------------------------------------------ perfis
@@ -200,7 +222,10 @@ def test_ultimo_administrador_ativo_nao_pode_cair(admin, cliente):
     eu = cliente.get("/api/sessao/atual").json()["id"]
 
     assert admin.patch(f"/api/usuarios/{eu}", json={"ativo": False}).status_code == 409
-    assert admin.patch(f"/api/usuarios/{eu}", json={"perfil": "ANALISTA"}).status_code == 409
+    r = admin.patch(f"/api/usuarios/{eu}", json={"perfil": "ANALISTA"})
+    assert r.status_code == 409
+    assert r.json()["detail"]["erro"] == "Este é o último administrador ativo."
+    assert "Promova outro" in r.json()["detail"]["ajuda"]
 
 
 def test_com_outro_administrador_a_alteracao_passa(admin, cliente, criar_usuario):

@@ -53,7 +53,7 @@
 |---|:--:|:--:|:--:|:--:|
 | UC01 Autenticar | ● | ● | ● | ● |
 | UC02 Gerenciar usuários | ● | — | — | — |
-| UC03 Importar relatório | — | ● | ● | — |
+| UC03 Importar relatório | ○ | ● | ● | — |
 | UC04 Gerenciar parceiros | — | ● | ● | — |
 | UC05 Painel e ranking | ○ | ● | ● | — |
 | UC06 Mobilidade do Top N | ○ | ● | ● | — |
@@ -67,6 +67,10 @@
 | UC14 Auditoria | ● | — | — | — |
 
 ● executa · ○ somente leitura · — sem acesso
+
+No UC03, o "somente leitura" do Administrador é o **histórico das importações** — quem trouxe cada
+período, quando e quanto — que o RF13 lhe atribui. Importar continua sendo de Gestor e Analista. A matriz
+dizia "sem acesso" e contradizia o RF13; o RF13 é o que vale.
 
 ---
 

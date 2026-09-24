@@ -798,6 +798,43 @@ def item_configuracao(
         )
 
 
+# ----------------------------------------------------------------- menu
+def item_telas(r: Relatorio, url: str, admin: httpx.Client, criados: dict[str, str]) -> None:
+    """O menu de cada perfil vem do servidor, e o histórico chega ao Administrador.
+
+    A interface monta o menu com a lista `telas` da sessão. Se ela prometesse uma
+    tela que a rota recusa, o usuário cairia num 403; conferir pela API no ar é
+    o que pega uma divergência entre o que o menu mostra e o que o servidor cobra.
+    """
+    r.secao("Telas por perfil e histórico de importações")
+
+    telas_admin = admin.get("/api/sessao/atual").json().get("telas", [])
+    r.checar(
+        "o administrador vê usuários e configuração, e não parceiros",
+        "usuarios" in telas_admin and "configuracao" in telas_admin
+        and "parceiros" not in telas_admin,
+        ", ".join(telas_admin),
+    )
+    historico = admin.get("/api/importacoes", params={"tamanho": 5})
+    r.checar(
+        "o administrador lê o histórico de importações (RF13)",
+        historico.status_code == 200 and "itens" in historico.json(),
+        f"{historico.json().get('total', '?')} importações" if historico.status_code == 200 else
+        f"HTTP {historico.status_code}",
+    )
+
+    analista = criados.get("ANALISTA")
+    if analista:
+        with sessao(url) as c:
+            entrar(c, analista, SENHA)
+            telas = c.get("/api/sessao/atual").json().get("telas", [])
+            r.checar(
+                "o analista vê importação e parceiros, e não usuários",
+                "importar" in telas and "parceiros" in telas and "usuarios" not in telas,
+                ", ".join(telas),
+            )
+
+
 # --------------------------------------------------------------------- extra
 def item_limpeza(
     r: Relatorio, admin: httpx.Client, marca: str, painel_antes: httpx.Response
@@ -894,6 +931,7 @@ def main() -> int:
             item_segmentacao(r, a.url, criados, periodo_id)
             item_recorte(r, a.url, criados, marca)
             item_configuracao(r, a.url, admin, criados)
+            item_telas(r, a.url, admin, criados)
         finally:
             # No `finally`: a execução interrompida por uma exceção é justamente
             # a que deixaria mais para trás — período no futuro no painel e

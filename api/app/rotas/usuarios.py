@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -56,7 +57,7 @@ def criar(
     try:
         seguranca.validar_forca(dados.senha, dados.login)
     except SenhaFraca as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+        raise _erro_do_campo("senha", str(e), "********") from e
 
     usuario = Usuario(
         login=dados.login,
@@ -75,10 +76,7 @@ def criar(
         # janela entre a conferência e a gravação — deixar o banco recusar é o
         # único jeito sem corrida.
         s.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Já existe um usuário com este login.",
-        ) from e
+        raise _login_em_uso(s, dados.login) from e
 
     auditoria.registrar(
         Acao.USUARIO_CRIADO,
@@ -131,9 +129,8 @@ def editar(
         usuario.ativo = dados.ativo
 
     if usuario.perfil == Perfil.PARCEIRO and usuario.parceiro_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="O perfil Parceiro exige um parceiro vinculado.",
+        raise _erro_do_campo(
+            "parceiro_id", "O perfil Parceiro exige um parceiro vinculado.", None
         )
 
     s.flush()
@@ -144,6 +141,44 @@ def editar(
 
     _auditar_edicao(usuario, anterior, autor_id=autor.id, origem=origem)
     return usuario
+
+
+def _erro_do_campo(campo: str, mensagem: str, entrada) -> RequestValidationError:
+    """Recusa que pertence a um campo sai como os outros erros de campo.
+
+    Mesmo arranjo de `_categoria_existe` em `rotas/parceiros.py`: passando pelo
+    tradutor de `app/erros.py`, a tela recebe o formato de sempre e marca o
+    campo certo, em vez de um aviso solto no topo.
+    """
+    return RequestValidationError(
+        [{"type": "value_error", "loc": ("body", campo), "msg": f"Value error, {mensagem}",
+          "input": entrada}]
+    )
+
+
+def _login_em_uso(s: Session, login: str) -> HTTPException:
+    """Login repetido (UC02, E1) — e **qual** conta já o usa.
+
+    O caso comum não é coincidência de nomes: é a conta antiga, desativada, de
+    quem voltou. Apontar a conta é o que leva a reativá-la em vez de tentar
+    outro login para a mesma pessoa.
+    """
+    existente = s.scalar(select(Usuario).where(Usuario.login == login))
+    detalhe = {
+        "erro": f"Já existe um usuário com o login {login!r}.",
+        "ajuda": (
+            "Escolha outro login. Se a conta é da mesma pessoa e está desativada, "
+            "reative-a em vez de criar outra."
+        ),
+    }
+    if existente is not None:
+        detalhe["existente"] = {
+            "id": existente.id,
+            "login": existente.login,
+            "nome": existente.nome,
+            "ativo": existente.ativo,
+        }
+    return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detalhe)
 
 
 def _buscar(s: Session, usuario_id: int) -> Usuario:
@@ -183,7 +218,13 @@ def _proteger_ultimo_administrador(
     if not restantes:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Este é o último administrador ativo — promova outro antes de alterá-lo.",
+            detail={
+                "erro": "Este é o último administrador ativo.",
+                "ajuda": (
+                    "Sem ele, ninguém mais conseguiria gerenciar usuários. Promova outro usuário "
+                    "a Administrador antes de desativar este ou mudar o perfil dele."
+                ),
+            },
         )
 
 

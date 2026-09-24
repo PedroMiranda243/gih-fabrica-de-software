@@ -13,8 +13,14 @@ from sqlalchemy import select
 from app import auditoria, bloqueio, seguranca, sessoes
 from app.auditoria import Acao
 from app.config import config
-from app.dependencias import Banco, SessaoAtual, UsuarioAtual
-from app.esquemas import Credenciais, SessaoResposta, TrocaSenha, UsuarioResposta
+from app.dependencias import Banco, SessaoAtual, UsuarioAtual, telas_de
+from app.esquemas import (
+    Credenciais,
+    SessaoResposta,
+    TrocaSenha,
+    UsuarioAtualResposta,
+    UsuarioResposta,
+)
 from app.modelos import Usuario
 from app.seguranca import SenhaFraca
 from app.sessoes import Motivo
@@ -103,7 +109,7 @@ def autenticar(
     auditoria.registrar(Acao.LOGIN_SUCESSO, usuario_id=usuario.id, origem=origem)
 
     return SessaoResposta(
-        usuario=UsuarioResposta.model_validate(usuario),
+        usuario=_com_telas(usuario, request),
         expira_em=sessao.expira_em,
     )
 
@@ -145,14 +151,27 @@ def encerrar(
     return resposta
 
 
-@router.get("/atual", response_model=UsuarioResposta)
-def quem_sou(usuario: UsuarioAtual) -> Usuario:
+@router.get("/atual", response_model=UsuarioAtualResposta)
+def quem_sou(usuario: UsuarioAtual, request: Request) -> UsuarioAtualResposta:
     """Quem está autenticado. O frontend usa para decidir o que desenhar.
 
     Decidir o que *desenhar*, não o que *permitir* — a permissão é verificada no
     servidor a cada requisição (regra 2.5, RNF14).
     """
-    return usuario
+    return _com_telas(usuario, request)
+
+
+def _com_telas(usuario: Usuario, request: Request) -> UsuarioAtualResposta:
+    """O usuário com as telas do perfil dele — no login e na recarga da página.
+
+    Os dois caminhos precisam trazer a lista: a interface guarda o usuário que
+    vier de qualquer um deles, e o menu de quem acabou de entrar não pode
+    depender de recarregar a página.
+    """
+    return UsuarioAtualResposta(
+        **UsuarioResposta.model_validate(usuario).model_dump(),
+        telas=telas_de(request.app.routes, usuario.perfil),
+    )
 
 
 @router.post("/senha", status_code=status.HTTP_204_NO_CONTENT)
