@@ -1,0 +1,241 @@
+Persistência: os dados sobrevivem a desligar e religar a aplicação · http://localhost:8000
+Dados sintéticos; nenhum nome real de empresa ou pessoa.
+
+==============================================================================
+Preparação — um analista, que é quem gerencia parceiros (UC04)
+==============================================================================
+
+$ POST /api/usuarios
+  > {
+  >   "login": "t57729.analista",
+  >   "nome": "Analista da Evidência",
+  >   "senha": "********",
+  >   "perfil": "ANALISTA"
+  > }
+  201 Created
+  < {
+  <   "id": 97,
+  <   "login": "t57729.analista",
+  <   "nome": "Analista da Evidência",
+  <   "perfil": "ANALISTA",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-09-25T04:51:50.561810Z"
+  < }
+
+==============================================================================
+[1/4] Antes de desligar — o analista cadastra e altera um parceiro
+==============================================================================
+
+$ POST /api/sessao
+  > {
+  >   "login": "t57729.analista",
+  >   "senha": "********"
+  > }
+  201 Created
+  < {
+  <   "usuario": {
+  <     "id": 97,
+  <     "login": "t57729.analista",
+  <     "nome": "Analista da Evidência",
+  <     "perfil": "ANALISTA",
+  <     "ativo": true,
+  <     "parceiro_id": null,
+  <     "criado_em": "2026-09-25T04:51:50.561810Z",
+  <     "telas": [
+  <       "painel",
+  <       "importar",
+  <       "historico_importacoes",
+  <       "parceiros"
+  <     ]
+  <   },
+  <   "expira_em": "2026-09-25T12:51:53.037926Z"
+  < }
+
+$ POST /api/categorias
+  > {
+  >   "nome": "Categoria t57729"
+  > }
+  201 Created
+  < {
+  <   "id": 26,
+  <   "nome": "Categoria t57729",
+  <   "ativa": true
+  < }
+
+$ POST /api/parceiros
+  > {
+  >   "nome": "Comércio t57729",
+  >   "status": "PROSPECCAO"
+  > }
+  201 Created
+  < {
+  <   "id": 587,
+  <   "nome": "Comércio t57729",
+  <   "categoria": null,
+  <   "origem_categoria": null,
+  <   "status": "PROSPECCAO",
+  <   "contato": null,
+  <   "ativo": true,
+  <   "criado_em": "2026-09-25T04:51:53.061560Z"
+  < }
+
+$ PATCH /api/parceiros/587
+  > {
+  >   "status": "ATIVO",
+  >   "categoria_id": 26,
+  >   "contato": "contato@exemplo.test"
+  > }
+  200 OK
+  < {
+  <   "id": 587,
+  <   "nome": "Comércio t57729",
+  <   "categoria": {
+  <     "id": 26,
+  <     "nome": "Categoria t57729",
+  <     "ativa": true
+  <   },
+  <   "origem_categoria": "MANUAL",
+  <   "status": "ATIVO",
+  <   "contato": "contato@exemplo.test",
+  <   "ativo": true,
+  <   "criado_em": "2026-09-25T04:51:53.061560Z"
+  < }
+
+O estado anotado para comparar depois:
+  parceiro           Comércio t57729 · ATIVO · contato@exemplo.test · Categoria t57729
+  parceiros na base  501
+  painel             2026-09-14 a 2026-09-20 · faturamento 1839707.96 · 41974 pedidos
+  limiares           Top 15 · tendência em 2 períodos · recém-chegado até 3
+  modelo em uso      rede-1 (treino 1) · MAPE 0.0922 · Brier 0.1051
+  previsão           R$ 84818.54 · risco 0.2355 · rede-1
+
+Contêineres em execução:
+  api        e8fe5bba5702
+  postgres   ae4fb994acba
+  web        2f8bcff54ca4
+
+Volume do banco: growth-intelligence-hub_dados_postgres, criado em 2026-09-15T20:18:27Z
+
+==============================================================================
+[2/4] Desligar — docker compose down
+==============================================================================
+
+$ docker compose down
+   Container growth-intelligence-hub-web-1 Stopping 
+   Container growth-intelligence-hub-web-1 Stopped 
+   Container growth-intelligence-hub-web-1 Removing 
+   Container growth-intelligence-hub-web-1 Removed 
+   Container growth-intelligence-hub-api-1 Stopping 
+   Container growth-intelligence-hub-api-1 Stopped 
+   Container growth-intelligence-hub-api-1 Removing 
+   Container growth-intelligence-hub-api-1 Removed 
+   Container growth-intelligence-hub-postgres-1 Stopping 
+   Container growth-intelligence-hub-postgres-1 Stopped 
+   Container growth-intelligence-hub-postgres-1 Removing 
+   Container growth-intelligence-hub-postgres-1 Removed 
+   Network growth-intelligence-hub_default Removing 
+   Network growth-intelligence-hub_default Removed 
+
+A API responde? não
+Contêineres depois do down:
+  (nenhum contêiner)
+Volume do banco: growth-intelligence-hub_dados_postgres, criado em 2026-09-15T20:18:27Z
+
+==============================================================================
+[3/4] Religar — docker compose up -d
+==============================================================================
+
+$ docker compose up -d
+   Network growth-intelligence-hub_default Creating 
+   Network growth-intelligence-hub_default Created 
+   Container growth-intelligence-hub-postgres-1 Creating 
+   Container growth-intelligence-hub-postgres-1 Created 
+   Container growth-intelligence-hub-api-1 Creating 
+   Container growth-intelligence-hub-api-1 Created 
+   Container growth-intelligence-hub-web-1 Creating 
+   Container growth-intelligence-hub-web-1 Created 
+   Container growth-intelligence-hub-postgres-1 Starting 
+   Container growth-intelligence-hub-postgres-1 Started 
+   Container growth-intelligence-hub-postgres-1 Waiting 
+   Container growth-intelligence-hub-postgres-1 Healthy 
+   Container growth-intelligence-hub-api-1 Starting 
+   Container growth-intelligence-hub-api-1 Started 
+   Container growth-intelligence-hub-web-1 Starting 
+   Container growth-intelligence-hub-web-1 Started 
+
+A API voltou a responder em 7 s.
+Contêineres novos:
+  api        06645820c4d9
+  postgres   e2a4e43cea3b
+  web        266ea7d86b0c
+
+==============================================================================
+[4/4] Depois de religar — o mesmo cookie de antes, sem novo login
+==============================================================================
+
+$ GET /api/sessao/atual
+  200 OK
+  < {
+  <   "id": 97,
+  <   "login": "t57729.analista",
+  <   "nome": "Analista da Evidência",
+  <   "perfil": "ANALISTA",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-09-25T04:51:50.561810Z",
+  <   "telas": [
+  <     "painel",
+  <     "importar",
+  <     "historico_importacoes",
+  <     "parceiros"
+  <   ]
+  < }
+
+$ GET /api/parceiros/587
+  200 OK
+  < {
+  <   "id": 587,
+  <   "nome": "Comércio t57729",
+  <   "categoria": {
+  <     "id": 26,
+  <     "nome": "Categoria t57729",
+  <     "ativa": true
+  <   },
+  <   "origem_categoria": "MANUAL",
+  <   "status": "ATIVO",
+  <   "contato": "contato@exemplo.test",
+  <   "ativo": true,
+  <   "criado_em": "2026-09-25T04:51:53.061560Z",
+  <   "desempenho": {
+  <     "segmento": null,
+  <     "faturamento": null,
+  <     "pedidos": null,
+  <     "ticket_medio": null,
+  <     "variacao_percentual": null
+  <   }
+  < }
+
+O estado lido agora:
+  parceiro           Comércio t57729 · ATIVO · contato@exemplo.test · Categoria t57729
+  parceiros na base  501
+  painel             2026-09-14 a 2026-09-20 · faturamento 1839707.96 · 41974 pedidos
+  limiares           Top 15 · tendência em 2 períodos · recém-chegado até 3
+  modelo em uso      rede-1 (treino 1) · MAPE 0.0922 · Brier 0.1051
+  previsão           R$ 84818.54 · risco 0.2355 · rede-1
+
+Conferências:
+  ok    o down removeu os contêineres, e a API parou de responder
+  ok    o up criou contêineres novos — não é o mesmo processo de antes
+  ok    o volume do banco é o mesmo, com a mesma data de criação
+  ok    a sessão aberta antes de desligar continua valendo
+  ok    o parceiro voltou com todos os campos iguais
+  ok    a alteração feita antes de desligar continua lá
+  ok    a base tem o mesmo número de parceiros
+  ok    o painel mostra os mesmos indicadores
+  ok    os limiares da segmentação são os mesmos
+  ok    a versão do modelo em uso é a mesma, com as mesmas métricas
+  ok    a previsão do parceiro é a mesma, da mesma versão
+
+==============================================================================
+Resultado: 11 de 11 conferências passaram.

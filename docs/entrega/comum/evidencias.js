@@ -82,4 +82,9 @@ function trecho(nome, de, ate = null) {
   return (fim > 0 ? resto.slice(0, fim) : resto).flatMap(quebrar);
 }
 
-module.exports = { todas, trecho, COLUNAS };
+/** Evidência estruturada, como o registro de bugs — lida do arquivo que o script gerou. */
+function json(nome) {
+  return JSON.parse(ler(nome).join('\n'));
+}
+
+module.exports = { todas, trecho, json, COLUNAS };

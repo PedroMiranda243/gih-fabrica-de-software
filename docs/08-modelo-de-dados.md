@@ -309,6 +309,45 @@ e é o que a tela mostra ao lado da estimativa.
 
 **treino_modelo** — entrou na Sprint 05 da disciplina (H42 a H45, ADR-010)
 
+O recorte do modelo que o módulo de previsão usa — o MER inteiro, na seção 1, fica ilegível impresso na
+largura de uma página:
+
+<!-- diagrama: mer-previsao -->
+```mermaid
+erDiagram
+    USUARIO |o--o{ TREINO_MODELO : dispara
+    PERIODO ||--o{ TREINO_MODELO : "é a base de"
+    PERIODO ||--o{ METRICA : delimita
+    PARCEIRO ||--o{ METRICA : possui
+    PERIODO ||--o{ PREVISAO : "é a base de"
+    PARCEIRO ||--o{ PREVISAO : recebe
+    TREINO_MODELO ||..o{ PREVISAO : "versão que as gerou"
+
+    TREINO_MODELO {
+        int id PK
+        enum situacao "um só EM_ANDAMENTO"
+        int usuario_id FK
+        int periodo_base_id FK
+        float mape_modelo
+        float mape_media_movel
+        float brier_modelo
+        bool promovido
+        string versao_em_uso
+        bytea pesos
+    }
+    PREVISAO {
+        int id PK
+        int parceiro_id FK
+        int periodo_base_id FK
+        numeric faturamento_previsto
+        float probabilidade_queda "entre 0 e 1"
+        string modelo_versao "rede-N ou referencia-N"
+    }
+```
+
+A ligação entre treino e previsão é **tracejada** porque não é chave estrangeira: vem da versão, pelo nome
+(`rede-7` saiu do treino 7).
+
 | Coluna | Tipo | Chave | Restrição |
 |---|---|---|---|
 | id | serial | **PK** | |

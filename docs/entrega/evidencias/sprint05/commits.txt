@@ -1,0 +1,95 @@
+Commits do repositório
+https://github.com/PedroMiranda243/gih-fabrica-de-software
+Referência origin/main em 5b0c661 · de 2026-09-03 a 2026-09-24
+Gerado a partir do git log; nenhum número foi escrito à mão.
+
+Totais
+------
+  commits de trabalho              157
+  Pull Requests incorporados        41
+  commits direto na main            22   (até 15/09, antes de a main ser protegida)
+
+Por tipo (Conventional Commits)
+-------------------------------
+  docs       52   33%
+  feat       41   26%
+  test       30   19%
+  fix        17   11%
+  ci          8    5%
+  perf        2    1%
+  refactor    2    1%
+  spike       2    1%
+  build       1    1%
+  chore       1    1%
+  fora        1  (fora da convenção:)
+             2026-09-15  Revert "docs: corta a central de comunicação e torna o assistente…
+
+Por semana (segunda a domingo)
+------------------------------
+  31/08 a 06/09    7  ████
+  07/09 a 13/09    0  
+  14/09 a 20/09   72  █████████████████████████████████████
+  21/09 a 27/09   78  ████████████████████████████████████████
+
+Autoria e coautoria
+-------------------
+  Cada commit tem um autor e, por área, o colega responsável como coautor
+  (trailer Co-authored-by, que o GitHub credita ao coautor).
+  autor     Pedro Miranda                             157
+  coautor   João Pedro Nunes de França                 49
+  coautor   Marcio Maycom                              43
+  coautor   Ingryd Vitoria de Araújo Barbosa           23
+  coautor   Thiago José Falcão de Freitas              11
+  sem coautor                                         36
+
+Pull Requests incorporados, por janela de entrega
+-------------------------------------------------
+
+  Sprint 01 — até 05/09: 0
+
+  Sprints 02 e 03 — 06/09 a 19/09: 11
+    #26  16/09  feat: autentica por sessão com estado no servidor, perfis e auditoria
+    #25  16/09  spike: valida o toolchain nativo e mede OpenMP contra CUDA
+    #31  16/09  feat: autorização verificada em cada endpoint e ingestão por texto
+    #32  17/09  docs: entrega da Sprint 02 acadêmica — arquitetura, classes, MER e modelo…
+    #36  17/09  feat: CRUD de parceiros, verificação de ponta a ponta e entrega da Sprint 03
+    #45  17/09  feat: ingestão completa — arquivo CSV, substituição de período e histórico…
+    #46  17/09  feat: painel — indicadores consolidados, ranking com variação e séries…
+    #47  17/09  feat: busca de parceiro sem sensibilidade a acentuação, com índice de trigrama
+    #49  18/09  feat: interface web — login, painel, importação e parceiros
+    #50  18/09  fix: verificação de ponta a ponta não deixa resíduo no banco da equipe
+    #51  19/09  docs: entrega da Sprint 03 atualizada — interface, números remedidos e…
+
+  Sprint 04 — 20/09 a 21/09, data do PDF: 18
+    #61  20/09  Segmenta cada parceiro por regra determinística (H33)
+    #52  20/09  Mede o tempo de resposta do painel com base grande (H40)
+    #62  20/09  Mobilidade do Top N e o painel com paridade com o protótipo (H35)
+    #63  20/09  Limiares da segmentação configuráveis sem alterar código (H34)
+    #64  20/09  Filtrar, ordenar e exportar a lista de parceiros (H36, H38)
+    #65  20/09  Verificação de ponta a ponta do núcleo de regras, e piso de cobertura (H69)
+    #66  21/09  Sazonalidade do gerador sem viés de direção nem de calendário (#60)
+    #67  21/09  As recusas do cadastro de parceiro dizem o que aconteceu (UC04)
+    #69  21/09  Tela de cadastro de parceiro — reaberta: a #68 não chegou à main
+    #70  21/09  Os contêineres voltam sozinhos quando o Docker volta
+    #71  21/09  Modelagem atualizada e mapa de navegação entre as telas
+    #72  21/09  A recusa do período já importado fala com quem usa a tela
+    #73  21/09  As evidências da Sprint 03 ganham pasta própria, e a Parte III fica como foi…
+    #74  21/09  Geradores das evidências da Sprint 04 — persistência, validações, capturas e…
+    #75  21/09  A importação concluída leva ao painel
+    #76  21/09  Nenhuma mensagem de validação sai em inglês, e o 500 ganha teste
+    #77  21/09  Entrega da Sprint 04 — Parte IV, evidências e medição do painel
+    #78  21/09  PDF da Sprint 04, com a Parte III idêntica à entregue
+
+  Sprint 05 — 22/09 a 03/10: 12
+    #79  24/09  A sessão diz as telas do perfil; histórico para o Administrador; recusas de…
+    #80  24/09  O menu segue o perfil, e o histórico de importações na tela
+    #81  24/09  A tela dos limiares da segmentação (RF21)
+    #82  24/09  A tela de usuários (UC02)
+    #83  24/09  O mapa de navegação com as telas de administração; a Parte IV guarda o mapa…
+    #84  24/09  A categoria sugerida pelo nome do parceiro (H27, RF15)
+    #93  24/09  docs: RN09 e ADR-010 — queda prevista, histórico mínimo e onde o treino roda
+    #94  24/09  feat(modelo): o pacote do modelo preditivo — variáveis, referências, rede e…
+    #95  24/09  feat: o módulo de previsão pela API — treino, versão em uso e previsão no…
+    #96  24/09  feat(web): a tela do modelo e a previsão no cadastro do parceiro
+    #107 25/09  Registros de bugs e de testes gerados de fonte; docs/08 e docs/05 corrigidos
+    #109 25/09  Geradores das evidências da Sprint 05 — integração com o banco…

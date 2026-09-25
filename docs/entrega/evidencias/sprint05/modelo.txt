@@ -1,0 +1,1250 @@
+Módulo de previsão integrado ao banco · http://localhost:8000
+Dados sintéticos; nenhum nome real de empresa ou pessoa.
+
+==============================================================================
+Preparação — um gestor, que treina (UC07), e um analista, que lê (RF28)
+==============================================================================
+
+$ POST /api/usuarios
+  > {
+  >   "login": "t62011.gestor",
+  >   "nome": "Gestor da Evidência",
+  >   "senha": "********",
+  >   "perfil": "GESTOR"
+  > }
+  201 Created
+  < {
+  <   "id": 100,
+  <   "login": "t62011.gestor",
+  <   "nome": "Gestor da Evidência",
+  <   "perfil": "GESTOR",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-09-25T05:04:59.504258Z"
+  < }
+
+$ POST /api/usuarios
+  > {
+  >   "login": "t62011.analista",
+  >   "nome": "Analista da Evidência",
+  >   "senha": "********",
+  >   "perfil": "ANALISTA"
+  > }
+  201 Created
+  < {
+  <   "id": 101,
+  <   "login": "t62011.analista",
+  <   "nome": "Analista da Evidência",
+  <   "perfil": "ANALISTA",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-09-25T05:04:59.578150Z"
+  < }
+
+==============================================================================
+[1/5] Consultar — a versão em uso e se dá para treinar
+==============================================================================
+
+$ GET /api/modelo
+  200 OK
+  < {
+  <   "versao_em_uso": "rede-1",
+  <   "origem": "MODELO",
+  <   "treino_da_versao": {
+  <     "id": 1,
+  <     "situacao": "CONCLUIDO",
+  <     "autor": null,
+  <     "iniciado_em": "2026-09-25T00:28:21.944835Z",
+  <     "concluido_em": "2026-09-25T00:28:21.970278Z",
+  <     "periodo_base": {
+  <       "id": 12,
+  <       "data_inicio": "2026-09-14",
+  <       "data_fim": "2026-09-20"
+  <     },
+  <     "volume": {
+  <       "parceiros": 500,
+  <       "periodos": 12,
+  <       "amostras_treino": 2814,
+  <       "amostras_validacao": 469,
+  <       "amostras_teste": 469
+  <     },
+  <     "metricas": {
+  <       "mape_modelo": 0.09222733571784175,
+  <       "mape_ultimo": 0.11542503374584373,
+  <       "mape_media_movel": 0.09972713645799962,
+  <       "brier_modelo": 0.10507158443120267,
+  <       "brier_referencia": 0.12150220680270103,
+  <       "calibracao_modelo": 0.03483412452146827,
+  <       "calibracao_referencia": 0.003332676354123643
+  <     },
+  <     "curva": [
+  <       {
+  <         "inicio": 0.0,
+  <         "fim": 0.1,
+  <         "previsto": 0.011216865408005117,
+  <         "observado": 0.019305019305019305,
+  <         "amostras": 259
+  <       },
+  <       {
+  <         "inicio": 0.1,
+  <         "fim": 0.2,
+  <         "previsto": 0.1390345395449353,
+  <         "observado": 0.14285714285714285,
+  <         "amostras": 42
+  <       },
+  <       {
+  <         "inicio": 0.2,
+  <         "fim": 0.3,
+  <         "previsto": 0.240077807240059,
+  <         "observado": 0.391304347826087,
+  <         "amostras": 23
+  <       },
+  <       {
+  <         "inicio": 0.3,
+  <         "fim": 0.4,
+  <         "previsto": 0.35355661693190654,
+  <         "observado": 0.3333333333333333,
+  <         "amostras": 21
+  <       },
+  <       {
+  <         "inicio": 0.4,
+  <         "fim": 0.5,
+  <         "previsto": 0.4486659208629378,
+  <         "observado": 0.5555555555555556,
+  <         "amostras": 18
+  <       },
+  <       {
+  <         "inicio": 0.5,
+  <         "fim": 0.6,
+  <         "previsto": 0.5507172579550662,
+  <         "observado": 0.44,
+  <         "amostras": 25
+  <       },
+  <       {
+  <         "inicio": 0.6,
+  <         "fim": 0.7,
+  <         "previsto": 0.6599574800726159,
+  <         "observado": 0.6,
+  <         "amostras": 30
+  <       },
+  <       {
+  <         "inicio": 0.7,
+  <         "fim": 0.8,
+  <         "previsto": 0.7503668706378713,
+  <         "observado": 0.75,
+  <         "amostras": 24
+  <       },
+  <       {
+  <         "inicio": 0.8,
+  <         "fim": 0.9,
+  <         "previsto": 0.8552219313830488,
+  <         "observado": 0.8421052631578947,
+  <         "amostras": 19
+  <       },
+  <       {
+  <         "inicio": 0.9,
+  <         "fim": 1.0,
+  <         "previsto": 0.928779118246432,
+  <         "observado": 0.5,
+  <         "amostras": 8
+  <       }
+  <     ],
+  <     "segundos": 1.87,
+  <     "promovido": true,
+  <     "versao": "rede-1",
+  <     "versao_em_uso": "rede-1",
+  <     "motivo": null
+  <   },
+  <   "ultimo_treino": {
+  <     "id": 1,
+  <     "situacao": "CONCLUIDO",
+  <     "autor": null,
+  <     "iniciado_em": "2026-09-25T00:28:21.944835Z",
+  <     "concluido_em": "2026-09-25T00:28:21.970278Z",
+  <     "periodo_base": {
+  <       "id": 12,
+  <       "data_inicio": "2026-09-14",
+  <       "data_fim": "2026-09-20"
+  <     },
+  <     "volume": {
+  <       "parceiros": 500,
+  <       "periodos": 12,
+  <       "amostras_treino": 2814,
+  <       "amostras_validacao": 469,
+  <       "amostras_teste": 469
+  <     },
+  <     "metricas": {
+  <       "mape_modelo": 0.09222733571784175,
+  <       "mape_ultimo": 0.11542503374584373,
+  <       "mape_media_movel": 0.09972713645799962,
+  <       "brier_modelo": 0.10507158443120267,
+  <       "brier_referencia": 0.12150220680270103,
+  <       "calibracao_modelo": 0.03483412452146827,
+  <       "calibracao_referencia": 0.003332676354123643
+  <     },
+  <     "curva": [
+  <       {
+  <         "inicio": 0.0,
+  <         "fim": 0.1,
+  <         "previsto": 0.011216865408005117,
+  <         "observado": 0.019305019305019305,
+  <         "amostras": 259
+  <       },
+  <       {
+  <         "inicio": 0.1,
+  <         "fim": 0.2,
+  <         "previsto": 0.1390345395449353,
+  <         "observado": 0.14285714285714285,
+  <         "amostras": 42
+  <       },
+  <       {
+  <         "inicio": 0.2,
+  <         "fim": 0.3,
+  <         "previsto": 0.240077807240059,
+  <         "observado": 0.391304347826087,
+  <         "amostras": 23
+  <       },
+  <       {
+  <         "inicio": 0.3,
+  <         "fim": 0.4,
+  <         "previsto": 0.35355661693190654,
+  <         "observado": 0.3333333333333333,
+  <         "amostras": 21
+  <       },
+  <       {
+  <         "inicio": 0.4,
+  <         "fim": 0.5,
+  <         "previsto": 0.4486659208629378,
+  <         "observado": 0.5555555555555556,
+  <         "amostras": 18
+  <       },
+  <       {
+  <         "inicio": 0.5,
+  <         "fim": 0.6,
+  <         "previsto": 0.5507172579550662,
+  <         "observado": 0.44,
+  <         "amostras": 25
+  <       },
+  <       {
+  <         "inicio": 0.6,
+  <         "fim": 0.7,
+  <         "previsto": 0.6599574800726159,
+  <         "observado": 0.6,
+  <         "amostras": 30
+  <       },
+  <       {
+  <         "inicio": 0.7,
+  <         "fim": 0.8,
+  <         "previsto": 0.7503668706378713,
+  <         "observado": 0.75,
+  <         "amostras": 24
+  <       },
+  <       {
+  <         "inicio": 0.8,
+  <         "fim": 0.9,
+  <         "previsto": 0.8552219313830488,
+  <         "observado": 0.8421052631578947,
+  <         "amostras": 19
+  <       },
+  <       {
+  <         "inicio": 0.9,
+  <         "fim": 1.0,
+  <         "previsto": 0.928779118246432,
+  <         "observado": 0.5,
+  <         "amostras": 8
+  <       }
+  <     ],
+  <     "segundos": 1.87,
+  <     "promovido": true,
+  <     "versao": "rede-1",
+  <     "versao_em_uso": "rede-1",
+  <     "motivo": null
+  <   },
+  <   "em_andamento": null,
+  <   "periodos_na_base": 12,
+  <   "periodos_minimos": 8,
+  <   "periodo_mais_recente": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "periodo_das_previsoes": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "desatualizado": false,
+  <   "pode_treinar": true,
+  <   "motivo_bloqueio": null
+  < }
+  ok    a API diz se dá para treinar, e o mínimo da RN09
+
+==============================================================================
+[2/5] Armazenar — o gestor dispara o treino
+==============================================================================
+
+A requisição devolve na hora, com o treino gravado em andamento; o treino
+roda fora dela (ADR-010):
+
+$ POST /api/modelo/treinos
+  202 Accepted
+  < {
+  <   "id": 19,
+  <   "situacao": "EM_ANDAMENTO",
+  <   "autor": "Gestor da Evidência",
+  <   "iniciado_em": "2026-09-25T05:05:04.416327Z",
+  <   "concluido_em": null,
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "volume": {
+  <     "parceiros": null,
+  <     "periodos": null,
+  <     "amostras_treino": null,
+  <     "amostras_validacao": null,
+  <     "amostras_teste": null
+  <   },
+  <   "metricas": {
+  <     "mape_modelo": null,
+  <     "mape_ultimo": null,
+  <     "mape_media_movel": null,
+  <     "brier_modelo": null,
+  <     "brier_referencia": null,
+  <     "calibracao_modelo": null,
+  <     "calibracao_referencia": null
+  <   },
+  <   "curva": [],
+  <   "segundos": null,
+  <   "promovido": null,
+  <   "versao": "rede-19",
+  <   "versao_em_uso": null,
+  <   "motivo": null
+  < }
+  ok    o treino é aceito e gravado em andamento (202)
+
+  ... 2 consulta(s) a GET /api/modelo/treinos/19 até a situação mudar (1.0 s)
+
+O registro gravado, lido de volta:
+
+$ GET /api/modelo/treinos/19
+  200 OK
+  < {
+  <   "id": 19,
+  <   "situacao": "CONCLUIDO",
+  <   "autor": "Gestor da Evidência",
+  <   "iniciado_em": "2026-09-25T05:05:04.416327Z",
+  <   "concluido_em": "2026-09-25T05:05:04.428378Z",
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "volume": {
+  <     "parceiros": 500,
+  <     "periodos": 12,
+  <     "amostras_treino": 2814,
+  <     "amostras_validacao": 469,
+  <     "amostras_teste": 469
+  <   },
+  <   "metricas": {
+  <     "mape_modelo": 0.09222733571784175,
+  <     "mape_ultimo": 0.11542503374584373,
+  <     "mape_media_movel": 0.09972713645799962,
+  <     "brier_modelo": 0.10507158443120267,
+  <     "brier_referencia": 0.12150220680270103,
+  <     "calibracao_modelo": 0.03483412452146827,
+  <     "calibracao_referencia": 0.003332676354123643
+  <   },
+  <   "curva": [
+  <     {
+  <       "inicio": 0.0,
+  <       "fim": 0.1,
+  <       "previsto": 0.011216865408005117,
+  <       "observado": 0.019305019305019305,
+  <       "amostras": 259
+  <     },
+  <     {
+  <       "inicio": 0.1,
+  <       "fim": 0.2,
+  <       "previsto": 0.1390345395449353,
+  <       "observado": 0.14285714285714285,
+  <       "amostras": 42
+  <     },
+  <     {
+  <       "inicio": 0.2,
+  <       "fim": 0.3,
+  <       "previsto": 0.240077807240059,
+  <       "observado": 0.391304347826087,
+  <       "amostras": 23
+  <     },
+  <     {
+  <       "inicio": 0.3,
+  <       "fim": 0.4,
+  <       "previsto": 0.35355661693190654,
+  <       "observado": 0.3333333333333333,
+  <       "amostras": 21
+  <     },
+  <     {
+  <       "inicio": 0.4,
+  <       "fim": 0.5,
+  <       "previsto": 0.4486659208629378,
+  <       "observado": 0.5555555555555556,
+  <       "amostras": 18
+  <     },
+  <     {
+  <       "inicio": 0.5,
+  <       "fim": 0.6,
+  <       "previsto": 0.5507172579550662,
+  <       "observado": 0.44,
+  <       "amostras": 25
+  <     },
+  <     {
+  <       "inicio": 0.6,
+  <       "fim": 0.7,
+  <       "previsto": 0.6599574800726159,
+  <       "observado": 0.6,
+  <       "amostras": 30
+  <     },
+  <     {
+  <       "inicio": 0.7,
+  <       "fim": 0.8,
+  <       "previsto": 0.7503668706378713,
+  <       "observado": 0.75,
+  <       "amostras": 24
+  <     },
+  <     {
+  <       "inicio": 0.8,
+  <       "fim": 0.9,
+  <       "previsto": 0.8552219313830488,
+  <       "observado": 0.8421052631578947,
+  <       "amostras": 19
+  <     },
+  <     {
+  <       "inicio": 0.9,
+  <       "fim": 1.0,
+  <       "previsto": 0.928779118246432,
+  <       "observado": 0.5,
+  <       "amostras": 8
+  <     }
+  <   ],
+  <   "segundos": 0.76,
+  <   "promovido": true,
+  <   "versao": "rede-19",
+  <   "versao_em_uso": "rede-19",
+  <   "motivo": null
+  < }
+  ok    o treino terminou e registrou data, autor, volume e métricas (RF27)
+  ok    a versão em uso é a que venceu as referências, ou a anterior com o motivo (A1)
+
+==============================================================================
+[3/5] Consultar — o histórico de treinos e a previsão no cadastro
+==============================================================================
+
+$ GET /api/modelo/treinos?tamanho=3
+  200 OK
+  < {
+  <   "itens": [
+  <     {
+  <       "id": 19,
+  <       "situacao": "CONCLUIDO",
+  <       "autor": "Gestor da Evidência",
+  <       "iniciado_em": "2026-09-25T05:05:04.416327Z",
+  <       "concluido_em": "2026-09-25T05:05:04.428378Z",
+  <       "periodo_base": {
+  <         "id": 12,
+  <         "data_inicio": "2026-09-14",
+  <         "data_fim": "2026-09-20"
+  <       },
+  <       "volume": {
+  <         "parceiros": 500,
+  <         "periodos": 12,
+  <         "amostras_treino": 2814,
+  <         "amostras_validacao": 469,
+  <         "amostras_teste": 469
+  <       },
+  <       "metricas": {
+  <         "mape_modelo": 0.09222733571784175,
+  <         "mape_ultimo": 0.11542503374584373,
+  <         "mape_media_movel": 0.09972713645799962,
+  <         "brier_modelo": 0.10507158443120267,
+  <         "brier_referencia": 0.12150220680270103,
+  <         "calibracao_modelo": 0.03483412452146827,
+  <         "calibracao_referencia": 0.003332676354123643
+  <       },
+  <       "curva": [
+  <         {
+  <           "inicio": 0.0,
+  <           "fim": 0.1,
+  <           "previsto": 0.011216865408005117,
+  <           "observado": 0.019305019305019305,
+  <           "amostras": 259
+  <         },
+  <         {
+  <           "inicio": 0.1,
+  <           "fim": 0.2,
+  <           "previsto": 0.1390345395449353,
+  <           "observado": 0.14285714285714285,
+  <           "amostras": 42
+  <         },
+  <         {
+  <           "inicio": 0.2,
+  <           "fim": 0.3,
+  <           "previsto": 0.240077807240059,
+  <           "observado": 0.391304347826087,
+  <           "amostras": 23
+  <         },
+  <         {
+  <           "inicio": 0.3,
+  <           "fim": 0.4,
+  <           "previsto": 0.35355661693190654,
+  <           "observado": 0.3333333333333333,
+  <           "amostras": 21
+  <         },
+  <         {
+  <           "inicio": 0.4,
+  <           "fim": 0.5,
+  <           "previsto": 0.4486659208629378,
+  <           "observado": 0.5555555555555556,
+  <           "amostras": 18
+  <         },
+  <         {
+  <           "inicio": 0.5,
+  <           "fim": 0.6,
+  <           "previsto": 0.5507172579550662,
+  <           "observado": 0.44,
+  <           "amostras": 25
+  <         },
+  <         {
+  <           "inicio": 0.6,
+  <           "fim": 0.7,
+  <           "previsto": 0.6599574800726159,
+  <           "observado": 0.6,
+  <           "amostras": 30
+  <         },
+  <         {
+  <           "inicio": 0.7,
+  <           "fim": 0.8,
+  <           "previsto": 0.7503668706378713,
+  <           "observado": 0.75,
+  <           "amostras": 24
+  <         },
+  <         {
+  <           "inicio": 0.8,
+  <           "fim": 0.9,
+  <           "previsto": 0.8552219313830488,
+  <           "observado": 0.8421052631578947,
+  <           "amostras": 19
+  <         },
+  <         {
+  <           "inicio": 0.9,
+  <           "fim": 1.0,
+  <           "previsto": 0.928779118246432,
+  <           "observado": 0.5,
+  <           "amostras": 8
+  <         }
+  <       ],
+  <       "segundos": 0.76,
+  <       "promovido": true,
+  <       "versao": "rede-19",
+  <       "versao_em_uso": "rede-19",
+  <       "motivo": null
+  <     },
+  <     {
+  <       "id": 1,
+  <       "situacao": "CONCLUIDO",
+  <       "autor": null,
+  <       "iniciado_em": "2026-09-25T00:28:21.944835Z",
+  <       "concluido_em": "2026-09-25T00:28:21.970278Z",
+  <       "periodo_base": {
+  <         "id": 12,
+  <         "data_inicio": "2026-09-14",
+  <         "data_fim": "2026-09-20"
+  <       },
+  <       "volume": {
+  <         "parceiros": 500,
+  <         "periodos": 12,
+  <         "amostras_treino": 2814,
+  <         "amostras_validacao": 469,
+  <         "amostras_teste": 469
+  <       },
+  <       "metricas": {
+  <         "mape_modelo": 0.09222733571784175,
+  <         "mape_ultimo": 0.11542503374584373,
+  <         "mape_media_movel": 0.09972713645799962,
+  <         "brier_modelo": 0.10507158443120267,
+  <         "brier_referencia": 0.12150220680270103,
+  <         "calibracao_modelo": 0.03483412452146827,
+  <         "calibracao_referencia": 0.003332676354123643
+  <       },
+  <       "curva": [
+  <         {
+  <           "inicio": 0.0,
+  <           "fim": 0.1,
+  <           "previsto": 0.011216865408005117,
+  <           "observado": 0.019305019305019305,
+  <           "amostras": 259
+  <         },
+  <         {
+  <           "inicio": 0.1,
+  <           "fim": 0.2,
+  <           "previsto": 0.1390345395449353,
+  <           "observado": 0.14285714285714285,
+  <           "amostras": 42
+  <         },
+  <         {
+  <           "inicio": 0.2,
+  <           "fim": 0.3,
+  <           "previsto": 0.240077807240059,
+  <           "observado": 0.391304347826087,
+  <           "amostras": 23
+  <         },
+  <         {
+  <           "inicio": 0.3,
+  <           "fim": 0.4,
+  <           "previsto": 0.35355661693190654,
+  <           "observado": 0.3333333333333333,
+  <           "amostras": 21
+  <         },
+  <         {
+  <           "inicio": 0.4,
+  <           "fim": 0.5,
+  <           "previsto": 0.4486659208629378,
+  <           "observado": 0.5555555555555556,
+  <           "amostras": 18
+  <         },
+  <         {
+  <           "inicio": 0.5,
+  <           "fim": 0.6,
+  <           "previsto": 0.5507172579550662,
+  <           "observado": 0.44,
+  <           "amostras": 25
+  <         },
+  <         {
+  <           "inicio": 0.6,
+  <           "fim": 0.7,
+  <           "previsto": 0.6599574800726159,
+  <           "observado": 0.6,
+  <           "amostras": 30
+  <         },
+  <         {
+  <           "inicio": 0.7,
+  <           "fim": 0.8,
+  <           "previsto": 0.7503668706378713,
+  <           "observado": 0.75,
+  <           "amostras": 24
+  <         },
+  <         {
+  <           "inicio": 0.8,
+  <           "fim": 0.9,
+  <           "previsto": 0.8552219313830488,
+  <           "observado": 0.8421052631578947,
+  <           "amostras": 19
+  <         },
+  <         {
+  <           "inicio": 0.9,
+  <           "fim": 1.0,
+  <           "previsto": 0.928779118246432,
+  <           "observado": 0.5,
+  <           "amostras": 8
+  <         }
+  <       ],
+  <       "segundos": 1.87,
+  <       "promovido": true,
+  <       "versao": "rede-1",
+  <       "versao_em_uso": "rede-1",
+  <       "motivo": null
+  <     }
+  <   ],
+  <   "total": 2,
+  <   "pagina": 1,
+  <   "tamanho": 3
+  < }
+
+O analista abre o cadastro de Ponto Azul 2, o maior do período mais recente:
+
+$ GET /api/parceiros/246/previsao
+  200 OK
+  < {
+  <   "disponivel": true,
+  <   "faturamento_previsto": "84818.54",
+  <   "probabilidade_queda": 0.23553469215055362,
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "modelo_versao": "rede-19",
+  <   "origem": "MODELO",
+  <   "gerada_em": "2026-09-25T05:05:04.428378Z",
+  <   "desatualizada": false,
+  <   "motivo": null,
+  <   "ajuda": null
+  < }
+  ok    a previsão do parceiro sai da versão em uso, com a base
+
+==============================================================================
+[4/5] Atualizar — um novo treino muda a versão em uso
+==============================================================================
+
+$ POST /api/modelo/treinos
+  202 Accepted
+  < {
+  <   "id": 20,
+  <   "situacao": "EM_ANDAMENTO",
+  <   "autor": "Gestor da Evidência",
+  <   "iniciado_em": "2026-09-25T05:05:05.526954Z",
+  <   "concluido_em": null,
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "volume": {
+  <     "parceiros": null,
+  <     "periodos": null,
+  <     "amostras_treino": null,
+  <     "amostras_validacao": null,
+  <     "amostras_teste": null
+  <   },
+  <   "metricas": {
+  <     "mape_modelo": null,
+  <     "mape_ultimo": null,
+  <     "mape_media_movel": null,
+  <     "brier_modelo": null,
+  <     "brier_referencia": null,
+  <     "calibracao_modelo": null,
+  <     "calibracao_referencia": null
+  <   },
+  <   "curva": [],
+  <   "segundos": null,
+  <   "promovido": null,
+  <   "versao": "rede-20",
+  <   "versao_em_uso": null,
+  <   "motivo": null
+  < }
+
+  ... 2 consulta(s) a GET /api/modelo/treinos/20 até a situação mudar (1.0 s)
+
+$ GET /api/modelo
+  200 OK
+  < {
+  <   "versao_em_uso": "rede-20",
+  <   "origem": "MODELO",
+  <   "treino_da_versao": {
+  <     "id": 20,
+  <     "situacao": "CONCLUIDO",
+  <     "autor": "Gestor da Evidência",
+  <     "iniciado_em": "2026-09-25T05:05:05.526954Z",
+  <     "concluido_em": "2026-09-25T05:05:05.537493Z",
+  <     "periodo_base": {
+  <       "id": 12,
+  <       "data_inicio": "2026-09-14",
+  <       "data_fim": "2026-09-20"
+  <     },
+  <     "volume": {
+  <       "parceiros": 500,
+  <       "periodos": 12,
+  <       "amostras_treino": 2814,
+  <       "amostras_validacao": 469,
+  <       "amostras_teste": 469
+  <     },
+  <     "metricas": {
+  <       "mape_modelo": 0.09222733571784175,
+  <       "mape_ultimo": 0.11542503374584373,
+  <       "mape_media_movel": 0.09972713645799962,
+  <       "brier_modelo": 0.10507158443120267,
+  <       "brier_referencia": 0.12150220680270103,
+  <       "calibracao_modelo": 0.03483412452146827,
+  <       "calibracao_referencia": 0.003332676354123643
+  <     },
+  <     "curva": [
+  <       {
+  <         "inicio": 0.0,
+  <         "fim": 0.1,
+  <         "previsto": 0.011216865408005117,
+  <         "observado": 0.019305019305019305,
+  <         "amostras": 259
+  <       },
+  <       {
+  <         "inicio": 0.1,
+  <         "fim": 0.2,
+  <         "previsto": 0.1390345395449353,
+  <         "observado": 0.14285714285714285,
+  <         "amostras": 42
+  <       },
+  <       {
+  <         "inicio": 0.2,
+  <         "fim": 0.3,
+  <         "previsto": 0.240077807240059,
+  <         "observado": 0.391304347826087,
+  <         "amostras": 23
+  <       },
+  <       {
+  <         "inicio": 0.3,
+  <         "fim": 0.4,
+  <         "previsto": 0.35355661693190654,
+  <         "observado": 0.3333333333333333,
+  <         "amostras": 21
+  <       },
+  <       {
+  <         "inicio": 0.4,
+  <         "fim": 0.5,
+  <         "previsto": 0.4486659208629378,
+  <         "observado": 0.5555555555555556,
+  <         "amostras": 18
+  <       },
+  <       {
+  <         "inicio": 0.5,
+  <         "fim": 0.6,
+  <         "previsto": 0.5507172579550662,
+  <         "observado": 0.44,
+  <         "amostras": 25
+  <       },
+  <       {
+  <         "inicio": 0.6,
+  <         "fim": 0.7,
+  <         "previsto": 0.6599574800726159,
+  <         "observado": 0.6,
+  <         "amostras": 30
+  <       },
+  <       {
+  <         "inicio": 0.7,
+  <         "fim": 0.8,
+  <         "previsto": 0.7503668706378713,
+  <         "observado": 0.75,
+  <         "amostras": 24
+  <       },
+  <       {
+  <         "inicio": 0.8,
+  <         "fim": 0.9,
+  <         "previsto": 0.8552219313830488,
+  <         "observado": 0.8421052631578947,
+  <         "amostras": 19
+  <       },
+  <       {
+  <         "inicio": 0.9,
+  <         "fim": 1.0,
+  <         "previsto": 0.928779118246432,
+  <         "observado": 0.5,
+  <         "amostras": 8
+  <       }
+  <     ],
+  <     "segundos": 0.76,
+  <     "promovido": true,
+  <     "versao": "rede-20",
+  <     "versao_em_uso": "rede-20",
+  <     "motivo": null
+  <   },
+  <   "ultimo_treino": {
+  <     "id": 20,
+  <     "situacao": "CONCLUIDO",
+  <     "autor": "Gestor da Evidência",
+  <     "iniciado_em": "2026-09-25T05:05:05.526954Z",
+  <     "concluido_em": "2026-09-25T05:05:05.537493Z",
+  <     "periodo_base": {
+  <       "id": 12,
+  <       "data_inicio": "2026-09-14",
+  <       "data_fim": "2026-09-20"
+  <     },
+  <     "volume": {
+  <       "parceiros": 500,
+  <       "periodos": 12,
+  <       "amostras_treino": 2814,
+  <       "amostras_validacao": 469,
+  <       "amostras_teste": 469
+  <     },
+  <     "metricas": {
+  <       "mape_modelo": 0.09222733571784175,
+  <       "mape_ultimo": 0.11542503374584373,
+  <       "mape_media_movel": 0.09972713645799962,
+  <       "brier_modelo": 0.10507158443120267,
+  <       "brier_referencia": 0.12150220680270103,
+  <       "calibracao_modelo": 0.03483412452146827,
+  <       "calibracao_referencia": 0.003332676354123643
+  <     },
+  <     "curva": [
+  <       {
+  <         "inicio": 0.0,
+  <         "fim": 0.1,
+  <         "previsto": 0.011216865408005117,
+  <         "observado": 0.019305019305019305,
+  <         "amostras": 259
+  <       },
+  <       {
+  <         "inicio": 0.1,
+  <         "fim": 0.2,
+  <         "previsto": 0.1390345395449353,
+  <         "observado": 0.14285714285714285,
+  <         "amostras": 42
+  <       },
+  <       {
+  <         "inicio": 0.2,
+  <         "fim": 0.3,
+  <         "previsto": 0.240077807240059,
+  <         "observado": 0.391304347826087,
+  <         "amostras": 23
+  <       },
+  <       {
+  <         "inicio": 0.3,
+  <         "fim": 0.4,
+  <         "previsto": 0.35355661693190654,
+  <         "observado": 0.3333333333333333,
+  <         "amostras": 21
+  <       },
+  <       {
+  <         "inicio": 0.4,
+  <         "fim": 0.5,
+  <         "previsto": 0.4486659208629378,
+  <         "observado": 0.5555555555555556,
+  <         "amostras": 18
+  <       },
+  <       {
+  <         "inicio": 0.5,
+  <         "fim": 0.6,
+  <         "previsto": 0.5507172579550662,
+  <         "observado": 0.44,
+  <         "amostras": 25
+  <       },
+  <       {
+  <         "inicio": 0.6,
+  <         "fim": 0.7,
+  <         "previsto": 0.6599574800726159,
+  <         "observado": 0.6,
+  <         "amostras": 30
+  <       },
+  <       {
+  <         "inicio": 0.7,
+  <         "fim": 0.8,
+  <         "previsto": 0.7503668706378713,
+  <         "observado": 0.75,
+  <         "amostras": 24
+  <       },
+  <       {
+  <         "inicio": 0.8,
+  <         "fim": 0.9,
+  <         "previsto": 0.8552219313830488,
+  <         "observado": 0.8421052631578947,
+  <         "amostras": 19
+  <       },
+  <       {
+  <         "inicio": 0.9,
+  <         "fim": 1.0,
+  <         "previsto": 0.928779118246432,
+  <         "observado": 0.5,
+  <         "amostras": 8
+  <       }
+  <     ],
+  <     "segundos": 0.76,
+  <     "promovido": true,
+  <     "versao": "rede-20",
+  <     "versao_em_uso": "rede-20",
+  <     "motivo": null
+  <   },
+  <   "em_andamento": null,
+  <   "periodos_na_base": 12,
+  <   "periodos_minimos": 8,
+  <   "periodo_mais_recente": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "periodo_das_previsoes": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "desatualizado": false,
+  <   "pode_treinar": true,
+  <   "motivo_bloqueio": null
+  < }
+  ok    o último treino é o novo, e a tela sabe qual versão está valendo
+
+O cadastro de Ponto Azul 2, de novo:
+
+$ GET /api/parceiros/246/previsao
+  200 OK
+  < {
+  <   "disponivel": true,
+  <   "faturamento_previsto": "84818.54",
+  <   "probabilidade_queda": 0.23553469215055362,
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "modelo_versao": "rede-20",
+  <   "origem": "MODELO",
+  <   "gerada_em": "2026-09-25T05:05:05.537493Z",
+  <   "desatualizada": false,
+  <   "motivo": null,
+  <   "ajuda": null
+  < }
+  ok    a previsão do parceiro passou a sair da versão nova
+
+==============================================================================
+[5/5] No banco — o que ficou gravado
+==============================================================================
+
+$ SQL, só leitura, no banco da API
+  > SELECT id, situacao, parceiros, amostras_teste,
+  > round(mape_modelo::numeric, 4), round(brier_modelo::numeric, 4),
+  > promovido, versao_em_uso, octet_length(pesos)
+  > FROM treino_modelo WHERE id IN (:a, :b) ORDER BY id
+  < id | situacao  | parceiros | teste | mape   | brier  | promovido | em_uso  | bytes
+  < ---+-----------+-----------+-------+--------+--------+-----------+---------+------
+  < 19 | CONCLUIDO | 500       | 469   | 0.0922 | 0.1051 | True      | rede-19 | 11781
+  < 20 | CONCLUIDO | 500       | 469   | 0.0922 | 0.1051 | True      | rede-20 | 11781
+  ok    os dois treinos estão gravados, com os pesos na própria linha (ADR-010)
+
+$ SQL, só leitura, no banco da API
+  > SELECT modelo_versao, periodo_base_id, count(*)
+  > FROM previsao WHERE modelo_versao IN (:a, :b)
+  > GROUP BY modelo_versao, periodo_base_id ORDER BY modelo_versao
+  < modelo_versao | periodo_base_id | previsoes
+  < --------------+-----------------+----------
+  < rede-19       | 12              | 469      
+  < rede-20       | 12              | 469      
+  ok    as previsões das versões coexistem no banco sobre o mesmo período (UC07-A2)
+
+==============================================================================
+Depois da limpeza
+==============================================================================
+
+$ GET /api/modelo
+  200 OK
+  < {
+  <   "versao_em_uso": "rede-1",
+  <   "origem": "MODELO",
+  <   "treino_da_versao": {
+  <     "id": 1,
+  <     "situacao": "CONCLUIDO",
+  <     "autor": null,
+  <     "iniciado_em": "2026-09-25T00:28:21.944835Z",
+  <     "concluido_em": "2026-09-25T00:28:21.970278Z",
+  <     "periodo_base": {
+  <       "id": 12,
+  <       "data_inicio": "2026-09-14",
+  <       "data_fim": "2026-09-20"
+  <     },
+  <     "volume": {
+  <       "parceiros": 500,
+  <       "periodos": 12,
+  <       "amostras_treino": 2814,
+  <       "amostras_validacao": 469,
+  <       "amostras_teste": 469
+  <     },
+  <     "metricas": {
+  <       "mape_modelo": 0.09222733571784175,
+  <       "mape_ultimo": 0.11542503374584373,
+  <       "mape_media_movel": 0.09972713645799962,
+  <       "brier_modelo": 0.10507158443120267,
+  <       "brier_referencia": 0.12150220680270103,
+  <       "calibracao_modelo": 0.03483412452146827,
+  <       "calibracao_referencia": 0.003332676354123643
+  <     },
+  <     "curva": [
+  <       {
+  <         "inicio": 0.0,
+  <         "fim": 0.1,
+  <         "previsto": 0.011216865408005117,
+  <         "observado": 0.019305019305019305,
+  <         "amostras": 259
+  <       },
+  <       {
+  <         "inicio": 0.1,
+  <         "fim": 0.2,
+  <         "previsto": 0.1390345395449353,
+  <         "observado": 0.14285714285714285,
+  <         "amostras": 42
+  <       },
+  <       {
+  <         "inicio": 0.2,
+  <         "fim": 0.3,
+  <         "previsto": 0.240077807240059,
+  <         "observado": 0.391304347826087,
+  <         "amostras": 23
+  <       },
+  <       {
+  <         "inicio": 0.3,
+  <         "fim": 0.4,
+  <         "previsto": 0.35355661693190654,
+  <         "observado": 0.3333333333333333,
+  <         "amostras": 21
+  <       },
+  <       {
+  <         "inicio": 0.4,
+  <         "fim": 0.5,
+  <         "previsto": 0.4486659208629378,
+  <         "observado": 0.5555555555555556,
+  <         "amostras": 18
+  <       },
+  <       {
+  <         "inicio": 0.5,
+  <         "fim": 0.6,
+  <         "previsto": 0.5507172579550662,
+  <         "observado": 0.44,
+  <         "amostras": 25
+  <       },
+  <       {
+  <         "inicio": 0.6,
+  <         "fim": 0.7,
+  <         "previsto": 0.6599574800726159,
+  <         "observado": 0.6,
+  <         "amostras": 30
+  <       },
+  <       {
+  <         "inicio": 0.7,
+  <         "fim": 0.8,
+  <         "previsto": 0.7503668706378713,
+  <         "observado": 0.75,
+  <         "amostras": 24
+  <       },
+  <       {
+  <         "inicio": 0.8,
+  <         "fim": 0.9,
+  <         "previsto": 0.8552219313830488,
+  <         "observado": 0.8421052631578947,
+  <         "amostras": 19
+  <       },
+  <       {
+  <         "inicio": 0.9,
+  <         "fim": 1.0,
+  <         "previsto": 0.928779118246432,
+  <         "observado": 0.5,
+  <         "amostras": 8
+  <       }
+  <     ],
+  <     "segundos": 1.87,
+  <     "promovido": true,
+  <     "versao": "rede-1",
+  <     "versao_em_uso": "rede-1",
+  <     "motivo": null
+  <   },
+  <   "ultimo_treino": {
+  <     "id": 1,
+  <     "situacao": "CONCLUIDO",
+  <     "autor": null,
+  <     "iniciado_em": "2026-09-25T00:28:21.944835Z",
+  <     "concluido_em": "2026-09-25T00:28:21.970278Z",
+  <     "periodo_base": {
+  <       "id": 12,
+  <       "data_inicio": "2026-09-14",
+  <       "data_fim": "2026-09-20"
+  <     },
+  <     "volume": {
+  <       "parceiros": 500,
+  <       "periodos": 12,
+  <       "amostras_treino": 2814,
+  <       "amostras_validacao": 469,
+  <       "amostras_teste": 469
+  <     },
+  <     "metricas": {
+  <       "mape_modelo": 0.09222733571784175,
+  <       "mape_ultimo": 0.11542503374584373,
+  <       "mape_media_movel": 0.09972713645799962,
+  <       "brier_modelo": 0.10507158443120267,
+  <       "brier_referencia": 0.12150220680270103,
+  <       "calibracao_modelo": 0.03483412452146827,
+  <       "calibracao_referencia": 0.003332676354123643
+  <     },
+  <     "curva": [
+  <       {
+  <         "inicio": 0.0,
+  <         "fim": 0.1,
+  <         "previsto": 0.011216865408005117,
+  <         "observado": 0.019305019305019305,
+  <         "amostras": 259
+  <       },
+  <       {
+  <         "inicio": 0.1,
+  <         "fim": 0.2,
+  <         "previsto": 0.1390345395449353,
+  <         "observado": 0.14285714285714285,
+  <         "amostras": 42
+  <       },
+  <       {
+  <         "inicio": 0.2,
+  <         "fim": 0.3,
+  <         "previsto": 0.240077807240059,
+  <         "observado": 0.391304347826087,
+  <         "amostras": 23
+  <       },
+  <       {
+  <         "inicio": 0.3,
+  <         "fim": 0.4,
+  <         "previsto": 0.35355661693190654,
+  <         "observado": 0.3333333333333333,
+  <         "amostras": 21
+  <       },
+  <       {
+  <         "inicio": 0.4,
+  <         "fim": 0.5,
+  <         "previsto": 0.4486659208629378,
+  <         "observado": 0.5555555555555556,
+  <         "amostras": 18
+  <       },
+  <       {
+  <         "inicio": 0.5,
+  <         "fim": 0.6,
+  <         "previsto": 0.5507172579550662,
+  <         "observado": 0.44,
+  <         "amostras": 25
+  <       },
+  <       {
+  <         "inicio": 0.6,
+  <         "fim": 0.7,
+  <         "previsto": 0.6599574800726159,
+  <         "observado": 0.6,
+  <         "amostras": 30
+  <       },
+  <       {
+  <         "inicio": 0.7,
+  <         "fim": 0.8,
+  <         "previsto": 0.7503668706378713,
+  <         "observado": 0.75,
+  <         "amostras": 24
+  <       },
+  <       {
+  <         "inicio": 0.8,
+  <         "fim": 0.9,
+  <         "previsto": 0.8552219313830488,
+  <         "observado": 0.8421052631578947,
+  <         "amostras": 19
+  <       },
+  <       {
+  <         "inicio": 0.9,
+  <         "fim": 1.0,
+  <         "previsto": 0.928779118246432,
+  <         "observado": 0.5,
+  <         "amostras": 8
+  <       }
+  <     ],
+  <     "segundos": 1.87,
+  <     "promovido": true,
+  <     "versao": "rede-1",
+  <     "versao_em_uso": "rede-1",
+  <     "motivo": null
+  <   },
+  <   "em_andamento": null,
+  <   "periodos_na_base": 12,
+  <   "periodos_minimos": 8,
+  <   "periodo_mais_recente": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "periodo_das_previsoes": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "desatualizado": false,
+  <   "pode_treinar": true,
+  <   "motivo_bloqueio": null
+  < }
+  ok    a versão em uso voltou a ser a de antes da transcrição
+
+==============================================================================
+Resultado: 10 de 10 conferências passaram.

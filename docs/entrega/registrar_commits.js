@@ -22,10 +22,14 @@ const REPOSITORIO = 'https://github.com/PedroMiranda243/gih-fabrica-de-software'
 
 /* As janelas de entrega da disciplina (docs/05, seção 1). As Sprints 02 e 03
    venceram no mesmo dia, e por isso dividem a janela. */
+/* A da Sprint 04 fecha no dia em que o PDF dela foi gerado (21/09), e não no
+   prazo (26/09): o trabalho de 22/09 em diante já é o da Sprint 05, e contá-lo
+   pelo prazo daria a ela commits que ela não teve. */
 const JANELAS = [
   { rotulo: 'Sprint 01 — até 05/09', ate: '2026-09-05' },
   { rotulo: 'Sprints 02 e 03 — 06/09 a 19/09', ate: '2026-09-19' },
-  { rotulo: 'Sprint 04 — 20/09 a 26/09', ate: '2026-09-26' },
+  { rotulo: 'Sprint 04 — 20/09 a 21/09, data do PDF', ate: '2026-09-21' },
+  { rotulo: 'Sprint 05 — 22/09 a 03/10', ate: '2026-10-03' },
 ];
 
 // Separadores de controle: nenhum deles aparece em mensagem de commit.

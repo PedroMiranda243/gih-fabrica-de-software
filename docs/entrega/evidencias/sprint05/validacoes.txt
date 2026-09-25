@@ -1,0 +1,673 @@
+Validações e mensagens de erro · http://localhost:8000
+Dados sintéticos; nenhum nome real de empresa ou pessoa.
+
+==============================================================================
+Preparação — um analista, um gestor, e um parceiro com faturamento importado
+==============================================================================
+
+$ POST /api/usuarios
+  > {
+  >   "login": "t01498.analista",
+  >   "nome": "Analista da Evidência",
+  >   "senha": "********",
+  >   "perfil": "ANALISTA"
+  > }
+  201 Created
+  < {
+  <   "id": 95,
+  <   "login": "t01498.analista",
+  <   "nome": "Analista da Evidência",
+  <   "perfil": "ANALISTA",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-09-25T04:51:12.847183Z"
+  < }
+
+$ POST /api/usuarios
+  > {
+  >   "login": "t01498.gestor",
+  >   "nome": "Gestor da Evidência",
+  >   "senha": "********",
+  >   "perfil": "GESTOR"
+  > }
+  201 Created
+  < {
+  <   "id": 96,
+  <   "login": "t01498.gestor",
+  <   "nome": "Gestor da Evidência",
+  <   "perfil": "GESTOR",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-09-25T04:51:12.937364Z"
+  < }
+
+$ POST /api/importacoes
+  > {
+  >   "periodo_inicio": "2061-02-12",
+  >   "periodo_fim": "2061-02-18",
+  >   "texto": "Parceiro;Faturamento;Pedidos\nComércio t01498 hist;12500,40;312\n"
+  > }
+  201 Created
+  < {
+  <   "id": 70,
+  <   "periodo": {
+  <     "id": 61,
+  <     "data_inicio": "2061-02-12",
+  <     "data_fim": "2061-02-18"
+  <   },
+  <   "autor": {
+  <     "id": 95,
+  <     "nome": "Analista da Evidência"
+  <   },
+  <   "origem": "TEXTO",
+  <   "total_gravado": 1,
+  <   "total_rejeitado": 0,
+  <   "enviado_em": "2026-09-25T04:51:15.449572Z",
+  <   "metricas_vigentes": 0
+  < }
+
+==============================================================================
+[1/7] Importação de relatório (UC03)
+==============================================================================
+
+RN03 — sem o período, a importação é recusada e diz por quê:
+
+$ POST /api/importacoes
+  > {
+  >   "texto": "Parceiro;Faturamento;Pedidos\nComércio Alfa;12500,40;312\n"
+  > }
+  422 Unprocessable Entity
+  < {
+  <   "erro": "Alguns campos precisam de correção.",
+  <   "campos": [
+  <     {
+  <       "campo": "periodo_inicio",
+  <       "mensagem": "Campo obrigatório.",
+  <       "ajuda": "Sem o período, as métricas ficam órfãs na linha do tempo e a segmentação por tendência classifica errado sem emitir erro (RN03). Não existe valor padrão: informe a data inicial e a data final do relatório."
+  <     },
+  <     {
+  <       "campo": "periodo_fim",
+  <       "mensagem": "Campo obrigatório.",
+  <       "ajuda": "Sem o período, as métricas ficam órfãs na linha do tempo e a segmentação por tendência classifica errado sem emitir erro (RN03). Não existe valor padrão: informe a data inicial e a data final do relatório."
+  <     }
+  <   ]
+  < }
+  ok    esperado: 422 com 'periodo_inicio', 'periodo_fim', 'RN03'
+
+Período com o fim antes do início:
+
+$ POST /api/importacoes
+  > {
+  >   "periodo_inicio": "2061-02-18",
+  >   "periodo_fim": "2061-02-12",
+  >   "texto": "Parceiro;Faturamento;Pedidos\nComércio Alfa;12500,40;312\n"
+  > }
+  422 Unprocessable Entity
+  < {
+  <   "erro": "Alguns campos precisam de correção.",
+  <   "campos": [
+  <     {
+  <       "campo": "requisição",
+  <       "mensagem": "A data final do período não pode ser anterior à inicial."
+  <     }
+  <   ]
+  < }
+  ok    esperado: 422 com 'anterior'
+
+Data fora do formato:
+
+$ POST /api/importacoes
+  > {
+  >   "periodo_inicio": "31/12/2026",
+  >   "periodo_fim": "2061-02-18",
+  >   "texto": "Parceiro;Faturamento;Pedidos\nComércio Alfa;12500,40;312\n"
+  > }
+  422 Unprocessable Entity
+  < {
+  <   "erro": "Alguns campos precisam de correção.",
+  <   "campos": [
+  <     {
+  <       "campo": "periodo_inicio",
+  <       "mensagem": "Informe uma data válida, no formato AAAA-MM-DD.",
+  <       "ajuda": "Sem o período, as métricas ficam órfãs na linha do tempo e a segmentação por tendência classifica errado sem emitir erro (RN03). Não existe valor padrão: informe a data inicial e a data final do relatório."
+  <     }
+  <   ]
+  < }
+  ok    esperado: 422 com 'AAAA-MM-DD'
+
+Uma linha ruim não derruba as outras — a prévia mostra cada rejeição com o motivo:
+
+$ POST /api/importacoes/previa
+  > {
+  >   "periodo_inicio": "2061-02-12",
+  >   "periodo_fim": "2061-02-18",
+  >   "texto": "Parceiro;Faturamento;Pedidos\nComércio Alfa;12500,40;312\n;900,00;10\nComércio Beta;abacaxi;20\nComércio Gama;100,00;muitos\n"
+  > }
+  200 OK
+  < {
+  <   "periodo": {
+  <     "id": null,
+  <     "data_inicio": "2061-02-12",
+  <     "data_fim": "2061-02-18"
+  <   },
+  <   "reconhecidos": [
+  <     {
+  <       "linha": 2,
+  <       "nome": "Comércio Alfa",
+  <       "faturamento": "12500.40",
+  <       "pedidos": 312
+  <     }
+  <   ],
+  <   "rejeitados": [
+  <     {
+  <       "linha": 3,
+  <       "conteudo": ";900,00;10",
+  <       "motivo": "Nome do parceiro em branco."
+  <     },
+  <     {
+  <       "linha": 4,
+  <       "conteudo": "Comércio Beta;abacaxi;20",
+  <       "motivo": "Faturamento não numérico: 'abacaxi'."
+  <     },
+  <     {
+  <       "linha": 5,
+  <       "conteudo": "Comércio Gama;100,00;muitos",
+  <       "motivo": "Número de pedidos inválido: 'muitos'."
+  <     }
+  <   ],
+  <   "parceiros_novos": [
+  <     "Comércio Alfa"
+  <   ],
+  <   "total_reconhecido": 1,
+  <   "total_rejeitado": 3,
+  <   "periodo_ja_importado": true
+  < }
+  ok    esperado: 200 com '"total_reconhecido":1', '"total_rejeitado":3'
+
+Nenhuma linha aproveitável: nada é gravado.
+
+$ POST /api/importacoes
+  > {
+  >   "periodo_inicio": "2061-02-19",
+  >   "periodo_fim": "2061-02-25",
+  >   "texto": "Parceiro;Faturamento;Pedidos\nComércio Alfa;abacaxi;312\n"
+  > }
+  422 Unprocessable Entity
+  < {
+  <   "detail": "Nenhuma linha válida no relatório — nada foi gravado."
+  < }
+  ok    esperado: 422 com 'Nenhuma linha válida'
+
+Planilha do Excel enviada no lugar do CSV:
+
+$ POST /api/importacoes/arquivo/previa  (formulário com arquivo)
+  > arquivo: relatorio.xlsx, 64 bytes, começando por b'PK\x03\x04'
+  > periodo_inicio: 2061-02-12
+  > periodo_fim: 2061-02-18
+  422 Unprocessable Entity
+  < {
+  <   "detail": {
+  <     "erro": "'relatorio.xlsx' não é um arquivo de texto.",
+  <     "ajuda": "O relatório precisa ser CSV ou texto. Planilha em .xlsx é arquivo compactado e não pode ser lida assim: exporte como CSV antes de enviar."
+  <   }
+  < }
+  ok    esperado: 422 com 'exporte como CSV'
+
+RF12 — o mesmo período de novo. O padrão é cancelar, e a recusa diz o que seria
+apagado antes de oferecer a substituição:
+
+$ POST /api/importacoes
+  > {
+  >   "periodo_inicio": "2061-02-12",
+  >   "periodo_fim": "2061-02-18",
+  >   "texto": "Parceiro;Faturamento;Pedidos\nComércio t01498 hist;12500,40;312\n"
+  > }
+  409 Conflict
+  < {
+  <   "detail": {
+  <     "erro": "Este período já foi importado.",
+  <     "ajuda": "O padrão é cancelar, para não duplicar nem apagar dados sem querer. Para trocar o conteúdo do período, substitua a importação anterior: as métricas atuais deste período serão apagadas antes da gravação.",
+  <     "ja_existe": {
+  <       "importacao": 70,
+  <       "autor": "Analista da Evidência",
+  <       "enviado_em": "2026-09-25T04:51:15.449572+00:00",
+  <       "metricas_que_serao_apagadas": 1
+  <     }
+  <   }
+  < }
+  ok    esperado: 409 com 'metricas_que_serao_apagadas'
+
+==============================================================================
+[2/7] Cadastro de parceiro (UC04)
+==============================================================================
+
+Nome vazio — a mensagem diz que é obrigatório e quanto falta:
+
+$ POST /api/parceiros
+  > {
+  >   "nome": ""
+  > }
+  422 Unprocessable Entity
+  < {
+  <   "erro": "Alguns campos precisam de correção.",
+  <   "campos": [
+  <     {
+  <       "campo": "nome",
+  <       "mensagem": "Obrigatório: informe ao menos 2 caracteres."
+  <     }
+  <   ]
+  < }
+  ok    esperado: 422 com 'Obrigatório: informe ao menos 2 caracteres.'
+
+Nome curto:
+
+$ POST /api/parceiros
+  > {
+  >   "nome": "A"
+  > }
+  422 Unprocessable Entity
+  < {
+  <   "erro": "Alguns campos precisam de correção.",
+  <   "campos": [
+  <     {
+  <       "campo": "nome",
+  <       "mensagem": "Curto demais: use ao menos 2 caracteres."
+  <     }
+  <   ]
+  < }
+  ok    esperado: 422 com 'Curto demais: use ao menos 2 caracteres.'
+
+Contato longo:
+
+$ POST /api/parceiros
+  > {
+  >   "nome": "Comércio t01498",
+  >   "contato": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  > }
+  422 Unprocessable Entity
+  < {
+  <   "erro": "Alguns campos precisam de correção.",
+  <   "campos": [
+  <     {
+  <       "campo": "contato",
+  <       "mensagem": "Longo demais: use no máximo 120 caracteres."
+  <     }
+  <   ]
+  < }
+  ok    esperado: 422 com 'Longo demais: use no máximo 120 caracteres.'
+
+Situação comercial fora da lista:
+
+$ POST /api/parceiros
+  > {
+  >   "nome": "Comércio t01498",
+  >   "status": "VIP"
+  > }
+  422 Unprocessable Entity
+  < {
+  <   "erro": "Alguns campos precisam de correção.",
+  <   "campos": [
+  <     {
+  <       "campo": "status",
+  <       "mensagem": "Escolha uma destas opções: ATIVO, PROSPECCAO ou INATIVO."
+  <     }
+  <   ]
+  < }
+  ok    esperado: 422 com 'Escolha uma destas opções'
+
+Categoria que não existe — erro do campo, e não conflito de nome:
+
+$ POST /api/parceiros
+  > {
+  >   "nome": "Comércio t01498",
+  >   "categoria_id": 999999
+  > }
+  422 Unprocessable Entity
+  < {
+  <   "erro": "Alguns campos precisam de correção.",
+  <   "campos": [
+  <     {
+  <       "campo": "categoria_id",
+  <       "mensagem": "Categoria não encontrada. Escolha uma da lista ou deixe o parceiro sem categoria."
+  <     }
+  <   ]
+  < }
+  ok    esperado: 422 com 'categoria_id', 'Categoria não encontrada'
+
+UC04-E1 — nome em uso: a recusa aponta o parceiro que já o usa:
+
+$ POST /api/parceiros
+  > {
+  >   "nome": "Comércio t01498 hist"
+  > }
+  409 Conflict
+  < {
+  <   "detail": {
+  <     "erro": "Já existe um parceiro com o nome 'Comércio t01498 hist'.",
+  <     "ajuda": "Corrija o nome, ou abra o cadastro existente e edite-o em vez de criar outro.",
+  <     "existente": {
+  <       "id": 585,
+  <       "nome": "Comércio t01498 hist"
+  <     }
+  <   }
+  < }
+  ok    esperado: 409 com '"existente"', '585'
+
+Excluir parceiro com faturamento importado apagaria números de períodos já
+fechados. A recusa diz o que impede e aponta a saída — desativar:
+
+$ DELETE /api/parceiros/585
+  409 Conflict
+  < {
+  <   "detail": {
+  <     "erro": "O parceiro 'Comércio t01498 hist' tem histórico e não pode ser excluído.",
+  <     "ajuda": "Excluir apagaria registros que outros períodos já contabilizam. Para tirá-lo de circulação sem perder o histórico, desative o parceiro.",
+  <     "vinculos": {
+  <       "metricas": 1,
+  <       "segmentos": 1,
+  <       "previsoes": 0,
+  <       "itens_de_plano": 0,
+  <       "mensagens": 0,
+  <       "usuarios": 0
+  <     }
+  <   }
+  < }
+  ok    esperado: 409 com 'desative'
+
+==============================================================================
+[3/7] Lista de parceiros — filtros e ordenação vêm da URL
+==============================================================================
+
+Um link editado à mão chega aqui. A recusa diz o que vale:
+
+$ GET /api/parceiros?ordenar_por=idade
+  422 Unprocessable Entity
+  < {
+  <   "erro": "Alguns campos precisam de correção.",
+  <   "campos": [
+  <     {
+  <       "campo": "ordenar_por",
+  <       "mensagem": "Escolha uma destas opções: nome, faturamento, pedidos, ticket_medio ou variacao."
+  <     }
+  <   ]
+  < }
+  ok    esperado: 422 com 'Escolha uma destas opções'
+
+$ GET /api/parceiros?pagina=0
+  422 Unprocessable Entity
+  < {
+  <   "erro": "Alguns campos precisam de correção.",
+  <   "campos": [
+  <     {
+  <       "campo": "pagina",
+  <       "mensagem": "Use um valor a partir de 1."
+  <     }
+  <   ]
+  < }
+  ok    esperado: 422 com 'Use um valor a partir de 1.'
+
+$ GET /api/parceiros?tamanho=5000
+  422 Unprocessable Entity
+  < {
+  <   "erro": "Alguns campos precisam de correção.",
+  <   "campos": [
+  <     {
+  <       "campo": "tamanho",
+  <       "mensagem": "Use um valor até 200."
+  <     }
+  <   ]
+  < }
+  ok    esperado: 422 com 'Use um valor até 200.'
+
+==============================================================================
+[4/7] Limiares da segmentação (RF21) — só o administrador
+==============================================================================
+
+Top 0 esvaziaria o segmento Top da rede inteira. Nada é gravado:
+
+$ PUT /api/configuracao/segmentacao
+  > {
+  >   "top_n": 0,
+  >   "periodos_tendencia": 2,
+  >   "periodos_novato": 3
+  > }
+  422 Unprocessable Entity
+  < {
+  <   "erro": "Alguns campos precisam de correção.",
+  <   "campos": [
+  <     {
+  <       "campo": "top_n",
+  <       "mensagem": "Use um valor a partir de 1."
+  <     }
+  <   ]
+  < }
+  ok    esperado: 422 com 'top_n', 'Use um valor a partir de 1.'
+
+==============================================================================
+[5/7] Acesso (RF01, RF03, RNF11)
+==============================================================================
+
+Senha errada, e depois um login que não existe. RNF11: as duas respostas são
+iguais — duas mensagens diferentes entregariam a lista de logins válidos.
+
+$ POST /api/sessao
+  > {
+  >   "login": "t01498.analista",
+  >   "senha": "********"
+  > }
+  401 Unauthorized
+  < {
+  <   "detail": "Login ou senha inválidos."
+  < }
+  ok    esperado: 401 com 'Login ou senha inválidos.'
+
+$ POST /api/sessao
+  > {
+  >   "login": "ninguem.com.este.login",
+  >   "senha": "********"
+  > }
+  401 Unauthorized
+  < {
+  <   "detail": "Login ou senha inválidos."
+  < }
+  ok    esperado: 401 com 'Login ou senha inválidos.'
+  ok    as duas recusas são indistinguíveis
+
+Sem sessão:
+
+$ GET /api/parceiros
+  401 Unauthorized
+  < {
+  <   "detail": "Sessão inválida ou expirada."
+  < }
+  ok    esperado: 401 com 'Sessão inválida ou expirada.'
+
+O analista tentando a área de usuários, que é do administrador:
+
+$ GET /api/usuarios
+  403 Forbidden
+  < {
+  <   "detail": "Seu perfil não permite esta operação."
+  < }
+  ok    esperado: 403 com 'Seu perfil não permite esta operação.'
+
+==============================================================================
+[6/7] Modelo preditivo (UC07, RN09) — quem treina, e um por vez
+==============================================================================
+
+O analista lê a previsão no cadastro (RF28), mas não troca o modelo que toda a
+equipe usa (UC07):
+
+$ POST /api/modelo/treinos
+  403 Forbidden
+  < {
+  <   "detail": "Seu perfil não permite esta operação."
+  < }
+  ok    esperado: 403 com 'Seu perfil não permite esta operação.'
+
+Um treino por vez, travado pelo banco (ADR-010). O segundo pedido chega com o
+primeiro ainda rodando:
+
+$ POST /api/modelo/treinos
+  202 Accepted
+  < {
+  <   "id": 17,
+  <   "situacao": "EM_ANDAMENTO",
+  <   "autor": "Gestor da Evidência",
+  <   "iniciado_em": "2026-09-25T04:51:20.744343Z",
+  <   "concluido_em": null,
+  <   "periodo_base": {
+  <     "id": 61,
+  <     "data_inicio": "2061-02-12",
+  <     "data_fim": "2061-02-18"
+  <   },
+  <   "volume": {
+  <     "parceiros": null,
+  <     "periodos": null,
+  <     "amostras_treino": null,
+  <     "amostras_validacao": null,
+  <     "amostras_teste": null
+  <   },
+  <   "metricas": {
+  <     "mape_modelo": null,
+  <     "mape_ultimo": null,
+  <     "mape_media_movel": null,
+  <     "brier_modelo": null,
+  <     "brier_referencia": null,
+  <     "calibracao_modelo": null,
+  <     "calibracao_referencia": null
+  <   },
+  <   "curva": [],
+  <   "segundos": null,
+  <   "promovido": null,
+  <   "versao": "rede-17",
+  <   "versao_em_uso": null,
+  <   "motivo": null
+  < }
+
+$ POST /api/modelo/treinos
+  409 Conflict
+  < {
+  <   "detail": {
+  <     "erro": "Já existe um treino em andamento.",
+  <     "ajuda": "Acompanhe o treino atual; quando ele terminar, você pode disparar outro.",
+  <     "em_andamento": 17
+  <   }
+  < }
+  ok    esperado: 409 com 'Já existe um treino em andamento.', 'Acompanhe o treino atual'
+
+Um treino que não existe:
+
+$ GET /api/modelo/treinos/999999
+  404 Not Found
+  < {
+  <   "detail": "Treino não encontrado."
+  < }
+  ok    esperado: 404 com 'Treino não encontrado.'
+
+Um parceiro recém-chegado, com menos períodos que a janela da RN09: o cadastro
+não inventa previsão, e diz por quê.
+
+$ GET /api/parceiros/585/previsao
+  200 OK
+  < {
+  <   "disponivel": false,
+  <   "faturamento_previsto": null,
+  <   "probabilidade_queda": null,
+  <   "periodo_base": {
+  <     "id": 61,
+  <     "data_inicio": "2061-02-12",
+  <     "data_fim": "2061-02-18"
+  <   },
+  <   "modelo_versao": "rede-17",
+  <   "origem": null,
+  <   "gerada_em": null,
+  <   "desatualizada": false,
+  <   "motivo": "Com 1 período de histórico, ainda não há previsão: são necessários 4.",
+  <   "ajuda": "A previsão aparece no primeiro treino depois que o parceiro completar a janela."
+  < }
+  ok    esperado: 200 com '"disponivel":false', 'ainda não há previsão', 'são necessários 4'
+
+==============================================================================
+[7/7] Falha inesperada (RNF18, RNF19) — o banco fora do ar
+==============================================================================
+
+Para ver o que o usuário vê quando algo quebra de verdade, o banco é parado
+por alguns segundos.
+
+$ docker compose stop postgres
+   Container growth-intelligence-hub-postgres-1 Stopping 
+   Container growth-intelligence-hub-postgres-1 Stopped 
+
+A verificação de saúde separa "API fora" de "banco fora":
+
+$ GET /api/health
+  200 OK
+  < {
+  <   "status": "ok",
+  <   "banco": "indisponível",
+  <   "versao": "0.2.0"
+  < }
+
+Uma tela pedindo a lista de parceiros:
+
+$ GET /api/parceiros?tamanho=1
+  500 Internal Server Error
+  < {
+  <   "erro": "Não foi possível concluir a operação.",
+  <   "correlacao": "966b7afeb031"
+  < }
+  ok    esperado: 500 com 'Não foi possível concluir a operação.', 'correlacao'
+  ok    a resposta não mostra nada do servidor
+
+$ docker compose logs api  (só o que tem 966b7afeb031)
+  [966b7afeb031] GET /api/parceiros
+  sqlalchemy.exc.OperationalError: (psycopg.OperationalError) [Errno -2] Name or service not known
+  ok    o mesmo identificador está no log, com a exceção que ficou fora da resposta
+
+$ docker compose start postgres
+   Container growth-intelligence-hub-postgres-1 Starting 
+   Container growth-intelligence-hub-postgres-1 Started 
+
+O banco voltou em 2 s. A mesma tela, de novo,
+sem reiniciar a API:
+
+$ GET /api/parceiros?tamanho=1
+  200 OK
+  < {
+  <   "itens": [
+  <     {
+  <       "id": 31,
+  <       "nome": "Cantina Azul",
+  <       "categoria": {
+  <         "id": 2,
+  <         "nome": "Lanchonete",
+  <         "ativa": true
+  <       },
+  <       "origem_categoria": "MANUAL",
+  <       "status": "ATIVO",
+  <       "contato": null,
+  <       "ativo": true,
+  <       "criado_em": "2026-09-21T07:58:22.652526Z",
+  <       "desempenho": {
+  <         "segmento": null,
+  <         "faturamento": null,
+  <         "pedidos": null,
+  <         "ticket_medio": null,
+  <         "variacao_percentual": null
+  <       }
+  <     }
+  <   ],
+  <   "total": 501,
+  <   "pagina": 1,
+  <   "tamanho": 1,
+  <   "periodo": {
+  <     "id": 61,
+  <     "data_inicio": "2061-02-12",
+  <     "data_fim": "2061-02-18"
+  <   }
+  < }
+  ok    esperado: 200
+
+==============================================================================
+Resultado: 31 de 31 respostas como esperado.
