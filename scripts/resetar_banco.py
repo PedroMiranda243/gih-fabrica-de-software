@@ -9,16 +9,22 @@ Uso:
     python scripts/resetar_banco.py --parceiros 2000         # tamanho da rede
     python scripts/resetar_banco.py --vazio                  # recria sem popular
     python scripts/resetar_banco.py --sim                    # sem perguntar
+
+Os usuários vão junto com o resto. No fim, o reset recria o administrador e
+reinicia a API — ver `reabrir_acesso`.
 """
 from __future__ import annotations
 
 import argparse
 import subprocess
 import sys
+import time
+import urllib.request
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 API = RAIZ / "api"
+SAUDE = "http://localhost:8000/api/health"
 sys.path.insert(0, str(API))
 
 from app.config import config  # noqa: E402
@@ -40,6 +46,71 @@ def rodar(comando: list[str], cwd: Path) -> None:
         sys.exit(r.returncode)
 
 
+def api_no_compose() -> bool | None:
+    """Se a API roda pelo Docker Compose; `None` quando não há Docker para perguntar."""
+    try:
+        r = subprocess.run(
+            ["docker", "compose", "ps", "--status", "running", "--services"],
+            cwd=RAIZ,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        return None
+    return r.returncode == 0 and "api" in r.stdout.split()
+
+
+def esperar_api(limite_s: float = 60) -> bool:
+    fim = time.monotonic() + limite_s
+    while time.monotonic() < fim:
+        try:
+            with urllib.request.urlopen(SAUDE, timeout=2) as r:
+                if r.status == 200:
+                    return True
+        except OSError:
+            pass
+        time.sleep(1)
+    return False
+
+
+def reabrir_acesso(py: str) -> None:
+    """Deixa a base em condição de uso: com administrador, e a API enxergando as
+    tabelas novas (#115).
+
+    **O administrador.** O reset recria também a tabela de usuários, e ela volta
+    vazia. O `criar-admin` só rodava na subida do contêiner: até alguém
+    reiniciar a API, ninguém entrava. Rodado aqui, e antes de reiniciar, a senha
+    sorteada (quando `ADMIN_SENHA` não está definida) sai nesta saída, onde quem
+    rodou o reset vai lê-la — e não só no log do contêiner.
+
+    **A API.** O psycopg prepara no servidor as consultas que se repetem numa
+    conexão, e as conexões que a API mantém guardam planos dos tipos que o reset
+    acabou de recriar. Cada uma respondia "erro interno" uma vez antes de se
+    renovar ("cached plan must not change result type"). Reiniciar abre
+    conexões novas.
+    """
+    print("\nConferindo o administrador...")
+    rodar([py, "-m", "app.cli", "criar-admin"], cwd=API)
+    print(
+        "Só o administrador entra agora. Logins pessoais se recriam com "
+        "`python -m app.cli criar-usuario` — a senha é digitada no terminal."
+    )
+
+    if not api_no_compose():
+        print(
+            "\nA API não está rodando pelo Docker Compose. Se ela estiver no ar por outro "
+            "caminho, reinicie-a: as conexões abertas guardam consultas das tabelas antigas."
+        )
+        return
+
+    print("\nReiniciando a API...")
+    rodar(["docker", "compose", "restart", "api"], cwd=RAIZ)
+    if esperar_api():
+        print("API no ar.")
+    else:
+        print(f"A API não respondeu em {SAUDE} — veja `docker compose logs api`.")
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description="Limpa e repovoa o banco do GIH.")
     p.add_argument("--parceiros", type=int, default=500)
@@ -52,7 +123,7 @@ def main() -> None:
     # Mostrar o destino antes de apagar não é formalidade: a porta 5432 costuma
     # ter outro Postgres, e apagar o banco errado é irreversível.
     destino = config.database_url.split("@")[-1]
-    print(f"Isto vai APAGAR todos os dados de: {destino}")
+    print(f"Isto vai APAGAR todos os dados, inclusive os usuários, de: {destino}")
 
     if not a.sim:
         if input("Digite 'apagar' para confirmar: ").strip().lower() != "apagar":
@@ -69,6 +140,7 @@ def main() -> None:
 
     if a.vazio:
         print("\nEsquema recriado, sem dados.")
+        reabrir_acesso(py)
         return
 
     print("\nPopulando...")
@@ -103,6 +175,8 @@ def main() -> None:
             f"\nModelo não treinado: {a.periodos} períodos, e o treino exige "
             f"{PERIODOS_MINIMOS} (RN09)."
         )
+
+    reabrir_acesso(py)
 
 
 if __name__ == "__main__":
