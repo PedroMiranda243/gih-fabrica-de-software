@@ -18,7 +18,8 @@ desenvolvimento da equipe, não a terceira entrega avaliada.
 | **Sprint 02** — arquitetura e modelagem | 19/09/2026 | 2 a 5 | Arquitetura, diagrama de classes, MER, modelo relacional, protótipo, banco criado, repositório estruturado |
 | **Sprint 03** — estrutura inicial funcionando | 19/09/2026 | 6 | Login, cadastro de usuários, perfis, CRUD de parceiros, importação, painel, interface web, deploy local |
 | **Sprint 04** — primeiro módulo completo | 26/09/2026 | 7 | Ingestão + BI: segmentação, mobilidade do Top N, limiares configuráveis, filtros, exportação, cadastro de parceiro na tela |
-| Sprint 05 em diante | a definir | 8 em diante | — |
+| **Sprint 05** — segundo módulo funcionando | 03/10/2026 | 8, e a H45 da 9 | Previsão: variáveis, referências, rede com risco calibrado, treino pela tela com versão em uso, previsão e risco no cadastro do parceiro |
+| Sprint 06 em diante | a definir | 9 em diante | — |
 
 A numeração semanal é a que aparece nas *issues*, nos *milestones* e nos commits do GitHub, e por isso não
 foi renumerada: mudá-la desalinharia o histórico do repositório, que é justamente onde a disciplina pede
@@ -27,6 +28,11 @@ que a evolução do projeto seja demonstrada.
 **A equipe segue à frente do calendário interno.** A Sprint 7 — segmentação e mobilidade do Top N — estava
 prevista para 19/10 a 23/10 e foi concluída em 21/09. A folga não muda o plano das sprints seguintes: ela
 vira margem para o núcleo em GPU (Sprints 9 a 11), que é onde o risco técnico do projeto se concentra.
+
+**A H45 — retreino pela tela — foi antecipada da Sprint 9 para a 8**, e entregue na Sprint 05 da
+disciplina. Sem ela, o módulo de previsão não teria fluxo de uso: o usuário só leria números prontos, e o
+enunciado pede um módulo funcionando, com fluxo real. A Sprint 9 fica com as outras cinco histórias do
+otimizador.
 
 **A segunda entrega cobre quatro das nossas sprints, e não uma.** A equipe está adiantada em relação ao
 calendário da disciplina: na data da entrega de arquitetura e modelagem, o banco já está criado e migrado,
