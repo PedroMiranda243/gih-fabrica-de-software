@@ -310,3 +310,69 @@ describe("Parceiro — sugestão de categoria pelo nome (RN05, H27)", () => {
   });
 });
 
+describe("Parceiro — previsão do próximo período (RF28, H44)", () => {
+  const PREVISTO = {
+    disponivel: true,
+    faturamento_previsto: "1100.00",
+    probabilidade_queda: 0.24,
+    periodo_base: SERIE.pontos[1].periodo,
+    modelo_versao: "rede-2",
+    origem: "MODELO",
+    gerada_em: "2026-09-24T20:00:02Z",
+    desatualizada: false,
+    motivo: null,
+    ajuda: null,
+  };
+
+  it("mostra a estimativa marcada como tal, com a base e a versão", async () => {
+    simularApi(rotasDoCadastro({ "GET /api/parceiros/7/previsao": { corpo: PREVISTO } }));
+    renderizar("/parceiros/7");
+
+    const secao = (await screen.findByRole("heading", { name: "Próximo período" })).closest(
+      "section",
+    );
+    expect(within(secao).getByText("Estimativa")).toBeVisible();
+    expect(within(secao).getByText("R$ 1.100,00")).toBeVisible();
+    expect(within(secao).getByText("24%")).toBeVisible();
+    expect(within(secao).getByText(/Rede neural · rede-2/)).toBeVisible();
+    expect(within(secao).getByText(/não medição/)).toBeVisible();
+
+    // A série ganha o trecho tracejado até o próximo período.
+    expect(screen.getByText(/estimativa do modelo para o próximo período/)).toBeInTheDocument();
+  });
+
+  it("sem previsão, diz o motivo que a API deu", async () => {
+    simularApi(
+      rotasDoCadastro({
+        "GET /api/parceiros/7/previsao": {
+          corpo: {
+            ...PREVISTO,
+            disponivel: false,
+            faturamento_previsto: null,
+            probabilidade_queda: null,
+            motivo: "Com 2 períodos de histórico, ainda não há previsão: são necessários 4.",
+            ajuda: "A previsão aparece no primeiro treino depois que o parceiro completar a janela.",
+          },
+        },
+      }),
+    );
+    renderizar("/parceiros/7");
+
+    expect(await screen.findByText(/são necessários 4/)).toBeVisible();
+    expect(screen.queryByText(/estimativa do modelo para o próximo período/)).toBeNull();
+  });
+
+  it("previsão de antes do período mais recente fica fora do gráfico, e avisa", async () => {
+    simularApi(
+      rotasDoCadastro({
+        "GET /api/parceiros/7/previsao": { corpo: { ...PREVISTO, desatualizada: true } },
+      }),
+    );
+    renderizar("/parceiros/7");
+
+    expect(await screen.findByText(/o próximo treino a refaz/)).toBeVisible();
+    // Estimativa de um período que já aconteceu não se desenha como futuro.
+    expect(screen.queryByText(/estimativa do modelo para o próximo período/)).toBeNull();
+  });
+});
+

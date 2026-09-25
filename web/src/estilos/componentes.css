@@ -423,6 +423,17 @@
   stroke-width: 2;
 }
 
+/* A estimativa: tracejada e vazada, para se distinguir do medido sem depender
+   da cor (H44). O traço é da série, e não da grade: grade tracejada é que leria
+   como projeção. */
+.grafico__linha--prevista {
+  stroke-dasharray: 5 4;
+}
+
+.grafico__ponto--previsto {
+  stroke-dasharray: 2 2;
+}
+
 .grafico__cruz {
   stroke: var(--ink-3);
   stroke-width: 1;

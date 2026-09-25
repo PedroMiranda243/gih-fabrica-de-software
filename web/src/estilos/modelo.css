@@ -1,0 +1,209 @@
+/* Tela do modelo preditivo (UC07) e o gráfico de comparação com as referências. */
+
+.modelo__corpo {
+  padding: var(--esp-16);
+}
+
+/* Por que o botão está desligado — a frase vem pronta da API. */
+.modelo__bloqueio {
+  margin: 0;
+  padding: var(--esp-12) var(--esp-16) 0;
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+}
+
+/* Os fatos à esquerda, a comparação à direita: resumo antes do detalhe, como o
+   `docs/09` pede, e os dois cabem lado a lado a partir de ~900 px. */
+.modelo__versao {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--esp-24);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .modelo__versao {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.modelo__explica {
+  margin: 0 0 var(--esp-12);
+  max-width: 60ch;
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+  line-height: 1.55;
+}
+
+.modelo__fatos {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--esp-8) var(--esp-16);
+  margin: 0;
+}
+
+.modelo__fatos dt {
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+}
+
+.modelo__fatos dd {
+  margin: 0;
+  font-size: var(--txt-13);
+}
+
+.modelo__graficos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-20);
+}
+
+.modelo__rodape {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--ink-2);
+  font-size: var(--txt-11);
+  line-height: 1.5;
+}
+
+/* Andamento sem porcentagem, porque não há como sabê-la: a parada antecipada
+   decide quando o treino acaba. Uma barra que corre diz "está trabalhando" sem
+   prometer um fim que ninguém conhece. Cinza, e não a cor de ação: não
+   responde a clique. */
+.modelo__barra-andamento {
+  position: relative;
+  height: 3px;
+  margin-top: var(--esp-8);
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--surface-2);
+}
+
+.modelo__barra-andamento::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 30%;
+  background: var(--ink-3);
+  animation: modelo-andamento 1.4s ease-in-out infinite;
+}
+
+@keyframes modelo-andamento {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(340%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modelo__barra-andamento::after {
+    width: 100%;
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+/* Três classes, como no histórico de importações: `.tabela .nome` de
+   `componentes.css` tem a mesma especificidade de duas classes e ganharia. */
+.historico-treinos .tabela .quando {
+  white-space: nowrap;
+}
+
+.historico-treinos .tabela .resultado {
+  min-width: 14rem;
+  max-width: 32rem;
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+}
+
+/* ------------------------------------------------------------ comparação */
+.comparacao {
+  margin: 0;
+}
+
+.comparacao__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--esp-8);
+  margin-bottom: var(--esp-8);
+  font-size: var(--txt-13);
+  font-weight: var(--peso-nome);
+}
+
+.comparacao__nota {
+  font-size: var(--txt-11);
+  font-weight: var(--peso-corpo);
+  color: var(--ink-2);
+}
+
+.comparacao__barras {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A linha inteira é o alvo do mouse, e não só a barra: a da referência pode
+   ter poucos pixels a mais que a outra, e mirar nela seria trabalho. */
+.comparacao__linha {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr);
+  gap: var(--esp-12);
+  align-items: center;
+  min-height: 24px;
+  border-radius: var(--raio-controle);
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+}
+
+.comparacao__linha:hover {
+  background: var(--surface-2);
+}
+
+/* A série que a pergunta é sobre: peso e tinta cheia no nome, cor da rampa na
+   barra. As referências ficam em cinza — pano de fundo. */
+.comparacao__linha--destaque {
+  color: var(--ink);
+  font-weight: var(--peso-nome);
+}
+
+.comparacao__trilho {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-6);
+  min-width: 0;
+}
+
+/* Espessura contida e ponta arredondada só na ponta do dado: a base fica
+   reta, colada no zero. */
+.comparacao__barra {
+  display: block;
+  flex: none;
+  height: 14px;
+  min-width: 2px;
+  border-radius: 0 4px 4px 0;
+  background: var(--serie-referencia);
+}
+
+.comparacao__linha--destaque .comparacao__barra {
+  background: var(--serie-1);
+}
+
+/* O valor na ponta, em tinta de texto: a cor da série fica na barra, nunca no
+   número (skill de visualização). */
+.comparacao__valor {
+  color: var(--ink);
+  font-size: var(--txt-12);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .comparacao__linha {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

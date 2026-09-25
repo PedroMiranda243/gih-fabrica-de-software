@@ -56,6 +56,11 @@
   --serie-1: #2a78d6;
   --serie-2: #eb6834;
   --serie-3: #1baf7a;
+  /* A referência contra a qual uma série se compara (modelo × contas simples):
+     cinza, porque o gráfico é de ênfase — a série fala, a referência é pano de
+     fundo. Validado contra `--serie-1` no validador de paleta: ΔE 16,2 em visão
+     normal e 13,9 no pior daltonismo, contraste acima de 3:1. */
+  --serie-referencia: #8a93a3;
   --grade: #e8ecf3;
 
   /* ----------------------------------------------------------- tipografia */
@@ -130,6 +135,9 @@
     --serie-1: #3987e5;
     --serie-2: #d95926;
     --serie-3: #199e70;
+    /* Mais escuro que o `--ink-3` do modo escuro de propósito: com ele, o par
+       com `--serie-1` mediu ΔE 14,5 em visão normal, abaixo do piso de 15. */
+    --serie-referencia: #5a6474;
     --grade: #232a34;
   }
 }
@@ -157,6 +165,7 @@
   --serie-1: #3987e5;
   --serie-2: #d95926;
   --serie-3: #199e70;
+  --serie-referencia: #5a6474;
   --grade: #232a34;
 }
 

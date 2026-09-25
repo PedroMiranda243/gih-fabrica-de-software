@@ -335,9 +335,9 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 |---|---|
 | **Ator principal** | Administrador (também Gestor) |
 | **Objetivo** | Produzir previsões de faturamento e de risco a partir do histórico já armazenado |
-| **Pré-condições** | Usuário autenticado com perfil Administrador ou Gestor; histórico com períodos suficientes |
+| **Pré-condições** | Usuário autenticado com perfil Administrador ou Gestor; histórico com períodos suficientes (8, RN09) |
 | **Pós-condições** | Modelo treinado e versionado; previsões disponíveis para consulta |
-| **Requisitos** | RF27, RF28; RNF16 |
+| **Requisitos** | RF27, RF28; RNF16; RN09 |
 
 **Fluxo principal**
 
@@ -360,8 +360,16 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 
 **Exceções**
 
-- **E1 — Histórico insuficiente.** Abaixo do mínimo de períodos, o sistema recusa o treino e diz quantos
-  períodos faltam. Treinar com pouco dado produz um número com aparência de previsão e sem valor preditivo.
+- **E1 — Histórico insuficiente.** Abaixo do mínimo de períodos — 8, pela RN09 —, o sistema recusa o treino
+  e diz quantos períodos faltam. Treinar com pouco dado produz um número com aparência de previsão e sem
+  valor preditivo.
+
+> **Na interface (Sprint 05 da disciplina).** A tela **Modelo** (`/modelo`) mostra a versão em uso, com as
+> métricas lado a lado com as referências; dispara o treino com confirmação e acompanha o andamento até o
+> resultado — entrou em uso, ficou a anterior com o motivo (A1), ou falhou. O treino roda fora da
+> requisição, um por vez (ADR-010). As previsões aparecem no **cadastro do parceiro**, marcadas como
+> estimativa, com o período-base e a versão; sem previsão, o motivo da RN09. Alimentar o otimizador (passo
+> 6) é da Sprint 9–10, quando ele existir.
 
 ---
 

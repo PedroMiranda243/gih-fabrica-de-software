@@ -3,7 +3,8 @@
  *
  * O trilho lista **apenas o que existe**. Campanha e aprovação estão no
  * protótipo e não entram aqui: o otimizador é a Sprint 9–10 e as mensagens são
- * a Sprint 12, então não há API atrás delas. Item de menu que leva a uma tela
+ * a Sprint 12, então não há API atrás delas. O modelo preditivo entrou na
+ * Sprint 05 da disciplina, com a API junto. Item de menu que leva a uma tela
  * vazia é pior que item ausente — promete e não entrega.
  *
  * Pela mesma razão, **cada perfil vê só o que abre**. A lista vem do servidor
@@ -18,6 +19,7 @@ import { useTema } from "../temas/useTema";
 import {
   IconeConfiguracao,
   IconeImportar,
+  IconeModelo,
   IconePainel,
   IconeParceiros,
   IconeSair,
@@ -38,6 +40,7 @@ const TELAS = [
     exige: ["importar", "historico_importacoes"],
   },
   { para: "/parceiros", rotulo: "Parceiros", Icone: IconeParceiros, exige: ["parceiros"] },
+  { para: "/modelo", rotulo: "Modelo", Icone: IconeModelo, exige: ["modelo"] },
   { para: "/usuarios", rotulo: "Usuários", Icone: IconeUsuarios, exige: ["usuarios"] },
   {
     para: "/configuracao",

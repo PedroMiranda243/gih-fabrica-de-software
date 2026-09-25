@@ -71,6 +71,42 @@
 }
 
 /* -------------------------------------------------------- desempenho */
+/* Desempenho e previsão empilhados na coluna da direita: o medido em cima, o
+   estimado embaixo — a ordem em que se lê. */
+.cadastro__lateral {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-12);
+  min-width: 0;
+}
+
+/* Neutra de propósito: não é alerta nem segmento, é a natureza do número. Em
+   caixa alta pequena, como os rótulos de coluna. */
+.etiqueta-estimativa {
+  padding: 2px var(--esp-6);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-controle);
+  color: var(--ink-2);
+  font-size: var(--txt-11);
+  font-weight: var(--peso-rotulo);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.previsao__nota {
+  margin: 0;
+  padding: 0 var(--esp-16) var(--esp-16);
+  max-width: 60ch;
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+  line-height: 1.5;
+}
+
+.previsao__nota--alerta {
+  color: var(--ink);
+}
+
+
 .desempenho {
   display: grid;
   grid-template-columns: auto 1fr;

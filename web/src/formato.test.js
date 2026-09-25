@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { comoDataHora, comoDinheiro, comoPercentual, sentidoDa, TRACO } from "./formato";
+import {
+  comoDataHora,
+  comoDecimal,
+  comoDinheiro,
+  comoFracao,
+  comoPercentual,
+  comoProbabilidade,
+  sentidoDa,
+  TRACO,
+} from "./formato";
 
 describe("formatação", () => {
   it("variação nula vira travessão, e nunca zero", () => {
@@ -36,5 +45,23 @@ describe("formatação", () => {
     expect(comoDataHora("2026-09-14T13:05:00Z")).toMatch(/^\d{2}\/\d{2}\/2026 às \d{2}:\d{2}$/);
     expect(comoDataHora(null)).toBe(TRACO);
     expect(comoDataHora("não é data")).toBe(TRACO);
+  });
+
+  it("fração vira porcentagem sem sinal, e ausente vira travessão", () => {
+    expect(comoFracao(0.0922)).toBe("9,2%");
+    expect(comoFracao(0.24, 0)).toBe("24%");
+    expect(comoFracao(null)).toBe("—");
+  });
+
+  it("decimal com vírgula e casas fixas", () => {
+    expect(comoDecimal(0.1051)).toBe("0,105");
+    expect(comoDecimal(undefined)).toBe("—");
+  });
+
+  it("probabilidade estimada não vira certeza nos extremos", () => {
+    expect(comoProbabilidade(0.24)).toBe("24%");
+    expect(comoProbabilidade(0.998)).toBe("mais de 99%");
+    expect(comoProbabilidade(0.002)).toBe("menos de 1%");
+    expect(comoProbabilidade(null)).toBe("—");
   });
 });

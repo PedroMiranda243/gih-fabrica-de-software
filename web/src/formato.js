@@ -160,3 +160,57 @@ export function comoDelta(valor) {
   if (numero === 0) return "igual ao anterior";
   return `${Math.abs(numero)} a ${numero > 0 ? "mais" : "menos"}`;
 }
+
+/**
+ * Uma fração como porcentagem, sem sinal: `0.0922` vira `9,2%`.
+ *
+ * Para erro e probabilidade, que a API manda em fração e não têm sentido de
+ * "subiu" ou "caiu" — `comoPercentual` põe o sinal de mais, e "+9,2% de erro"
+ * leria como piora.
+ */
+export function comoFracao(valor, casas = 1) {
+  if (valor === null || valor === undefined) return TRACO;
+  const numero = Number(valor);
+  if (Number.isNaN(numero)) return TRACO;
+  return `${(numero * 100).toFixed(casas).replace(".", ",")}%`;
+}
+
+/** Um número com vírgula decimal e casas fixas: o Brier `0.1051` vira `0,105`. */
+export function comoDecimal(valor, casas = 3) {
+  if (valor === null || valor === undefined) return TRACO;
+  const numero = Number(valor);
+  return Number.isNaN(numero) ? TRACO : numero.toFixed(casas).replace(".", ",");
+}
+
+/** A situação de um treino do modelo (UC07). */
+export const ROTULO_SITUACAO_TREINO = {
+  EM_ANDAMENTO: "Em andamento",
+  CONCLUIDO: "Concluído",
+  FALHOU: "Falhou",
+};
+
+/**
+ * De onde sai a previsão em uso (RN09, item 4): da rede treinada, ou das
+ * contas simples, enquanto nenhuma versão da rede as superou.
+ */
+export const ROTULO_ORIGEM_PREVISAO = {
+  MODELO: "Rede neural",
+  REFERENCIA: "Referência (contas simples)",
+};
+
+/**
+ * Uma probabilidade estimada, sem fingir certeza: `0.24` vira `24%`, e os
+ * extremos viram "menos de 1%" e "mais de 99%".
+ *
+ * Arredondar 0,998 para "100%" diria que o parceiro **vai** entrar em risco, e
+ * 0,002 para "0%", que ele não tem como — nenhum dos dois é o que uma
+ * estimativa sabe.
+ */
+export function comoProbabilidade(valor) {
+  if (valor === null || valor === undefined) return TRACO;
+  const numero = Number(valor);
+  if (Number.isNaN(numero)) return TRACO;
+  if (numero < 0.005) return "menos de 1%";
+  if (numero >= 0.995) return "mais de 99%";
+  return `${Math.round(numero * 100)}%`;
+}

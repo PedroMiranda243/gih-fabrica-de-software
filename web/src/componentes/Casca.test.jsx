@@ -40,6 +40,16 @@ describe("menu lateral", () => {
     expect(itens).toEqual(["Painel", "Importação", "Parceiros"]);
   });
 
+  it("o Gestor vê o modelo, que o UC07 lhe dá — com as telas que o servidor mandou", () => {
+    const itens = menu({
+      nome: "Gestora",
+      perfil: "GESTOR",
+      telas: ["painel", "importar", "historico_importacoes", "parceiros", "modelo"],
+    });
+
+    expect(itens).toEqual(["Painel", "Importação", "Parceiros", "Modelo"]);
+  });
+
   it("sessão de antes da atualização, sem telas, mantém o menu anterior", () => {
     /* Uma aba aberta durante a atualização não pode ficar com o trilho vazio. */
     const itens = menu({ nome: "Antiga", perfil: "GESTOR" });
