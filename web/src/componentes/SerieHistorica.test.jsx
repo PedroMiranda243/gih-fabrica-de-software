@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { fireEvent, render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import SerieHistorica from "./SerieHistorica";
@@ -58,5 +58,37 @@ describe("Série histórica", () => {
     );
 
     expect(container.querySelectorAll(".grafico__ponto")).toHaveLength(1);
+  });
+
+  it("a estimativa do próximo período é tracejada, tem legenda e entra na tabela", () => {
+    /* H44: a previsão se distingue do medido por mais que a cor — traço,
+       marcador vazado e a legenda dizendo qual é qual. */
+    const { container, getByRole, getByText } = render(
+      <SerieHistorica
+        pontos={[
+          { periodo: periodo(2), faturamento: "100.00", pedidos: 1, ticket_medio: "100.00" },
+          { periodo: periodo(9), faturamento: "200.00", pedidos: 2, ticket_medio: "100.00" },
+        ]}
+        previsao={{ valor: "180.00" }}
+      />,
+    );
+
+    expect(container.querySelectorAll(".grafico__linha--prevista")).toHaveLength(2); // traço e legenda
+    expect(container.querySelectorAll(".grafico__ponto--previsto")).toHaveLength(1);
+    expect(getByText(/estimativa do modelo para o próximo período/)).toBeInTheDocument();
+    expect(getByRole("img").getAttribute("aria-label")).toContain("estimativa do próximo");
+    expect(container.textContent).toContain("próximo");
+
+    fireEvent.click(getByRole("button", { name: "Ver os números" }));
+    expect(getByText("Próximo período (estimativa)")).toBeInTheDocument();
+  });
+
+  it("sem estimativa, nada tracejado", () => {
+    const { container } = render(
+      <SerieHistorica
+        pontos={[{ periodo: periodo(2), faturamento: "100.00", pedidos: 1, ticket_medio: "100.00" }]}
+      />,
+    );
+    expect(container.querySelectorAll(".grafico__linha--prevista")).toHaveLength(0);
   });
 });
