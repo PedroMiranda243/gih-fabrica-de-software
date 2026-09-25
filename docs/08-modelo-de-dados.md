@@ -472,7 +472,7 @@ O esquema não está só desenhado: está aplicado e em uso. O ambiente sobe com
 
 ```
 $ docker compose exec api alembic current
-b7d4e1f90c23 (head)
+d2c9b1a21c53 (head)
 ```
 
 **Tabelas criadas** (`docker compose exec postgres psql -U gih -d gih -c "\dt"`):
@@ -497,28 +497,32 @@ b7d4e1f90c23 (head)
  public | previsao                 | table | gih
  public | sessao_acesso            | table | gih
  public | tentativa_login          | table | gih
+ public | treino_modelo            | table | gih
  public | usuario                  | table | gih
-(18 rows)
+(19 rows)
 ```
 
-São as 17 tabelas de domínio mais `alembic_version`, que é da própria ferramenta de migração e registra
+São as 18 tabelas de domínio mais `alembic_version`, que é da própria ferramenta de migração e registra
 qual versão do esquema está aplicada.
 
 **Contagem por consulta ao catálogo do PostgreSQL:**
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas de domínio | 17 |
-| Chaves primárias | 17 |
-| Chaves estrangeiras | 22 |
+| Tabelas de domínio | 18 |
+| Chaves primárias | 18 |
+| Chaves estrangeiras | 24 |
 | Restrições `UNIQUE` | 11 |
-| Restrições `CHECK` declaradas | 13 |
-| Índices | 36 |
-| Tipos `ENUM` | 7 |
+| Restrições `CHECK` declaradas | 15 |
+| Índices | 39 |
+| Tipos `ENUM` | 8 |
 
-Medido em 21/09/2026, contra o banco no ar. **Na Sprint 02 eram 16, 16, 21, 11, 9, 34 e 7.** A diferença é
-de duas migrações: o nome normalizado do parceiro com o índice de trigrama (Sprint 6, +1 índice) e a
-configuração da segmentação (Sprint 7, +1 tabela, +1 chave estrangeira, +4 `CHECK`, +1 índice).
+Medido em 24/09/2026, contra o banco no ar. **Na Sprint 02 eram 16, 16, 21, 11, 9, 34 e 7.** A diferença é
+de três migrações: o nome normalizado do parceiro com o índice de trigrama (Sprint 6, +1 índice), a
+configuração da segmentação (Sprint 7, +1 tabela, +1 chave estrangeira, +4 `CHECK`, +1 índice) e o treino
+do modelo (Sprint 05 da disciplina, +1 tabela, +2 chaves estrangeiras, +2 `CHECK`, +3 índices contando o da
+chave primária, +1 enum). O índice único parcial do treino não aparece entre as restrições `UNIQUE`: é
+índice, e não restrição — o PostgreSQL só aceita condição (`WHERE`) em índice.
 
 **O esquema é gerado por migração versionada, não por script solto.** Isso é o que permite qualquer
 integrante chegar ao mesmo estado a partir de um clone limpo, e é o que torna a evolução do banco
@@ -529,7 +533,8 @@ auditável no histórico do repositório.
 ## 7. Verificação
 
 O ciclo de reverter e reaplicar foi testado **duas vezes**, e não uma: a falha de ENUM da seção 4 só
-aparece na segunda execução.
+aparece na segunda execução. A migração do treino do modelo, que cria o enum `situacaotreino`, passou pelo
+mesmo ciclo em 24/09/2026, num banco descartável.
 
 ```bash
 alembic upgrade head     # aplica
