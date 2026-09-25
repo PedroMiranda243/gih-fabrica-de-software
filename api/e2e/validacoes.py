@@ -1,9 +1,10 @@
 """Transcreve as validações e as mensagens de erro, para servir de evidência.
 
 A quarta entrega da disciplina pede exemplos das validações e evidência das
-mensagens de erro. Aqui cada regra é provocada contra a API no ar, e a troca
-inteira vai para a transcrição: o que foi enviado, o código que voltou e a
-mensagem que a tela mostra ao usuário.
+mensagens de erro; a quinta, os testes das validações e das situações de erro
+do segundo módulo — o de previsão, que tem seção própria desde então. Aqui cada
+regra é provocada contra a API no ar, e a troca inteira vai para a transcrição:
+o que foi enviado, o código que voltou e a mensagem que a tela mostra ao usuário.
 
 Cada troca vem com o que se esperava dela, e o fim da transcrição conta quantas
 bateram. Uma evidência que só mostra respostas não diz se elas estão certas.
@@ -18,7 +19,7 @@ Como a transcrição do CRUD, não deixa resíduo (ver `e2e/limpeza.py`).
 
 Uso, da pasta `api/`:
     GIH_ADMIN_SENHA=... python e2e/validacoes.py \
-        > ../docs/entrega/evidencias/sprint04/validacoes.txt
+        > ../docs/entrega/evidencias/sprint05/validacoes.txt
 """
 from __future__ import annotations
 
@@ -117,10 +118,13 @@ def main() -> int:
 
 def transcrever(url: str, admin: httpx.Client, marca: str, confere: Conferencias,
                 falha: bool) -> None:
-    analista = f"{marca}.analista"
-    titulo("Preparação — um analista, e um parceiro com faturamento importado")
+    analista, gestor = f"{marca}.analista", f"{marca}.gestor"
+    titulo("Preparação — um analista, um gestor, e um parceiro com faturamento importado")
     troca(admin, "POST", "/api/usuarios", {
         "login": analista, "nome": "Analista da Evidência", "senha": SENHA, "perfil": "ANALISTA",
+    })
+    troca(admin, "POST", "/api/usuarios", {
+        "login": gestor, "nome": "Gestor da Evidência", "senha": SENHA, "perfil": "GESTOR",
     })
 
     with httpx.Client(base_url=url, timeout=30) as c:
@@ -140,13 +144,14 @@ def transcrever(url: str, admin: httpx.Client, marca: str, confere: Conferencias
         lista(c, confere)
         limiares(admin, confere)
         acesso(url, c, analista, confere)
+        modelo(url, c, gestor, confere)
         if falha:
             falha_inesperada(url, c, confere)
 
 
 # ------------------------------------------------------------------ importação
 def importacao(c: httpx.Client, periodo: dict, marca: str, confere: Conferencias) -> None:
-    titulo("[1/6] Importação de relatório (UC03)")
+    titulo("[1/7] Importação de relatório (UC03)")
     texto = "Parceiro;Faturamento;Pedidos\nComércio Alfa;12500,40;312\n"
 
     print("\nRN03 — sem o período, a importação é recusada e diz por quê:")
@@ -201,7 +206,7 @@ def importacao(c: httpx.Client, periodo: dict, marca: str, confere: Conferencias
 
 # -------------------------------------------------------------------- cadastro
 def cadastro(c: httpx.Client, marca: str, comhist: dict, confere: Conferencias) -> None:
-    titulo("[2/6] Cadastro de parceiro (UC04)")
+    titulo("[2/7] Cadastro de parceiro (UC04)")
 
     print("\nNome vazio — a mensagem diz que é obrigatório e quanto falta:")
     confere("nome vazio", troca(c, "POST", "/api/parceiros", {"nome": ""}),
@@ -238,7 +243,7 @@ def cadastro(c: httpx.Client, marca: str, comhist: dict, confere: Conferencias) 
 
 # ----------------------------------------------------------------------- lista
 def lista(c: httpx.Client, confere: Conferencias) -> None:
-    titulo("[3/6] Lista de parceiros — filtros e ordenação vêm da URL")
+    titulo("[3/7] Lista de parceiros — filtros e ordenação vêm da URL")
     print("\nUm link editado à mão chega aqui. A recusa diz o que vale:")
     confere("ordenação desconhecida", troca(c, "GET", "/api/parceiros?ordenar_por=idade"),
             422, "Escolha uma destas opções")
@@ -250,7 +255,7 @@ def lista(c: httpx.Client, confere: Conferencias) -> None:
 
 # -------------------------------------------------------------------- limiares
 def limiares(admin: httpx.Client, confere: Conferencias) -> None:
-    titulo("[4/6] Limiares da segmentação (RF21) — só o administrador")
+    titulo("[4/7] Limiares da segmentação (RF21) — só o administrador")
     print("\nTop 0 esvaziaria o segmento Top da rede inteira. Nada é gravado:")
     confere("Top N zero", troca(admin, "PUT", "/api/configuracao/segmentacao", {
         "top_n": 0, "periodos_tendencia": 2, "periodos_novato": 3,
@@ -259,7 +264,7 @@ def limiares(admin: httpx.Client, confere: Conferencias) -> None:
 
 # ---------------------------------------------------------------------- acesso
 def acesso(url: str, c: httpx.Client, analista: str, confere: Conferencias) -> None:
-    titulo("[5/6] Acesso (RF01, RF03, RNF11)")
+    titulo("[5/7] Acesso (RF01, RF03, RNF11)")
     with httpx.Client(base_url=url, timeout=30) as anonimo:
         print("\nSenha errada, e depois um login que não existe. RNF11: as duas respostas são")
         print("iguais — duas mensagens diferentes entregariam a lista de logins válidos.")
@@ -281,9 +286,50 @@ def acesso(url: str, c: httpx.Client, analista: str, confere: Conferencias) -> N
             403, "Seu perfil não permite esta operação.")
 
 
+# ------------------------------------------------------------------- modelo
+def modelo(url: str, c: httpx.Client, gestor: str, confere: Conferencias) -> None:
+    titulo("[6/7] Modelo preditivo (UC07, RN09) — quem treina, e um por vez")
+    print("\nO analista lê a previsão no cadastro (RF28), mas não troca o modelo que toda a")
+    print("equipe usa (UC07):")
+    confere("analista não treina", troca(c, "POST", "/api/modelo/treinos"),
+            403, "Seu perfil não permite esta operação.")
+
+    with httpx.Client(base_url=url, timeout=30) as g:
+        g.post("/api/sessao", json={"login": gestor, "senha": SENHA})
+        print("\nUm treino por vez, travado pelo banco (ADR-010). O segundo pedido chega com o")
+        print("primeiro ainda rodando:")
+        primeiro = troca(g, "POST", "/api/modelo/treinos")
+        segundo = troca(g, "POST", "/api/modelo/treinos")
+        confere("segundo treino com o primeiro rodando", segundo, 409,
+                "Já existe um treino em andamento.", "Acompanhe o treino atual")
+
+        print("\nUm treino que não existe:")
+        confere("treino inexistente", troca(g, "GET", "/api/modelo/treinos/999999"),
+                404, "Treino não encontrado.")
+
+        # O treino roda em segundo plano; a limpeza não pode apagar um que ainda
+        # esteja gravando.
+        if primeiro.status_code == 202:
+            limite = time.monotonic() + 180
+            while (g.get(f"/api/modelo/treinos/{primeiro.json()['id']}").json()["situacao"]
+                   == "EM_ANDAMENTO" and time.monotonic() < limite):
+                time.sleep(1)
+
+    print("\nUm parceiro recém-chegado, com menos períodos que a janela da RN09: o cadastro")
+    print("não inventa previsão, e diz por quê.")
+    curtos = c.get("/api/parceiros", params={"segmento": "RECEM_CHEGADO", "tamanho": 1})
+    itens = curtos.json().get("itens", []) if curtos.status_code == 200 else []
+    if not itens:
+        confere.registrar("há parceiro recém-chegado para mostrar", False)
+        return
+    confere("previsão sem histórico suficiente",
+            troca(c, "GET", f"/api/parceiros/{itens[0]['id']}/previsao"),
+            200, '"disponivel":false', "ainda não há previsão", "são necessários 4")
+
+
 # ----------------------------------------------------------- falha inesperada
 def falha_inesperada(url: str, c: httpx.Client, confere: Conferencias) -> None:
-    titulo("[6/6] Falha inesperada (RNF18, RNF19) — o banco fora do ar")
+    titulo("[7/7] Falha inesperada (RNF18, RNF19) — o banco fora do ar")
     print("\nPara ver o que o usuário vê quando algo quebra de verdade, o banco é parado")
     print("por alguns segundos.")
     desde = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
