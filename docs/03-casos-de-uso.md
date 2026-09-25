@@ -381,7 +381,7 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 | **Objetivo** | Obter o plano de ações comerciais que maximiza o retorno esperado dentro das restrições reais |
 | **Pré-condições** | Usuário autenticado com perfil Gestor; modelo de previsão treinado (UC07); ao menos um período importado |
 | **Pós-condições** | Plano de campanha gerado e persistido; execução registrada no histórico e na auditoria |
-| **Requisitos** | RF29, RF30, RF31, RF32, RF34, RF35; regra RN07 |
+| **Requisitos** | RF29, RF30, RF31, RF32, RF34, RF35; regras RN07, RN10 e RN11 |
 
 **Fluxo principal**
 

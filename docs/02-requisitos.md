@@ -305,3 +305,45 @@ períodos). Para quem já está em risco, é a probabilidade de continuar. Regra
 4. **Versão que não supera a referência não entra em uso** (UC07, A1). Sem versão anterior, as previsões
    saem da melhor referência, identificadas como tal.
 5. **Previsão é estimativa e aparece como tal**, com o período-base e a versão que a produziu (H44).
+
+### RN10 — O ganho esperado de uma ação soma crescimento e perda evitada
+
+O ganho esperado (*uplift*) de aplicar a ação *a* ao parceiro *i* no próximo período é:
+
+```
+u(i,a) = F̂ᵢ · cₐ  +  F̂ᵢ · pᵢ · rₐ
+```
+
+- **F̂ᵢ** é o faturamento previsto e **pᵢ** a chance de o parceiro estar em risco no próximo período (RN09).
+  As duas vêm da previsão da versão em uso.
+- **cₐ** é o efeito de crescimento da ação: a fração do faturamento previsto que ela acrescenta.
+- **rₐ** é o efeito de retenção: a fração do faturamento que ela preserva quando o parceiro cairia.
+
+As duas saídas do modelo entram no plano. Uma ação de retenção vale mais para quem está prestes a cair, e
+uma de crescimento vale mais para quem fatura mais. Os efeitos são atributos do catálogo de ações, editáveis
+pelo Gestor (RF29). Os valores da base de demonstração são dado sintético, e não regra.
+
+O ganho é calculado pela API, em **centavos inteiros**. O núcleo recebe o valor pronto e não faz conta de
+dinheiro em ponto flutuante: é o que permite às três versões do otimizador chegarem ao mesmo plano (ADR-011).
+Regra decidida na issue #117.
+
+### RN11 — Quem recebe ação, e como as cotas contam
+
+1. **Só é elegível o parceiro ativo que tem previsão da versão em uso.** Os demais ficam fora do plano, e o
+   resultado diz quantos ficaram fora e por quê: histórico curto, ausência no período mais recente,
+   inativo ou em prospecção. Sem previsão não há ganho a calcular, e estimar um no lugar seria seguir com
+   dado parcial (`CLAUDE.md`, §7).
+2. **Cota é fração do número máximo de ações K e vira contagem:** o mínimo arredonda para cima e o máximo
+   para baixo. Com K = 45, uma cauda longa de pelo menos 30% exige ⌈13,5⌉ = 14 ações. Se a cota fosse fração
+   das ações que o plano acabou escolhendo, o plano vazio cumpriria qualquer uma (30% de zero é zero), e
+   nenhuma cota jamais tornaria a campanha inviável (RN07).
+3. **Cotas por categoria:** mínimo e máximo opcionais, por categoria **confirmada** do parceiro.
+4. **Cota da cauda longa:** um mínimo opcional. A cauda longa é quem está **fora do Top N no ranking do
+   período-base** das previsões. É a mesma leitura da RN02: o ranking, e nunca o segmento armazenado.
+5. **Parceiro pendente de classificação recebe ação normalmente.** Conta no total e na cauda longa, mas em
+   nenhuma cota de categoria: sugestão não é categoria confirmada (RN05).
+
+Com as cotas em contagem, a viabilidade é **decidida com exatidão antes da busca** (RF31, RN07). Nenhuma
+ação custa menos que a mais barata do catálogo, e todo parceiro pode recebê-la; então os mínimos cabem na
+campanha se, e somente se, o menor conjunto que os cumpre couber no máximo de ações e no orçamento pagando a
+ação mais barata. A recusa nomeia a restrição e diz quanto falta. Regra decidida na issue #117.

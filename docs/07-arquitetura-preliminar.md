@@ -132,15 +132,30 @@ Diagrama de classes, incluindo a camada de serviços e o núcleo computacional:
 
 ### 4.1 Formalização do problema
 
-Dado um conjunto de **N** parceiros e **A** tipos de ação comercial, escolher no máximo uma ação por
-parceiro de modo a **maximizar o uplift esperado**, respeitando:
+Dado um conjunto de **N** parceiros elegíveis e **A** tipos de ação comercial, escolher no máximo uma ação
+por parceiro de modo a **maximizar o ganho esperado (uplift)**, respeitando o orçamento, a capacidade e as
+cotas. Elegível é o parceiro ativo com previsão da versão em uso (RN11).
 
-- **Orçamento:** a soma dos custos das ações escolhidas não excede o orçamento disponível
-- **Capacidade:** o número total de ações não excede o que a equipe consegue executar no período
-- **Cotas por categoria:** limites mínimos ou máximos de ações por categoria de parceiro
+| Elemento | Definição |
+|---|---|
+| Decisão | `x[i,a] ∈ {0,1}` — o parceiro *i* recebe a ação *a*; `Σₐ x[i,a] ≤ 1` |
+| Objetivo | maximizar `Σ u(i,a) · x[i,a]`, com `u(i,a) = F̂ᵢ·cₐ + F̂ᵢ·pᵢ·rₐ` (RN10) |
+| Orçamento | `Σ custoₐ · x[i,a] ≤ B` |
+| Capacidade | `n = Σ x[i,a] ≤ K`, o número máximo de ações |
+| Cota da categoria *k* | `⌈minₖ·K⌉ ≤ nₖ ≤ ⌊maxₖ·K⌋`, contando só a categoria **confirmada** (RN11) |
+| Cota da cauda longa | `n_cauda ≥ ⌈m·K⌉`, em que a cauda longa é quem está fora do Top N no ranking do período-base |
 
-O uplift esperado de aplicar a ação *a* ao parceiro *i* combina o faturamento previsto pelo modelo, o risco
-de queda estimado e o efeito histórico daquele tipo de ação.
+As cotas são frações de **K** e viram contagens antes da busca (RN11): o núcleo recebe inteiros, e não
+frações. Dinheiro também chega em centavos inteiros (ADR-011).
+
+**Viabilidade decidida antes da busca (RF31, RN07).** Todo parceiro pode receber a ação mais barata, então
+basta saber se o **menor conjunto que cumpre os mínimos** cabe em K e no orçamento a esse preço. O conjunto
+se monta assim:
+
+1. Em cada categoria, os mínimos são preenchidos primeiro com parceiros da cauda longa, que contam duas vezes.
+2. O que ainda faltar de cauda longa sai das categorias com folga no máximo, ou de quem não tem categoria.
+
+A conta é exata, e a recusa diz qual restrição falhou e quanto falta.
 
 **Por que não é trivial:** o espaço de busca tem (A+1)^N configurações. Com N = 200 e A = 4, isso ultrapassa
 10^139 — força bruta está fora de questão, e a estrutura das restrições de cota impede a decomposição
@@ -159,7 +174,8 @@ de paralelização em CPU e GPU.
 | **GPU** | CUDA | Avaliação da população em paralelo massivo na GPU |
 
 As três versões resolvem o **mesmo problema com a mesma semente**, e é isso que dá sentido à comparação: o
-*speedup* só é honesto se a qualidade da solução for equivalente (RNF02, tolerância de 2%).
+*speedup* só é honesto se a qualidade da solução for equivalente (RNF02, tolerância de 2%). O algoritmo, o
+tratamento das restrições e o que torna as três versões idênticas estão na ADR-011.
 
 ### 4.3 Cenário de referência do benchmark
 
@@ -502,6 +518,65 @@ não faz cálculo pesado no processo da requisição (seção 1); e onde ficam o
   depois dele — a própria, se superou a referência, ou a anterior, com o motivo
 - **Custo assumido:** o PyTorch aumenta a imagem da API e o tempo da CI. A roda CPU é a menor disponível, e
   o tamanho medido fica registrado no Pull Request que a introduz
+
+---
+
+### ADR-011 — Otimizador: genético com partidas independentes, restrições por viabilidade, aritmética inteira
+
+**Status:** Decidido
+**Data:** 25/09/2026
+
+**Situação:** a ADR-002 fixou a família do algoritmo, uma metaheurística populacional com partidas
+independentes. Faltava decidir três coisas antes da primeira linha (H48, H49):
+
+- como as restrições entram na busca;
+- o que garante que o plano devolvido seja viável (RN07);
+- como três implementações (Python, C++ com OpenMP e CUDA) chegam ao mesmo resultado. A H53a pede resultado
+  idêntico ao do Python, e o RNF02 mede o *speedup* com qualidade equivalente.
+
+**Alternativas — restrições:**
+
+| Opção | Avaliação |
+|---|---|
+| Penalidade somada ao objetivo | O peso da penalidade é arbitrário, e com o peso errado o melhor encontrado é inviável |
+| Decodificador que só gera soluções viáveis | Garante viabilidade, mas a construção fixa escolhas (quem cobre a cota) e pode deixar o ótimo fora do alcance da busca |
+| **Comparação por viabilidade, com semente viável e elitismo** | **Escolhida.** Viável vence inviável; entre viáveis, maior ganho; entre inviáveis, menor violação. Sem peso para calibrar, e a busca pode atravessar o inviável para chegar ao ótimo |
+
+**Decisão:**
+
+- **Algoritmo genético, com partidas independentes** e o melhor delas ao final.
+  - Cada solução é um vetor com um gene por parceiro: 0 é "sem ação", e de 1 a A é a ação.
+  - Seleção por torneio de dois, cruzamento uniforme e mutação que sorteia outro valor para o gene.
+  - Cada geração guarda o melhor da anterior (elitismo).
+- **A primeira solução de toda partida é viável por construção.** Ela sai da mesma montagem que decide a
+  viabilidade (§4.1): os mínimos com a ação mais barata, e depois o guloso por ganho/custo. Com o elitismo, o
+  melhor encontrado nunca é pior que ela. Por isso, **quando a campanha é viável, o plano devolvido é viável**;
+  e ele ainda passa por um verificador independente antes de ser gravado.
+- **A violação é inteira e em unidades de ação:** o excesso sobre K e sobre os máximos, o que falta nos
+  mínimos, e o excesso de orçamento dividido pelo custo da ação mais barata (arredondado para cima). Não há
+  mistura de reais com contagens. Por isso toda ação do catálogo que entra na campanha custa mais que zero:
+  uma ação gratuita não consome orçamento e não é o que uma campanha distribui.
+- **Dinheiro em centavos inteiros.** Ganho, custo e orçamento chegam ao núcleo como inteiros. A soma de
+  inteiros dá o mesmo resultado em qualquer ordem, e a de `float` não; sem isso, a soma em paralelo da GPU
+  divergiria da serial no último centavo e mudaria desempates.
+- **Gerador aleatório sem estado.** Cada sorteio é o SplitMix64 aplicado em cadeia a (semente, partida,
+  geração, indivíduo, gene). Escrito igual em Python, C++ e CUDA, ele dá o mesmo número em qualquer versão, e
+  cada thread da GPU calcula o seu sem compartilhar estado. Probabilidades são inteiras, em partes por milhão.
+- **Gerações síncronas e desempate fixo** (o menor índice vence). Cada filho depende só da geração anterior e
+  do sorteio dele. Serial, OpenMP e GPU executam a mesma sequência, e o paralelismo muda o tempo, não o plano.
+- **O baseline serial é Python puro, sem NumPy no laço.** Ele é a referência de corretude e o denominador do
+  *speedup* (RNF02). Vetorizá-lo deixaria o baseline mais rápido e o ganho medido menos honesto.
+- **Limite de tempo** (UC08, E2): ao estourar, devolve o melhor viável encontrado e marca o plano como parcial.
+
+**Consequências:**
+
+- A qualidade é conferida contra a **enumeração exata** em instâncias pequenas, sem solver pronto (ADR-002), e
+  contra o guloso numa instância em que ele falha
+- A GPU avalia a população inteira em paralelo, que é o kernel medido no spike da H47, e com a população
+  residente entre gerações (ADR-006)
+- Aritmética inteira limita o ganho de um plano a 2⁶³ centavos, muito acima de qualquer campanha
+- **Custo assumido:** o baseline em Python puro é lento de propósito. Na tela, o limite de tempo o protege até
+  as versões em C++ chegarem (Sprint 10)
 
 ---
 
