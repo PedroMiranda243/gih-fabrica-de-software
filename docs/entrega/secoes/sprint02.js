@@ -11,6 +11,16 @@ const { diagrama, captura, legenda } = require('../comum/figuras');
 
 const REPO = 'github.com/PedroMiranda243/gih-fabrica-de-software';
 
+/*
+ * **As figuras desta parte são as entregues**, e não as dos documentos vivos.
+ * O `docs/08` e o `docs/10` ganharam a tabela do treino do modelo na Sprint 05;
+ * renderizados de novo, os diagramas mudariam uma parte que já foi entregue — o
+ * defeito que a Parte III e o mapa da Parte IV já tiveram. A pasta guarda o SVG
+ * e o PNG de cada figura como saíram no PDF da Sprint 04; a modelagem nova
+ * aparece na Parte V, como ajuste justificado.
+ */
+const PARTE_II = 'parte-ii';
+
 function montar() {
   const c = [];
 
@@ -58,7 +68,7 @@ function montar() {
     + 'sem tocar na interface, e garantir que o assistente de linguagem nunca produza um número.',
   ));
 
-  c.push(diagrama('arquitetura-geral', 560));
+  c.push(diagrama('arquitetura-geral', 560, PARTE_II));
   c.push(legenda('Arquitetura geral: interface, API, banco, núcleo computacional, modelo preditivo e assistente.'));
 
   c.push(h2('1.1 Componentes e responsabilidades'));
@@ -154,7 +164,7 @@ function montar() {
 
   c.push(h2('2.1 Visão de integração'));
   c.push(p('Onde cada camada vive e o que atravessa a fronteira entre elas.'));
-  c.push(diagrama('classes-integracao', 520));
+  c.push(diagrama('classes-integracao', 520, PARTE_II));
   c.push(legenda('Visão de integração entre as camadas, com as tecnologias de cada uma.'));
   c.push(p(
     'Três fronteiras não se atravessam: a interface não conhece regra de negócio, o núcleo não conhece '
@@ -164,7 +174,7 @@ function montar() {
   c.push(quebra());
   c.push(h2('2.2 Domínio — acesso, sessões e auditoria'));
   c.push(p('Quem entra no sistema, por quanto tempo, e o rastro que fica.'));
-  c.push(diagrama('classes-dominio-acesso'));
+  c.push(diagrama('classes-dominio-acesso', undefined, PARTE_II));
   c.push(legenda('Entidades de controle de acesso: usuário, sessão, tentativas de login e trilha de auditoria.'));
   c.push(p(
     'A sessão guarda o hash do identificador, nunca ele próprio: quem conseguir ler a tabela não consegue '
@@ -176,7 +186,7 @@ function montar() {
   c.push(quebra());
   c.push(h2('2.3 Domínio — parceiros e dados de desempenho'));
   c.push(p('O núcleo informacional do produto: quem são os parceiros, o que faturaram, e como foram classificados.'));
-  c.push(diagrama('classes-dominio-desempenho'));
+  c.push(diagrama('classes-dominio-desempenho', undefined, PARTE_II));
   c.push(legenda('Entidades de negócio: categoria, parceiro, período, importação, métrica e histórico de segmento.'));
   c.push(p(
     'Métrica não tem atributo de ticket médio: ele é faturamento dividido por pedidos, calculado na '
@@ -186,7 +196,7 @@ function montar() {
   c.push(quebra());
   c.push(h2('2.4 Domínio — núcleo computacional e comunicação'));
   c.push(p('As entidades que registram previsões, execuções do otimizador, planos de campanha e mensagens.'));
-  c.push(diagrama('classes-dominio-nucleo'));
+  c.push(diagrama('classes-dominio-nucleo', undefined, PARTE_II));
   c.push(legenda('Entidades do núcleo e da comunicação: previsão, ação, execução, plano, item e mensagem.'));
   c.push(p(
     'A execução do otimizador produz zero ou um plano: ou o plano respeita todas as restrições, ou não '
@@ -200,7 +210,7 @@ function montar() {
     'As entidades acima são anêmicas de propósito: carregam dados e restrições, e a regra de negócio vive '
     + 'nos serviços. A razão é testabilidade — a regra fica exercitável sem instanciar entidade.',
   ));
-  c.push(diagrama('servicos-acesso'));
+  c.push(diagrama('servicos-acesso', undefined, PARTE_II));
   c.push(legenda('Serviços de autenticação, sessão, bloqueio por força bruta e auditoria. Todos implementados.'));
   c.push(p(
     'A autorização é dependência declarada na rota, e não uma verificação dentro de cada função: esquecer '
@@ -210,7 +220,7 @@ function montar() {
 
   c.push(quebra());
   c.push(h2('2.6 Serviços — ingestão e análise'));
-  c.push(diagrama('servicos-negocio'));
+  c.push(diagrama('servicos-negocio', undefined, PARTE_II));
   c.push(legenda('Serviços de ingestão, segmentação, ranking, otimização e assistente. Os dois primeiros implementados.'));
   c.push(p(
     'O interpretador do relatório não toca no banco: é função pura de texto para resultado. É isso que '
@@ -221,12 +231,12 @@ function montar() {
   c.push(quebra());
   c.push(h2('2.7 Núcleo computacional — as estruturas'));
   c.push(p('O que entra no otimizador, o que sai, e quem avalia um candidato.'));
-  c.push(diagrama('nucleo-estruturas'));
+  c.push(diagrama('nucleo-estruturas', undefined, PARTE_II));
   c.push(legenda('Estruturas do núcleo em C++: cenário, restrições, plano e avaliador de população.'));
 
   c.push(h2('2.8 Núcleo computacional — as três implementações'));
   c.push(p('Três implementações da mesma interface, para que o benchmark compare o que é comparável.'));
-  c.push(diagrama('nucleo-otimizadores'));
+  c.push(diagrama('nucleo-otimizadores', undefined, PARTE_II));
   c.push(legenda('Hierarquia do otimizador: serial, paralelo em CPU com OpenMP e paralelo em GPU com CUDA.'));
   c.push(p(
     'O método privado de manter a população na GPU não é detalhe de implementação: é o que justifica a '
@@ -260,7 +270,7 @@ function montar() {
     'O modelo conceitual responde "o que o sistema precisa saber", na linguagem do negócio e sem decisão '
     + 'de implementação. São dezesseis entidades.',
   ));
-  c.push(diagrama('mer-conceitual'));
+  c.push(diagrama('mer-conceitual', undefined, PARTE_II));
   c.push(legenda('Modelo conceitual: entidades e relacionamentos, com cardinalidade em notação pé-de-galinha.'));
   c.push(p(
     'A entidade de tentativas de login não aparece no diagrama porque não se relaciona com nenhuma outra, '

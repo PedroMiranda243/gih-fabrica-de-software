@@ -61,10 +61,16 @@ function medir(proporcao, limiteLargura) {
  * Diagrama vetorial com reserva rasterizada.
  * @param {string} nome  nome do arquivo, sem extensão
  * @param {number} [limiteLargura]  para diagramas que não precisam da página toda
+ * @param {string} [congelado]  pasta, dentro de `diagramas/`, com a figura como
+ *   foi entregue — ver `PARTE_II` em `secoes/sprint02.js`
  */
-function diagrama(nome, limiteLargura) {
-  const svg = path.join(RAIZ, 'docs', 'diagramas', `${nome}.svg`);
-  const png = path.join(DIAGRAMAS, `${nome}.png`);
+function diagrama(nome, limiteLargura, congelado) {
+  // A figura congelada traz o SVG junto: a proporção tem de ser a da figura
+  // entregue, e não a do diagrama vivo, que pode ter ganhado caixas desde então.
+  const svg = congelado
+    ? path.join(DIAGRAMAS, congelado, `${nome}.svg`)
+    : path.join(RAIZ, 'docs', 'diagramas', `${nome}.svg`);
+  const png = path.join(DIAGRAMAS, congelado ?? '', `${nome}.png`);
 
   for (const arquivo of [svg, png]) {
     if (!fs.existsSync(arquivo)) {
