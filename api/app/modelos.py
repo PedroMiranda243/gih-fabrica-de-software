@@ -21,11 +21,13 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     Numeric,
     String,
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
@@ -82,6 +84,12 @@ class EstadoMensagem(enum.StrEnum):
     PENDENTE = "PENDENTE"
     APROVADA = "APROVADA"
     REJEITADA = "REJEITADA"
+
+
+class SituacaoTreino(enum.StrEnum):
+    EM_ANDAMENTO = "EM_ANDAMENTO"
+    CONCLUIDO = "CONCLUIDO"
+    FALHOU = "FALHOU"
 
 
 # --------------------------------------------------------------------------- acesso
@@ -387,6 +395,86 @@ class HistoricoSegmento(Base):
 
 
 # --------------------------------------------------------------------------- núcleo
+class TreinoModelo(Base):
+    """Uma execução do treino do modelo preditivo — RF27, UC07, histórias H42 a H45.
+
+    Registra o que o RF27 pede — data, volume de dados e métricas — e o que o
+    UC07-A1 precisa para decidir: a versão treinada entra em uso só se superar
+    as referências; senão, fica a anterior, e `motivo` diz por quê.
+
+    **A versão em uso depois deste treino** fica gravada na própria linha, e não
+    em configuração à parte: a resposta a "qual modelo está valendo?" é o último
+    treino concluído, sem uma segunda fonte que possa discordar dele.
+
+    **Os pesos ficam aqui** (ADR-010): poucos KB, e a versão em uso sobrevive a
+    reinício sem depender de arquivo num volume.
+
+    **Um treino por vez**, garantido pelo índice único parcial sobre os que
+    estão em andamento. Trava em memória não serviria: com mais de um processo,
+    um não enxerga a memória do outro.
+    """
+
+    __tablename__ = "treino_modelo"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    situacao: Mapped[SituacaoTreino] = mapped_column(default=SituacaoTreino.EM_ANDAMENTO)
+    # Nulo quando o treino veio do terminal, e não de uma pessoa na tela.
+    usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id"))
+    periodo_base_id: Mapped[int] = mapped_column(ForeignKey("periodo.id"))
+    semente: Mapped[int] = mapped_column(Integer)
+
+    iniciado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    concluido_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    # Volume de dados (RF27).
+    parceiros: Mapped[int | None] = mapped_column(Integer)
+    periodos: Mapped[int | None] = mapped_column(Integer)
+    amostras_treino: Mapped[int | None] = mapped_column(Integer)
+    amostras_validacao: Mapped[int | None] = mapped_column(Integer)
+    amostras_teste: Mapped[int | None] = mapped_column(Integer)
+
+    # Métricas no conjunto de teste, lado a lado com as referências (H42, H43, H46).
+    mape_modelo: Mapped[float | None] = mapped_column()
+    mape_ultimo: Mapped[float | None] = mapped_column()
+    mape_media_movel: Mapped[float | None] = mapped_column()
+    brier_modelo: Mapped[float | None] = mapped_column()
+    brier_referencia: Mapped[float | None] = mapped_column()
+    calibracao_modelo: Mapped[float | None] = mapped_column()
+    calibracao_referencia: Mapped[float | None] = mapped_column()
+    # O que não precisa de coluna própria: curva de calibração, épocas,
+    # temperatura, duração e as taxas da referência de risco.
+    detalhes: Mapped[dict | None] = mapped_column(JSONB)
+
+    promovido: Mapped[bool | None] = mapped_column(Boolean)
+    versao_em_uso: Mapped[str | None] = mapped_column(String(40))
+    motivo: Mapped[str | None] = mapped_column(Text)
+    pesos: Mapped[bytes | None] = mapped_column(LargeBinary)
+
+    __table_args__ = (
+        Index(
+            "uq_treino_um_em_andamento",
+            "situacao",
+            unique=True,
+            postgresql_where=text("situacao = 'EM_ANDAMENTO'"),
+        ),
+        CheckConstraint(
+            "situacao <> 'CONCLUIDO' OR (versao_em_uso IS NOT NULL AND promovido IS NOT NULL)",
+            name="ck_treino_concluido_tem_versao",
+        ),
+        CheckConstraint(
+            "situacao <> 'FALHOU' OR motivo IS NOT NULL",
+            name="ck_treino_falho_tem_motivo",
+        ),
+    )
+
+    @property
+    def versao(self) -> str:
+        """O nome da rede treinada nesta execução."""
+        return f"rede-{self.id}"
+
+
 class Previsao(Base):
     __tablename__ = "previsao"
 
@@ -412,6 +500,9 @@ class Previsao(Base):
             "probabilidade_queda >= 0 AND probabilidade_queda <= 1",
             name="ck_previsao_probabilidade",
         ),
+        # A leitura é sempre "as previsões desta versão sobre este período": a
+        # unicidade acima começa por parceiro e não atende a busca da rede toda.
+        Index("ix_previsao_periodo_versao", "periodo_base_id", "modelo_versao"),
     )
 
 
