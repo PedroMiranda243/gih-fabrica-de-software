@@ -220,6 +220,48 @@ describe("tela do modelo", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Acompanhe o treino atual");
   });
 
+  it("depois da recusa, a tela passa a acompanhar o treino que já roda (#108)", async () => {
+    /* Outra aba disparou um treino: a tela desta ainda o ignora, e o pedido é
+       recusado. Reler o estado faz ela encontrar o treino e acompanhá-lo. */
+    let recusou = false;
+    let terminou = false;
+    simularApi({
+      "GET /api/modelo": () => ({
+        corpo:
+          recusou && !terminou
+            ? estado({ em_andamento: treino({ id: 5, situacao: "EM_ANDAMENTO" }), pode_treinar: false })
+            : estado(),
+      }),
+      "POST /api/modelo/treinos": () => {
+        recusou = true;
+        return {
+          status: 409,
+          corpo: { detail: { erro: "Já existe um treino em andamento.", ajuda: "Acompanhe." } },
+        };
+      },
+      "GET /api/modelo/treinos/5": () => {
+        terminou = true;
+        return { corpo: treino({ id: 5, versao: "rede-5", versao_em_uso: "rede-5" }) };
+      },
+      "GET /api/modelo/treinos": { corpo: SEM_HISTORICO },
+    });
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await usuario.click(await screen.findByRole("button", { name: "Treinar agora" }));
+    await usuario.click(screen.getByRole("button", { name: "Treinar" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Já existe um treino em andamento.");
+    expect(await screen.findByText("Treinando o modelo…")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Treinando…" })).toBeDisabled();
+
+    // Quando o treino da outra aba termina, a recusa deixa de valer e some.
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull(), {
+      timeout: INTERVALO_MS + 2000,
+    });
+    expect(screen.getByRole("status")).toHaveTextContent("a versão rede-5 entrou em uso");
+  });
+
   it("período mais novo que as previsões avisa, com os dois períodos", async () => {
     simularApi({
       "GET /api/modelo": {

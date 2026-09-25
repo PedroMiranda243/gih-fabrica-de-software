@@ -77,6 +77,8 @@ export default function Modelo() {
           if (treino.situacao === "EM_ANDAMENTO") return;
           setAcompanhando(null);
           setResultado(treino);
+          // A recusa que levou a acompanhar este treino já não vale.
+          setErro(null);
           setRecarga((r) => r + 1);
         })
         /* Falha de rede numa consulta não encerra o acompanhamento: a próxima
@@ -96,6 +98,11 @@ export default function Modelo() {
       setRecarga((r) => r + 1);
     } catch (e) {
       setErro(e);
+      /* A recusa mais comum é "já existe um treino em andamento" — disparado
+         em outra aba ou por outra pessoa. Reler o estado faz a tela encontrar
+         esse treino e acompanhá-lo, em vez de seguir oferecendo "Treinar
+         agora" como se nada rodasse (#108). */
+      setRecarga((r) => r + 1);
     } finally {
       setEnviando(false);
       setConfirmando(false);

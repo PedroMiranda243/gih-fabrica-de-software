@@ -5,12 +5,17 @@ continua lá depois de fechar e reabrir o sistema. Este script faz isso de
 verdade, e não por simulação:
 
 1. um analista cadastra e altera um parceiro, e o estado é anotado — o
-   parceiro, os totais da base, o painel, os limiares da segmentação;
+   parceiro, os totais da base, o painel, os limiares da segmentação, e, desde
+   a Sprint 05, a versão do modelo em uso e a previsão de um parceiro;
 2. `docker compose down` **remove** os contêineres — não os pausa — e o script
    confere que a API parou de responder;
 3. `docker compose up -d` cria contêineres novos, e o script espera a API;
 4. com **o mesmo cookie de antes**, sem novo login, tudo é lido de novo e
    comparado campo a campo.
+
+**O modelo é parte da prova desde a Sprint 05.** Os pesos ficam na linha do
+treino (ADR-010): se a versão em uso ou a previsão mudassem depois de religar, é
+porque algo morava na memória do processo.
 
 O cookie é parte da prova: a sessão tem estado no servidor (`sessao_acesso`),
 então ela também é dado persistido, e não algo que só existia na memória do
@@ -24,7 +29,7 @@ banco e o analista é desativado (ver `e2e/limpeza.py`).
 
 Precisa do Docker Desktop aberto e da aplicação no ar. Uso, da pasta `api/`:
     GIH_ADMIN_SENHA=... python e2e/persistencia.py \
-        > ../docs/entrega/evidencias/sprint04/persistencia.txt
+        > ../docs/entrega/evidencias/sprint05/persistencia.txt
 """
 from __future__ import annotations
 
@@ -106,7 +111,7 @@ def api_responde(url: str) -> bool:
         return False
 
 
-def retrato(c: httpx.Client, admin: httpx.Client, alvo: int) -> dict:
+def retrato(c: httpx.Client, admin: httpx.Client, alvo: int, maior: int) -> dict:
     """Tudo o que se compara depois: lido pela API, como a tela lê.
 
     Os limiares vêm pela sessão do administrador, que é o único perfil que os
@@ -117,6 +122,19 @@ def retrato(c: httpx.Client, admin: httpx.Client, alvo: int) -> dict:
         "total_de_parceiros": c.get("/api/parceiros?tamanho=1").json()["total"],
         "painel": c.get("/api/painel/indicadores").json(),
         "limiares": admin.get("/api/configuracao/segmentacao").json(),
+        "modelo": _modelo(admin.get("/api/modelo").json()),
+        "previsao": c.get(f"/api/parceiros/{maior}/previsao").json(),
+    }
+
+
+def _modelo(estado: dict) -> dict:
+    """A versão em uso e as métricas do treino que a produziu."""
+    treino = estado.get("treino_da_versao") or {}
+    return {
+        "versao_em_uso": estado.get("versao_em_uso"),
+        "treino": treino.get("id"),
+        "concluido_em": treino.get("concluido_em"),
+        "metricas": treino.get("metricas"),
     }
 
 
@@ -132,6 +150,16 @@ def mostrar_retrato(r: dict) -> None:
     print(f"  limiares           Top {limiares['top_n']} · tendência em"
           f" {limiares['periodos_tendencia']} períodos · recém-chegado até"
           f" {limiares['periodos_novato']}")
+    modelo, previsao = r["modelo"], r["previsao"]
+    if modelo["versao_em_uso"]:
+        metricas = modelo["metricas"]
+        print(f"  modelo em uso      {modelo['versao_em_uso']} (treino {modelo['treino']})"
+              f" · MAPE {metricas['mape_modelo']:.4f} · Brier {metricas['brier_modelo']:.4f}")
+    else:
+        print("  modelo em uso      nenhum — o modelo não foi treinado")
+    if previsao.get("disponivel"):
+        print(f"  previsão           R$ {previsao['faturamento_previsto']} · risco"
+              f" {previsao['probabilidade_queda']:.4f} · {previsao['modelo_versao']}")
 
 
 def mostrar_conteineres(ids: dict[str, str]) -> None:
@@ -195,7 +223,11 @@ def demonstrar(url: str, admin: httpx.Client, marca: str) -> list[tuple[str, boo
             "status": "ATIVO", "categoria_id": categoria["id"], "contato": "contato@exemplo.test",
         })
 
-        antes = retrato(c, admin, alvo)
+        # O maior do período mais recente: está nele, então tem previsão.
+        maior = c.get("/api/parceiros", params={
+            "tamanho": 1, "ordenar_por": "faturamento", "descendente": True,
+        }).json()["itens"][0]["id"]
+        antes = retrato(c, admin, alvo, maior)
         print("\nO estado anotado para comparar depois:")
         mostrar_retrato(antes)
         ids_antes = conteineres()
@@ -235,7 +267,7 @@ def demonstrar(url: str, admin: httpx.Client, marca: str) -> list[tuple[str, boo
         titulo("[4/4] Depois de religar — o mesmo cookie de antes, sem novo login")
         sessao = troca(c, "GET", "/api/sessao/atual")
         troca(c, "GET", f"/api/parceiros/{alvo}")
-        depois = retrato(c, admin, alvo)
+        depois = retrato(c, admin, alvo, maior)
         print("\nO estado lido agora:")
         mostrar_retrato(depois)
 
@@ -260,6 +292,10 @@ def demonstrar(url: str, admin: httpx.Client, marca: str) -> list[tuple[str, boo
          depois["painel"] == antes["painel"]),
         ("os limiares da segmentação são os mesmos",
          depois["limiares"] == antes["limiares"]),
+        ("a versão do modelo em uso é a mesma, com as mesmas métricas",
+         bool(antes["modelo"]["versao_em_uso"]) and depois["modelo"] == antes["modelo"]),
+        ("a previsão do parceiro é a mesma, da mesma versão",
+         antes["previsao"].get("disponivel") is True and depois["previsao"] == antes["previsao"]),
     ]
     print("\nConferências:")
     for texto, ok in conferencias:
