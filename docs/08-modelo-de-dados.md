@@ -346,7 +346,7 @@ mesma resposta acabariam discordando.
 |---|---|---|---|
 | id | serial | **PK** | |
 | usuario_id | integer | **FK** → usuario | |
-| modo | enum | | SERIAL, OPENMP, CUDA |
+| modo | enum | | SERIAL, CPU_PARALELO, GPU |
 | parametros | jsonb | | restrições usadas na rodada |
 | viavel | boolean | | |
 | restricao_violada | varchar(120) | | |
@@ -432,7 +432,7 @@ forte que uma validação de aplicação que alguém pode esquecer de chamar.
 | `origemcategoria` | INFERIDA, SUGERIDA_IA, MANUAL |
 | `statuscomercial` | ATIVO, INATIVO, PROSPECCAO |
 | `origemimportacao` | TEXTO, CSV |
-| `modoexecucao` | SERIAL, OPENMP, CUDA |
+| `modoexecucao` | SERIAL, CPU_PARALELO, GPU |
 | `estadomensagem` | PENDENTE, APROVADA, REJEITADA |
 | `situacaotreino` | EM_ANDAMENTO, CONCLUIDO, FALHOU |
 
