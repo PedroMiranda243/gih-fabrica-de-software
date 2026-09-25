@@ -165,6 +165,33 @@ jobs:
         working-directory: modelo
         run: pytest
 
+  nucleo:
+    name: Otimizador (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # O pacote não tem dependência (ADR-011: o baseline é Python puro), e o
+      # `nucleo/requirements.txt` é do spike de GPU — instalá-lo traria o CuPy
+      # para testar código que não o usa.
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest==8.3.4 ruff==0.8.4
+          pip install --no-deps -e nucleo
+
+      - name: Análise estática
+        working-directory: nucleo
+        run: ruff check .
+
+      - name: Testes
+        working-directory: nucleo
+        run: pytest
+
   web:
     name: Interface (React)
     runs-on: ubuntu-latest
