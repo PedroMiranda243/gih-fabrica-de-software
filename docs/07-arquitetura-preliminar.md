@@ -179,15 +179,21 @@ como parte do resultado.
 
 | Item | Definição |
 |---|---|
-| Alvo | Faturamento do próximo período e probabilidade de queda |
-| Variáveis | Faturamento e pedidos dos últimos períodos, ticket médio, tendência, posição no ranking, categoria, tempo de casa |
-| Modelo | Rede neural em PyTorch, treinada com o histórico |
-| Separação | Treino e teste separados **por tempo**, para não haver vazamento do futuro |
-| Baselines | Repetir o último período; média móvel |
-| Métrica | MAPE, comparado contra os baselines |
+| Alvo | Faturamento do próximo período e probabilidade de queda — de o parceiro estar **Em Risco no período seguinte**, pelo critério da RN01 (RN09) |
+| Variáveis | Dos últimos 4 períodos do parceiro: faturamento e pedidos, ticket médio, tendência, posição no ranking do período (em percentil), categoria, tempo de casa |
+| Modelo | Rede neural pequena em PyTorch, com duas saídas: o faturamento e o risco |
+| Separação | **Por tempo**, para não haver vazamento do futuro: o último período testa, o penúltimo valida (parada antecipada e calibração do risco), os anteriores treinam |
+| Baselines | Faturamento: repetir o último período; média móvel dos últimos 4. Risco: a taxa observada no treino, separada por "caiu no último período" |
+| Métricas | MAPE do faturamento contra os baselines; Brier e erro de calibração do risco contra a referência |
+| Mínimos | 8 períodos na base para treinar; 4 de histórico para o parceiro receber previsão (RN09) |
 
 Se o modelo aprendido não superar os baselines, isso é reportado e o otimizador segue operando com a melhor
 estimativa disponível. A conclusão negativa, bem medida, é resultado válido.
+
+**Uma versão só entra em uso se superar a referência nas duas saídas** — MAPE abaixo do melhor baseline e
+Brier abaixo da referência do risco. Uma versão que acerta o faturamento e erra o risco alimentaria o
+otimizador com metade da informação pior do que uma conta simples. Onde o código mora, onde o treino roda e
+onde ficam os pesos: ADR-010.
 
 ---
 
@@ -434,6 +440,66 @@ Acentuação e caixa são ignoradas. Colunas extras são ignoradas. O valor mone
 - O interpretador é função pura de texto para resultado, em `app/leitor_relatorio.py`. É o que permite a
   prévia da H24 usar **o mesmo** código da gravação da H21, sem risco de a prévia mostrar uma coisa e a
   gravação fazer outra
+
+---
+
+### ADR-010 — Modelo preditivo: pacote próprio, treino em segundo plano, pesos no banco
+
+**Status:** Decidido
+**Data:** 24/09/2026
+
+**Situação:** a Sprint 05 da disciplina entrega o módulo de previsão (UC07, RF27, RF28, histórias H41 a H46).
+Três perguntas não tinham resposta em `docs/`: onde mora o código do modelo; onde o treino roda, já que a API
+não faz cálculo pesado no processo da requisição (seção 1); e onde ficam os pesos treinados.
+
+**Alternativas — onde o treino roda:**
+
+| Opção | Avaliação |
+|---|---|
+| Dentro da requisição | Mais simples, mas segura a conexão enquanto treina, e o navegador desiste antes do fim |
+| Fila de tarefas com serviço próprio (Celery ou RQ, com Redis) | O caminho quando a carga cresce. Aqui traz um serviço e uma dependência a mais para um treino disparado à mão |
+| **Tarefa em segundo plano no processo da API, com o estado no banco** | **Escolhida.** A requisição devolve na hora, e a tela acompanha o estado gravado |
+
+**Alternativas — onde ficam os pesos:**
+
+| Opção | Avaliação |
+|---|---|
+| Arquivo num volume do Docker | Mais um volume para lembrar de preservar, e o banco passa a apontar para algo que pode não existir |
+| **Na linha do treino, no banco** | **Escolhida.** A rede tem poucos milhares de parâmetros; os pesos cabem numa coluna |
+
+**Decisão:**
+
+- **`modelo/` é um pacote Python próprio**, `gih_modelo`: variáveis, baselines, rede, treino e avaliação.
+  Recebe séries numéricas e devolve números. Não conhece banco, FastAPI nem regra de negócio — o mesmo
+  desenho do `nucleo/`, testável por linha de comando sem subir a API.
+- **A API orquestra**, em `app/servico_previsao.py`: lê o histórico numa consulta agregada, calcula o rótulo
+  de risco com a mesma função que classifica o segmento (RN09), chama o modelo e grava o treino e as
+  previsões. A regra de negócio fica onde as outras estão.
+- **O treino roda em segundo plano.** A requisição devolve `202` com o treino criado, e a tela consulta o
+  estado até ele terminar.
+- **Um treino por vez, garantido pelo banco**, com um índice único parcial sobre os treinos em andamento.
+  Uma trava em memória não serviria: com mais de um processo, um não enxerga a memória do outro.
+- **Treino interrompido não prende a trava.** Se a API reiniciar no meio de um treino, a subida seguinte o
+  marca como falho, com o motivo. Sem isso, a trava de um por vez ficaria fechada para sempre.
+- **Os pesos ficam na linha do treino**, junto com a normalização e o vocabulário de categorias usados. A
+  versão em uso sobrevive a reinício, e uma versão antiga consegue prever sobre dados novos — é o que o
+  UC07-A1 precisa para "manter a versão anterior" depois que chega um período novo.
+- **PyTorch na roda CPU** (issue #86). A rede é pequena e a CPU basta; o sistema funciona sem GPU (RNF06), e
+  a GPU fica para o otimizador.
+- **Reprodutível** (RNF16): semente fixa, algoritmos determinísticos e uma thread. A mesma base com a mesma
+  semente dá as mesmas métricas — e isso é teste, não promessa.
+- **A imagem da API recebe `modelo/` como contexto adicional de build**, sem trocar o contexto principal.
+  Construir a partir da raiz do repositório levaria `web/node_modules` e `docs/` para dentro do build.
+
+**Consequências:**
+
+- Enquanto treina, o treino ocupa um núcleo do processo da API. O tempo é medido e registrado junto com as
+  métricas (H46); se a base crescer a ponto de pesar, o treino vira um processo separado **sem mudar o
+  contrato da tela**, porque a tela só conhece o estado gravado
+- A versão em uso é sempre derivável do banco: cada treino concluído registra qual versão ficou em uso
+  depois dele — a própria, se superou a referência, ou a anterior, com o motivo
+- **Custo assumido:** o PyTorch aumenta a imagem da API e o tempo da CI. A roda CPU é a menor disponível, e
+  o tamanho medido fica registrado no Pull Request que a introduz
 
 ---
 

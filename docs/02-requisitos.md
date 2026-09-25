@@ -289,3 +289,19 @@ entre si, o sistema informa a inviabilidade e indica qual restrição foi violad
 
 Todo valor numérico exibido pelo assistente precisa ter sido calculado pelo núcleo determinístico e apenas
 citado na redação (RF43, RNF16). O modelo redige; ele não conta, não soma e não compara.
+
+### RN09 — Queda prevista é entrar em risco, e o modelo exige histórico
+
+A "probabilidade de queda" do RF28 e da H43 é a probabilidade de o parceiro estar **Em Risco no período
+seguinte**, pelo critério da RN01: a sequência de quedas consecutivas chegar ao limiar configurado (hoje, 2
+períodos). Para quem já está em risco, é a probabilidade de continuar. Regra decidida na issue #85.
+
+1. **O rótulo do treino sai da mesma regra que classifica o segmento.** Modelo e segmentação nunca discordam
+   sobre o que é queda, e mudar o limiar na configuração (RF21) muda os dois juntos.
+2. **O treino exige 8 períodos na base.** Abaixo disso é recusado, dizendo quantos faltam (UC07, E1). São
+   quatro de janela de variáveis, dois para treinar, um para validar e um para testar, separados no tempo.
+3. **Parceiro com menos de 4 períodos de histórico não recebe previsão**, porque 4 é a janela de variáveis.
+   Parceiro que não aparece no período mais recente também não. Nos dois casos, a tela diz por quê.
+4. **Versão que não supera a referência não entra em uso** (UC07, A1). Sem versão anterior, as previsões
+   saem da melhor referência, identificadas como tal.
+5. **Previsão é estimativa e aparece como tal**, com o período-base e a versão que a produziu (H44).
