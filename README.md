@@ -232,6 +232,7 @@ docker compose logs api | grep "Senha sorteada"
 
 Anote: ela não é gravada em lugar nenhum e não pode ser recuperada. Troque no primeiro acesso, em
 `POST /api/sessao/senha`. Para definir a senha de antemão, preencha `ADMIN_SENHA` no `.env` antes de subir.
+Depois de um `resetar_banco.py`, a senha sorteada sai na saída do reset, e não no log.
 
 Perdeu a senha do administrador? `redefinir-senha --login admin`, como acima.
 
@@ -312,6 +313,11 @@ benchmark do otimizador, que precisa de escala para evidenciar o ganho de parale
 
 O `resetar_banco.py` reverte as migrações, reaplica e repovoa — é o ciclo que se usa dezenas de vezes por
 dia durante o desenvolvimento.
+
+**Os usuários vão junto.** No fim, o reset recria o administrador — com a senha de `ADMIN_SENHA`, ou
+sorteada e impressa na saída do próprio reset — e reinicia a API, cujas conexões abertas guardavam
+consultas preparadas das tabelas antigas e respondiam erro interno (#115). Logins pessoais se recriam
+com `criar-usuario`, como acima.
 
 ### Medição de desempenho
 
