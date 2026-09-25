@@ -124,6 +124,38 @@ jobs:
         if: steps.existe.outputs.pronto == 'nao'
         run: echo "Diretório api/ ainda não existe — previsto para a Sprint 3 (história H09)."
 
+  modelo:
+    name: Modelo preditivo (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # O cache importa aqui mais que nos outros trabalhos: a roda CPU do
+      # PyTorch é a maior dependência do repositório, e baixá-la a cada push
+      # custaria mais que rodar os testes.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: modelo/requirements.txt
+
+      # pytest e ruff nas mesmas versões de api/requirements-dev.txt. Aquele
+      # arquivo não serve inteiro: traria a API toda para testar um pacote que
+      # não a conhece.
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r modelo/requirements.txt pytest==8.3.4 ruff==0.8.4
+          pip install --no-deps -e modelo
+
+      - name: Análise estática
+        working-directory: modelo
+        run: ruff check .
+
+      - name: Testes
+        working-directory: modelo
+        run: pytest
+
   web:
     name: Interface (React)
     runs-on: ubuntu-latest
