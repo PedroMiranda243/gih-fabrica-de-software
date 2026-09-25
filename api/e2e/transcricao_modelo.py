@@ -200,14 +200,16 @@ def transcrever(url: str, admin: httpx.Client, marca: str, confere: Conferencias
         titulo("[5/5] No banco — o que ficou gravado")
         ids = (primeiro["id"], segundo["id"])
         consulta = """
-            SELECT id, situacao, parceiros, periodos, amostras_teste,
+            SELECT id, situacao, parceiros, amostras_teste,
                    round(mape_modelo::numeric, 4), round(brier_modelo::numeric, 4),
                    promovido, versao_em_uso, octet_length(pesos)
               FROM treino_modelo WHERE id IN (:a, :b) ORDER BY id
         """
         linhas = no_banco(consulta, {"a": ids[0], "b": ids[1]})
-        mostrar_sql(consulta, linhas, ("id", "situacao", "parceiros", "periodos", "teste",
-                                       "mape", "brier", "promovido", "versao_em_uso", "bytes"))
+        # Colunas contadas para caber nas 96 do documento de entrega: mais uma, e
+        # a linha da tabela quebra no meio.
+        mostrar_sql(consulta, linhas, ("id", "situacao", "parceiros", "teste", "mape", "brier",
+                                       "promovido", "em_uso", "bytes"))
         confere("os dois treinos estão gravados, com os pesos na própria linha (ADR-010)",
                 len(linhas) == 2 and all(linha[-1] and linha[-1] > 0 for linha in linhas))
 
