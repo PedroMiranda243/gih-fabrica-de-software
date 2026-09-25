@@ -94,6 +94,13 @@ def estado(s: Banco) -> EstadoModelo:
         periodos_na_base=periodos,
         periodos_minimos=PERIODOS_MINIMOS,
         periodo_mais_recente=PeriodoResposta.model_validate(recente) if recente else None,
+        # Não é o do treino que produziu a versão: um treino que manteve a
+        # rede-3 regravou as previsões dela a partir do período dele (UC07-A1).
+        periodo_das_previsoes=(
+            PeriodoResposta.model_validate(s.get(Periodo, concluido.periodo_base_id))
+            if concluido
+            else None
+        ),
         desatualizado=bool(concluido and recente and recente.id != concluido.periodo_base_id),
         pode_treinar=motivo is None,
         motivo_bloqueio=motivo,

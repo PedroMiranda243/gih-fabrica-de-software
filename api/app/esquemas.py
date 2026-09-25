@@ -724,6 +724,9 @@ class EstadoModelo(BaseModel):
     periodos_na_base: int
     periodos_minimos: int
     periodo_mais_recente: PeriodoResposta | None
+    periodo_das_previsoes: PeriodoResposta | None = Field(
+        description="De onde partem as previsões em uso: o período-base do último treino concluído."
+    )
     desatualizado: bool = Field(
         description="Há período mais novo que o das previsões em uso; um novo treino o incorpora."
     )

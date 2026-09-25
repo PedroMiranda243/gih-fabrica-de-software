@@ -317,6 +317,9 @@ def test_versao_que_nao_supera_nao_entra_e_as_versoes_coexistem(rede, gestor, mo
     assert estado["treino_da_versao"]["id"] == 2
     assert estado["ultimo_treino"]["id"] == 3
     assert ids.periodos[-1] == estado["periodo_mais_recente"]["id"]
+    # As previsões em uso partem do período do último treino concluído — o 3º,
+    # que manteve a rede-2 —, e não do treino que a produziu.
+    assert estado["periodo_das_previsoes"]["id"] == terceiro.periodo_base_id
 
 
 def test_os_pesos_gravados_refazem_as_previsoes(rede, gestor, monkeypatch):
