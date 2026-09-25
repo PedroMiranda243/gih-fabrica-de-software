@@ -53,7 +53,10 @@ function extrair(caminhoRelativo) {
   const caminho = path.join(RAIZ, caminhoRelativo);
   if (!fs.existsSync(caminho)) return [];
 
-  const linhas = fs.readFileSync(caminho, 'utf8').split('\n');
+  // `\r?\n`, e não `\n`: no Windows o git entrega os .md com CRLF, o `\r` sobrava
+  // no fim de cada linha e nenhum marcador casava — o script dizia "nenhum bloco
+  // marcado" com os blocos todos lá.
+  const linhas = fs.readFileSync(caminho, 'utf8').split(/\r?\n/);
   const achados = [];
 
   for (let i = 0; i < linhas.length; i += 1) {
