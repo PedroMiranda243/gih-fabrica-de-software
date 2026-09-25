@@ -115,6 +115,7 @@ TELAS: dict[str, tuple[str, str]] = {
     "parceiros": ("GET", "/api/parceiros"),
     "usuarios": ("GET", "/api/usuarios"),
     "configuracao": ("GET", "/api/configuracao/segmentacao"),
+    "modelo": ("GET", "/api/modelo"),
 }
 
 

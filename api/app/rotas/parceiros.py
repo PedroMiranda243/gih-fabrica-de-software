@@ -20,7 +20,7 @@ from sqlalchemy import func, literal, nullslast, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from app import auditoria
+from app import auditoria, servico_previsao
 from app.auditoria import Acao
 from app.calculos import ticket_medio, variacao_percentual
 from app.db import Sessao
@@ -34,6 +34,7 @@ from app.esquemas import (
     ParceiroComDesempenho,
     ParceiroResposta,
     PeriodoResposta,
+    PrevisaoParceiro,
     VinculoParceiro,
 )
 from app.modelos import (
@@ -485,6 +486,39 @@ def obter(parceiro_id: int, s: Banco) -> ParceiroComDesempenho:
         )
     ).one()
     return _linha(linha)
+
+
+@router.get("/{parceiro_id}/previsao", response_model=PrevisaoParceiro)
+def previsao(parceiro_id: int, s: Banco) -> PrevisaoParceiro:
+    """Faturamento previsto e risco do parceiro (RF28, H44) — ou o porquê de não haver.
+
+    Rota própria, e não um campo a mais no parceiro: a lista e a exportação
+    usam o mesmo formato do parceiro, e a previsão lá seria uma consulta por
+    linha que nenhuma das duas mostra.
+    """
+    _buscar(s, parceiro_id)  # 404 com a mesma mensagem de sempre
+    lida = servico_previsao.previsao_do_parceiro(s, parceiro_id)
+    base = PeriodoResposta.model_validate(lida.periodo_base) if lida.periodo_base else None
+    if lida.previsao is None:
+        return PrevisaoParceiro(
+            disponivel=False,
+            periodo_base=base,
+            modelo_versao=lida.versao,
+            desatualizada=lida.desatualizada,
+            motivo=lida.motivo,
+            ajuda=lida.ajuda,
+        )
+    previsto = lida.previsao
+    return PrevisaoParceiro(
+        disponivel=True,
+        faturamento_previsto=previsto.faturamento_previsto,
+        probabilidade_queda=previsto.probabilidade_queda,
+        periodo_base=base,
+        modelo_versao=previsto.modelo_versao,
+        origem="REFERENCIA" if servico_previsao.e_referencia(previsto.modelo_versao) else "MODELO",
+        gerada_em=previsto.gerada_em,
+        desatualizada=lida.desatualizada,
+    )
 
 
 @router.post("", response_model=ParceiroResposta, status_code=status.HTTP_201_CREATED)

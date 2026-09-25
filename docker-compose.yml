@@ -31,7 +31,13 @@ services:
       retries: 10
 
   api:
-    build: ./api
+    build:
+      context: ./api
+      # O modelo preditivo (`modelo/`) roda dentro da API, mas mora fora dela.
+      # Entra como contexto adicional, e não trocando o contexto para a raiz:
+      # a raiz levaria web/node_modules e docs/ para o build (ADR-010).
+      additional_contexts:
+        modelo: ./modelo
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-gih}:${POSTGRES_PASSWORD:-gih}@postgres:5432/${POSTGRES_DB:-gih}

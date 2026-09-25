@@ -22,6 +22,7 @@ API = RAIZ / "api"
 sys.path.insert(0, str(API))
 
 from app.config import config  # noqa: E402
+from gih_modelo import PERIODOS_MINIMOS  # noqa: E402
 
 
 def python_do_ambiente() -> str:
@@ -88,6 +89,20 @@ def main() -> None:
     # ainda não calculada" — correto, mas não é o que se quer demonstrar.
     print("\nSegmentando...")
     rodar([py, "-m", "app.cli", "reprocessar-segmentos"], cwd=API)
+
+    # Pelo mesmo motivo, o modelo: sem treino, o cadastro do parceiro abriria
+    # com "o modelo ainda não foi treinado" — correto, e não o que se demonstra.
+    # Com menos de 8 períodos o treino é recusado (RN09); o reset não pula o
+    # passo em silêncio, mas também não falha por isso — a base pequena
+    # continua útil para o resto.
+    if a.periodos >= PERIODOS_MINIMOS:
+        print("\nTreinando o modelo preditivo...")
+        rodar([py, "-m", "app.cli", "treinar-modelo"], cwd=API)
+    else:
+        print(
+            f"\nModelo não treinado: {a.periodos} períodos, e o treino exige "
+            f"{PERIODOS_MINIMOS} (RN09)."
+        )
 
 
 if __name__ == "__main__":

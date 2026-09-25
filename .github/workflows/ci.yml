@@ -82,12 +82,19 @@ jobs:
         if: steps.existe.outputs.pronto == 'sim'
         with:
           python-version: '3.11'
+          cache: pip
+          cache-dependency-path: |
+            api/requirements-dev.txt
+            modelo/requirements.txt
 
+      # A API treina e prevê com o pacote do modelo (ADR-010): sem ele, os
+      # testes do módulo de previsão não teriam o que chamar.
       - name: Instalar dependências
         if: steps.existe.outputs.pronto == 'sim'
         run: |
           python -m pip install --upgrade pip
-          pip install -r api/requirements-dev.txt
+          pip install -r api/requirements-dev.txt -r modelo/requirements.txt
+          pip install --no-deps ./modelo
 
       - name: Análise estática
         if: steps.existe.outputs.pronto == 'sim'
@@ -104,8 +111,10 @@ jobs:
         run: pytest --cov=app --cov-report=term-missing
 
       # O núcleo de regras tem um piso próprio, e reprova o PR que o furar
-      # (RNF24, história H69). Cobertura que não é cobrada decai: o número
-      # medido hoje é 99%, e o piso fica no que o requisito exige, 70% — largo
+      # (RNF24, história H69). A H69 nomeia segmentação, ranking, previsão e
+      # otimização; a previsão entrou com o módulo da Sprint 05. Cobertura que
+      # não é cobrada decai: o número medido na segmentação era 99%, e o piso
+      # fica no que o requisito exige, 70% — largo
       # de propósito, porque piso colado no valor atual reprova por qualquer
       # refatoração honesta.
       #
@@ -117,7 +126,7 @@ jobs:
         working-directory: api
         run: >-
           coverage report
-          --include=app/servico_segmentacao.py,app/ranking.py,app/rotas/painel.py,app/calculos.py
+          --include=app/servico_segmentacao.py,app/ranking.py,app/rotas/painel.py,app/calculos.py,app/servico_previsao.py
           --fail-under=70
 
       - name: Módulo ainda não criado

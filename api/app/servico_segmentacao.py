@@ -117,6 +117,16 @@ def _consecutivos(faturamentos: Sequence[Decimal], *, subindo: bool) -> int:
     return seguidos
 
 
+def criterio_em_risco(faturamentos: Sequence[Decimal], limiares: Limiares = PADRAO) -> bool:
+    """O critério de Em Risco da RN01, sozinho: quedas seguidas até o limiar.
+
+    Separado de `classificar` porque o modelo preditivo rotula o treino com ele
+    (RN09). Modelo e segmentação não podem discordar sobre o que é queda — e,
+    usando a mesma função, mudar o limiar na configuração muda os dois juntos.
+    """
+    return _consecutivos(faturamentos, subindo=False) >= limiares.periodos_tendencia
+
+
 def classificar(
     *,
     status: StatusComercial,
@@ -144,7 +154,7 @@ def classificar(
         return Segmento.RECEM_CHEGADO
 
     # 3. Em Risco — **antes de Top, deliberadamente** (RN01).
-    if _consecutivos(faturamentos, subindo=False) >= limiares.periodos_tendencia:
+    if criterio_em_risco(faturamentos, limiares):
         return Segmento.EM_RISCO
 
     # 4. Top — entre os N maiores do período mais recente.

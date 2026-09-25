@@ -37,6 +37,7 @@ import io
 import os
 import secrets
 import sys
+import time
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -871,9 +872,129 @@ def item_sugestao(r: Relatorio, url: str, criados: dict[str, str], marca: str) -
         )
 
 
+# ------------------------------------------------------------- modelo
+def item_modelo(r: Relatorio, url: str, criados: dict[str, str]) -> None:
+    """O módulo de previsão (UC07, RF27, RF28, RN09), contra a base no ar.
+
+    **Roda antes de qualquer importação da execução**, de propósito: o CRUD e a
+    ingestão gravam semanas no futuro, e o treino parte do período mais
+    recente. Depois delas, a base do treino seria uma semana de verificação com
+    dois parceiros — e a previsão de um parceiro da demonstração diria, com
+    razão, que ele não aparece no período mais recente. Foi o que a primeira
+    execução mostrou.
+
+    O treino desta execução sai na limpeza, com as previsões dele, e a versão em
+    uso volta a ser a de antes — conferido no fim.
+    """
+    r.secao("Modelo preditivo — treino, versão em uso e previsão")
+
+    analista = criados.get("ANALISTA")
+    if analista:
+        with sessao(url) as c:
+            entrar(c, analista, SENHA)
+            r.checar(
+                "o analista não treina o modelo",
+                c.post("/api/modelo/treinos").status_code == 403,
+                "treinar muda as previsões de toda a equipe (UC07)",
+            )
+
+    gestor = criados.get("GESTOR")
+    if not gestor:
+        r.checar("há gestor para treinar", False)
+        return
+    with sessao(url) as c:
+        entrar(c, gestor, SENHA)
+        estado = c.get("/api/modelo").json()
+        r.checar(
+            "a tela do modelo diz se dá para treinar e por quê",
+            "pode_treinar" in estado and estado.get("periodos_minimos") == 8,
+            f"{estado.get('periodos_na_base')} períodos na base; mínimo "
+            f"{estado.get('periodos_minimos')} (RN09)",
+        )
+        if not estado.get("pode_treinar"):
+            r.nota(f"treino não conferido: {estado.get('motivo_bloqueio')}")
+            return
+
+        pedido = c.post("/api/modelo/treinos")
+        if not r.checar(
+            "o treino é aceito e roda fora da requisição",
+            pedido.status_code == 202 and pedido.json().get("situacao") == "EM_ANDAMENTO",
+            f"HTTP {pedido.status_code}",
+        ):
+            return
+        treino_id = pedido.json()["id"]
+
+        segundo = c.post("/api/modelo/treinos")
+        andamento = c.get(f"/api/modelo/treinos/{treino_id}").json().get("situacao")
+        if andamento == "EM_ANDAMENTO" or segundo.status_code == 409:
+            r.checar(
+                "um segundo treino, com o primeiro rodando, é recusado",
+                segundo.status_code == 409,
+                "um treino por vez, travado pelo banco (ADR-010)",
+            )
+        else:
+            r.nota("o primeiro treino terminou antes do segundo pedido; trava não conferida")
+
+        limite = time.monotonic() + 180
+        treino = c.get(f"/api/modelo/treinos/{treino_id}").json()
+        while treino.get("situacao") == "EM_ANDAMENTO" and time.monotonic() < limite:
+            time.sleep(1)
+            treino = c.get(f"/api/modelo/treinos/{treino_id}").json()
+        metricas = treino.get("metricas", {})
+        volume = treino.get("volume", {})
+        if not r.checar(
+            "o treino termina e registra data, volume e métricas (RF27)",
+            treino.get("situacao") == "CONCLUIDO"
+            and treino.get("concluido_em") is not None
+            and (volume.get("amostras_teste") or 0) > 0
+            and metricas.get("mape_modelo") is not None,
+            f"{volume.get('parceiros')} parceiros · {volume.get('periodos')} períodos · "
+            f"{treino.get('segundos')} s".replace(".", ",") if treino.get("situacao") == "CONCLUIDO"
+            else f"{treino.get('situacao')}: {treino.get('motivo')}",
+        ):
+            return
+
+        melhor = min(metricas["mape_ultimo"], metricas["mape_media_movel"])
+        r.checar(
+            "a versão em uso é a que venceu as referências, ou a anterior com o motivo (UC07-A1)",
+            (treino["promovido"] and treino["versao_em_uso"] == treino["versao"])
+            or (not treino["promovido"] and bool(treino.get("motivo"))),
+            f"rede {metricas['mape_modelo']:.1%} contra {melhor:.1%} da melhor referência; "
+            f"em uso: {treino['versao_em_uso']}".replace(".", ","),
+        )
+
+    if analista:
+        with sessao(url) as c:
+            entrar(c, analista, SENHA)
+            # O maior do período mais recente: está nele, então tem previsão.
+            maior = {"tamanho": 1, "ordenar_por": "faturamento", "descendente": True}
+            lista = c.get("/api/parceiros", params=maior)
+            itens = lista.json().get("itens", []) if lista.status_code == 200 else []
+            if not itens:
+                r.nota("não há parceiro na base para ler a previsão")
+                return
+            previsao = c.get(f"/api/parceiros/{itens[0]['id']}/previsao").json()
+            disponivel = previsao.get("disponivel") is True
+            r.checar(
+                "o cadastro do parceiro mostra a previsão, com base e versão (RF28)",
+                disponivel
+                and previsao.get("modelo_versao") == treino["versao_em_uso"]
+                and 0 <= (previsao.get("probabilidade_queda") or -1) <= 1,
+                f"{itens[0]['nome']}: R$ "
+                + str(previsao["faturamento_previsto"]).replace(".", ",")
+                + f" previstos, risco de {previsao['probabilidade_queda']:.0%}"
+                if disponivel
+                else f"{itens[0]['nome']}: {previsao.get('motivo')}",
+            )
+
+
 # --------------------------------------------------------------------- extra
 def item_limpeza(
-    r: Relatorio, admin: httpx.Client, marca: str, painel_antes: httpx.Response
+    r: Relatorio,
+    admin: httpx.Client,
+    marca: str,
+    painel_antes: httpx.Response,
+    versao_antes: str | None,
 ) -> None:
     """Desfaz o que a execução gravou, e confere pelo painel que desfez.
 
@@ -907,6 +1028,12 @@ def item_limpeza(
         onde_o_painel_abre(depois)
         if igual
         else f"antes: {onde_o_painel_abre(painel_antes)}; agora: {onde_o_painel_abre(depois)}",
+    )
+    versao = admin.get("/api/modelo").json().get("versao_em_uso")
+    r.checar(
+        "a versão do modelo em uso volta a ser a de antes",
+        versao == versao_antes,
+        f"{versao or 'nenhuma — o modelo não estava treinado'}",
     )
     r.nota("os usuários da execução ficam, desativados: a trilha de auditoria aponta para eles")
 
@@ -956,11 +1083,13 @@ def main() -> int:
         # Onde o painel abre antes de a verificação gravar qualquer coisa. É
         # contra isto que a limpeza é conferida no fim.
         painel_antes = admin.get("/api/painel/indicadores")
+        versao_antes = admin.get("/api/modelo").json().get("versao_em_uso")
         try:
             item_banco(r, admin)
             item_login(r, a.url, a.login, a.senha)
             criados = item_cadastro(r, admin, marca)
             item_perfis(r, a.url, criados)
+            item_modelo(r, a.url, criados)
             item_crud(r, a.url, criados, marca)
             periodo_id = item_ingestao(r, a.url, criados, marca)
             item_painel(r, a.url, criados, periodo_id)
@@ -973,7 +1102,7 @@ def main() -> int:
             # No `finally`: a execução interrompida por uma exceção é justamente
             # a que deixaria mais para trás — período no futuro no painel e
             # usuário ativo com a senha que está publicada neste arquivo.
-            item_limpeza(r, admin, marca, painel_antes)
+            item_limpeza(r, admin, marca, painel_antes, versao_antes)
 
     return r.encerrar()
 

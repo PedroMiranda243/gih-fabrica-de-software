@@ -6,12 +6,14 @@ a cada requisição (RF05, RNF14) — ver `app/dependencias.py`.
 """
 import logging
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
+from app import servico_previsao
 from app.db import sessao
 from app.erros import erro_de_validacao
 from app.rotas import (
@@ -20,6 +22,7 @@ from app.rotas import (
     categorias,
     configuracao,
     importacoes,
+    modelo,
     painel,
     parceiros,
     usuarios,
@@ -27,7 +30,28 @@ from app.rotas import (
 
 log = logging.getLogger("gih")
 
+
+@asynccontextmanager
+async def ciclo_de_vida(_app: FastAPI):
+    """Na subida, fecha os treinos que um reinício deixou em andamento.
+
+    Sem isto, a trava do um por vez ficaria presa para sempre e a tela do
+    modelo recusaria todo treino novo (ADR-010). Banco fora do ar não impede a
+    subida: a verificação de saúde é quem diz isso, e a API volta a funcionar
+    quando o banco voltar.
+    """
+    try:
+        with sessao() as s:
+            interrompidos = servico_previsao.recuperar_interrompidos(s)
+        if interrompidos:
+            log.warning("%d treino(s) interrompido(s) marcado(s) como falho(s)", interrompidos)
+    except Exception:
+        log.exception("Não foi possível conferir os treinos interrompidos")
+    yield
+
+
 app = FastAPI(
+    lifespan=ciclo_de_vida,
     title="Growth Intelligence Hub",
     description="API do painel de inteligência de crescimento para redes de parceiros.",
     version="0.2.0",
@@ -45,6 +69,7 @@ app.include_router(categorias.router)
 app.include_router(importacoes.router)
 app.include_router(painel.router)
 app.include_router(configuracao.router)
+app.include_router(modelo.router)
 app.include_router(auditoria.router)
 
 
