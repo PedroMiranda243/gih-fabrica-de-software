@@ -548,10 +548,15 @@ independentes. Faltava decidir três coisas antes da primeira linha (H48, H49):
   - Cada solução é um vetor com um gene por parceiro: 0 é "sem ação", e de 1 a A é a ação.
   - Seleção por torneio de dois, cruzamento uniforme e mutação que sorteia outro valor para o gene.
   - Cada geração guarda o melhor da anterior (elitismo).
-- **A primeira solução de toda partida é viável por construção.** Ela sai da mesma montagem que decide a
-  viabilidade (§4.1): os mínimos com a ação mais barata, e depois o guloso por ganho/custo. Com o elitismo, o
-  melhor encontrado nunca é pior que ela. Por isso, **quando a campanha é viável, o plano devolvido é viável**;
-  e ele ainda passa por um verificador independente antes de ser gravado.
+- **As duas primeiras soluções de toda partida são viáveis por construção.** Saem da mesma montagem que
+  decide a viabilidade (§4.1): os mínimos com a ação mais barata, completados por um guloso. Uma completa pela
+  razão ganho/custo, que acerta quando o orçamento aperta; a outra pelo ganho, que acerta quando o que aperta
+  é o máximo de ações. Com o elitismo, o melhor encontrado nunca é pior que a melhor delas. Por isso, **quando
+  a campanha é viável, o plano devolvido é viável**; e ele ainda passa por um verificador independente antes
+  de ser gravado.
+- **Uma mutação por filho, em média**, qualquer que seja N. Com duas ou quatro, o genético não saiu dos planos
+  gulosos em duas de três campanhas de teste, e uma mutação por troca (tirar a ação de um parceiro e dar a
+  outro) também rendeu menos. Os números estão na medição do otimizador.
 - **A violação é inteira e em unidades de ação:** o excesso sobre K e sobre os máximos, o que falta nos
   mínimos, e o excesso de orçamento dividido pelo custo da ação mais barata (arredondado para cima). Não há
   mistura de reais com contagens. Por isso toda ação do catálogo que entra na campanha custa mais que zero:
