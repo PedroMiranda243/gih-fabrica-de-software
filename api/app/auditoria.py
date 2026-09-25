@@ -54,6 +54,11 @@ class Acao(enum.StrEnum):
     USUARIO_REATIVADO = "USUARIO_REATIVADO"
     PERFIL_ALTERADO = "PERFIL_ALTERADO"
     ACESSO_NEGADO = "ACESSO_NEGADO"
+    # O treino muda as previsões que todo mundo vê e que o otimizador vai usar.
+    # A trilha guarda quem pediu, a versão que ficou em uso e as métricas (H45);
+    # a falha tem ação própria para aparecer no filtro sem abrir cada registro.
+    MODELO_TREINADO = "MODELO_TREINADO"
+    MODELO_TREINO_FALHOU = "MODELO_TREINO_FALHOU"
 
 
 # Chaves que nunca podem entrar em `detalhes`. A trilha é consultável por

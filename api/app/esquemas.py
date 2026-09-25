@@ -17,7 +17,14 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.config import config
-from app.modelos import OrigemCategoria, OrigemImportacao, Perfil, Segmento, StatusComercial
+from app.modelos import (
+    OrigemCategoria,
+    OrigemImportacao,
+    Perfil,
+    Segmento,
+    SituacaoTreino,
+    StatusComercial,
+)
 
 # Senha longa demais é trabalho de hash caro sem ganho nenhum — o Argon2 leva o
 # tempo que for pedido dele. O teto é proteção de recurso (RNF15).
@@ -632,3 +639,114 @@ class SerieHistorica(BaseModel):
     parceiro_id: int | None
     parceiro_nome: str | None
     pontos: list[PontoSerie]
+
+
+# ------------------------------------------------------------ modelo preditivo
+class VolumeTreino(BaseModel):
+    """O volume de dados do treino (RF27)."""
+
+    parceiros: int | None
+    periodos: int | None
+    amostras_treino: int | None
+    amostras_validacao: int | None
+    amostras_teste: int | None
+
+
+class MetricasTreino(BaseModel):
+    """As métricas no conjunto de teste, lado a lado com as referências.
+
+    O MAPE vem em fração (0,098 = 9,8%), como sai do cálculo: formatar é
+    trabalho da tela.
+    """
+
+    mape_modelo: float | None
+    mape_ultimo: float | None
+    mape_media_movel: float | None
+    brier_modelo: float | None
+    brier_referencia: float | None
+    calibracao_modelo: float | None
+    calibracao_referencia: float | None
+
+
+class FaixaCalibracao(BaseModel):
+    inicio: float
+    fim: float
+    previsto: float
+    observado: float
+    amostras: int
+
+
+class TreinoResposta(BaseModel):
+    """Um treino do modelo (RF27, UC07).
+
+    `versao` é o nome da rede treinada nele; `versao_em_uso`, a que ficou
+    valendo depois dele — a própria, se superou as referências, ou a anterior,
+    com o `motivo` (UC07-A1).
+    """
+
+    id: int
+    situacao: SituacaoTreino
+    autor: str | None = Field(description="Nome de quem disparou. Nulo quando veio do terminal.")
+    iniciado_em: datetime
+    concluido_em: datetime | None
+    periodo_base: PeriodoResposta
+    volume: VolumeTreino
+    metricas: MetricasTreino
+    curva: list[FaixaCalibracao]
+    segundos: float | None
+    promovido: bool | None
+    versao: str
+    versao_em_uso: str | None
+    motivo: str | None
+
+
+class PaginaTreinos(BaseModel):
+    itens: list[TreinoResposta]
+    total: int
+    pagina: int
+    tamanho: int
+
+
+class EstadoModelo(BaseModel):
+    """O que a tela do modelo mostra ao abrir (UC07, passo 1).
+
+    **Se dá para treinar agora é decisão da API** (regra 2.4): a tela recebe
+    `pode_treinar` e o porquê, em vez de refazer a conta dos períodos.
+    """
+
+    versao_em_uso: str | None
+    origem: str | None = Field(description="MODELO ou REFERENCIA.")
+    treino_da_versao: TreinoResposta | None = Field(
+        description="O treino que produziu a versão em uso, com as métricas dela."
+    )
+    ultimo_treino: TreinoResposta | None
+    em_andamento: TreinoResposta | None
+    periodos_na_base: int
+    periodos_minimos: int
+    periodo_mais_recente: PeriodoResposta | None
+    desatualizado: bool = Field(
+        description="Há período mais novo que o das previsões em uso; um novo treino o incorpora."
+    )
+    pode_treinar: bool
+    motivo_bloqueio: str | None
+
+
+class PrevisaoParceiro(BaseModel):
+    """Previsão e risco de um parceiro (RF28, H44) — ou o porquê de não haver.
+
+    **É estimativa, e a resposta diz de onde ela vem**: o período-base, a
+    versão e se saiu da rede ou da referência. Sem previsão, `motivo` e `ajuda`
+    dizem por quê (RN09) — a tela não adivinha.
+    """
+
+    disponivel: bool
+    faturamento_previsto: Decimal | None = None
+    probabilidade_queda: float | None = None
+    periodo_base: PeriodoResposta | None = None
+    modelo_versao: str | None = None
+    origem: str | None = Field(default=None, description="MODELO ou REFERENCIA.")
+    gerada_em: datetime | None = None
+    desatualizada: bool = False
+    motivo: str | None = None
+    ajuda: str | None = None
+

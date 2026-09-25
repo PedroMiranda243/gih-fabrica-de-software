@@ -4,9 +4,10 @@ Uso:
     python -m app.cli criar-admin        # só cria se não houver nenhum administrador
     python -m app.cli criar-usuario --login pedro --nome "Pedro" --perfil GESTOR
     python -m app.cli redefinir-senha --login admin
+    python -m app.cli treinar-modelo
 
-Nos dois últimos a senha é **digitada no terminal**, nunca passada como argumento.
-Com o ambiente no ar:
+Em `criar-usuario` e `redefinir-senha` a senha é **digitada no terminal**, nunca
+passada como argumento. Com o ambiente no ar:
 
     docker compose exec api python -m app.cli criar-usuario --login ... --nome ...
 
@@ -23,12 +24,19 @@ import sys
 
 from sqlalchemy import func, select
 
-from app import auditoria, sessoes
+from app import auditoria, servico_previsao, sessoes
 from app.auditoria import Acao
 from app.config import config
 from app.db import Sessao
 from app.esquemas import LimiaresSegmentacao, NovoUsuario
-from app.modelos import ConfiguracaoSegmentacao, Perfil, Periodo, Usuario
+from app.modelos import (
+    ConfiguracaoSegmentacao,
+    Perfil,
+    Periodo,
+    SituacaoTreino,
+    TreinoModelo,
+    Usuario,
+)
 from app.seguranca import SenhaFraca, gerar_hash, validar_forca
 from app.servico_segmentacao import (
     Limiares,
@@ -359,6 +367,66 @@ def configurar_segmentacao(argumentos: list[str]) -> int:
     return 0
 
 
+def treinar_modelo(argumentos: list[str]) -> int:
+    """Treina o modelo preditivo pelo terminal (UC07, H45).
+
+    O mesmo treino da tela, com as mesmas regras: recusa com histórico curto
+    (UC07-E1) ou com outro treino rodando, e só põe em uso a versão que supera
+    as referências (UC07-A1). Aqui ele roda até o fim antes de o comando
+    voltar — não há tela para acompanhar. Serve para a base de demonstração
+    nascer com previsão, pelo `resetar_banco.py`.
+    """
+    argparse.ArgumentParser(prog="python -m app.cli treinar-modelo").parse_args(argumentos)
+
+    s = Sessao()
+    try:
+        try:
+            treino = servico_previsao.iniciar(s, usuario_id=None)
+        except servico_previsao.TreinoRecusado as recusa:
+            print(recusa.erro, file=sys.stderr)
+            print(recusa.ajuda, file=sys.stderr)
+            return 1
+        s.commit()
+        treino_id = treino.id
+    finally:
+        s.close()
+
+    print(f"Treinando (treino {treino_id})...")
+    servico_previsao.executar(treino_id, origem="cli")
+
+    s = Sessao()
+    try:
+        treino = s.get(TreinoModelo, treino_id)
+        if treino.situacao is not SituacaoTreino.CONCLUIDO:
+            print(f"O treino falhou: {treino.motivo}", file=sys.stderr)
+            return 1
+        print(
+            f"Concluído: {treino.parceiros} parceiros, {treino.periodos} períodos, "
+            f"{treino.amostras_teste} amostras de teste."
+        )
+        def br(texto: str) -> str:
+            return texto.replace(".", ",")
+
+        print(
+            br(
+                f"  MAPE   rede {treino.mape_modelo:.2%} · último período {treino.mape_ultimo:.2%}"
+                f" · média móvel {treino.mape_media_movel:.2%}"
+            )
+        )
+        print(
+            br(
+                f"  Brier  rede {treino.brier_modelo:.4f}"
+                f" · referência {treino.brier_referencia:.4f}"
+            )
+        )
+        print(f"Versão em uso: {treino.versao_em_uso}")
+        if treino.motivo:
+            print(treino.motivo)
+        return 0
+    finally:
+        s.close()
+
+
 # Cada comando recebe o resto da linha de comando. `criar-admin` não tem
 # argumentos e é chamado pelo entrypoint a cada subida.
 COMANDOS = {
@@ -367,6 +435,7 @@ COMANDOS = {
     "redefinir-senha": redefinir_senha,
     "reprocessar-segmentos": reprocessar_segmentos,
     "configurar-segmentacao": configurar_segmentacao,
+    "treinar-modelo": treinar_modelo,
 }
 
 
