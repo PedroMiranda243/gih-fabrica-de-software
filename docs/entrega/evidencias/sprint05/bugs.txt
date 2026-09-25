@@ -1,5 +1,5 @@
 Registro de bugs — gerado das issues com o rótulo `fix`
-Abertas desde 22/09/2026; gerado em 25/09/2026 01:57 por scripts/registrar_bugs.py
+Abertas desde 22/09/2026; gerado em 25/09/2026 03:07 por scripts/registrar_bugs.py
 
 #97  O menu do Administrador oferecia Parceiros, que a rota lhe recusa
     situação:    corrigido em #79, #80
@@ -79,10 +79,10 @@ Abertas desde 22/09/2026; gerado em 25/09/2026 01:57 por scripts/registrar_bugs.
     encontrado:  24/09, na captura das evidências da Sprint 05 (`capturar_sprint05.js`, erro 1).
 
 #110  O renderizador de diagramas não achava nenhum bloco com os .md em CRLF
-    situação:    PENDENTE
+    situação:    corrigido em #111
     apareceu:    `node docs/entrega/renderizar_diagramas.js` respondeu "Nenhum bloco marcado encontrado. Falta o comentário `<!-- diagrama: nome -->`?" — com os marcadores todos nos documentos.
     causa:       O script quebrava o arquivo em linhas por `\n`. No Windows, o git entrega os `.md` com CRLF: o `\r` sobrava no fim de cada linha, e a expressão do marcador, ancorada no fim, não casava. Antes funcionava porque os arquivos editados por script ficavam em LF até o próximo checkout.
-    a fazer:     Quebrar por `\r?\n`.
+    correção:    Quebrar por `\r?\n`.
     encontrado:  25/09, ao renderizar os diagramas para a entrega da Sprint 05.
 
-Resultado: 12 defeitos registrados — 11 corrigidos, 1 pendente.
+Resultado: 12 defeitos registrados — 12 corrigidos, 0 pendentes.

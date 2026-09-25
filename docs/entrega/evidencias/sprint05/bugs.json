@@ -136,8 +136,10 @@
   {
     "numero": 110,
     "titulo": "O renderizador de diagramas não achava nenhum bloco com os .md em CRLF",
-    "situacao": "pendente",
-    "prs": [],
+    "situacao": "corrigido",
+    "prs": [
+      111
+    ],
     "apareceu": "`node docs/entrega/renderizar_diagramas.js` respondeu \"Nenhum bloco marcado encontrado. Falta o comentário `<!-- diagrama: nome -->`?\" — com os marcadores todos nos documentos.",
     "causa": "O script quebrava o arquivo em linhas por `\\n`. No Windows, o git entrega os `.md` com CRLF: o `\\r` sobrava no fim de cada linha, e a expressão do marcador, ancorada no fim, não casava. Antes funcionava porque os arquivos editados por script ficavam em LF até o próximo checkout.",
     "correcao": "Quebrar por `\\r?\\n`.",

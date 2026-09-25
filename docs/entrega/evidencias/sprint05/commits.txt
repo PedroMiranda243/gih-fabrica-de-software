@@ -1,20 +1,20 @@
 Commits do repositório
 https://github.com/PedroMiranda243/gih-fabrica-de-software
-Referência origin/main em 5b0c661 · de 2026-09-03 a 2026-09-24
+Referência origin/main em 491c851 · de 2026-09-03 a 2026-09-25
 Gerado a partir do git log; nenhum número foi escrito à mão.
 
 Totais
 ------
-  commits de trabalho              157
-  Pull Requests incorporados        41
+  commits de trabalho              163
+  Pull Requests incorporados        42
   commits direto na main            22   (até 15/09, antes de a main ser protegida)
 
 Por tipo (Conventional Commits)
 -------------------------------
-  docs       52   33%
-  feat       41   26%
-  test       30   19%
-  fix        17   11%
+  docs       56   34%
+  feat       41   25%
+  test       31   19%
+  fix        18   11%
   ci          8    5%
   perf        2    1%
   refactor    2    1%
@@ -26,18 +26,18 @@ Por tipo (Conventional Commits)
 
 Por semana (segunda a domingo)
 ------------------------------
-  31/08 a 06/09    7  ████
+  31/08 a 06/09    7  ███
   07/09 a 13/09    0  
-  14/09 a 20/09   72  █████████████████████████████████████
-  21/09 a 27/09   78  ████████████████████████████████████████
+  14/09 a 20/09   72  ██████████████████████████████████
+  21/09 a 27/09   84  ████████████████████████████████████████
 
 Autoria e coautoria
 -------------------
   Cada commit tem um autor e, por área, o colega responsável como coautor
   (trailer Co-authored-by, que o GitHub credita ao coautor).
-  autor     Pedro Miranda                             157
-  coautor   João Pedro Nunes de França                 49
-  coautor   Marcio Maycom                              43
+  autor     Pedro Miranda                             163
+  coautor   João Pedro Nunes de França                 50
+  coautor   Marcio Maycom                              48
   coautor   Ingryd Vitoria de Araújo Barbosa           23
   coautor   Thiago José Falcão de Freitas              11
   sem coautor                                         36
@@ -80,7 +80,7 @@ Pull Requests incorporados, por janela de entrega
     #77  21/09  Entrega da Sprint 04 — Parte IV, evidências e medição do painel
     #78  21/09  PDF da Sprint 04, com a Parte III idêntica à entregue
 
-  Sprint 05 — 22/09 a 03/10: 12
+  Sprint 05 — 22/09 a 03/10: 13
     #79  24/09  A sessão diz as telas do perfil; histórico para o Administrador; recusas de…
     #80  24/09  O menu segue o perfil, e o histórico de importações na tela
     #81  24/09  A tela dos limiares da segmentação (RF21)
@@ -93,3 +93,4 @@ Pull Requests incorporados, por janela de entrega
     #96  24/09  feat(web): a tela do modelo e a previsão no cadastro do parceiro
     #107 25/09  Registros de bugs e de testes gerados de fonte; docs/08 e docs/05 corrigidos
     #109 25/09  Geradores das evidências da Sprint 05 — integração com o banco…
+    #111 25/09  Entrega da Sprint 05 — Parte V, evidências e a Parte II como foi entregue
