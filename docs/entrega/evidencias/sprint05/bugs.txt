@@ -1,0 +1,88 @@
+Registro de bugs — gerado das issues com o rótulo `fix`
+Abertas desde 22/09/2026; gerado em 25/09/2026 01:57 por scripts/registrar_bugs.py
+
+#97  O menu do Administrador oferecia Parceiros, que a rota lhe recusa
+    situação:    corrigido em #79, #80
+    apareceu:    O trilho mostrava Parceiros para o Administrador; clicar levava a um 403, porque a matriz do UC04 não lhe dá o cadastro.
+    causa:       O menu era uma lista fixa na interface, sem saber o que a rota de cada tela aceita.
+    correção:    A sessão passou a dizer as telas do perfil, lidas do `exigir` de cada rota (#79), e o menu desenha só essas (#80). Teste: `test_as_telas_de_cada_perfil_seguem_a_matriz`.
+    encontrado:  Ao fechar as lacunas declaradas na Parte IV (PRs de 24/09), usando a interface como Administrador.
+
+#98  O UC03 negava ao Administrador o histórico que o RF13 lhe dá
+    situação:    corrigido em #79, #83
+    apareceu:    O RF13 dá o histórico de importações ao Administrador; a matriz do `docs/03` dizia "sem acesso" no UC03, e a rota seguia a matriz.
+    causa:       Documento e requisito se contradiziam desde a Sprint 1.
+    correção:    O RF13 prevalece: o UC03 passa a "somente leitura" para o Administrador, e a permissão desceu do roteador para cada rota (#79); o `docs/03` foi alinhado (#83).
+    encontrado:  Ao fechar as lacunas declaradas na Parte IV (PRs de 24/09), revisando a matriz de permissões contra os requisitos.
+
+#99  Recusas do cadastro de usuário fora do contrato {erro, ajuda}
+    situação:    corrigido em #79
+    apareceu:    Senha fraca, login repetido, último administrador e parceiro sem vínculo voltavam como frase solta, com 400 — a tela não tinha como marcar o campo nem oferecer a saída.
+    causa:       Essas rotas eram anteriores ao contrato de erro da API.
+    correção:    422 no campo certo; 409 com `erro`, `ajuda` e, no login repetido, a conta que já o usa (#79).
+    encontrado:  Ao fechar as lacunas declaradas na Parte IV (PRs de 24/09), desenhando a tela de usuários.
+
+#100  Abaixo de 860 px, o menu ficava solto no meio de uma faixa vazia
+    situação:    corrigido em #81
+    apareceu:    Numa página mais curta que a janela, o trilho aparecia no meio de uma faixa vazia.
+    causa:       A grade da casca não declarava as linhas, e dividia a sobra do `min-height` entre o trilho e o conteúdo. As telas longas escondiam o defeito.
+    correção:    `grid-template-rows: auto 1fr` abaixo de 860 px (#81).
+    encontrado:  24/09, na captura da tela de limiares a 768 px.
+
+#101  A regra de estilo do histórico de importações não fazia efeito
+    situação:    corrigido em #80
+    apareceu:    Período e data quebravam em duas linhas, apesar da regra que os mantinha numa só.
+    causa:       `.tabela .nome`, de mesma especificidade e carregada depois, vencia a regra nova.
+    correção:    Seletor de três classes (#80). O comentário na folha registra o porquê.
+    encontrado:  24/09, na captura a 768 px, antes do merge.
+
+#102  A Parte IV da entrega lia o mapa vivo e mudaria uma parte já entregue
+    situação:    corrigido em #83
+    apareceu:    Regerado para a Sprint 05, o documento sairia com uma Parte IV que ninguém entregou.
+    causa:       A Parte IV desenhava o mapa a partir do `docs/09`, que é documento vivo.
+    correção:    O mapa entregue foi congelado em `evidencias/sprint04/` (#83) — o mesmo tratamento da Parte III.
+    encontrado:  24/09, ao atualizar o mapa de navegação.
+
+#103  A verificação no ar treinava o modelo a partir de uma semana de teste
+    situação:    corrigido em #95
+    apareceu:    A seção do modelo rodava depois do CRUD, que já gravara uma semana no futuro: o treino partiu dela, com dois parceiros, e o maior parceiro não tinha previsão — e a formatação estourou com o valor nulo.
+    causa:       Ordem das seções da verificação.
+    correção:    A seção roda antes de qualquer importação da execução, e sem previsão mostra o motivo (#95). Contra a API no ar: 81 de 81.
+    encontrado:  24/09, na primeira execução da verificação de ponta a ponta com o modelo.
+
+#104  Mensagens do modelo com "período(s)"
+    situação:    corrigido em #95
+    apareceu:    "Com 1 período(s) de histórico, ainda não há previsão."
+    causa:       Plural genérico na mensagem da API.
+    correção:    "1 período" e "3 períodos", no motivo e na recusa por histórico curto (#95).
+    encontrado:  24/09, olhando o cadastro de um parceiro sem previsão.
+
+#105  Probabilidade de 0,998 aparecia como "100%" de chance
+    situação:    corrigido em #96
+    apareceu:    "Chance de estar em risco: 100%" — uma estimativa apresentada como certeza. No outro extremo, 172 de 469 parceiros sairiam com "0%".
+    causa:       Arredondamento para inteiro.
+    correção:    `comoProbabilidade`: "mais de 99%" e "menos de 1%" nos extremos (#96).
+    encontrado:  24/09, olhando o cadastro do parceiro com a maior probabilidade.
+
+#106  O docs/08 lista o modo de execução com valores que o banco não tem
+    situação:    corrigido em #107
+    apareceu:    O `docs/08` diz que `modoexecucao` é SERIAL, OPENMP, CUDA; o banco e `app/modelos.py` têm SERIAL, CPU_PARALELO, GPU.
+    causa:       O documento não acompanhou a migração inicial.
+    correção:    Corrigir as duas ocorrências no `docs/08` (seções 2.4 e 4).
+    encontrado:  24/09, revisando o modelo de dados.
+
+#108  Depois da recusa por treino em andamento, a tela seguia oferecendo Treinar agora
+    situação:    corrigido em #109
+    apareceu:    Com um treino já rodando (disparado em outra aba), pedir outro mostra a recusa "Já existe um treino em andamento." — e a tela continua com "Treinar agora" ativo e sem andamento, como se nada estivesse rodando.
+    causa:       A tela só relia o estado do modelo quando o próprio pedido dava certo. A recusa não disparava a releitura, e o treino em andamento que o servidor conhecia não chegava à tela.
+    correção:    Depois de qualquer falha no pedido, reler o estado: a tela encontra o treino em andamento e passa a acompanhá-lo, e o aviso de recusa sai quando ele termina.
+    encontrado:  24/09, na captura das evidências da Sprint 05 (`capturar_sprint05.js`, erro 1).
+
+#110  O renderizador de diagramas não achava nenhum bloco com os .md em CRLF
+    situação:    PENDENTE
+    apareceu:    `node docs/entrega/renderizar_diagramas.js` respondeu "Nenhum bloco marcado encontrado. Falta o comentário `<!-- diagrama: nome -->`?" — com os marcadores todos nos documentos.
+    causa:       O script quebrava o arquivo em linhas por `\n`. No Windows, o git entrega os `.md` com CRLF: o `\r` sobrava no fim de cada linha, e a expressão do marcador, ancorada no fim, não casava. Antes funcionava porque os arquivos editados por script ficavam em LF até o próximo checkout.
+    a fazer:     Quebrar por `\r?\n`.
+    encontrado:  25/09, ao renderizar os diagramas para a entrega da Sprint 05.
+
+Resultado: 12 defeitos registrados — 11 corrigidos, 1 pendente.
