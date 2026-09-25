@@ -55,6 +55,7 @@ from app.modelos import (
     Parceiro,
     Periodo,
     Previsao,
+    TreinoModelo,
     Usuario,
 )
 
@@ -76,6 +77,7 @@ class Contagem:
     metricas: int = 0
     parceiros: int = 0
     categorias: int = 0
+    treinos: int = 0
 
     def __str__(self) -> str:
         nomes = (
@@ -84,6 +86,7 @@ class Contagem:
             ("métrica", "métricas"),
             ("parceiro", "parceiros"),
             ("categoria", "categorias"),
+            ("treino", "treinos"),
         )
         partes = [
             f"{n} {um if n == 1 else varios}"
@@ -134,7 +137,10 @@ def limpar_execucao(marca: str, url: str | None = None) -> Contagem:
     - usuários: o login começa com `<marca>.`;
     - importações: o autor é um desses usuários;
     - períodos: os dessas importações;
-    - parceiros e categorias: a marca aparece no nome como palavra inteira.
+    - parceiros e categorias: a marca aparece no nome como palavra inteira;
+    - treinos do modelo: disparados por um desses usuários, com as previsões
+      das versões que eles produziram. Sem o treino, a versão em uso volta a
+      ser a do último treino de fora da execução.
 
     **Recusa em vez de apagar dado alheio.** Se alguém de fora da execução
     importou num desses períodos, ou se algo fora dela aponta para um parceiro
@@ -201,6 +207,13 @@ def _apagar(c: Connection, marca: str, destino: str) -> Contagem:
             "de fora da execução"
         )
 
+    # O treino da execução sai com as previsões das versões que ele produziu —
+    # `rede-7` e `referencia-7` vêm do treino 7. Antes dos períodos: o treino
+    # aponta para o período-base, e a chave estrangeira recusaria apagá-lo.
+    treinos = c.scalars(select(TreinoModelo.id).where(TreinoModelo.usuario_id.in_(usuarios))).all()
+    versoes = [f"{prefixo}{t}" for t in treinos for prefixo in ("rede-", "referencia-")]
+    c.execute(delete(Previsao).where(Previsao.modelo_versao.in_(versoes)))
+
     # A ordem é a das chaves estrangeiras. Segmento e previsão saem com o
     # período, como em `servico_importacao._limpar_periodo`: são derivados da
     # métrica, e a coluna do período não tem o mesmo nome nas duas tabelas.
@@ -212,6 +225,9 @@ def _apagar(c: Connection, marca: str, destino: str) -> Contagem:
     palavra = rf"\m{marca}\M"
 
     removidos = Contagem()
+    removidos.treinos = c.execute(
+        delete(TreinoModelo).where(TreinoModelo.id.in_(treinos))
+    ).rowcount
     removidos.metricas = c.execute(
         delete(Metrica).where(Metrica.periodo_id.in_(periodos))
     ).rowcount

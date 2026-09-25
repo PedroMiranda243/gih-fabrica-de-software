@@ -26,6 +26,9 @@ from app.modelos import (
     Parceiro,
     Perfil,
     Periodo,
+    Previsao,
+    SituacaoTreino,
+    TreinoModelo,
     Usuario,
 )
 from app.servico_importacao import gravar
@@ -116,6 +119,54 @@ def test_o_que_nao_e_da_execucao_fica(execucao):
     assert _contar(Importacao) == 1
     assert _contar(Metrica) == 1
     assert _contar(Parceiro, Parceiro.nome == "Loja do Centro") == 1
+
+
+def _treino(login: str, versao: str, periodo_inicio: date) -> int:
+    """Um treino concluído de `login`, com uma previsão da versão dele."""
+    s = Sessao()
+    try:
+        autor = s.scalar(select(Usuario.id).where(Usuario.login == login))
+        periodo = s.scalar(select(Periodo.id).where(Periodo.data_inicio == periodo_inicio))
+        parceiro = s.scalar(select(Parceiro.id).order_by(Parceiro.id))
+        treino = TreinoModelo(
+            usuario_id=autor,
+            periodo_base_id=periodo,
+            semente=42,
+            situacao=SituacaoTreino.CONCLUIDO,
+            promovido=True,
+            versao_em_uso="",
+        )
+        s.add(treino)
+        s.flush()
+        treino.versao_em_uso = versao.format(treino.id)
+        s.add(
+            Previsao(
+                parceiro_id=parceiro,
+                periodo_base_id=periodo,
+                faturamento_previsto=100,
+                probabilidade_queda=0.1,
+                modelo_versao=treino.versao_em_uso,
+            )
+        )
+        s.commit()
+        return treino.id
+    finally:
+        s.close()
+
+
+def test_o_treino_da_execucao_sai_e_o_de_fora_fica(execucao):
+    """A verificação dispara um treino para provar o módulo de previsão. Ele sai
+    com as previsões dele — e a versão em uso volta a ser a de antes."""
+    de_fora = _treino("analista.real", "rede-{}", SEMANA_REAL[0])
+    da_execucao = _treino(ANALISTA_DA_EXECUCAO, "rede-{}", SEMANA_DA_EXECUCAO[0])
+
+    removidos = limpar_execucao(MARCA)
+
+    assert removidos.treinos == 1
+    assert _contar(TreinoModelo, TreinoModelo.id == da_execucao) == 0
+    assert _contar(TreinoModelo, TreinoModelo.id == de_fora) == 1
+    assert _contar(Previsao, Previsao.modelo_versao == f"rede-{da_execucao}") == 0
+    assert _contar(Previsao, Previsao.modelo_versao == f"rede-{de_fora}") == 1
 
 
 def test_o_usuario_da_execucao_fica(execucao):
