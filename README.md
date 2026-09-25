@@ -184,8 +184,8 @@ A redefinição encerra as sessões abertas daquele usuário, como a troca pela 
 
 ### Administração pelo terminal
 
-**Não há tela de administração**, e a lacuna é declarada: usuários e configuração vivem na API e nos
-comandos abaixo. A tela não está no protótipo aprovado (H08).
+As telas **Usuários** e **Configuração** cobrem a administração pelo navegador. Os comandos abaixo fazem o
+mesmo pelo terminal, para quem administra sem abrir a aplicação.
 
 Os limiares da segmentação (RF21) — tamanho do Top N, períodos de queda para caracterizar risco e
 períodos de histórico para o parceiro ainda ser recém-chegado:
@@ -204,6 +204,17 @@ docker compose exec api python -m app.cli reprocessar-segmentos
 
 Esse último é também o que classifica uma base carregada antes da segmentação existir — sem ele, o painel
 mostra a distribuição vazia sem dizer por quê.
+
+O modelo preditivo (UC07) treina pela tela **Modelo** ou pelo terminal:
+
+```
+docker compose exec api python -m app.cli treinar-modelo
+```
+
+Pelo terminal ele roda até o fim e imprime as métricas contra as referências e a versão que ficou em uso.
+As regras são as da tela: com menos de 8 períodos na base o treino é recusado (RN09), e a versão treinada
+só entra em uso se superar as referências (UC07-A1). O `scripts/resetar_banco.py` já treina depois de
+segmentar, e a base de demonstração nasce com previsão.
 
 #### O administrador inicial
 
@@ -228,7 +239,8 @@ Para ter recarga automática ao salvar:
 docker compose up -d postgres
 cd api
 python -m venv .venv && .venv/Scripts/activate      # Linux/Mac: source .venv/bin/activate
-pip install -r requirements-dev.txt
+pip install -r requirements-dev.txt -r ../modelo/requirements.txt
+pip install --no-deps -e ../modelo                   # o modelo preditivo, que a API chama
 alembic upgrade head
 uvicorn app.main:app --reload
 ```

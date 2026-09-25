@@ -99,7 +99,7 @@ Duplicata de diagrama sempre diverge, e a que ninguém está olhando é a que fi
 **O modelo de dados vive em [`08-modelo-de-dados.md`](08-modelo-de-dados.md)**, em uma versão só: modelo
 conceitual, modelo relacional com tipos e chaves, índices, restrições e a evidência do banco criado.
 
-As dezesseis entidades, em resumo:
+As dezoito entidades, em resumo:
 
 | Entidade | Papel |
 |---|---|
@@ -113,7 +113,9 @@ As dezesseis entidades, em resumo:
 | `IMPORTACAO` | Registro de uma carga de dados |
 | `METRICA` | Faturamento e pedidos de um parceiro em um período |
 | `HISTORICO_SEGMENTO` | Segmento atribuído a um parceiro em um período |
+| `CONFIGURACAO_SEGMENTACAO` | Os limiares da RN01, configuráveis sem alterar código (RF21) |
 | `PREVISAO` | Faturamento previsto e risco estimado |
+| `TREINO_MODELO` | Uma execução do treino do modelo, com métricas, versão em uso e pesos (RF27) |
 | `ACAO_COMERCIAL` | Tipo de ação disponível, com custo e efeito esperado |
 | `EXECUCAO_OTIMIZADOR` | Parâmetros, modo, tempo e resultado de uma execução |
 | `PLANO_CAMPANHA` | Solução retornada pelo otimizador |

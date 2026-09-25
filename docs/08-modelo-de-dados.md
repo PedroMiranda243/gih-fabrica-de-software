@@ -29,6 +29,7 @@ erDiagram
     USUARIO ||--o{ MENSAGEM : decide
     USUARIO }o--o| PARCEIRO : representa
     USUARIO |o--o| CONFIGURACAO_SEGMENTACAO : ajusta
+    USUARIO |o--o{ TREINO_MODELO : dispara
 
     CATEGORIA ||--o{ PARCEIRO : classifica
 
@@ -36,6 +37,7 @@ erDiagram
     PERIODO ||--o{ METRICA : delimita
     PERIODO ||--o{ HISTORICO_SEGMENTO : delimita
     PERIODO ||--o{ PREVISAO : baseia
+    PERIODO ||--o{ TREINO_MODELO : baseia
 
     IMPORTACAO ||--o{ METRICA : origina
 
@@ -75,6 +77,7 @@ entidades e mais de cem atributos, a figura ficaria ilegível impressa, que é c
 | **HistoricoSegmento** | Classificação de um parceiro em um período | segmento, momento do cálculo |
 | **ConfiguracaoSegmentacao** | Os limiares de RN01, configuráveis (RF21) | tamanho do Top N, períodos de tendência, períodos para ser recém-chegado, quem alterou e quando |
 | **Previsao** | Estimativa do modelo para um parceiro | faturamento previsto, probabilidade de queda, versão do modelo |
+| **TreinoModelo** | Uma execução do treino do modelo preditivo (RF27) | autor, situação, período-base, volume de dados, métricas lado a lado com as referências, se entrou em uso, versão em uso depois dele, motivo, pesos |
 | **AcaoComercial** | Tipo de ação que a campanha pode alocar | nome, custo unitário, uplift esperado, situação |
 | **ExecucaoOtimizador** | Uma rodada do otimizador | modo, parâmetros, viabilidade, restrição violada, uplift, custo, tempo |
 | **PlanoCampanha** | O plano resultante de uma execução viável | janela de aplicação |
@@ -118,6 +121,11 @@ configuracao_segmentacao(id, top_n, periodos_tendencia, periodos_novato, atualiz
 
 previsao(id, parceiro_id*, periodo_base_id*, faturamento_previsto, probabilidade_queda,
          modelo_versao, gerada_em)
+treino_modelo(id, situacao, usuario_id*, periodo_base_id*, semente, iniciado_em, concluido_em,
+              parceiros, periodos, amostras_treino, amostras_validacao, amostras_teste,
+              mape_modelo, mape_ultimo, mape_media_movel, brier_modelo, brier_referencia,
+              calibracao_modelo, calibracao_referencia, detalhes, promovido, versao_em_uso,
+              motivo, pesos)
 acao_comercial(id, nome, custo_unitario, uplift_esperado_pct, ativa)
 execucao_otimizador(id, usuario_id*, modo, parametros, viavel, restricao_violada, uplift_total,
                     custo_total, tempo_ms, executada_em)
@@ -294,6 +302,34 @@ com a migração, com os valores de RN01: Top 15, 2 períodos de tendência, 3 p
 | modelo_versao | varchar(40) | | versionar é o que permite comparar modelos |
 | gerada_em | timestamptz | | padrão `now()` |
 
+**Previsão e treino se ligam pela versão, não por chave estrangeira.** `modelo_versao` é `rede-7` quando a
+previsão saiu da rede treinada no treino 7, e `referencia-7` quando saiu das contas simples medidas nele —
+o que vale enquanto nenhuma versão da rede superou as referências (UC07-A1, RN09). O nome carrega a origem,
+e é o que a tela mostra ao lado da estimativa.
+
+**treino_modelo** — entrou na Sprint 05 da disciplina (H42 a H45, ADR-010)
+
+| Coluna | Tipo | Chave | Restrição |
+|---|---|---|---|
+| id | serial | **PK** | |
+| situacao | enum | | EM_ANDAMENTO, CONCLUIDO, FALHOU — **um só em andamento**, por índice único parcial |
+| usuario_id | integer | **FK** → usuario | nulo quando o treino veio do terminal |
+| periodo_base_id | integer | **FK** → periodo | o período mais recente com dado — de onde as previsões partem |
+| semente | integer | | a do treino, para que ele possa ser refeito (RNF16) |
+| iniciado_em, concluido_em | timestamptz | | a data do treino que o RF27 pede |
+| parceiros, periodos, amostras_treino, amostras_validacao, amostras_teste | integer | | o volume de dados (RF27) |
+| mape_modelo, mape_ultimo, mape_media_movel | double | | faturamento: a rede e as duas referências (H42, H46) |
+| brier_modelo, brier_referencia, calibracao_modelo, calibracao_referencia | double | | risco: a rede e a taxa observada (H43) |
+| detalhes | jsonb | | curva de calibração, épocas, temperatura, duração, taxas da referência |
+| promovido | boolean | | a versão treinada entrou em uso (UC07-A1) |
+| versao_em_uso | varchar(40) | | a que ficou valendo **depois** deste treino |
+| motivo | text | | por que não entrou em uso, ou por que falhou |
+| pesos | bytea | | a rede treinada, com a normalização — poucos KB (ADR-010) |
+
+`CHECK` que exige versão em uso de todo treino concluído, e motivo de todo treino que falhou. **A versão em
+uso não fica em configuração à parte**: é o que o último treino concluído registra. Duas fontes para a
+mesma resposta acabariam discordando.
+
 **acao_comercial**
 
 | Coluna | Tipo | Chave | Restrição |
@@ -379,12 +415,14 @@ Cada índice existe por causa de uma consulta concreta, não por precaução (RN
 | `ix_sessao_acesso_usuario` | sessao_acesso | usuario_id | Derrubar as sessões de um usuário de uma vez |
 | `ix_tentativa_origem_ocorrido` | tentativa_login | origem, ocorrido_em | Contagem de falhas na janela do bloqueio (RNF11) |
 | `ix_mensagem_estado` | mensagem | estado | Fila de aprovação (RF37) |
+| `ix_previsao_periodo_versao` | previsao | periodo_base_id, modelo_versao | As previsões de uma versão sobre um período, para a rede toda |
+| `uq_treino_um_em_andamento` | treino_modelo | situacao, só onde é `EM_ANDAMENTO` (único, parcial) | Um treino por vez, travado pelo banco e não pela memória do processo (ADR-010) |
 
 ---
 
 ## 4. Tipos enumerados
 
-Sete tipos `ENUM` do PostgreSQL, em vez de texto livre. O banco recusa valor fora da lista, o que é mais
+Oito tipos `ENUM` do PostgreSQL, em vez de texto livre. O banco recusa valor fora da lista, o que é mais
 forte que uma validação de aplicação que alguém pode esquecer de chamar.
 
 | Tipo | Valores |
@@ -396,6 +434,7 @@ forte que uma validação de aplicação que alguém pode esquecer de chamar.
 | `origemimportacao` | TEXTO, CSV |
 | `modoexecucao` | SERIAL, OPENMP, CUDA |
 | `estadomensagem` | PENDENTE, APROVADA, REJEITADA |
+| `situacaotreino` | EM_ANDAMENTO, CONCLUIDO, FALHOU |
 
 > **Armadilha registrada:** o `autogenerate` do Alembic **não** remove tipos ENUM no `downgrade` — só
 > derruba as tabelas. Sem acrescentar `DROP TYPE` à mão, reverter e reaplicar falha com *type already
@@ -405,7 +444,7 @@ forte que uma validação de aplicação que alguém pode esquecer de chamar.
 
 ## 5. O que o banco garante sozinho
 
-Nove restrições `CHECK` que impedem estado inválido independentemente do código da aplicação. É a diferença
+Onze restrições `CHECK` que impedem estado inválido independentemente do código da aplicação. É a diferença
 entre uma regra que vale e uma regra que valeria se ninguém esquecesse de chamá-la.
 
 | Restrição | Garante |
@@ -419,6 +458,8 @@ entre uma regra que vale e uma regra que valeria se ninguém esquecesse de cham�
 | `ck_acao_custo_nao_negativo` | Custo de ação ≥ 0 |
 | `ck_execucao_inviavel_tem_motivo` | Execução inviável **tem** motivo registrado (RN07) |
 | `ck_mensagem_decisao_tem_autor` | Mensagem decidida **tem** autor e data (RN06) |
+| `ck_treino_concluido_tem_versao` | Treino concluído **diz** qual versão ficou em uso (UC07-A1) |
+| `ck_treino_falho_tem_motivo` | Treino que falhou **diz** por quê |
 
 ---
 
@@ -510,5 +551,5 @@ implantar.
 | As entidades em código | [`api/app/modelos.py`](../api/app/modelos.py) |
 | A migração que cria o esquema | [`api/migrations/versions/`](../api/migrations/versions/) |
 | Diagrama de classes, incluindo serviços e núcleo | [`10-diagrama-de-classes.md`](10-diagrama-de-classes.md) |
-| Decisões de arquitetura (ADR-001 a ADR-009) | [`07-arquitetura-preliminar.md`](07-arquitetura-preliminar.md) |
+| Decisões de arquitetura (ADR-001 a ADR-010) | [`07-arquitetura-preliminar.md`](07-arquitetura-preliminar.md) |
 | Massa de demonstração sintética | [`scripts/gerar_dados_sinteticos.py`](../scripts/gerar_dados_sinteticos.py) |

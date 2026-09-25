@@ -38,7 +38,7 @@ classDiagram
 
     class Dominio {
         <<SQLAlchemy>>
-        +16 entidades
+        +18 entidades
     }
 
     class Nucleo {
@@ -47,7 +47,8 @@ classDiagram
     }
 
     class Modelo {
-        <<PyTorch>>
+        <<PyTorch · gih_modelo>>
+        +treinar()
         +prever()
     }
 
@@ -62,7 +63,7 @@ classDiagram
     API --> Modelo : série histórica
     API --> Assistente : fatos já calculados
     Nucleo --> API : plano e tempo de execução
-    Modelo --> API : faturamento previsto
+    Modelo --> API : faturamento previsto e risco
     Assistente --> API : texto
 ```
 
@@ -280,6 +281,24 @@ classDiagram
         +datetime gerada_em
     }
 
+    class TreinoModelo {
+        +int id
+        +SituacaoTreino situacao
+        +int usuario_id
+        +int periodo_base_id
+        +int semente
+        +int parceiros
+        +int periodos
+        +float mape_modelo
+        +float mape_media_movel
+        +float brier_modelo
+        +bool promovido
+        +str versao_em_uso
+        +str motivo
+        +bytes pesos
+        +versao() str
+    }
+
     class AcaoComercial {
         +int id
         +str nome
@@ -334,6 +353,7 @@ classDiagram
     PlanoCampanha "1" *-- "1..*" ItemPlano : compõe
     AcaoComercial "1" --> "0..*" ItemPlano : é alocada em
     ItemPlano "0..1" --> "0..*" Mensagem : justifica
+    TreinoModelo "1" ..> "0..*" Previsao : versão que as gerou
 ```
 
 **`ExecucaoOtimizador` existe mesmo quando não há plano.** A cardinalidade `0..1` é RN07: ou o plano
@@ -342,6 +362,11 @@ respeita **todas** as restrições, ou não existe plano. A execução inviável
 
 **`PlanoCampanha` compõe `ItemPlano` (losango cheio).** Item sem plano não tem significado; apagar o plano
 apaga os itens.
+
+**`TreinoModelo` liga-se à `Previsao` pela versão, e não por chave (seta tracejada).** `rede-7` é a rede
+do treino 7; `referencia-7`, as contas simples medidas nele, que valem enquanto nenhuma rede superou as
+referências (UC07-A1). O treino guarda a métrica da rede ao lado da de cada referência — o atributo listado
+é uma amostra; o modelo de dados tem todas.
 
 **`Mensagem` separa `texto_gerado` de `texto_final`.** Se o Gestor editar antes de aprovar, o original
 permanece — é o que permite responder depois *"o que a IA escreveu, e o que de fato foi enviado?"*, e
@@ -441,15 +466,24 @@ classDiagram
     }
 
     class Segmentador {
-        <<previsto>>
-        +classificar(periodo) list
-        +recalcular_base()
+        <<implementado>>
+        +classificar(status, periodos, faturamentos, posicao) Segmento
+        +criterio_em_risco(faturamentos, limiares) bool
+        +reprocessar(periodo) Counter
+        +reprocessar_tudo() int
     }
 
     class Ranking {
-        <<previsto>>
-        +ordenar(periodo) list
-        +mobilidade_top_n(n) dict
+        <<implementado>>
+        +posicoes(periodo) Select
+    }
+
+    class ServicoPrevisao {
+        <<implementado>>
+        +historico() Historico
+        +iniciar(usuario) TreinoModelo
+        +executar(treino)
+        +previsao_do_parceiro(parceiro) PrevisaoLida
     }
 
     class OrquestradorOtimizacao {
@@ -467,6 +501,7 @@ classDiagram
     ServicoImportacao --> LeitorRelatorio : interpreta o texto
     ServicoImportacao --> Segmentador : dispara o recálculo
     Segmentador --> Ranking : usa a ordenação
+    ServicoPrevisao --> Segmentador : rotula o risco pelo mesmo critério (RN09)
     OrquestradorOtimizacao --> Ranking : monta o cenário
     Assistente --> Ranking : consome fatos apurados
 ```
@@ -474,6 +509,11 @@ classDiagram
 **`LeitorRelatorio` não toca no banco.** É função pura de texto para resultado, e é isso que permite a
 prévia da importação usar exatamente o mesmo código da gravação — sem risco de a prévia mostrar uma coisa
 e a gravação fazer outra.
+
+**`ServicoPrevisao` rotula o treino com o critério do `Segmentador`.** A queda que o modelo aprende a
+prever é entrar em Em Risco no período seguinte (RN09), e o rótulo sai de `criterio_em_risco` — a mesma
+função que classifica o segmento. O modelo em si mora fora da API, no pacote `gih_modelo` (ADR-010): recebe
+séries e devolve números, e quem decide se uma versão entra em uso é este serviço.
 
 **`Assistente` consome `Ranking`, nunca o banco direto.** Ele recebe fatos já apurados e redige texto em
 volta deles. Se somasse, contasse ou comparasse, o número deixaria de ser reproduzível (RN08).
@@ -595,13 +635,14 @@ abaixo separa os dois — e o repositório comprova cada linha da coluna ✅.
 
 | Camada | Implementado ✅ | Previsto ⏳ |
 |---|---|---|
-| Domínio | **as 16 entidades**, com restrições `CHECK` no banco | — |
-| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `erros` | `segmentador`, `ranking`, `orquestrador_otimizacao`, `assistente` |
-| Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/auditoria`, `/api/health` | painel, otimização, mensagens, assistente |
+| Domínio | **as 18 entidades**, com restrições `CHECK` no banco | — |
+| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `erros` | `orquestrador_otimizacao`, `assistente` |
+| Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/auditoria`, `/api/health` | otimização, mensagens, assistente |
 | Núcleo | kernel de avaliação de população validado em CUDA e OpenMP (spike H47) | `Otimizador` e as três implementações |
-| Modelo preditivo | — | `Previsor` (PyTorch) |
+| Modelo preditivo | pacote `gih_modelo`: variáveis, referências, rede e treino (H41 a H43, H46) | — |
 
-Cobertura de teste da parte implementada: **179 testes, 96%**.
+Cobertura de teste da API em 24/09/2026: **557 testes, 97%**. O pacote do modelo tem a própria suíte, em
+`modelo/tests`.
 
 ---
 
@@ -613,7 +654,7 @@ Diagrama que diverge do código é pior que diagrama ausente. As três verifica�
    corresponde a uma `class` desse arquivo, com os mesmos atributos.
 2. **Serviços e assinaturas** — os módulos de [`api/app/`](../api/app/). Os métodos listados nas seções 5 e 6
    são as funções públicas de cada um.
-3. **Tabelas realmente criadas** — `docker compose exec postgres psql -U gih -d gih -c "\dt"`. São 16
+3. **Tabelas realmente criadas** — `docker compose exec postgres psql -U gih -d gih -c "\dt"`. São 18
    tabelas de domínio mais a `alembic_version`, de controle das migrações.
 
 Modelo de dados detalhado, com tipos, chaves e índices, em
