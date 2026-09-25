@@ -91,7 +91,8 @@ Detalhamento em [`docs/07-arquitetura-preliminar.md`](docs/07-arquitetura-prelim
 | Sprint 01 — planejamento e descoberta | 05/09/2026 | incluída nos documentos abaixo |
 | Sprint 02 — arquitetura e modelagem | 19/09/2026 | [`GRUPO-18-GIH-SPRINT-02.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-02.pdf) |
 | Sprint 03 — estrutura inicial funcionando | 19/09/2026 | [`GRUPO-18-GIH-SPRINT-03.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-03.pdf) |
-| **Sprint 04 — primeiro módulo completo** | 26/09/2026 | [`GRUPO-18-GIH-SPRINT-04.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-04.pdf) |
+| Sprint 04 — primeiro módulo completo | 26/09/2026 | [`GRUPO-18-GIH-SPRINT-04.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-04.pdf) |
+| **Sprint 05 — segundo módulo funcionando** | 03/10/2026 | [`GRUPO-18-GIH-SPRINT-05.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-05.pdf) |
 
 O documento é acumulado: cada entrega traz as sprints anteriores e a atual. Ele é **gerado a partir da
 documentação deste repositório**, e não escrito à parte — ver [`docs/entrega/`](docs/entrega/).
@@ -99,7 +100,7 @@ documentação deste repositório**, e não escrito à parte — ver [`docs/entr
 ```bash
 node docs/entrega/renderizar_diagramas.js   # diagramas, a partir dos blocos mermaid do markdown
 node docs/entrega/gerar.js                  # monta o .docx
-powershell -ExecutionPolicy Bypass -File docs/entrega/converter_pdf.ps1 -Nome GRUPO-18-GIH-SPRINT-04
+powershell -ExecutionPolicy Bypass -File docs/entrega/converter_pdf.ps1 -Nome GRUPO-18-GIH-SPRINT-05
 ```
 
 A conversão pelo Word trava nesta máquina com frequência, sem erro e sem janela. Quando acontecer, o
@@ -110,12 +111,15 @@ sua própria pasta, e **a pasta de uma sprint já entregue não se regera** — 
 
 ```bash
 cd api
-GIH_ADMIN_SENHA=... python e2e/verificacao.py  > ../docs/entrega/evidencias/sprint04/verificacao.txt
-GIH_ADMIN_SENHA=... python e2e/validacoes.py   > ../docs/entrega/evidencias/sprint04/validacoes.txt
-GIH_ADMIN_SENHA=... python e2e/persistencia.py > ../docs/entrega/evidencias/sprint04/persistencia.txt
+GIH_ADMIN_SENHA=... python e2e/verificacao.py        > ../docs/entrega/evidencias/sprint05/verificacao.txt
+GIH_ADMIN_SENHA=... python e2e/transcricao_modelo.py > ../docs/entrega/evidencias/sprint05/modelo.txt
+GIH_ADMIN_SENHA=... python e2e/validacoes.py         > ../docs/entrega/evidencias/sprint05/validacoes.txt
+GIH_ADMIN_SENHA=... python e2e/persistencia.py       > ../docs/entrega/evidencias/sprint05/persistencia.txt
 cd ..
-GIH_ADMIN_SENHA=... node docs/entrega/capturar_sprint04.js       # as telas: fluxo e erros
-node docs/entrega/registrar_commits.js > docs/entrega/evidencias/sprint04/commits.txt
+GIH_ADMIN_SENHA=... node docs/entrega/capturar_sprint05.js       # as telas: fluxo e erros
+api/.venv/Scripts/python scripts/registrar_testes.py --saida docs/entrega/evidencias/sprint05
+python scripts/registrar_bugs.py --desde 2026-09-22 --saida docs/entrega/evidencias/sprint05
+node docs/entrega/registrar_commits.js > docs/entrega/evidencias/sprint05/commits.txt
 ```
 
 A persistência desliga e religa os contêineres, e as validações param o banco por alguns segundos:
