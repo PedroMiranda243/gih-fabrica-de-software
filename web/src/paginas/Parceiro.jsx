@@ -17,6 +17,11 @@
  * **O desempenho fica ao lado do cadastro.** Segmento, faturamento e série
  * vêm da mesma consulta da lista: é o que liga o registro à análise, e o que
  * deixa ver o efeito de reclassificar ou desativar alguém.
+ *
+ * **E o próximo período, marcado como estimativa** (RF28, H44). O que o modelo
+ * prevê fica embaixo do que foi medido, com o período de onde parte e a versão
+ * que o produziu. Sem previsão, o motivo vem da API (RN09) — a tela não
+ * adivinha por que não há.
  */
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -30,10 +35,13 @@ import { IconeVariacao } from "../componentes/Icones";
 import Segmento from "../componentes/Segmento";
 import SerieHistorica from "../componentes/SerieHistorica";
 import {
+  comoData,
   comoDinheiro,
   comoInteiro,
   comoPercentual,
   comoPeriodo,
+  comoProbabilidade,
+  ROTULO_ORIGEM_PREVISAO,
   ROTULO_STATUS,
   sentidoDa,
   TRACO,
@@ -79,6 +87,7 @@ function Cadastro({ id }) {
   const [form, setForm] = useState(VAZIO);
   const [categorias, setCategorias] = useState([]);
   const [serie, setSerie] = useState(null);
+  const [previsao, setPrevisao] = useState(null);
   const [situacao, setSituacao] = useState(novo ? "pronto" : "carregando");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState(null);
@@ -112,12 +121,15 @@ function Cadastro({ id }) {
          a falha dela derrubar a tela inteira impediria corrigir um nome por
          causa de um gráfico. */
       api.get("/api/painel/series", { parceiro_id: id }).catch(() => null),
+      /* A previsão também: é complemento do cadastro, pelo mesmo motivo. */
+      api.get(`/api/parceiros/${id}/previsao`).catch(() => null),
     ])
-      .then(([dados, historico]) => {
+      .then(([dados, historico, previsto]) => {
         if (!vivo) return;
         setParceiro(dados);
         setForm(paraFormulario(dados));
         setSerie(historico);
+        setPrevisao(previsto);
         setSituacao("pronto");
       })
       .catch((e) => {
@@ -391,7 +403,12 @@ function Cadastro({ id }) {
           </form>
         </section>
 
-        {!novo && <Desempenho desempenho={parceiro.desempenho} serie={serie} />}
+        {!novo && (
+          <div className="cadastro__lateral">
+            <Desempenho desempenho={parceiro.desempenho} serie={serie} />
+            <Previsao previsao={previsao} />
+          </div>
+        )}
       </div>
 
       {!novo && serie?.pontos?.some((p) => p.faturamento !== null) && (
@@ -404,7 +421,16 @@ function Cadastro({ id }) {
               {serie.pontos.length} {serie.pontos.length === 1 ? "período" : "períodos"}
             </span>
           </div>
-          <SerieHistorica pontos={serie.pontos} />
+          <SerieHistorica
+            pontos={serie.pontos}
+            previsao={
+              /* Só a previsão de hoje: a desatualizada é de um período que já
+                 aconteceu e está medido no gráfico. */
+              previsao?.disponivel && !previsao.desatualizada
+                ? { valor: previsao.faturamento_previsto }
+                : null
+            }
+          />
         </section>
       )}
 
@@ -552,6 +578,57 @@ function Desempenho({ desempenho, serie }) {
             )}
           </dd>
         </dl>
+      )}
+    </section>
+  );
+}
+
+/**
+ * O próximo período, pelo modelo (RF28, H44).
+ *
+ * A etiqueta "Estimativa" no cabeçalho e a nota embaixo não são enfeite: é o
+ * critério de aceite da H44. Número previsto ao lado de número medido, sem
+ * marca, seria lido como medição.
+ */
+function Previsao({ previsao }) {
+  if (!previsao) return null;
+
+  return (
+    <section className="painel" aria-labelledby="titulo-previsao">
+      <div className="painel__cabecalho">
+        <h2 className="painel__titulo" id="titulo-previsao">
+          Próximo período
+        </h2>
+        <span className="etiqueta-estimativa">Estimativa</span>
+      </div>
+
+      {previsao.disponivel ? (
+        <>
+          <dl className="desempenho">
+            <dt>Faturamento previsto</dt>
+            <dd className="num">{comoDinheiro(previsao.faturamento_previsto)}</dd>
+            <dt>Chance de estar em risco</dt>
+            <dd className="num">{comoProbabilidade(previsao.probabilidade_queda)}</dd>
+            <dt>Com dados até</dt>
+            <dd>{comoData(previsao.periodo_base?.data_fim)}</dd>
+            <dt>Origem</dt>
+            <dd>
+              {ROTULO_ORIGEM_PREVISAO[previsao.origem] ?? previsao.origem} ·{" "}
+              {previsao.modelo_versao}
+            </dd>
+          </dl>
+          <p className="previsao__nota">
+            Estimativa do modelo, e não medição. A chance é a de o parceiro fechar o próximo
+            período em risco — em queda seguida, pela mesma regra da segmentação (RN09).
+          </p>
+          {previsao.desatualizada && (
+            <p className="previsao__nota previsao__nota--alerta">
+              Há período importado depois desta estimativa; o próximo treino a refaz.
+            </p>
+          )}
+        </>
+      ) : (
+        <EstadoVazio titulo={previsao.motivo} texto={previsao.ajuda} />
       )}
     </section>
   );

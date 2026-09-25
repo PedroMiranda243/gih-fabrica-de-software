@@ -13,6 +13,7 @@ import Carregando from "./componentes/Carregando";
 import Configuracao from "./paginas/Configuracao";
 import Importacao from "./paginas/Importacao";
 import Login from "./paginas/Login";
+import Modelo from "./paginas/Modelo";
 import Painel from "./paginas/Painel";
 import Parceiro from "./paginas/Parceiro";
 import Parceiros from "./paginas/Parceiros";
@@ -104,6 +105,16 @@ export default function App() {
         }
       >
         <Route path="/configuracao" element={<Configuracao />} />
+      </Route>
+
+      <Route
+        element={
+          <Protegido>
+            <Casca titulo="Modelo preditivo" />
+          </Protegido>
+        }
+      >
+        <Route path="/modelo" element={<Modelo />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

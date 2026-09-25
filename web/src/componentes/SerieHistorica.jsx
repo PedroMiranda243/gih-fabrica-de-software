@@ -11,6 +11,11 @@
  * interrompe ali. Ligar os vizinhos desenharia uma tendência que ninguém
  * mediu — é o mesmo erro que omitir o ponto cometeria, e o motivo de a API se
  * dar ao trabalho de devolvê-lo.
+ *
+ * **A estimativa se distingue do medido por mais que a cor** (H44). Com
+ * `previsao`, a série ganha um período a mais: o trecho até ele é tracejado, o
+ * marcador é vazado, e a legenda diz qual é qual. Cor diferente sozinha não
+ * bastaria — quem não a distingue leria a previsão como medição.
  */
 import { useId, useMemo, useState } from "react";
 
@@ -43,17 +48,21 @@ function trechosContinuos(coordenadas) {
   return trechos;
 }
 
-export default function SerieHistorica({ pontos, rotulo = "Faturamento" }) {
+export default function SerieHistorica({ pontos, rotulo = "Faturamento", previsao = null }) {
   const [emFoco, setEmFoco] = useState(null);
   const [mostrarTabela, setMostrarTabela] = useState(false);
   const idArea = useId();
 
-  const { coordenadas, teto, temLacuna } = useMemo(() => {
+  const { coordenadas, teto, temLacuna, prevista } = useMemo(() => {
     const valores = pontos
       .map((p) => (p.faturamento === null ? null : Number(p.faturamento)))
       .filter((v) => v !== null);
+    const valorPrevisto = previsao ? Number(previsao.valor) : null;
+    if (valorPrevisto !== null) valores.push(valorPrevisto);
     const limite = tetoBonito(Math.max(...valores, 0));
-    const passo = pontos.length > 1 ? AREA.largura / (pontos.length - 1) : 0;
+    // A estimativa ocupa um período a mais, à direita do último medido.
+    const posicoes = pontos.length + (valorPrevisto === null ? 0 : 1);
+    const passo = posicoes > 1 ? AREA.largura / (posicoes - 1) : 0;
 
     const coords = pontos.map((ponto, i) => {
       const valor = ponto.faturamento === null ? null : Number(ponto.faturamento);
@@ -71,8 +80,18 @@ export default function SerieHistorica({ pontos, rotulo = "Faturamento" }) {
       coordenadas: coords,
       teto: limite,
       temLacuna: coords.some((c) => c.vazio),
+      prevista:
+        valorPrevisto === null
+          ? null
+          : {
+              indice: pontos.length,
+              valor: valorPrevisto,
+              previsto: true,
+              x: MARGEM.esquerda + passo * (posicoes - 1),
+              y: MARGEM.topo + AREA.altura * (1 - valorPrevisto / limite),
+            },
     };
-  }, [pontos]);
+  }, [pontos, previsao]);
 
   const trechos = trechosContinuos(coordenadas);
   const ultimo = [...coordenadas].reverse().find((c) => !c.vazio);
@@ -83,7 +102,8 @@ export default function SerieHistorica({ pontos, rotulo = "Faturamento" }) {
   function aoMover(evento) {
     const caixa = evento.currentTarget.getBoundingClientRect();
     const xNoDesenho = ((evento.clientX - caixa.left) / caixa.width) * LARGURA;
-    const maisPerto = coordenadas.reduce((melhor, atual) =>
+    const alvos = prevista ? [...coordenadas, prevista] : coordenadas;
+    const maisPerto = alvos.reduce((melhor, atual) =>
       Math.abs(atual.x - xNoDesenho) < Math.abs(melhor.x - xNoDesenho) ? atual : melhor,
     );
     setEmFoco(maisPerto);
@@ -97,7 +117,9 @@ export default function SerieHistorica({ pontos, rotulo = "Faturamento" }) {
         viewBox={`0 0 ${LARGURA} ${ALTURA}`}
         preserveAspectRatio="xMidYMid meet"
         role="img"
-        aria-label={`${rotulo} por período. ${pontos.length} períodos.`}
+        aria-label={`${rotulo} por período. ${pontos.length} períodos${
+          prevista ? ", e a estimativa do próximo" : ""
+        }.`}
         onMouseMove={aoMover}
         onMouseLeave={() => setEmFoco(null)}
       >
@@ -165,6 +187,23 @@ export default function SerieHistorica({ pontos, rotulo = "Faturamento" }) {
             />
           ))}
 
+        {/* O trecho estimado parte do último ponto medido. Sem ele, a
+            estimativa flutuaria solta, sem dizer de onde saiu. */}
+        {prevista && ultimo && (
+          <>
+            <path
+              className="grafico__linha grafico__linha--prevista"
+              d={`M${ultimo.x} ${ultimo.y} L${prevista.x} ${prevista.y}`}
+            />
+            <circle
+              className="grafico__ponto grafico__ponto--previsto"
+              cx={prevista.x}
+              cy={prevista.y}
+              r={emFoco?.previsto ? 5 : 4}
+            />
+          </>
+        )}
+
         {emFoco && (
           <line
             className="grafico__cruz"
@@ -177,13 +216,13 @@ export default function SerieHistorica({ pontos, rotulo = "Faturamento" }) {
 
         {/* Rótulo direto **só no último ponto**. Número sobre cada marca vira
             ruído e some dentro do próprio gráfico. */}
-        {ultimo && (
+        {(prevista ?? ultimo) && (
           <text
             className="grafico__rotulo-final"
-            x={ultimo.x + FOLGA_ROTULO_FINAL}
-            y={ultimo.y + 4}
+            x={(prevista ?? ultimo).x + FOLGA_ROTULO_FINAL}
+            y={(prevista ?? ultimo).y + 4}
           >
-            {rotuloCompacto(ultimo.valor)}
+            {rotuloCompacto((prevista ?? ultimo).valor)}
           </text>
         )}
 
@@ -201,11 +240,13 @@ export default function SerieHistorica({ pontos, rotulo = "Faturamento" }) {
             </text>
             <text
               className="grafico__eixo"
-              x={coordenadas[coordenadas.length - 1].x}
+              x={(prevista ?? coordenadas[coordenadas.length - 1]).x}
               y={ALTURA - 8}
               textAnchor="end"
             >
-              {comoDiaMes(coordenadas[coordenadas.length - 1].ponto.periodo.data_inicio)}
+              {prevista
+                ? "próximo"
+                : comoDiaMes(coordenadas[coordenadas.length - 1].ponto.periodo.data_inicio)}
             </text>
           </>
         )}
@@ -219,11 +260,14 @@ export default function SerieHistorica({ pontos, rotulo = "Faturamento" }) {
             top: "var(--esp-16)",
           }}
         >
-          <div style={{ fontWeight: 600 }}>{comoPeriodo(emFoco.ponto.periodo)}</div>
+          <div style={{ fontWeight: 600 }}>
+            {emFoco.previsto ? "Próximo período" : comoPeriodo(emFoco.ponto.periodo)}
+          </div>
           <div className="num">
             {emFoco.vazio ? "sem medição neste período" : comoDinheiro(emFoco.valor)}
           </div>
-          {!emFoco.vazio && (
+          {emFoco.previsto && <div style={{ color: "var(--ink-2)" }}>estimativa do modelo</div>}
+          {!emFoco.vazio && !emFoco.previsto && (
             <div className="num" style={{ color: "var(--ink-2)" }}>
               {comoInteiro(emFoco.ponto.pedidos)} pedidos
             </div>
@@ -234,6 +278,19 @@ export default function SerieHistorica({ pontos, rotulo = "Faturamento" }) {
       {temLacuna && (
         <p className="grafico__legenda-lacuna">
           A linha se interrompe onde não houve medição no período.
+        </p>
+      )}
+
+      {prevista && (
+        <p className="grafico__legenda-lacuna">
+          <svg width="22" height="8" aria-hidden="true">
+            <path className="grafico__linha" d="M1 4 H21" />
+          </svg>
+          medido
+          <svg width="22" height="8" aria-hidden="true" style={{ marginLeft: "var(--esp-12)" }}>
+            <path className="grafico__linha grafico__linha--prevista" d="M1 4 H21" />
+          </svg>
+          estimativa do modelo para o próximo período
         </p>
       )}
 
@@ -274,6 +331,13 @@ export default function SerieHistorica({ pontos, rotulo = "Faturamento" }) {
                   <td className="numerica">{comoInteiro(p.pedidos)}</td>
                 </tr>
               ))}
+              {prevista && (
+                <tr>
+                  <td>Próximo período (estimativa)</td>
+                  <td className="numerica">{comoDinheiro(prevista.valor)}</td>
+                  <td className="numerica">—</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

@@ -80,6 +80,21 @@ export function IconeConfiguracao(props) {
   );
 }
 
+/* Uma rede de nós: a tela é a do modelo que aprende, e não mais um gráfico —
+   o do painel já é uma linha. */
+export function IconeModelo(props) {
+  return (
+    <svg {...comuns} {...props}>
+      <path d="M3.5 4 8 8m-4.5 4L8 8m0 0 4.5-4M8 8l4.5 4" />
+      <circle cx="3" cy="3.5" r="1.25" />
+      <circle cx="3" cy="12.5" r="1.25" />
+      <circle cx="8" cy="8" r="1.5" />
+      <circle cx="13" cy="3.5" r="1.25" />
+      <circle cx="13" cy="12.5" r="1.25" />
+    </svg>
+  );
+}
+
 export function IconeSair(props) {
   return (
     <svg {...comuns} {...props}>
