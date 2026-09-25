@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gih-nucleo"
+version = "0.1.0"
+description = "Núcleo de otimização do GIH: o plano de campanha de maior ganho esperado."
+requires-python = ">=3.11"
+# Nenhuma dependência, de propósito: o baseline serial é Python puro (ADR-011).
+# O `requirements.txt` desta pasta é do spike de GPU (H47), e não do pacote.
+dependencies = []
+
+[tool.setuptools]
+packages = ["gih_nucleo"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["spike"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
