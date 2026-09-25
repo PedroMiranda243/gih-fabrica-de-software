@@ -231,7 +231,7 @@ def test_historico_curto_recusa_dizendo_quantos_faltam(rede, gestor):
     corpo = r.json()["detail"]
     assert "8 períodos" in corpo["erro"]
     assert corpo["faltam"] == 2
-    assert "Faltam 2" in corpo["ajuda"]
+    assert "Faltam 2 períodos" in corpo["ajuda"]
     assert _treinos() == []
 
 
@@ -472,7 +472,7 @@ def test_sem_previsao_o_cadastro_diz_o_motivo_da_rn09(rede, gestor):
     gestor.post("/api/modelo/treinos")
     curto = gestor.get(f"/api/parceiros/{ids.parceiros[0]}/previsao").json()
     assert curto["disponivel"] is False
-    assert curto["motivo"].startswith("Com 3 período(s) de histórico")
+    assert curto["motivo"].startswith("Com 3 períodos de histórico")
     ausente = gestor.get(f"/api/parceiros/{ids.parceiros[1]}/previsao").json()
     assert ausente["disponivel"] is False
     assert "não aparece no período mais recente" in ausente["motivo"]
@@ -541,7 +541,7 @@ def test_treinar_pelo_terminal(rede, capsys):
 def test_terminal_recusa_historico_curto(rede, capsys):
     rede(parceiros=5, periodos=7)
     assert cli.treinar_modelo([]) == 1
-    assert "Faltam 1" in capsys.readouterr().err
+    assert "Faltam 1 período." in capsys.readouterr().err
 
 
 def test_prospeccao_nao_quebra_o_treino(rede, gestor):

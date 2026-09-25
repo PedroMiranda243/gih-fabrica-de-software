@@ -77,11 +77,15 @@ def recusa_por_historico(periodos: int) -> TreinoRecusado:
     faltam = PERIODOS_MINIMOS - periodos
     return TreinoRecusado(
         f"O treino precisa de {PERIODOS_MINIMOS} períodos importados, e a base tem {periodos}.",
-        f"Faltam {faltam} período(s). Com menos, não há como separar treino, validação e teste "
+        f"Faltam {_periodos(faltam)}. Com menos, não há como separar treino, validação e teste "
         "no tempo, e o número sairia com cara de previsão e sem valor preditivo.",
         periodos=periodos,
         faltam=faltam,
     )
+
+
+def _periodos(n: int) -> str:
+    return f"{n} período" if n == 1 else f"{n} períodos"
 
 
 def _recusa_por_andamento(treino: TreinoModelo) -> TreinoRecusado:
@@ -494,7 +498,7 @@ def previsao_do_parceiro(s: Session, parceiro_id: int) -> PrevisaoLida:
     )
     if periodos < JANELA:
         motivo = (
-            f"Com {periodos} período(s) de histórico, ainda não há previsão: "
+            f"Com {_periodos(periodos)} de histórico, ainda não há previsão: "
             f"são necessários {JANELA}."
         )
         ajuda = "A previsão aparece no primeiro treino depois que o parceiro completar a janela."
