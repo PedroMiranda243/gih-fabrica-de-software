@@ -876,11 +876,12 @@ def item_sugestao(r: Relatorio, url: str, criados: dict[str, str], marca: str) -
 def item_modelo(r: Relatorio, url: str, criados: dict[str, str]) -> None:
     """O módulo de previsão (UC07, RF27, RF28, RN09), contra a base no ar.
 
-    **Roda antes da ingestão**, de propósito: a ingestão grava semanas no
-    futuro, e o treino parte do período mais recente. Depois dela, a base do
-    treino seria uma semana de verificação com meia dúzia de parceiros — e a
-    previsão de um parceiro da demonstração diria, com razão, que ele não
-    aparece no período mais recente.
+    **Roda antes de qualquer importação da execução**, de propósito: o CRUD e a
+    ingestão gravam semanas no futuro, e o treino parte do período mais
+    recente. Depois delas, a base do treino seria uma semana de verificação com
+    dois parceiros — e a previsão de um parceiro da demonstração diria, com
+    razão, que ele não aparece no período mais recente. Foi o que a primeira
+    execução mostrou.
 
     O treino desta execução sai na limpeza, com as previsões dele, e a versão em
     uso volta a ser a de antes — conferido no fim.
@@ -948,7 +949,7 @@ def item_modelo(r: Relatorio, url: str, criados: dict[str, str]) -> None:
             and (volume.get("amostras_teste") or 0) > 0
             and metricas.get("mape_modelo") is not None,
             f"{volume.get('parceiros')} parceiros · {volume.get('periodos')} períodos · "
-            f"{treino.get('segundos')} s" if treino.get("situacao") == "CONCLUIDO"
+            f"{treino.get('segundos')} s".replace(".", ",") if treino.get("situacao") == "CONCLUIDO"
             else f"{treino.get('situacao')}: {treino.get('motivo')}",
         ):
             return
@@ -973,13 +974,17 @@ def item_modelo(r: Relatorio, url: str, criados: dict[str, str]) -> None:
                 r.nota("não há parceiro na base para ler a previsão")
                 return
             previsao = c.get(f"/api/parceiros/{itens[0]['id']}/previsao").json()
+            disponivel = previsao.get("disponivel") is True
             r.checar(
                 "o cadastro do parceiro mostra a previsão, com base e versão (RF28)",
-                previsao.get("disponivel") is True
+                disponivel
                 and previsao.get("modelo_versao") == treino["versao_em_uso"]
-                and 0 <= previsao.get("probabilidade_queda", -1) <= 1,
-                f"{itens[0]['nome']}: R$ {previsao.get('faturamento_previsto')} previstos, "
-                f"risco de {previsao.get('probabilidade_queda', 0):.0%}",
+                and 0 <= (previsao.get("probabilidade_queda") or -1) <= 1,
+                f"{itens[0]['nome']}: R$ "
+                + str(previsao["faturamento_previsto"]).replace(".", ",")
+                + f" previstos, risco de {previsao['probabilidade_queda']:.0%}"
+                if disponivel
+                else f"{itens[0]['nome']}: {previsao.get('motivo')}",
             )
 
 
@@ -1084,8 +1089,8 @@ def main() -> int:
             item_login(r, a.url, a.login, a.senha)
             criados = item_cadastro(r, admin, marca)
             item_perfis(r, a.url, criados)
-            item_crud(r, a.url, criados, marca)
             item_modelo(r, a.url, criados)
+            item_crud(r, a.url, criados, marca)
             periodo_id = item_ingestao(r, a.url, criados, marca)
             item_painel(r, a.url, criados, periodo_id)
             item_segmentacao(r, a.url, criados, periodo_id)
