@@ -322,7 +322,10 @@ def _executar(s: Session, treino: TreinoModelo) -> None:
 
     volume = resultado.volume
     treino.situacao = SituacaoTreino.CONCLUIDO
-    treino.concluido_em = s.scalar(select(func.now()))
+    # `clock_timestamp()`, e não `now()`: no PostgreSQL, `now()` é o início da
+    # transação, e a deste treino começou antes de treinar — a conclusão saía
+    # com a hora do começo (#113).
+    treino.concluido_em = s.scalar(select(func.clock_timestamp()))
     treino.periodo_base_id = periodo_base.id
     treino.parceiros = volume.parceiros
     treino.periodos = volume.periodos
