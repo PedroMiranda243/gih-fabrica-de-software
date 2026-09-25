@@ -258,6 +258,19 @@ def test_treinar_registra_data_volume_e_metricas(rede, gestor):
     assert treino["versao_em_uso"] in (treino["versao"], f"referencia-{treino_id}")
 
 
+def test_a_conclusao_vem_depois_do_tempo_que_o_treino_levou(rede, gestor):
+    """#113: gravada com `now()`, a conclusão saía com a hora em que o treino
+    começou — no PostgreSQL, `now()` é o início da transação, e a do treino
+    começa antes de treinar. O treino 1 da base de demonstração mediu 1,87 s
+    e ficou com 25 ms entre início e conclusão."""
+    rede()
+    gestor.post("/api/modelo/treinos")
+    (treino,) = _treinos()
+    assert treino.concluido_em - treino.iniciado_em >= timedelta(
+        seconds=treino.detalhes["segundos"]
+    )
+
+
 def test_o_treino_fica_na_auditoria_com_autor_e_metricas(rede, gestor):
     rede()
     treino_id = gestor.post("/api/modelo/treinos").json()["id"]
