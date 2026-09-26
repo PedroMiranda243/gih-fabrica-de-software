@@ -30,16 +30,21 @@ def gpu(executavel):
 def test_a_versao_diz_a_gpu_ou_por_que_nao_ha(executavel):
     c = nativo.capacidades(executavel)
     assert (c.gpu is None) != (c.sem_gpu is None)
+    assert (c.sem_gpu is None) == (c.ausencia_gpu is None)
     if c.gpu:
         assert c.gpu.nome and c.gpu.memoria_mib > 0
+    else:
+        assert c.ausencia_gpu in ("sem_cuda", "sem_placa", "erro")
 
 
 def test_sem_placa_o_executavel_recusa_com_saida_1(executavel):
     r = subprocess.run([executavel, "gpu"], capture_output=True, text=True, env=ESCONDIDA)
     assert r.returncode == 1
-    assert r.stderr.strip()  # o motivo, para a API mostrar
+    assert r.stderr.strip()  # o motivo, para quem investiga
     versao = subprocess.run([executavel, "versao"], capture_output=True, text=True, env=ESCONDIDA)
-    assert "gpu 0 " in versao.stdout
+    linha = next(x for x in versao.stdout.splitlines() if x.startswith("gpu "))
+    # Com CUDA, a placa escondida é "sem placa"; sem CUDA, como na CI, é "sem CUDA".
+    assert linha.split()[:3] in (["gpu", "0", "sem_placa"], ["gpu", "0", "sem_cuda"])
 
 
 def test_sem_placa_a_ida_e_volta_levanta_sem_gpu(executavel, monkeypatch):
