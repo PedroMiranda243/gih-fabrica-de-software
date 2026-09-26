@@ -67,6 +67,9 @@ class Acao(enum.StrEnum):
     # 10). A falha tem ação própria, pelo mesmo motivo da do treino.
     OTIMIZACAO_EXECUTADA = "OTIMIZACAO_EXECUTADA"
     OTIMIZACAO_FALHOU = "OTIMIZACAO_FALHOU"
+    # O benchmark (UC09, passo 8): quem mediu, o cenário e a média de cada modo.
+    BENCHMARK_EXECUTADO = "BENCHMARK_EXECUTADO"
+    BENCHMARK_FALHOU = "BENCHMARK_FALHOU"
 
 
 # Chaves que nunca podem entrar em `detalhes`. A trilha é consultável por

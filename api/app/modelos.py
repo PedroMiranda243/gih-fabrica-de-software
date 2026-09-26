@@ -642,6 +642,70 @@ class ItemPlano(Base):
     )
 
 
+class ExecucaoBenchmark(Base):
+    """Uma execução do benchmark — UC09, RF33, história H57.
+
+    O mesmo problema sintético (`gih_nucleo.cenario`), com a mesma semente, em
+    cada modo que a máquina tem, repetido: o tempo de cada um, e o ganho do
+    plano, que precisa ser o mesmo nos quatro (RNF02). Roda em segundo plano,
+    como o otimizador, e **um por vez**: dois benchmarks ao mesmo tempo
+    dividiriam a máquina e mediriam a disputa.
+
+    Guarda as medidas cruas — o tempo de cada repetição —, e não só a média: a
+    média, o desvio e os ganhos saem delas, e o gráfico de escalabilidade junta
+    execuções de tamanhos diferentes (UC09, passo 7).
+    """
+
+    __tablename__ = "execucao_benchmark"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    situacao: Mapped[SituacaoExecucao] = mapped_column(default=SituacaoExecucao.EM_ANDAMENTO)
+    # Nulo quando o benchmark veio do terminal, e não de uma pessoa na tela.
+    usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id"))
+    parceiros: Mapped[int] = mapped_column(Integer)
+    acoes: Mapped[int] = mapped_column(Integer)
+    repeticoes: Mapped[int] = mapped_column(Integer)
+    semente: Mapped[int] = mapped_column(Integer)
+
+    iniciada_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    concluida_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    # Enquanto roda: o passo, o total e o que está medindo agora.
+    progresso: Mapped[dict | None] = mapped_column(JSONB)
+    # Quando termina: um item por modo, na ordem da ADR-012 — medido, com cada
+    # tempo e o ganho do plano; indisponível, ou falho, com o motivo.
+    resultados: Mapped[list | None] = mapped_column(JSONB)
+    # Onde mediu: a GPU, as threads do OpenMP e o compilador daquele momento.
+    ambiente: Mapped[dict | None] = mapped_column(JSONB)
+    # Outro cálculo pesado rodou junto — uma otimização, um treino —, e os
+    # tempos podem ter saído maiores do que são.
+    disputada: Mapped[bool | None] = mapped_column(Boolean)
+    motivo: Mapped[str | None] = mapped_column(Text)
+
+    __table_args__ = (
+        Index(
+            "uq_benchmark_um_em_andamento",
+            "situacao",
+            unique=True,
+            postgresql_where=text("situacao = 'EM_ANDAMENTO'"),
+        ),
+        # A faixa do gerador (RF16) e a da tela. Fora dela, o Python levaria
+        # horas, ou o problema não teria o que medir.
+        CheckConstraint("parceiros BETWEEN 100 AND 10000", name="ck_benchmark_parceiros"),
+        CheckConstraint("acoes BETWEEN 1 AND 10", name="ck_benchmark_acoes"),
+        CheckConstraint("repeticoes BETWEEN 1 AND 10", name="ck_benchmark_repeticoes"),
+        CheckConstraint(
+            "situacao <> 'CONCLUIDA' OR resultados IS NOT NULL",
+            name="ck_benchmark_concluido_tem_resultado",
+        ),
+        CheckConstraint(
+            "situacao <> 'FALHOU' OR motivo IS NOT NULL", name="ck_benchmark_falha_tem_motivo"
+        ),
+    )
+
+
 # --------------------------------------------------------------------------- comunicação
 class Mensagem(Base):
     """Mensagem gerada por segmento, sujeita a aprovação humana.

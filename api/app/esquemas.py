@@ -979,3 +979,145 @@ class EstadoCampanha(BaseModel):
     modo_automatico: ModoExecucao = Field(
         description="O que roda quando o gestor não escolhe: o primeiro modo disponível."
     )
+
+
+# ------------------------------------------------------------ o benchmark (UC09, H57)
+class ColunaBenchmark(enum.StrEnum):
+    """As quatro colunas da ADR-012: o baseline em Python e as três do executável."""
+
+    PYTHON = "PYTHON"
+    CPP_SERIAL = "CPP_SERIAL"
+    OPENMP = "OPENMP"
+    GPU = "GPU"
+
+
+class SituacaoColuna(enum.StrEnum):
+    MEDIDA = "MEDIDA"
+    INDISPONIVEL = "INDISPONIVEL"  # a máquina não tem o modo (UC09-A1)
+    FALHOU = "FALHOU"  # o modo existia e falhou durante a medição (UC09-E1)
+
+
+class ParametrosBenchmark(BaseModel):
+    """O cenário do benchmark (UC09, passo 2): o tamanho do problema e as repetições."""
+
+    parceiros: int = Field(ge=100, le=10000, description="Parceiros elegíveis do cenário (RF16).")
+    acoes: int = Field(ge=1, le=10, description="Tipos de ação do catálogo do cenário.")
+    repeticoes: int = Field(ge=1, le=10, description="Quantas vezes cada modo roda.")
+
+
+class DisponibilidadeBenchmark(BaseModel):
+    """Um modo do benchmark, e se esta máquina o tem (UC09, passo 3)."""
+
+    coluna: ColunaBenchmark
+    disponivel: bool
+    motivo: str | None = Field(description="Por que não está disponível.")
+    detalhe: str | None = Field(
+        default=None, description="Com o que roda: as threads do OpenMP, o nome da GPU."
+    )
+
+
+class ProgressoBenchmark(BaseModel):
+    passo: int
+    total: int
+    etapa: str = Field(description="O que está medindo agora, para a tela dizer.")
+
+
+class ResultadoColuna(BaseModel):
+    """Um modo, medido ou não (UC09, passo 6).
+
+    Os tempos são os da busca, medidos por quem busca; na GPU, com o contexto da
+    placa, que vem também à parte. Os ganhos de velocidade são lidos contra o
+    Python — o baseline do RNF02 — e, para o OpenMP e a GPU, contra o C++ serial:
+    contra o Python, o ganho mediria o compilador junto (ADR-012).
+    """
+
+    coluna: ColunaBenchmark
+    situacao: SituacaoColuna
+    motivo: str | None
+    tempos_s: list[float] = Field(description="O tempo de cada repetição, em segundos.")
+    media_s: float | None
+    desvio_s: float | None = Field(description="Desvio padrão amostral; nulo com uma repetição.")
+    contexto_s: float | None = Field(
+        description="Só na GPU: quanto da média foi iniciar o driver e criar o contexto."
+    )
+    speedup_python: float | None = Field(description="O tempo do Python dividido por este.")
+    speedup_cpp: float | None = Field(
+        description="O tempo do C++ serial dividido por este; só no OpenMP e na GPU."
+    )
+    uplift: Decimal | None = Field(description="O ganho esperado do plano encontrado, em reais.")
+    diferenca_uplift: float | None = Field(
+        description="A diferença para o uplift do Python, em fração: 0 é o mesmo plano."
+    )
+    divergente: bool = Field(
+        description="Passou da tolerância de 2% do RNF02: possível defeito (UC09-A3)."
+    )
+
+
+class AmbienteBenchmark(BaseModel):
+    threads: int | None = Field(description="As threads do OpenMP: uma por núcleo físico.")
+    gpu: str | None
+    compilador: str | None
+
+
+class PontoEscalabilidade(BaseModel):
+    parceiros: int
+    media_s: float
+    execucao_id: int
+
+
+class SerieEscalabilidade(BaseModel):
+    coluna: ColunaBenchmark
+    pontos: list[PontoEscalabilidade]
+
+
+class EscalabilidadeBenchmark(BaseModel):
+    """O tempo de cada modo pelo número de parceiros (UC09, passo 7).
+
+    Junta as execuções concluídas com o mesmo número de ações: de cada tamanho,
+    a mais recente.
+    """
+
+    acoes: int
+    series: list[SerieEscalabilidade]
+
+
+class ExecucaoBenchmarkResposta(BaseModel):
+    id: int
+    situacao: SituacaoExecucao
+    autor: str | None
+    iniciada_em: datetime
+    concluida_em: datetime | None
+    parametros: ParametrosBenchmark
+    progresso: ProgressoBenchmark | None
+    colunas: list[ResultadoColuna]
+    ambiente: AmbienteBenchmark | None
+    disputada: bool | None = Field(
+        description="Outro cálculo pesado rodou junto: os tempos podem ter saído maiores."
+    )
+    motivo: str | None
+    explicacao_gpu: str | None = Field(
+        description="Por que a GPU não ganhou neste tamanho, quando não ganhou (UC09-A2)."
+    )
+    escalabilidade: EscalabilidadeBenchmark | None = None
+
+
+class PaginaBenchmarks(BaseModel):
+    itens: list[ExecucaoBenchmarkResposta]
+    total: int
+    pagina: int
+    tamanho: int
+
+
+class EstadoBenchmark(BaseModel):
+    """O que a tela de benchmark mostra ao abrir (UC09, passos 1 a 3)."""
+
+    colunas: list[DisponibilidadeBenchmark]
+    padrao: ParametrosBenchmark = Field(description="O cenário que a tela sugere.")
+    em_andamento: ExecucaoBenchmarkResposta | None
+    ultima: ExecucaoBenchmarkResposta | None
+    pode_executar: bool
+    motivo_bloqueio: str | None
+    python_s_por_parceiro: float | None = Field(
+        description="O Python da última medição, por parceiro e repetição: a base da "
+        "estimativa de duração. O genético cresce em linha com os parceiros."
+    )

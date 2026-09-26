@@ -171,43 +171,54 @@ class Disponibilidade:
     motivo: str | None  # por que não, quando não
 
 
-def modos() -> list[Disponibilidade]:
-    """Os três modos, na ordem da preferência, e se cada um existe nesta instalação.
+SEM_NUCLEO = "O núcleo em C++ não está nesta instalação."
+NUCLEO_MUDO = "O núcleo em C++ não respondeu."
+SEM_PARALELO = "O núcleo desta instalação foi compilado sem paralelismo."
 
-    Quem diz é o executável (`gih-nucleo versao`, ADR-012), perguntado a cada
-    vez: ele pode ter sido recompilado, e a pergunta custa milissegundos. A GPU
-    precisa das duas coisas: o modo `cuda`, que o executável compilado com CUDA
-    tem, e a placa, que esta máquina pode não ter.
+
+def perguntar_ao_nucleo() -> tuple[nativo.Capacidades | None, str | None]:
+    """O que o executável tem (`gih-nucleo versao`, ADR-012), ou por que não disse.
+
+    Perguntado a cada vez: ele pode ter sido recompilado, e a pergunta custa
+    milissegundos. A campanha e o benchmark (H57) leem os modos daqui, e dão os
+    mesmos motivos quando falta um.
     """
-    capacidades = None
     try:
-        capacidades = nativo.capacidades()
-        existentes = set(capacidades.modos)
-        sem_nucleo = None
+        return nativo.capacidades(), None
     except nativo.NucleoIndisponivel:
-        existentes, sem_nucleo = set(), "O núcleo em C++ não está nesta instalação."
+        return None, SEM_NUCLEO
     except nativo.NucleoFalhou:
         log.exception("O núcleo em C++ não respondeu à pergunta dos modos")
-        existentes, sem_nucleo = set(), "O núcleo em C++ não respondeu."
+        return None, NUCLEO_MUDO
 
-    faltando = {
-        ModoExecucao.CPU_PARALELO: "O núcleo desta instalação foi compilado sem paralelismo.",
-        ModoExecucao.GPU: _sem_gpu(capacidades),
+
+def tem_gpu(capacidades: nativo.Capacidades | None) -> bool:
+    """A GPU precisa das duas coisas: o modo `cuda`, que o executável compilado com
+    CUDA tem, e a placa, que esta máquina pode não ter."""
+    return capacidades is not None and "cuda" in capacidades.modos and capacidades.gpu is not None
+
+
+def modos() -> list[Disponibilidade]:
+    """Os três modos, na ordem da preferência, e se cada um existe nesta instalação."""
+    capacidades, sem_nucleo = perguntar_ao_nucleo()
+    existe = {
+        ModoExecucao.SERIAL: True,
+        ModoExecucao.CPU_PARALELO: capacidades is not None and "openmp" in capacidades.modos,
+        ModoExecucao.GPU: tem_gpu(capacidades),
     }
-    com_placa = capacidades is not None and capacidades.gpu is not None
-    resposta = []
-    for modo in ORDEM:
-        existe = modo == ModoExecucao.SERIAL or NO_EXECUTAVEL[modo] in existentes
-        if modo == ModoExecucao.GPU:
-            existe = existe and com_placa
-        if existe:
-            resposta.append(Disponibilidade(modo, True, None))
-        else:
-            resposta.append(Disponibilidade(modo, False, sem_nucleo or faltando[modo]))
-    return resposta
+    faltando = {
+        ModoExecucao.CPU_PARALELO: SEM_PARALELO,
+        ModoExecucao.GPU: motivo_sem_gpu(capacidades),
+    }
+    return [
+        Disponibilidade(modo, True, None)
+        if existe[modo]
+        else Disponibilidade(modo, False, sem_nucleo or faltando[modo])
+        for modo in ORDEM
+    ]
 
 
-def _sem_gpu(capacidades: nativo.Capacidades | None) -> str:
+def motivo_sem_gpu(capacidades: nativo.Capacidades | None) -> str:
     """Por que o modo GPU não está disponível, com o código que o executável deu.
 
     Um executável sem CUDA diz `sem_cuda`; com CUDA, numa máquina sem placa —
