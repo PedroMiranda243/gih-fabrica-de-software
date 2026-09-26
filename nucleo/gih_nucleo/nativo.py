@@ -181,8 +181,9 @@ def _ler(inst: Instancia, saida: str, modo: str) -> Resultado:
     iniciadas, rodadas, parcial, microssegundos = (int(x) for x in campos["busca"])
     # Um executável que calculasse num modo e informasse outro estragaria a
     # medição sem ninguém ver.
-    if campos["execucao"][0] != modo:
-        raise NucleoFalhou(f"Pedido o modo {modo}, o núcleo respondeu {campos['execucao'][0]}.")
+    modo_usado, threads = campos["execucao"]
+    if modo_usado != modo:
+        raise NucleoFalhou(f"Pedido o modo {modo}, o núcleo respondeu {modo_usado}.")
 
     avaliacao = avaliar(inst, genes)
     if len(genes) != inst.parceiros or (ganho, custo, acoes, violacao) != (
@@ -192,4 +193,44 @@ def _ler(inst: Instancia, saida: str, modo: str) -> Resultado:
         avaliacao.violacao,
     ):
         raise NucleoFalhou("A avaliação do núcleo em C++ diverge da do Python.")
-    return Resultado(genes, avaliacao, iniciadas, rodadas, bool(parcial), microssegundos / 1e6)
+    return Resultado(
+        genes, avaliacao, iniciadas, rodadas, bool(parcial), microssegundos / 1e6, int(threads)
+    )
+
+
+def nucleos_fisicos() -> int | None:
+    """Os núcleos físicos que este processo pode usar; `None` onde não há `/proc/cpuinfo`.
+
+    É quantas threads a API pede ao modo OpenMP (adendo da ADR-011). No
+    contêiner, uma thread por núcleo físico ganhou 6,0x do C++ serial numa faixa
+    estreita; todas as threads lógicas ganharam menos e oscilaram de 1,0x a
+    6,9x, disputando a CPU com o Windows (`docs/medicoes/nucleo.md`).
+    """
+    try:
+        texto = Path("/proc/cpuinfo").read_text(encoding="utf-8")
+    except OSError:
+        return None
+    permitidos = os.sched_getaffinity(0) if hasattr(os, "sched_getaffinity") else None
+    return contar_nucleos(texto, permitidos)
+
+
+def contar_nucleos(cpuinfo: str, permitidos: set[int] | None = None) -> int | None:
+    """Os pares (processador físico, núcleo) distintos entre os processadores permitidos.
+
+    Com SMT, duas threads lógicas dividem um núcleo e repetem o par. Sem o
+    campo `core id` — algumas máquinas virtuais não o expõem —, não há como
+    saber, e a resposta é `None`: vale o padrão do OpenMP.
+    """
+    nucleos = set()
+    for bloco in cpuinfo.strip().split("\n\n"):
+        campos = {}
+        for linha in bloco.splitlines():
+            if ":" in linha:
+                chave, valor = linha.split(":", 1)
+                campos[chave.strip()] = valor.strip()
+        if "processor" not in campos or "core id" not in campos:
+            continue
+        if permitidos is not None and int(campos["processor"]) not in permitidos:
+            continue
+        nucleos.add((campos.get("physical id", "0"), campos["core id"]))
+    return len(nucleos) or None
