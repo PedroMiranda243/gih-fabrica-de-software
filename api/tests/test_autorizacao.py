@@ -96,10 +96,11 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("GET", "/api/parceiros/{parceiro_id}/previsao"): {Perfil.GESTOR, Perfil.ANALISTA},
     # UC08 — Executar otimização: o Gestor executa, o Analista consulta. O
     # plano decide onde vai a verba; o Administrador cuida de acesso, e não de
-    # campanha. O catálogo (RF29) segue a mesma divisão.
+    # campanha. O catálogo (RF29) segue a mesma divisão. O histórico (RF34) é a
+    # exceção: o Administrador o consulta, sem abrir o plano (docs/03, H58).
     ("GET", "/api/campanha"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("POST", "/api/otimizacoes"): {Perfil.GESTOR},
-    ("GET", "/api/otimizacoes"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/otimizacoes"): {Perfil.GESTOR, Perfil.ANALISTA, Perfil.ADMINISTRADOR},
     ("GET", "/api/otimizacoes/{execucao_id}"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/acoes-comerciais"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("POST", "/api/acoes-comerciais"): {Perfil.GESTOR},

@@ -1131,6 +1131,32 @@ def item_campanha(r: Relatorio, url: str, criados: dict[str, str]) -> None:
             recusa.get("motivo") or f"HTTP {inviavel.status_code}",
         )
 
+        historico = c.get("/api/otimizacoes", params={"tamanho": 10}).json().get("itens", [])
+        deste = {e["id"]: e for e in historico}
+        calculadas = [execucao_id, rapido.get("id"), recusa.get("id")]
+        r.checar(
+            "o histórico traz cada execução com autor, parâmetros, modo, tempo e resultado (RF34)",
+            all(i in deste for i in calculadas)
+            and all(
+                deste[i]["autor"] and deste[i]["parametros"] and deste[i]["modo"]
+                and deste[i]["tempo_ms"] is not None and deste[i]["viavel"] is not None
+                for i in calculadas
+            ),
+            f"as {len(calculadas)} desta verificação entre as {len(historico)} mais recentes",
+        )
+
+    administrador = criados.get("ADMINISTRADOR")
+    if administrador:
+        with sessao(url) as c:
+            entrar(c, administrador, SENHA)
+            lista = c.get("/api/otimizacoes")
+            plano_dele = c.get(f"/api/otimizacoes/{execucao_id}")
+            r.checar(
+                "o administrador vê o histórico, mas não abre o plano (RF34, UC08)",
+                lista.status_code == 200 and plano_dele.status_code == 403,
+                f"histórico HTTP {lista.status_code}; plano HTTP {plano_dele.status_code}",
+            )
+
 
 # --------------------------------------------------------------------- extra
 def item_limpeza(
