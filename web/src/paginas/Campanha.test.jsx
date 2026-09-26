@@ -87,6 +87,8 @@ function execucao(extra = {}) {
   };
 }
 
+const SEM_GPU = "Não há GPU compatível disponível nesta instalação.";
+
 function estado(extra = {}) {
   return {
     modelo_versao: "rede-1",
@@ -111,6 +113,12 @@ function estado(extra = {}) {
     pode_executar: true,
     motivo_bloqueio: null,
     pode_editar_catalogo: true,
+    modos: [
+      { modo: "GPU", disponivel: false, motivo: SEM_GPU },
+      { modo: "CPU_PARALELO", disponivel: true, motivo: null },
+      { modo: "SERIAL", disponivel: true, motivo: null },
+    ],
+    modo_automatico: "CPU_PARALELO",
     ...extra,
   };
 }
@@ -191,6 +199,7 @@ describe("tela da campanha", () => {
       cotas_categoria: [{ categoria_id: 3, minimo: "0.1000", maximo: null }],
       aplicacao_inicio: "2026-09-21",
       aplicacao_fim: "2026-09-27",
+      modo: null, // sem escolha: a API roda o mais rápido disponível
     });
     expect(await screen.findByText("Calculando o plano…")).toBeInTheDocument();
 
@@ -208,6 +217,52 @@ describe("tela da campanha", () => {
     expect(linhas[2]).toHaveTextContent("Pendente"); // sem categoria confirmada
     expect(screen.getByRole("link", { name: "Villa da Praça" })).toHaveAttribute("href", "/parceiros/16");
     expect(screen.getByText(/acima do plano guloso/)).toBeInTheDocument();
+  });
+
+  it("o modo: o automático diz qual roda, o indisponível fica desabilitado com o porquê", async () => {
+    let enviado = null;
+    simularApi({
+      "GET /api/campanha": { corpo: estado() },
+      "POST /api/otimizacoes": (_url, opcoes) => {
+        enviado = JSON.parse(opcoes.body);
+        return { status: 202, corpo: execucao({ situacao: "EM_ANDAMENTO", itens: null }) };
+      },
+    });
+    const usuario = userEvent.setup();
+    renderizar();
+
+    const modo = await screen.findByLabelText("Modo de execução");
+    expect(modo).toHaveValue("");
+    expect(within(modo).getByRole("option", { name: "Automático (CPU paralelo)" })).toBeInTheDocument();
+    expect(within(modo).getByRole("option", { name: "GPU — indisponível" })).toBeDisabled();
+    expect(within(modo).getByRole("option", { name: "Serial" })).toBeEnabled();
+    // A opção desabilitada não se explica sozinha: o porquê está na ajuda do campo.
+    expect(modo).toHaveAccessibleDescription(
+      `Sem escolha, roda o mais rápido disponível nesta instalação: CPU paralelo. GPU: ${SEM_GPU}`,
+    );
+
+    await usuario.selectOptions(modo, "SERIAL");
+    expect(modo).toHaveAccessibleDescription(expect.stringContaining("A referência, em Python"));
+    await usuario.type(screen.getByLabelText(/Orçamento/), "12.000,00");
+    await usuario.type(screen.getByLabelText(/Máximo de ações/), "45");
+    await usuario.click(screen.getByRole("button", { name: "Calcular plano" }));
+    expect(screen.getByRole("group", { name: "Confirmação" })).toHaveTextContent("no modo serial?");
+    await usuario.click(screen.getByRole("button", { name: "Calcular" }));
+    expect(enviado.modo).toBe("SERIAL");
+  });
+
+  it("o plano diz em que modo rodou, com as threads, e a troca quando houve", async () => {
+    const troca = `Pedido em GPU, calculado em CPU paralelo: n${SEM_GPU.slice(1)}`;
+    simularApi({
+      "GET /api/campanha": {
+        corpo: estado({
+          ultima: execucao({ modo: "CPU_PARALELO", threads: 8, tempo_ms: 62, substituicao: troca }),
+        }),
+      },
+    });
+    renderizar();
+    expect(await screen.findByText(/CPU paralelo, 8 threads · 62 ms/)).toBeInTheDocument();
+    expect(screen.getByText(troca)).toBeInTheDocument();
   });
 
   it("campanha inviável: sem plano, com a restrição e o que falta", async () => {

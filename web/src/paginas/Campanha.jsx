@@ -1,5 +1,5 @@
 /**
- * A campanha — UC08, RF29 a RF31, histórias H48 a H52.
+ * A campanha — UC08, RF29 a RF32, histórias H48 a H52 e H55.
  *
  * O Gestor configura as restrições e calcula o plano; o Analista consulta o
  * último plano e o catálogo. **Quem pode o quê vem da API** (regras 2.4 e 2.5):
@@ -12,7 +12,8 @@
  *
  * **A tela só traduz o que a pessoa digita**: "30" na cota vira a fração 0,3 e
  * "12.000,00" vira 12000.00. Se é viável, quanto cabe e quem entra, quem
- * responde é a API.
+ * responde é a API. O mesmo vale para o modo de execução (RF32): quais existem
+ * nesta instalação, e qual roda sem escolha, vêm da API.
  */
 import { useEffect, useId, useState } from "react";
 import { Link } from "react-router-dom";
@@ -45,6 +46,21 @@ export const INTERVALO_MS = 2000;
 let proximaChave = 0;
 const novaCota = () => ({ chave: ++proximaChave, categoria_id: "", minimo: "", maximo: "" });
 
+/* Na ordem em que aceleram, a mesma das séries do benchmark (docs/09): o rótulo
+   do seletor, o nome no meio da frase e o que o modo é. */
+const MODOS = [
+  ["SERIAL", "Serial", "serial", "A referência, em Python: o mesmo plano, em muito mais tempo. Serve para comparar."],
+  ["CPU_PARALELO", "CPU paralelo", "CPU paralelo", "O núcleo em C++, com os núcleos do processador em paralelo."],
+  ["GPU", "GPU", "GPU", "O núcleo em CUDA, na placa de vídeo."],
+];
+const ROTULO_DO_MODO = Object.fromEntries(MODOS.map(([modo, rotulo]) => [modo, rotulo]));
+const NOME_DO_MODO = Object.fromEntries(MODOS.map(([modo, , nome]) => [modo, nome]));
+
+/** Abaixo de um segundo, em milissegundos: "0,1 s" esconderia a diferença entre os modos. */
+function comoDuracao(ms) {
+  return ms < 1000 ? `${comoInteiro(ms)} ms` : `${comoDecimal(ms / 1000, 1)} s`;
+}
+
 const MOTIVOS_FORA = [
   ["historico_curto", "com histórico curto"],
   ["fora_do_periodo", "sem dado no período das previsões"],
@@ -71,7 +87,7 @@ function periodoSeguinte(periodo) {
 
 function valoresIniciais(estado) {
   const { inicio, fim } = periodoSeguinte(estado?.periodo_base);
-  return { orcamento: "", maximo_acoes: "", cauda: "", cotas: [], inicio, fim };
+  return { orcamento: "", maximo_acoes: "", cauda: "", cotas: [], inicio, fim, modo: "" };
 }
 
 function corpoDo(valores) {
@@ -88,6 +104,7 @@ function corpoDo(valores) {
       })),
     aplicacao_inicio: valores.inicio,
     aplicacao_fim: valores.fim,
+    modo: valores.modo || null,
   };
 }
 
@@ -346,6 +363,8 @@ function Restricoes({
         aoMudar={(cotas) => mudar("cotas", cotas)}
       />
 
+      <ModoDeExecucao estado={estado} valor={valores.modo} aoMudar={(modo) => mudar("modo", modo)} />
+
       {!estado.pode_executar && !acompanhando && (
         <p className="campanha__bloqueio">{estado.motivo_bloqueio}</p>
       )}
@@ -354,8 +373,11 @@ function Restricoes({
         <Confirmacao
           texto={
             `Calcular o plano com orçamento de ${comoDinheiro(lerReais(valores.orcamento))} e até ` +
-            `${valores.maximo_acoes || TRACO} ações? O cálculo roda em segundo plano e leva alguns ` +
-            "segundos; o plano nunca passa de nenhuma restrição."
+            `${valores.maximo_acoes || TRACO} ações, ` +
+            (valores.modo
+              ? `no modo ${NOME_DO_MODO[valores.modo]}`
+              : `no modo mais rápido disponível (${NOME_DO_MODO[estado.modo_automatico]})`) +
+            "? O cálculo roda em segundo plano; o plano nunca passa de nenhuma restrição."
           }
           acao="Calcular"
           ocupado={enviando}
@@ -372,6 +394,42 @@ function Restricoes({
         )
       )}
     </form>
+  );
+}
+
+/**
+ * O modo de execução (RF32, UC08 passo 4). Um `select`, como no protótipo; o
+ * modo que esta instalação não tem fica desabilitado, e o porquê vai na ajuda
+ * embaixo do campo — uma opção desabilitada não tem como se explicar sozinha.
+ */
+function ModoDeExecucao({ estado, valor, aoMudar }) {
+  const daApi = Object.fromEntries((estado.modos ?? []).map((m) => [m.modo, m]));
+  const escolhido = MODOS.find(([modo]) => modo === valor);
+  const ajuda = [
+    escolhido
+      ? escolhido[3]
+      : `Sem escolha, roda o mais rápido disponível nesta instalação: ${NOME_DO_MODO[estado.modo_automatico]}.`,
+    ...MODOS.filter(([modo]) => daApi[modo] && !daApi[modo].disponivel).map(
+      ([modo, rotulo]) => `${rotulo}: ${daApi[modo].motivo}`,
+    ),
+  ].join(" ");
+
+  return (
+    <div className="campanha__modo">
+      <Campo id="modo" rotulo="Modo de execução" ajuda={ajuda}>
+        <select id="campo-modo" value={valor} onChange={(e) => aoMudar(e.target.value)}>
+          <option value="">Automático ({NOME_DO_MODO[estado.modo_automatico]})</option>
+          {MODOS.map(([modo, rotulo]) => {
+            const disponivel = Boolean(daApi[modo]?.disponivel);
+            return (
+              <option key={modo} value={modo} disabled={!disponivel}>
+                {disponivel ? rotulo : `${rotulo} — indisponível`}
+              </option>
+            );
+          })}
+        </select>
+      </Campo>
+    </div>
   );
 }
 
@@ -449,9 +507,10 @@ function Andamento({ execucao }) {
       <p className="aviso__titulo">Calculando o plano…</p>
       <p className="aviso__ajuda">
         Iniciado {comoDataHora(execucao.iniciada_em)}
-        {execucao.autor ? ` por ${execucao.autor}` : " pelo terminal"}. A tela se atualiza sozinha
-        quando o cálculo terminar; você pode sair e voltar.
+        {execucao.autor ? ` por ${execucao.autor}` : " pelo terminal"}, no modo {NOME_DO_MODO[execucao.modo]}.
+        A tela se atualiza sozinha quando o cálculo terminar; você pode sair e voltar.
       </p>
+      {execucao.substituicao && <p className="aviso__ajuda">{execucao.substituicao}</p>}
       <div className="campanha__barra-andamento" aria-hidden="true" />
     </div>
   );
@@ -512,6 +571,7 @@ function Plano({ execucao }) {
             O cálculo atingiu o limite de tempo: este é o melhor plano viável encontrado até ali.
           </p>
         )}
+        {execucao.substituicao && <p className="campanha__parcial">{execucao.substituicao}</p>}
         <dl className="campanha__fatos">
           <dt>Previsões</dt>
           <dd>
@@ -534,7 +594,9 @@ function Plano({ execucao }) {
           </dd>
           <dt>Cálculo</dt>
           <dd className="num">
-            {comoDecimal(execucao.tempo_ms / 1000, 1)} s · {comoDataHora(execucao.concluida_em)}
+            {ROTULO_DO_MODO[execucao.modo]}
+            {execucao.threads ? `, ${comoInteiro(execucao.threads)} threads` : ""} ·{" "}
+            {comoDuracao(execucao.tempo_ms)} · {comoDataHora(execucao.concluida_em)}
             {execucao.autor ? ` · ${execucao.autor}` : ""}
           </dd>
         </dl>
