@@ -1,4 +1,5 @@
-"""Mede o núcleo em C++: o ganho do OpenMP sobre o serial (H53b).
+"""Mede o núcleo em C++: o ganho do OpenMP sobre o serial (H53b) e a transferência
+para a GPU (H54a).
 
 **O ganho é lido contra o C++ serial**, e não contra o Python. O C++ serial já é
 dezenas de vezes mais rápido que o mesmo algoritmo em Python (H53a), e comparar
@@ -29,10 +30,15 @@ isso logo no topo.
   qualidade do plano, que depende dos valores, é medida pelo caminho de verdade
   em `medir_otimizador.py`.
 
+**A transferência** é medida pelo próprio executável (`gih-nucleo transferir`):
+a instância e a população inicial vão para a GPU e voltam, conferidas byte a
+byte. Sem GPU — sem `--gpus all`, ou numa máquina sem placa —, a seção diz por
+quê, e o resto do relatório sai igual.
+
 Uso, da raiz do repositório:
 
     docker build -t gih-nucleo nucleo
-    docker run --rm -v "$PWD:/repo" -w /repo gih-nucleo python scripts/medir_nucleo.py
+    docker run --rm --gpus all -v "$PWD:/repo" -w /repo gih-nucleo python scripts/medir_nucleo.py
 """
 from __future__ import annotations
 
@@ -176,6 +182,81 @@ def _x(v: float) -> str:
     return f"{v:.1f}x".replace(".", ",")
 
 
+def _curto(ms: float) -> str:
+    """Tempos de transferência: abaixo de um milissegundo, em microssegundos."""
+    if ms < 1:
+        return f"{ms * 1000:.0f} µs"
+    return f"{ms:.2f} ms".replace(".", ",")
+
+
+def _tamanho(n_bytes: int) -> str:
+    if n_bytes < 1024 * 1024:
+        return f"{n_bytes / 1024:.0f} KiB"
+    return f"{n_bytes / (1024 * 1024):.1f} MiB".replace(".", ",")
+
+
+def _faixa_curta(valores) -> str:
+    return (
+        f"**{_curto(statistics.median(valores))}** "
+        f"({_curto(min(valores))} a {_curto(max(valores))})"
+    )
+
+
+def _secao_gpu(capacidades, transferencias, resultados, threads, repeticoes) -> list[str]:
+    linhas = ["## Transferência para a GPU — H54a", ""]
+    if capacidades.gpu is None:
+        return linhas + [
+            f"Não medida: {capacidades.sem_gpu} Com placa NVIDIA, rode o contêiner com "
+            "`--gpus all`.",
+            "",
+        ]
+    # A busca de referência: uma thread por núcleo físico, se foi medida (adendo
+    # da ADR-011); senão, a de mais threads.
+    fisicos = nativo.nucleos_fisicos()
+    t_ref = fisicos if fisicos in threads else max(threads)
+    busca = {
+        inst.parceiros: statistics.median(medidas[("openmp", t_ref)].busca) * 1000
+        for inst, _ref, medidas in resultados
+    }
+    linhas += [
+        f"A instância e a população inicial das {genetico.PARTIDAS} partidas "
+        f"({genetico.PARTIDAS} × {genetico.POPULACAO} indivíduos, um byte por gene) vão para a "
+        f"{capacidades.gpu.nome} e voltam. O executável confere o que voltou byte a byte, e com "
+        "uma conta feita na própria GPU, e sai como defeito se não bater. Mediana de "
+        f"{repeticoes} repetições, depois de uma de aquecimento, e a faixa.",
+        "",
+        "| Parceiros | Instância | População | Envio das duas | Volta da população "
+        f"| Volta de um indivíduo | Busca no OpenMP, {t_ref} threads |",
+        "|--:|--:|--:|--:|--:|--:|--:|",
+    ]
+    for n, t in transferencias:
+        linhas.append(
+            f"| {_mil(n)} | {_tamanho(t.bytes_instancia)} | {_tamanho(t.bytes_populacao)} "
+            f"| {_faixa_curta(t.envio_ms)} | {_faixa_curta(t.volta_ms)} "
+            f"| {_faixa_curta(t.volta_um_ms)} | {_curto(busca[n])} |"
+        )
+    referencia = next(((n, t) for n, t in transferencias if n == 2000), transferencias[-1])
+    n, t = referencia
+    por_busca = statistics.median(t.envio_ms) + statistics.median(t.volta_um_ms)
+    fracao = f"{por_busca / busca[n] * 100:.1f}".replace(".", ",")
+    # A população inteira de volta a cada geração, como no spike: só a volta, sem
+    # contar o envio de novo — é o piso do que a residência evita.
+    a_cada_geracao = statistics.median(t.volta_ms) * genetico.GERACOES
+    fracao_geracao = f"{a_cada_geracao / busca[n] * 100:.0f}"
+    linhas += [
+        "",
+        "- **O laço na GPU (H54c) paga, por busca, um envio e a volta de um indivíduo**, porque "
+        f"a população fica residente entre gerações (ADR-006). Com {_mil(n)} parceiros, "
+        f"{_curto(por_busca)}: {fracao}% da busca inteira no OpenMP.",
+        "- **Trazer a população inteira a cada geração**, como no spike, custaria só na volta "
+        f"{_curto(a_cada_geracao)} por busca ({genetico.GERACOES} gerações): "
+        f"{fracao_geracao}% da busca inteira no OpenMP, antes de o kernel fazer qualquer conta. "
+        "É o que a residência evita.",
+        "",
+    ]
+    return linhas
+
+
 def _cpuinfo(campo: str) -> str | None:
     """Um campo do /proc/cpuinfo, que só existe em Linux — onde se mede."""
     try:
@@ -218,7 +299,7 @@ def _secao(inst, referencia, medidas) -> list[str]:
     return linhas
 
 
-def montar_relatorio(resultados, threads, repeticoes, comando, capacidades) -> str:
+def montar_relatorio(resultados, threads, repeticoes, comando, capacidades, transferencias) -> str:
     no_conteiner = Path("/.dockerenv").exists()
     processador = _cpuinfo("model name") or platform.processor() or platform.machine()
     nucleos = _cpuinfo("cpu cores")
@@ -231,7 +312,7 @@ def montar_relatorio(resultados, threads, repeticoes, comando, capacidades) -> s
     else:
         smt = ""
     linhas = [
-        "# Medição do núcleo em C++: serial e OpenMP — H53b",
+        "# Medição do núcleo em C++: serial, OpenMP e transferência para a GPU — H53b, H54a",
         "",
         "> Gerado por `scripts/medir_nucleo.py`. **Não edite à mão**: número escrito à mão "
         "não é evidência. Para atualizar, rode o comando abaixo de novo.",
@@ -271,6 +352,14 @@ def montar_relatorio(resultados, threads, repeticoes, comando, capacidades) -> s
         f"| Compilador | {capacidades.compilador}, `-O2 -fopenmp` |",
         f"| Processador | {processador}, {os.cpu_count()} threads lógicas |",
         f"| OpenMP | threads medidas: {', '.join(map(str, threads))}; escalonamento dinâmico |",
+        "| GPU | "
+        + (
+            f"{capacidades.gpu.nome}, capacidade {capacidades.gpu.capacidade}, "
+            f"{_mil(capacidades.gpu.memoria_mib)} MiB"
+            if capacidades.gpu
+            else f"nenhuma: {capacidades.sem_gpu}"
+        )
+        + " |",
         f"| Genético | população {genetico.POPULACAO}, {genetico.GERACOES} gerações, "
         f"{genetico.PARTIDAS} partidas, {genetico.MUTACOES_POR_FILHO} mutação por filho |",
         f"| Rodadas | {repeticoes} por tamanho, depois de uma de aquecimento |",
@@ -286,6 +375,7 @@ def montar_relatorio(resultados, threads, repeticoes, comando, capacidades) -> s
     ]
     for inst, referencia, medidas in resultados:
         linhas += _secao(inst, referencia, medidas)
+    linhas += _secao_gpu(capacidades, transferencias, resultados, threads, repeticoes)
     return "\n".join(linhas)
 
 
@@ -312,6 +402,15 @@ def main() -> None:
         print(f"{_mil(parceiros)} parceiros", flush=True)
         resultados.append(medir(parceiros, threads, args.repeticoes, executavel))
 
+    transferencias = []
+    if capacidades.gpu is not None:
+        for parceiros in args.parceiros:
+            print(f"transferência, {_mil(parceiros)} parceiros", flush=True)
+            inst = montar_instancia(parceiros)
+            transferencias.append(
+                (parceiros, nativo.transferir(inst, repeticoes=args.repeticoes, executavel=executavel))
+            )
+
     opcoes = []
     if args.parceiros != PARCEIROS:
         opcoes += ["--parceiros", *map(str, args.parceiros)]
@@ -321,13 +420,13 @@ def main() -> None:
         opcoes += ["--threads", *map(str, args.threads)]
     comando = (
         "docker build -t gih-nucleo nucleo\n"
-        'docker run --rm -v "$PWD:/repo" -w /repo gih-nucleo python scripts/medir_nucleo.py '
-        + " ".join(opcoes)
+        'docker run --rm --gpus all -v "$PWD:/repo" -w /repo gih-nucleo '
+        "python scripts/medir_nucleo.py " + " ".join(opcoes)
     ).rstrip()
     destino = Path(args.relatorio)
     destino.parent.mkdir(parents=True, exist_ok=True)
     destino.write_text(
-        montar_relatorio(resultados, threads, args.repeticoes, comando, capacidades),
+        montar_relatorio(resultados, threads, args.repeticoes, comando, capacidades, transferencias),
         encoding="utf-8",
     )
     print(f"\nrelatório: {destino}")
