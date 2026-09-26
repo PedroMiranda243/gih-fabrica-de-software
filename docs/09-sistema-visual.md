@@ -75,9 +75,10 @@ não decidido.
 
 | Papel | Token | Claro | Escuro |
 |---|---|---|---|
-| Série 1 (serial, linha única) | `--serie-1` | `#2a78d6` | `#3987e5` |
-| Série 2 (CPU paralelo) | `--serie-2` | `#eb6834` | `#d95926` |
+| Série 1 (serial em Python, linha única) | `--serie-1` | `#2a78d6` | `#3987e5` |
+| Série 2 (CPU paralelo, OpenMP) | `--serie-2` | `#eb6834` | `#d95926` |
 | Série 3 (GPU) | `--serie-3` | `#1baf7a` | `#199e70` |
+| Série 4 (C++ serial, só no benchmark) | `--serie-4` | `#b0409a` | `#c75fb4` |
 | Grade | `--grade` | `#e8ecf3` | `#232a34` |
 
 ---
@@ -106,6 +107,38 @@ sozinha — sempre ao lado do rótulo em texto. Nenhuma informação depende de 
 Houve um trade-off explícito: um turquesa mais escuro passaria no contraste, mas cairia para ΔE 7,2 em
 daltonismo no modo claro. Escolhemos proteger o daltonismo, que é mais difícil de compensar do que
 visibilidade — e a compensação da visibilidade já existe.
+
+### A quarta série, do benchmark (H57)
+
+O benchmark tem quatro colunas (ADR-012): Python, C++ serial, OpenMP e GPU. As três primeiras cores já
+tinham dono — o serial da campanha é o Python, o CPU paralelo é o OpenMP —, e **a cor segue o modo**, em
+qualquer tela e em qualquer execução: sem a GPU, o OpenMP continua laranja. Faltava a do C++ serial.
+
+**Validada com todos os pares, e não só com os vizinhos**, porque no gráfico de escalabilidade as linhas se
+cruzam. Duas candidatas reprovaram antes:
+
+- o **violeta** dos segmentos passava no claro, mas no escuro ficava a ΔE 1,9 do azul em protanopia;
+- o **amarelo**, a quarta cor da paleta de referência da skill de visualização, ficava a ΔE 13,7 do laranja
+  em visão normal no claro, e a 4,8 em deuteranopia no escuro.
+
+A **orquídea** passou nos dois modos:
+
+| Verificação | Claro | Escuro |
+|---|---|---|
+| Faixa de luminosidade | ✅ | ✅ |
+| Piso de croma | ✅ | ✅ |
+| Separação sob daltonismo, todos os pares | ✅ 9,2 (turquesa ↔ laranja) | ✅ 8,2 (orquídea ↔ azul) |
+| Piso de visão normal, todos os pares | ✅ 22,0 | ✅ 18,4 |
+| Contraste com a superfície | ⚠️ turquesa 2,82:1 | ✅ |
+
+O aviso de contraste é o mesmo turquesa de sempre, com a mesma mitigação: no gráfico, a legenda fica acima,
+o nome do modo vai no fim da linha quando cabe, a dica lista os tempos e a tabela dos números está a um
+clique. Nenhum texto usa a cor da série.
+
+```bash
+node validate_palette.js "#2a78d6,#b0409a,#eb6834,#1baf7a" --mode light --surface "#ffffff" --pairs all
+node validate_palette.js "#3987e5,#c75fb4,#d95926,#199e70" --mode dark --surface "#12161c" --pairs all
+```
 
 **Para reproduzir:**
 

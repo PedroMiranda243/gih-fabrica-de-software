@@ -503,6 +503,32 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 - **E1 — Falha no dispositivo de GPU.** O sistema captura o erro, marca o modo como indisponível para aquela
   execução, prossegue com os demais e registra o detalhe no log.
 
+> **Na interface (Sprint 11 interna, H57).** A tela **Benchmark** (`/benchmark`) é do Gestor e do
+> Administrador, pela matriz. O Gestor escolhe parceiros (100 a 10.000, a faixa do RF16), tipos de ação (1 a
+> 10) e repetições (1 a 10), vê os modos que a máquina tem e por que falta cada um (A1), e dispara. A
+> medição roda no servidor, uma por vez, e a tela acompanha o passo e o total. As quatro colunas são as da
+> ADR-012 — Python, C++ serial, OpenMP e GPU —, e o resultado traz, para cada uma, tempo médio, desvio,
+> ganho sobre o Python (o baseline do RNF02), ganho sobre o C++ serial (para o OpenMP e a GPU), o início da
+> GPU e o uplift do plano, com a diferença para o do Python (A3). A GPU que perde ganha a explicação, com o
+> custo fixo medido e, quando já houver, o tamanho em que ela passa a ganhar (A2). A GPU que falha no meio
+> sai daquela execução, e os outros modos terminam (E1).
+>
+> **O que o UC09 deixava em aberto, e como ficou:**
+>
+> - **O problema é sintético** (`gih_nucleo.cenario`), montado do tamanho pedido com a mesma forma de uma
+>   campanha — ganho pela RN10, cotas pela RN11. A base de trabalho tem a escala da operação, pequena demais
+>   para medir paralelismo (`docs/07` §4.3). Com cinco ações, é o mesmo problema da medição do núcleo.
+> - **O gráfico de escalabilidade (passo 7) junta execuções**, e não roda vários tamanhos numa só: de cada
+>   tamanho medido com o mesmo número de ações, a mais recente. Medir 10.000 parceiros em Python leva mais de
+>   dois minutos por repetição, e o gráfico de uma execução só obrigaria o gestor a esperar todos os tamanhos
+>   de uma vez.
+> - **O histórico (passo 8) é o dos benchmarks**, na própria tela, e não o das execuções da campanha (RF34):
+>   um benchmark roda o otimizador dezenas de vezes num problema que não é campanha, e misturá-lo às
+>   execuções com plano poluiria o histórico da campanha. A auditoria registra cada benchmark.
+> - **A medição é honesta por construção**: o Python roda num processo à parte, para não dividir o
+>   interpretador com a API; os modos se intercalam em cada repetição; e se uma otimização ou um treino
+>   rodou durante a medição, o resultado diz que os tempos podem ter saído maiores.
+
 ---
 
 ### UC10 — Gerar mensagens por segmento

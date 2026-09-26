@@ -373,6 +373,12 @@ frente com alguma, a resposta já está aqui.
   rápido que o mesmo algoritmo em Python, com o mesmo plano (H53a). O ganho do OpenMP e da GPU se lê contra
   o C++ serial; o RNF02 pede o Python como baseline, e o benchmark mostra as duas colunas.
 
+- **O Python do benchmark não roda dentro da API.** Na thread de fundo, ele dividiria o interpretador com
+  as requisições da própria tela, que consulta o andamento a cada 2 s, e o baseline sairia mais lento — o
+  ganho medido, maior do que é. O `servico_benchmark` o roda num processo à parte, criado com `spawn`
+  (`fork` copiaria a API com as threads dela). Vale para qualquer medição nova do Python: meça fora do
+  processo que atende requisições.
+
 - **No contêiner, mais threads não é mais previsível.** Com 8 threads, uma por núcleo físico, o OpenMP
   ganhou do C++ serial 6,0x numa medição e 6,3x na seguinte, com 2.000 parceiros e faixa estreita. Com 16,
   todas as threads lógicas, a mediana foi de 4,6x numa e 7,2x na outra, e houve execução em 1,0x: o

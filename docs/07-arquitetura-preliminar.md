@@ -768,6 +768,22 @@ spike da issue #123 mediu se o mesmo código compila em Linux e roda **dentro da
   e dá o mesmo plano: 0,0% de diferença no uplift, contra os 2% permitidos. Números em
   [`docs/medicoes/nucleo.md`](medicoes/nucleo.md).
 
+**Adendo (27/09/2026, H57) — o benchmark na tela:**
+
+- **As quatro colunas desta ADR estão na tela** (`/benchmark`, UC09): o mesmo problema sintético, com a
+  mesma semente, no Python e nos três modos do executável. O ganho do OpenMP e o da GPU aparecem também
+  contra o C++ serial.
+- **O Python roda num processo à parte**, criado do zero (`spawn`), e não na thread de fundo da API. Lá ele
+  dividiria o interpretador com as requisições da própria tela, que consulta o andamento, e o baseline
+  sairia mais lento — o ganho medido, mais bonito do que é. Criado do zero porque `fork` copiaria a API, com
+  as threads dela.
+- **O benchmark é um por vez**, como o otimizador, e **não trava a campanha**: se uma otimização ou um treino
+  roda durante a medição, o resultado sai marcado como disputado, e a tela diz que os tempos podem ter saído
+  maiores.
+- **Medido no contêiner, pela própria tela**, com a GPU (`docker-compose.gpu.yml`), e o plano igual nos
+  quatro modos: com 2.000 parceiros, o Python levou 25,5 s, o C++ serial 314 ms, o OpenMP 53 ms e a GPU
+  228 ms — 112x o Python; com 10.000, a GPU (245 ms) passou o OpenMP (256 ms), como o adendo H54c previa.
+
 ---
 
 ## 6. Ambiente de desenvolvimento
