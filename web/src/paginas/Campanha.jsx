@@ -368,7 +368,7 @@ function Restricoes({
             `${valores.maximo_acoes || TRACO} ações, ` +
             (valores.modo
               ? `no modo ${NOME_MODO[valores.modo]}`
-              : `no modo mais rápido disponível (${NOME_MODO[estado.modo_automatico]})`) +
+              : `no modo automático (${NOME_MODO[estado.modo_automatico]})`) +
             "? O cálculo roda em segundo plano; o plano nunca passa de nenhuma restrição."
           }
           acao="Calcular"
@@ -400,7 +400,7 @@ function ModoDeExecucao({ estado, valor, aoMudar }) {
   const ajuda = [
     escolhido
       ? escolhido[3]
-      : `Sem escolha, roda o mais rápido disponível nesta instalação: ${NOME_MODO[estado.modo_automatico]}.`,
+      : `Sem escolha, roda na GPU, se houver, e senão no CPU paralelo. Nesta instalação: ${NOME_MODO[estado.modo_automatico]}.`,
     ...MODOS_DE_EXECUCAO.filter(([modo]) => daApi[modo] && !daApi[modo].disponivel).map(
       ([modo, rotulo]) => `${rotulo}: ${daApi[modo].motivo}`,
     ),

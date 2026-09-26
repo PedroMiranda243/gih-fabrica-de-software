@@ -24,13 +24,29 @@
 #include <utility>
 #include <vector>
 
+#include "gpu.hpp"
 #include "nucleo.hpp"
 
 namespace gih::gpu {
 
+// Uma falha do runtime do CUDA vira exceção, de uma de duas famílias:
+// - **a placa faltou**: acabou a memória, o driver caiu, a placa sumiu ou está
+//   ocupada. Para quem pediu, é o mesmo que não haver GPU: `SemGpu`, a saída 1,
+//   e a API calcula na CPU, que dá o mesmo plano (H56, ADR-011);
+// - **o resto é defeito do núcleo** — um acesso fora da memória num kernel, um
+//   lançamento mal configurado —, e sai como defeito, com a saída 3.
 inline void checar(cudaError_t erro, const char* chamada) {
-    if (erro != cudaSuccess) {
-        throw std::runtime_error(std::string("CUDA falhou em ") + chamada + ": " + cudaGetErrorString(erro));
+    if (erro == cudaSuccess) return;
+    const std::string texto = std::string("CUDA falhou em ") + chamada + ": " + cudaGetErrorString(erro);
+    switch (erro) {
+        case cudaErrorMemoryAllocation:
+        case cudaErrorDevicesUnavailable:
+        case cudaErrorNoDevice:
+        case cudaErrorInsufficientDriver:
+        case cudaErrorLaunchTimeout:
+            throw SemGpu(texto);
+        default:
+            throw std::runtime_error(texto);
     }
 }
 

@@ -120,7 +120,7 @@ function Pedido({ execucao: e }) {
           <dt>Cotas por categoria</dt>
           <dd>{cotas.length ? cotas.join(" · ") : TRACO}</dd>
           <dt>Modo</dt>
-          <dd>{p.modo ? ROTULO_MODO[p.modo] : "Automático, o mais rápido disponível"}</dd>
+          <dd>{p.modo ? ROTULO_MODO[p.modo] : "Automático: GPU, se houver, e senão CPU paralelo"}</dd>
         </dl>
       </div>
     </section>

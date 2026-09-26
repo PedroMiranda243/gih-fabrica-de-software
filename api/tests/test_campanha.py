@@ -524,7 +524,7 @@ SERIAL, CPU, GPU = ModoExecucao.SERIAL, ModoExecucao.CPU_PARALELO, ModoExecucao.
         (CPU, {SERIAL}, SERIAL, True),
     ],
 )
-def test_sem_escolha_roda_o_mais_rapido_e_o_indisponivel_vira_troca(
+def test_sem_escolha_roda_o_primeiro_disponivel_e_o_indisponivel_vira_troca(
     pedido, livres, esperado, troca
 ):
     disponiveis = [
@@ -552,27 +552,33 @@ def test_os_modos_sao_perguntados_ao_executavel(base, gestor, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "gpu, ausencia, motivo",
+    "modos, ausencia, motivo",
     [
-        (None, "sem_cuda", "Esta instalação foi montada sem suporte a GPU."),
-        (None, "sem_placa", "Nenhuma GPU NVIDIA disponível nesta máquina."),
-        (None, "erro", "A GPU desta máquina não respondeu."),
-        (
-            RTX,
-            None,
-            "A GPU desta máquina (NVIDIA GeForce RTX 4060) está disponível, mas o otimizador em "
-            "GPU ainda não faz parte desta versão.",
-        ),
+        (("openmp",), "sem_cuda", "Esta instalação foi montada sem suporte a GPU."),
+        # Com CUDA e sem placa: a imagem da GPU num contêiner sem a reserva dela.
+        (("openmp", "cuda"), "sem_placa", "Nenhuma GPU NVIDIA disponível nesta máquina."),
+        (("openmp", "cuda"), "erro", "A GPU desta máquina não respondeu."),
     ],
 )
-def test_a_tela_diz_por_que_nao_ha_gpu(base, gestor, monkeypatch, gpu, ausencia, motivo):
+def test_a_tela_diz_por_que_nao_ha_gpu(base, gestor, monkeypatch, modos, ausencia, motivo):
     """RNF06: sem GPU, o sistema funciona em CPU paralelo e diz por quê — com uma frase
-    para o gestor, e não a mensagem do runtime do CUDA."""
-    _fingir(monkeypatch, "openmp", gpu=gpu, ausencia=ausencia)
+    para o gestor, e não a mensagem do runtime do CUDA. O modo `cuda` no executável
+    não basta: sem a placa, a GPU segue indisponível."""
+    _fingir(monkeypatch, *modos, ausencia=ausencia)
     base(_seis())
     estado = gestor.get("/api/campanha").json()
     assert estado["modos"][0] == {"modo": "GPU", "disponivel": False, "motivo": motivo}
     assert estado["modo_automatico"] == "CPU_PARALELO"
+
+
+def test_com_a_placa_e_o_modo_cuda_o_automatico_e_a_gpu(base, gestor, monkeypatch):
+    """H54c: o executável com CUDA, numa máquina com placa, tem os três modos."""
+    _fingir(monkeypatch, "openmp", "cuda", gpu=RTX)
+    base(_seis())
+    estado = gestor.get("/api/campanha").json()
+    assert [m["disponivel"] for m in estado["modos"]] == [True, True, True]
+    assert all(m["motivo"] is None for m in estado["modos"])
+    assert estado["modo_automatico"] == "GPU"
 
 
 def _gpu_que_falha(monkeypatch):
@@ -599,7 +605,7 @@ def _gpu_que_falha(monkeypatch):
     [(None, "Sem escolha, rodaria em GPU"), ("GPU", "Pedido em GPU")],
 )
 def test_a_gpu_que_falha_no_calculo_cai_para_a_cpu(base, gestor, monkeypatch, pedido, como):
-    """RNF06 e UC08-A4 (H56): a execução termina, no mais rápido que sobrou, e diz a troca."""
+    """RNF06 e UC08-A4 (H56): a execução termina, no primeiro modo que sobrou, e diz a troca."""
     base(_seis())
     serial = _calcular(gestor, modo="SERIAL")
     chamados = _gpu_que_falha(monkeypatch)
@@ -637,7 +643,7 @@ def test_nucleo_que_nao_responde_deixa_so_o_serial(base, gestor, monkeypatch):
     assert estado["modos"][1]["motivo"] == "O núcleo em C++ não respondeu."
 
 
-def test_modo_indisponivel_roda_no_mais_rapido_e_diz_a_troca(base, gestor):
+def test_modo_indisponivel_roda_no_primeiro_disponivel_e_diz_a_troca(base, gestor):
     """UC08-A4: a campanha é calculada, e a execução diz o que foi pedido e o que rodou."""
     base(_seis())
     execucao = _calcular(gestor, modo="CPU_PARALELO")
@@ -655,23 +661,34 @@ def test_modo_desconhecido_e_recusado(base, gestor):
     assert r.status_code == 422
 
 
-def test_cpu_paralelo_da_o_mesmo_plano_do_serial(base, gestor, nucleo_real):
-    """RF32 e ADR-011: o modo muda o tempo, e não o plano."""
+def test_os_modos_do_executavel_dao_o_mesmo_plano_do_serial(base, gestor, nucleo_real):
+    """RF32 e ADR-011: o modo muda o tempo, e não o plano — em cada modo que esta
+    instalação tem. Na CI e na imagem padrão, o CPU paralelo; com a GPU (H54c), ela
+    também, e é ela que o automático escolhe."""
     base(_seis())
     serial = _calcular(gestor, modo="SERIAL")
-    paralelo = _calcular(gestor)  # sem escolha: o mais rápido que houver
-    assert serial["modo"] == "SERIAL" and paralelo["modo"] == "CPU_PARALELO"
-    assert paralelo["parametros"]["modo"] is None and paralelo["substituicao"] is None
-    assert paralelo["threads"] >= 1 and serial["threads"] is None
+    assert serial["modo"] == "SERIAL" and serial["threads"] is None
+    livres = [d.modo.value for d in servico_otimizacao.modos() if d.disponivel]
+    assert "CPU_PARALELO" in livres
 
     def plano(e):
         return [(i["parceiro_id"], i["acao_id"], i["ganho"]) for i in e["itens"]]
 
-    assert plano(paralelo) == plano(serial)
-    assert (paralelo["uplift_total"], paralelo["custo_total"]) == (
-        serial["uplift_total"],
-        serial["custo_total"],
-    )
+    automatico = _calcular(gestor)
+    assert automatico["modo"] == livres[0]
+    assert automatico["parametros"]["modo"] is None and automatico["substituicao"] is None
+    for modo in livres:
+        if modo == "SERIAL":
+            continue
+        execucao = automatico if modo == livres[0] else _calcular(gestor, modo=modo)
+        assert execucao["modo"] == modo and execucao["substituicao"] is None
+        # As threads só dizem algo no CPU paralelo; as da GPU são dezenas de milhares.
+        assert (execucao["threads"] is not None) == (modo == "CPU_PARALELO")
+        assert plano(execucao) == plano(serial), modo
+        assert (execucao["uplift_total"], execucao["custo_total"]) == (
+            serial["uplift_total"],
+            serial["custo_total"],
+        )
 
 
 # ================================================================ a tela e o catálogo

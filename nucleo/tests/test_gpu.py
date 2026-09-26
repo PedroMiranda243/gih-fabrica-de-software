@@ -1,7 +1,8 @@
-"""A GPU do núcleo: achar a placa, recusar sem ela, a ida e volta e o kernel (H54a, H54b, H56).
+"""A GPU do núcleo: achar a placa, recusar sem ela, a ida e volta, o kernel e a busca
+inteira (H54a, H54b, H54c, H56).
 
-A ida e volta e o kernel só rodam com GPU; na CI, sem placa nem CUDA, eles pulam
-— exceto com `GIH_GPU_OBRIGATORIA=1`, que reprova. **A recusa roda em qualquer máquina**:
+O que precisa de placa só roda com GPU; na CI, sem placa nem CUDA, pula — exceto
+com `GIH_GPU_OBRIGATORIA=1`, que reprova. **A recusa roda em qualquer máquina**:
 onde há placa, ela é escondida (`CUDA_VISIBLE_DEVICES=-1`), e o executável
 precisa responder como numa máquina sem ela — saída 1, com o motivo. É o sinal
 que a API usa para cair para a CPU (RNF06).
@@ -12,8 +13,9 @@ import subprocess
 
 import pytest
 
-from gih_nucleo import avaliar, nativo, verificar_viabilidade
+from gih_nucleo import Instancia, avaliar, nativo, otimizar, verificar_plano, verificar_viabilidade
 from tests.conftest import sortear_instancia, sortear_viavel
+from tests.test_otimizador import VIAVEIS
 
 ESCONDIDA = {**os.environ, "CUDA_VISIBLE_DEVICES": "-1"}
 
@@ -149,3 +151,104 @@ def test_sem_placa_avaliar_levanta_sem_gpu(executavel, monkeypatch):
     inst = sortear_viavel(parceiros=5, acoes=2)
     with pytest.raises(nativo.SemGpu):
         nativo.avaliar_na_gpu(inst, [(0, 1, 2, 1, 0)], executavel=executavel)
+
+
+# ------------------------------------------------------------ a busca inteira (H54c)
+def _mesmo(esperado, gpu):
+    """Mesmo plano, mesma avaliação, mesmas gerações: o critério de aceite (ADR-011)."""
+    assert gpu.genes == esperado.genes
+    assert gpu.avaliacao == esperado.avaliacao
+    assert (gpu.partidas, gpu.geracoes, gpu.parcial) == (
+        esperado.partidas,
+        esperado.geracoes,
+        esperado.parcial,
+    )
+
+
+@pytest.mark.parametrize("semente", VIAVEIS)
+def test_a_busca_na_gpu_e_a_do_python_nas_instancias_pequenas(gpu, semente):
+    inst = sortear_instancia(semente)
+    r = nativo.otimizar(inst, executavel=gpu, modo="cuda")
+    _mesmo(otimizar(inst), r)
+    assert r.threads > 1 and 0 < r.contexto_s < r.segundos
+
+
+def test_a_busca_na_gpu_e_a_do_python_numa_instancia_grande(gpu):
+    """300 parceiros, cotas de categoria e de cauda: milhares de sorteios, na GPU."""
+    inst = sortear_viavel(parceiros=300, acoes=5, categorias=3)
+    parametros = {"semente": 7, "geracoes": 60, "partidas": 3}
+    r = nativo.otimizar(inst, executavel=gpu, modo="cuda", **parametros)
+    _mesmo(otimizar(inst, **parametros), r)
+    assert verificar_plano(inst, r.genes) == []
+
+
+# Parâmetros que mudam a forma da busca na GPU: a população mínima (só os dois
+# gulosos, e torneios entre eles), uma partida só, zero gerações (o vencedor é
+# um guloso, e nenhum gene volta da placa), sem mutação e com muitas.
+@pytest.mark.parametrize(
+    "parametros",
+    [
+        {"populacao": 2},
+        {"populacao": 3, "partidas": 5},
+        {"partidas": 1, "geracoes": 40},
+        {"geracoes": 0},
+        {"geracoes": 1},
+        {"mutacoes_por_filho": 0},
+        {"mutacoes_por_filho": 25, "semente": 2026},
+        {"populacao": 130, "geracoes": 20},
+    ],
+)
+def test_a_busca_na_gpu_com_outros_parametros(gpu, parametros):
+    inst = sortear_viavel(parceiros=120, acoes=4, categorias=2, a_partir=11)
+    na_gpu = nativo.otimizar(inst, executavel=gpu, modo="cuda", **parametros)
+    _mesmo(otimizar(inst, **parametros), na_gpu)
+
+
+@pytest.mark.parametrize("parceiros", [2000, 10000])
+def test_a_busca_na_gpu_e_a_do_cpp_serial_nos_tamanhos_da_medicao(gpu, parceiros):
+    """O C++ serial é o Python, conferido em `test_nativo.py`; nestes tamanhos, o
+    Python levaria minutos. Aqui cada thread de um bloco percorre de 8 a 40 genes
+    do indivíduo, e não um ou dois, como nas instâncias pequenas."""
+    inst = sortear_viavel(parceiros=parceiros, acoes=5, categorias=3)
+    serial = nativo.otimizar(inst, executavel=gpu, modo="serial", geracoes=40)
+    _mesmo(serial, nativo.otimizar(inst, executavel=gpu, modo="cuda", geracoes=40))
+
+
+def test_a_busca_na_gpu_na_mochila_e_sem_parceiros(gpu, mochila):
+    assert nativo.otimizar(mochila, executavel=gpu, modo="cuda").avaliacao.ganho == 195
+    vazia = Instancia((), (100,), 1000, 5, (), (), (), (), 0)
+    _mesmo(otimizar(vazia), nativo.otimizar(vazia, executavel=gpu, modo="cuda"))
+
+
+def test_a_busca_na_gpu_sem_categoria(gpu):
+    inst = sortear_viavel(parceiros=80, acoes=3, categorias=0)
+    _mesmo(otimizar(inst), nativo.otimizar(inst, executavel=gpu, modo="cuda"))
+
+
+def test_a_busca_na_gpu_com_limite_de_tempo_devolve_viavel_e_marca_parcial(gpu):
+    """O limite é olhado entre as gerações, com no máximo quatro na fila da GPU; ele
+    conta o contexto da placa, que o gestor também espera."""
+    inst = sortear_viavel(parceiros=300, acoes=5, categorias=3)
+    r = nativo.otimizar(inst, executavel=gpu, modo="cuda", geracoes=10**8, limite_s=0.5)
+    assert r.parcial
+    assert verificar_plano(inst, r.genes) == []
+    assert r.partidas == 4
+    assert r.geracoes % 4 == 0
+    assert r.segundos < 2  # parou: 10⁸ gerações levariam horas
+
+
+def test_sem_placa_a_busca_na_gpu_levanta_sem_gpu(executavel, monkeypatch):
+    """Na CI, o executável sem CUDA recusa do mesmo jeito: para quem pediu, é a mesma falta."""
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "-1")
+    with pytest.raises(nativo.SemGpu):
+        nativo.otimizar(sortear_viavel(parceiros=20), executavel=executavel, modo="cuda")
+
+
+def test_sem_memoria_na_gpu_a_busca_levanta_sem_gpu(gpu):
+    """Uma população que não cabe em placa nenhuma — 100 GB — recusa como falta de GPU,
+    e não como defeito: é o sinal para a API calcular na CPU (H56)."""
+    inst = sortear_viavel(parceiros=500, acoes=3, categorias=2)
+    with pytest.raises(nativo.SemGpu):
+        nativo.otimizar(
+            inst, executavel=gpu, modo="cuda", partidas=1000, populacao=200_000, geracoes=0
+        )

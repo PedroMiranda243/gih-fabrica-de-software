@@ -78,7 +78,11 @@ def test_a_mochila(executavel, mochila):
 
 @pytest.mark.parametrize("modo", nativo.MODOS)
 def test_a_recusa_e_a_mesma(executavel, modo):
-    """A viabilidade decidida pelo C++ é a do Python: mesma restrição, exigido e disponível."""
+    """A viabilidade decidida pelo C++ é a do Python: mesma restrição, exigido e disponível.
+
+    Ela é decidida na CPU, antes da busca, em qualquer modo: a campanha inviável é
+    respondida no modo cuda mesmo sem GPU, e mesmo num executável sem CUDA.
+    """
     if modo == "openmp" and "openmp" not in nativo.capacidades(executavel).modos:
         pytest.skip("gih-nucleo compilado sem OpenMP.")
     inviaveis = 0
@@ -99,6 +103,8 @@ def test_o_executavel_diz_seus_modos(executavel):
     assert capacidades.modos[0] == "serial"
     assert set(capacidades.modos) <= set(nativo.MODOS)
     assert ("openmp" in capacidades.modos) == (capacidades.threads > 0)
+    # O modo cuda é de quem foi compilado com CUDA; se há placa, é a linha da GPU.
+    assert ("cuda" in capacidades.modos) == (capacidades.ausencia_gpu != "sem_cuda")
 
 
 # ------------------------------------------------------------ OpenMP (H53b)
@@ -166,8 +172,9 @@ def test_openmp_com_limite_de_tempo_devolve_viavel_e_marca_parcial(openmp):
 @pytest.mark.parametrize(
     "pedido",
     [
-        {"modo": "cuda"},  # ainda não existe (H54)
+        {"modo": "gpu"},  # o modo do executável é cuda; GPU é o nome na tela
         {"modo": "serial", "threads": 4},  # aceitar e ignorar faria a medição mentir
+        {"modo": "cuda", "threads": 4},
         {"modo": "openmp", "threads": 0},
     ],
 )

@@ -435,15 +435,29 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 > automático, o serial, o CPU paralelo e a GPU. Quais existem nesta instalação quem diz é o executável do
 > núcleo, que a API consulta (ADR-012). O que falta fica desabilitado, e o porquê aparece embaixo do campo.
 >
-> - **Sem escolha**, roda o mais rápido disponível. Na base de demonstração, o CPU paralelo calcula o plano
->   em cerca de 50 ms, contra cerca de 6 s do serial, e **o plano é o mesmo** (ADR-011).
+> - **Sem escolha**, roda a GPU, se houver, e senão o CPU paralelo. Na base de demonstração, o CPU paralelo
+>   calcula o plano em cerca de 50 ms, contra cerca de 6 s do serial, e **o plano é o mesmo** (ADR-011).
 > - **O serial** é o baseline em Python, e existe para comparar.
 > - **Um modo pedido que não existe** — pela API, já que a tela não o oferece — não é recusado. O cálculo
->   roda no mais rápido disponível, e a execução diz a troca: "Pedido em GPU, calculado em CPU paralelo: não
->   há GPU compatível disponível nesta instalação." É o A4, que vale do mesmo jeito para o CPU paralelo
->   numa instalação sem o núcleo em C++.
+>   roda no primeiro disponível, nessa ordem, e a execução diz a troca: "Pedido em GPU, calculado em CPU
+>   paralelo: nenhuma GPU NVIDIA disponível nesta máquina." É o A4, que vale do mesmo jeito para o CPU
+>   paralelo numa instalação sem o núcleo em C++.
 >
-> O plano mostra o modo usado, as threads e o tempo, e a execução registra o modo pedido e o usado.
+> O plano mostra o modo usado, as threads (no CPU paralelo) e o tempo, e a execução registra o modo pedido
+> e o usado.
+>
+> **A GPU (Sprint 11 interna, H54c).** Ela fica disponível quando o núcleo foi compilado com CUDA e a
+> máquina tem a placa — o `docker-compose.gpu.yml` faz as duas coisas (ADR-012). O plano é o mesmo dos
+> outros modos.
+>
+> **Nota sobre a RF32 — "o modo disponível mais rápido".** A RF32 é lida como **o modo de laço mais
+> rápido**: GPU, depois CPU paralelo, depois serial. A H54c mediu que o laço na GPU é o mais rápido dos três
+> (7x o do CPU paralelo com 2.000 parceiros, no contêiner), mas cada cálculo paga cerca de 0,2 s para
+> iniciar o driver e criar o contexto da placa. Em campanhas de poucos milhares de parceiros, o CPU paralelo
+> termina antes de ponta a ponta. A diferença é de décimos de segundo, que a tela não sente. Decisão de
+> 26/09/2026, na H54c: **o automático continua preferindo a GPU**, e a tela não promete "o mais rápido" —
+> diz "na GPU, se houver, e senão no CPU paralelo". Os números estão em
+> [`docs/medicoes/nucleo.md`](medicoes/nucleo.md) e no adendo H54c da ADR-012.
 >
 > **O histórico (passo 10, Sprint 10 interna, H58).** A tela **Execuções** (`/execucoes`) lista cada
 > execução com autor, data, parâmetros, modo, tempo e resultado (RF34), da mais recente para a mais antiga.

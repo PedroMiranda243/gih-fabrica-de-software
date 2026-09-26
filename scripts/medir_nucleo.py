@@ -1,10 +1,16 @@
 """Mede o núcleo em C++: o ganho do OpenMP sobre o serial (H53b), a transferência
-para a GPU (H54a) e o kernel de avaliação da população (H54b).
+para a GPU (H54a), o kernel de avaliação da população (H54b) e a busca inteira
+na GPU (H54c), com o RNF01 e o RNF02.
 
 **O ganho é lido contra o C++ serial**, e não contra o Python. O C++ serial já é
 dezenas de vezes mais rápido que o mesmo algoritmo em Python (H53a), e comparar
 o OpenMP com o Python mediria o compilador junto com o paralelismo (`CLAUDE.md`
-§7, ADR-012). O baseline em Python do RNF02 está em `docs/medicoes/otimizador.md`.
+§7, ADR-012). A exceção é o RNF02, que pede o ganho da GPU sobre o baseline em
+Python: ele é medido aqui, no cenário de referência, na mesma instância.
+
+**A GPU tem um custo fixo**, que o executável informa à parte: iniciar o driver
+e criar o contexto, uma vez por processo, antes de qualquer conta. O relatório
+mostra o laço sem ele, contra o OpenMP, e a busca inteira com ele.
 
 **Mede-se no contêiner**, que é onde o sistema roda (ADR-012): o OpenMP do GCC
 no WSL2 ganha menos que o do MSVC no Windows. Medido fora dele, o relatório diz
@@ -19,8 +25,9 @@ isso logo no topo.
   dividido pelo OpenMP dela, e a faixa do ganho vem daí;
 - o tempo é o da busca, medido pelo próprio executável, sem o processo subir e
   ler a entrada; o do processo inteiro vem numa coluna à parte;
-- **em toda execução, o plano do OpenMP é conferido contra o do serial**: genes,
-  avaliação e gerações. Se um divergir, o script para sem escrever o relatório.
+- **em toda execução, o plano do OpenMP e o da GPU são conferidos contra o do
+  serial**: genes, avaliação e gerações. Se um divergir, o script para sem
+  escrever o relatório.
 
 **A instância é sintética e montada aqui, sem banco.**
 - As ações, com custo e efeitos, são as do catálogo do gerador
@@ -76,6 +83,7 @@ CATEGORIAS = 5
 SEMENTE_DA_REDE = 2026
 PARCEIROS = [500, 2000, 10000]  # o cenário de referência e a carga do RNF04 em volta
 REPETICOES = 15
+BASELINE = 3  # execuções do Python no cenário de referência, para o RNF02
 
 
 def _acoes_do_catalogo() -> list[tuple[int, float, float]]:
@@ -136,6 +144,7 @@ def montar_instancia(parceiros: int) -> Instancia:
 class Medida:
     busca: list[float] = field(default_factory=list)  # segundos, do executável
     processo: list[float] = field(default_factory=list)  # segundos, de fora
+    contexto: list[float] = field(default_factory=list)  # segundos, só na GPU: dentro da busca
 
 
 def _rodar(inst, executavel, modo, threads, referencia=None):
@@ -155,12 +164,16 @@ def _rodar(inst, executavel, modo, threads, referencia=None):
     return r, processo
 
 
-def medir(parceiros: int, threads: list[int], repeticoes: int, executavel: str):
+def medir(parceiros: int, threads: list[int], repeticoes: int, executavel: str, com_gpu: bool):
     inst = montar_instancia(parceiros)
     if verificar_viabilidade(inst) is not None:
         raise SystemExit(f"A campanha de {parceiros} parceiros saiu inviável; ajuste o script.")
     referencia, _ = _rodar(inst, executavel, "serial", None)
     configuracoes = [("serial", None)] + [("openmp", t) for t in threads]
+    # A GPU entra na mesma rodada, intercalada com os outros: parte do repouso,
+    # como no uso de verdade, em que ela espera parada pelo próximo cálculo.
+    if com_gpu:
+        configuracoes.append(("cuda", None))
     medidas = {c: Medida() for c in configuracoes}
 
     for rodada in range(repeticoes + 1):
@@ -170,6 +183,7 @@ def medir(parceiros: int, threads: list[int], repeticoes: int, executavel: str):
                 continue  # aquecimento
             medidas[(modo, t)].busca.append(r.segundos)
             medidas[(modo, t)].processo.append(processo)
+            medidas[(modo, t)].contexto.append(r.contexto_s)
         if rodada:
             print(f"  rodada {rodada}/{repeticoes}", flush=True)
     return inst, referencia, medidas
@@ -189,6 +203,11 @@ def _ms(segundos: float) -> str:
 
 def _x(v: float) -> str:
     return f"{v:.1f}x".replace(".", ",")
+
+
+def _lista(itens: list[str]) -> str:
+    """'500', '500 e 2.000', '500, 2.000 e 10.000'."""
+    return itens[0] if len(itens) == 1 else f"{', '.join(itens[:-1])} e {itens[-1]}"
 
 
 def _curto(ms: float) -> str:
@@ -240,7 +259,7 @@ def _secao_kernel(capacidades, avaliacoes, repeticoes) -> list[str]:
         f"Python aqui. Mediana de {repeticoes} repetições, e a faixa.",
         "",
         "O kernel é medido pela própria GPU, sem a transferência (que é a seção de cima), e **em "
-        "lotes de lançamentos seguidos**, como o laço da H54c vai lançar uma geração depois da "
+        "lotes de lançamentos seguidos**, como o laço da H54c lança uma geração depois da "
         "outra: cada medida é a média por lançamento num lote de uns 2 ms. Um lançamento isolado, "
         "com a placa esperando a CPU entre um e outro, mede a latência, e ela oscilou de 11 a "
         "88 µs com 500 parceiros, conforme o relógio da placa subia ou não.",
@@ -258,8 +277,8 @@ def _secao_kernel(capacidades, avaliacoes, repeticoes) -> list[str]:
     linhas += [
         "",
         "- **O kernel sozinho não é o modo GPU.** A busca na GPU (H54c) também sorteia, "
-        "cruza e muta na placa, e paga o lançamento de um kernel por geração. O ganho da GPU "
-        "sobre o OpenMP só se mede com o laço inteiro, e esta tabela não o antecipa.",
+        "cruza e muta na placa, dentro do mesmo kernel, e paga o contexto da placa. O ganho "
+        "sobre o OpenMP está na seção da busca inteira.",
         "",
     ]
     return linhas
@@ -273,10 +292,7 @@ def _secao_gpu(capacidades, transferencias, resultados, threads, repeticoes) -> 
             "`--gpus all`.",
             "",
         ]
-    # A busca de referência: uma thread por núcleo físico, se foi medida (adendo
-    # da ADR-011); senão, a de mais threads.
-    fisicos = nativo.nucleos_fisicos()
-    t_ref = fisicos if fisicos in threads else max(threads)
+    t_ref = _t_ref(threads)
     busca = {
         inst.parceiros: statistics.median(medidas[("openmp", t_ref)].busca) * 1000
         for inst, _ref, medidas in resultados
@@ -308,9 +324,10 @@ def _secao_gpu(capacidades, transferencias, resultados, threads, repeticoes) -> 
     fracao_geracao = f"{a_cada_geracao / busca[n] * 100:.0f}"
     linhas += [
         "",
-        "- **O laço na GPU (H54c) paga, por busca, um envio e a volta de um indivíduo**, porque "
+        "- **A busca na GPU (H54c) paga, no máximo, um envio e a volta de um indivíduo**, porque "
         f"a população fica residente entre gerações (ADR-006). Com {_mil(n)} parceiros, "
-        f"{_curto(por_busca)}: {fracao}% da busca inteira no OpenMP.",
+        f"{_curto(por_busca)}: {fracao}% da busca inteira no OpenMP. Na verdade paga menos: a "
+        "população nem vai, porque é sorteada na placa; vão a instância e os dois gulosos.",
         "- **Trazer a população inteira a cada geração**, como no spike, custaria só na volta "
         f"{_curto(a_cada_geracao)} por busca ({genetico.GERACOES} gerações): "
         f"{fracao_geracao}% da busca inteira no OpenMP, antes de o kernel fazer qualquer conta. "
@@ -353,19 +370,123 @@ def _secao(inst, referencia, medidas) -> list[str]:
             continue
         ganho = t_serial / med(m.busca)
         pares = [s / o for s, o in zip(serial.busca, m.busca, strict=True)]
+        # Na GPU, "threads" não se compara com as do processador: são dezenas de
+        # milhares, e o ganho por thread não diz nada.
+        if modo == "cuda":
+            nome, threads, por_thread = "GPU, com o contexto", "—", "—"
+        else:
+            nome, threads, por_thread = "OpenMP", t, f"{ganho / t:.0%}"
         linhas.append(
-            f"| OpenMP | {t} | {_ms(med(m.busca))} | {_ms(min(m.busca))} a {_ms(max(m.busca))} "
-            f"| **{_x(ganho)}** | {_x(min(pares))} a {_x(max(pares))} "
-            f"| {ganho / t:.0%} | {_ms(med(m.processo))} |"
+            f"| {nome} | {threads} | {_ms(med(m.busca))} | {_ms(min(m.busca))} a "
+            f"{_ms(max(m.busca))} | **{_x(ganho)}** | {_x(min(pares))} a {_x(max(pares))} "
+            f"| {por_thread} | {_ms(med(m.processo))} |"
         )
     linhas += [""]
     return linhas
 
 
+def _t_ref(threads: list[int]) -> int:
+    """As threads do OpenMP que valem como referência: uma por núcleo físico, se
+    foi medida (adendo da ADR-011); senão, a de mais threads."""
+    fisicos = nativo.nucleos_fisicos()
+    return fisicos if fisicos in threads else max(threads)
+
+
+def _secao_busca_na_gpu(capacidades, resultados, threads) -> list[str]:
+    linhas = ["## A busca inteira na GPU — H54c", ""]
+    if capacidades.gpu is None or "cuda" not in capacidades.modos:
+        motivo = capacidades.sem_gpu or "o executável não tem o modo cuda."
+        return linhas + [f"Não medida: {motivo}", ""]
+    med = statistics.median
+    t_ref = _t_ref(threads)
+    linhas += [
+        f"O genético inteiro na {capacidades.gpu.nome}: a população nasce na placa e fica lá "
+        "até o fim, e só voltam as avaliações da última geração e o plano vencedor (ADR-006). "
+        "Cada geração é um kernel, com um bloco de 256 threads por indivíduo, e a placa parte do "
+        "repouso em cada busca, como no uso de verdade. O plano foi conferido contra o do serial "
+        "em todas as execuções.",
+        "",
+        "**O custo fixo, à parte.** Antes de qualquer conta, o processo inicia o driver e cria o "
+        "contexto da GPU: é o que cada cálculo paga uma vez. O executável o mede, e a tabela o "
+        "separa do laço.",
+        "",
+        f"| Parceiros | OpenMP, {t_ref} threads | GPU, só o laço | Laço contra o OpenMP "
+        "| Contexto da GPU | GPU, a busca inteira | Busca inteira contra o OpenMP |",
+        "|--:|--:|--:|--:|--:|--:|--:|",
+    ]
+    ganha, perde = [], []
+    for inst, _ref, medidas in resultados:
+        omp = med(medidas[("openmp", t_ref)].busca)
+        gpu = medidas[("cuda", None)]
+        laco = [b - c for b, c in zip(gpu.busca, gpu.contexto, strict=True)]
+        inteira = med(gpu.busca)
+        (ganha if inteira < omp else perde).append(_mil(inst.parceiros))
+        linhas.append(
+            f"| {_mil(inst.parceiros)} | {_ms(omp)} | **{_ms(med(laco))}** "
+            f"| **{_x(omp / med(laco))}** "
+            f"| {_ms(med(gpu.contexto))} ({_ms(min(gpu.contexto))} a {_ms(max(gpu.contexto))}) "
+            f"| {_ms(inteira)} | {_x(omp / inteira)} |"
+        )
+    linhas += [
+        "",
+        "- **O laço na GPU é o mais rápido dos modos**, e o ganho cresce com o tamanho: o tempo "
+        "de uma geração cresce bem menos que o número de parceiros, porque as threads de um bloco "
+        "dividem os genes do indivíduo.",
+        "- **Com o contexto, a GPU "
+        + (f"perde para o OpenMP com {_lista(perde)} parceiros" if perde else "não perde")
+        + (f" e ganha com {_lista(ganha)}" if ganha else "")
+        + ".** Abaixo de 1x, o OpenMP termina antes. O contexto é o mesmo em qualquer tamanho, "
+        "e só se paga quando o laço é grande.",
+        "- **O modo automático escolhe a GPU mesmo assim** (adendo H54c da ADR-012): a diferença é "
+        "de décimos de segundo, que a tela não sente, e a tela não promete \"o mais rápido\".",
+        "",
+    ]
+    return linhas
+
+
+def _secao_requisitos(capacidades, resultados, baseline) -> list[str]:
+    """RNF01 e RNF02, no cenário de referência: 2.000 parceiros e 5 ações."""
+    linhas = ["## RNF01 e RNF02 — a GPU no cenário de referência", ""]
+    referencia = next((r for r in resultados if r[0].parceiros == 2000), None)
+    if capacidades.gpu is None or "cuda" not in capacidades.modos or referencia is None:
+        return linhas + ["Não medidos: pedem a GPU e o cenário de 2.000 parceiros.", ""]
+    med = statistics.median
+    inst, plano, medidas = referencia
+    python, plano_python = baseline
+    gpu = medidas[("cuda", None)]
+    processo = med(gpu.processo)
+    ganho = med(python) / processo
+    ganho_python = plano_python.avaliacao.ganho
+    diferenca = abs(plano.avaliacao.ganho - ganho_python) / ganho_python
+
+    def atende(ok: bool) -> str:
+        return "atende" if ok else "**não atende**"
+
+    linhas += [
+        f"{_mil(inst.parceiros)} parceiros e {len(inst.custo)} ações (`docs/02-requisitos.md`). O "
+        "tempo da GPU é o do processo inteiro, da chamada à resposta — escrever a instância, subir "
+        "o processo, criar o contexto, buscar e conferir o plano no Python. O do Python é só o da "
+        f"busca, dentro do próprio processo, mediana de {len(python)} execuções: a comparação "
+        "desfavorece a GPU.",
+        "",
+        "| Requisito | Meta | Medido | |",
+        "|---|---|---|---|",
+        f"| RNF01, de ponta a ponta | até 5 s | {_ms(processo)} ({_ms(min(gpu.processo))} a "
+        f"{_ms(max(gpu.processo))}) | {atende(max(gpu.processo) <= 5)} |",
+        f"| RNF02, speedup sobre o Python | no mínimo 5x | {_ms(med(python))} contra "
+        f"{_ms(processo)}: **{_x(ganho)}** | {atende(ganho >= 5)} |",
+        f"| RNF02, uplift | dentro de 2% do Python | {f'{diferenca:.1%}'.replace('.', ',')} de "
+        f"diferença: o mesmo plano | {atende(diferenca <= 0.02)} |",
+        "",
+    ]
+    return linhas
+
+
 def montar_relatorio(
-    resultados, threads, repeticoes, comando, capacidades, transferencias, avaliacoes
+    resultados, threads, repeticoes, comando, capacidades, transferencias, avaliacoes, baseline
 ) -> str:
     no_conteiner = Path("/.dockerenv").exists()
+    com_cuda = "cuda" in capacidades.modos
     processador = _cpuinfo("model name") or platform.processor() or platform.machine()
     nucleos = _cpuinfo("cpu cores")
     if nucleos:
@@ -377,7 +498,7 @@ def montar_relatorio(
     else:
         smt = ""
     linhas = [
-        "# Medição do núcleo em C++: serial, OpenMP e GPU — H53b, H54a, H54b",
+        "# Medição do núcleo em C++: serial, OpenMP e GPU — H53b, H54a, H54b, H54c",
         "",
         "> Gerado por `scripts/medir_nucleo.py`. **Não edite à mão**: número escrito à mão "
         "não é evidência. Para atualizar, rode o comando abaixo de novo.",
@@ -390,23 +511,24 @@ def montar_relatorio(
             "",
         ]
     linhas += [
-        "O ganho do OpenMP é lido contra o **C++ serial**, com o mesmo plano: o C++ serial já é "
-        "dezenas de vezes mais rápido que o Python (H53a), e o ganho contra o Python mediria o "
-        "compilador junto. O baseline do RNF02, em Python, está em "
-        "[`otimizador.md`](otimizador.md). As colunas:",
+        "O ganho do OpenMP e o da GPU são lidos contra o **C++ serial**, com o mesmo plano: o C++ "
+        "serial já é dezenas de vezes mais rápido que o Python (H53a), e o ganho contra o Python "
+        "mediria o compilador junto. A exceção é o RNF02, que pede o ganho da GPU sobre o baseline "
+        "em Python: ele tem a sua seção, no cenário de referência. As colunas:",
         "",
         "- **Tempo da busca**: medido pelo executável, do começo ao fim do genético, sem o "
-        "processo subir e ler a entrada. Mediana, e a faixa do menor ao maior.",
-        "- **Faixa do ganho**: o serial de cada rodada dividido pelo OpenMP da mesma rodada.",
+        "processo subir e ler a entrada. Na GPU, inclui iniciar o driver e criar o contexto da "
+        "placa, que a seção da H54c separa. Mediana, e a faixa do menor ao maior.",
+        "- **Faixa do ganho**: o serial de cada rodada dividido pelo modo da mesma rodada.",
         f"- **Ganho por thread**: o ganho dividido pelas threads. {smt}".rstrip(),
         "- **Processo inteiro**: o que a API espera, da chamada à resposta — escrever a "
         "instância, subir o processo, conferir a viabilidade, buscar, e conferir o plano "
         "devolvido no Python (`nativo.py`).",
         "",
         f"**O plano foi o mesmo em todas as execuções**: em cada uma das {repeticoes + 1} "
-        f"rodadas de cada tamanho, com cada número de threads, os genes, a avaliação e as "
-        "gerações do OpenMP foram conferidos contra os do serial. O script para sem escrever "
-        "este arquivo se algum divergir.",
+        f"rodadas de cada tamanho, com cada número de threads e na GPU, os genes, a avaliação e "
+        "as gerações foram conferidos contra os do serial. O script para sem escrever este "
+        "arquivo se algum divergir.",
         "",
         "## Ambiente",
         "",
@@ -414,7 +536,9 @@ def montar_relatorio(
         "|---|---|",
         f"| Data | {datetime.now():%d/%m/%Y %H:%M} |",
         f"| Onde | {'contêiner, `python:3.11-slim` (ADR-012)' if no_conteiner else '**fora do contêiner**'} |",  # noqa: E501
-        f"| Compilador | {capacidades.compilador}, `-O2 -fopenmp` |",
+        f"| Compilador | {capacidades.compilador}, `-O2 -fopenmp`"
+        + ("; os kernels com o `nvcc`, `-O2 -arch=all-major`" if com_cuda else "")
+        + " |",
         f"| Processador | {processador}, {os.cpu_count()} threads lógicas |",
         f"| OpenMP | threads medidas: {', '.join(map(str, threads))}; escalonamento dinâmico |",
         "| GPU | "
@@ -440,13 +564,15 @@ def montar_relatorio(
     ]
     for inst, referencia, medidas in resultados:
         linhas += _secao(inst, referencia, medidas)
+    linhas += _secao_busca_na_gpu(capacidades, resultados, threads)
+    linhas += _secao_requisitos(capacidades, resultados, baseline)
     linhas += _secao_gpu(capacidades, transferencias, resultados, threads, repeticoes)
     linhas += _secao_kernel(capacidades, avaliacoes, repeticoes)
     return "\n".join(linhas)
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="Mede o ganho do OpenMP sobre o C++ serial (H53b).")
+    p = argparse.ArgumentParser(description="Mede o OpenMP e a GPU contra o C++ serial (H53b, H54)")
     p.add_argument("--parceiros", type=int, nargs="+", default=PARCEIROS)
     p.add_argument("--repeticoes", type=int, default=REPETICOES)
     p.add_argument("--threads", type=int, nargs="+", help="padrão: 1, 2, 4, 8... até o máximo")
@@ -463,10 +589,26 @@ def main() -> None:
         threads = [t for t in (1, 2, 4, 8, 16, 32, 64) if t < capacidades.threads]
         threads.append(capacidades.threads)
 
+    com_gpu = capacidades.gpu is not None and "cuda" in capacidades.modos
     resultados = []
     for parceiros in args.parceiros:
         print(f"{_mil(parceiros)} parceiros", flush=True)
-        resultados.append(medir(parceiros, threads, args.repeticoes, executavel))
+        resultados.append(medir(parceiros, threads, args.repeticoes, executavel, com_gpu))
+
+    # O baseline do RNF02: o Python, na instância do cenário de referência. Leva
+    # dezenas de segundos por execução, e por isso são poucas.
+    baseline = None
+    referencia = next((r for r in resultados if r[0].parceiros == 2000), None)
+    if com_gpu and referencia is not None:
+        inst, plano_cpp, _ = referencia
+        tempos = []
+        for rodada in range(1, BASELINE + 1):
+            print(f"baseline em Python, {rodada}/{BASELINE}", flush=True)
+            plano_python = genetico.otimizar(inst)
+            if plano_python.genes != plano_cpp.genes:
+                raise SystemExit("O Python deu um plano diferente do C++. Relatório não escrito.")
+            tempos.append(plano_python.segundos)
+        baseline = (tempos, plano_python)
 
     transferencias, avaliacoes = [], []
     if capacidades.gpu is not None:
@@ -504,7 +646,14 @@ def main() -> None:
     destino.parent.mkdir(parents=True, exist_ok=True)
     destino.write_text(
         montar_relatorio(
-            resultados, threads, args.repeticoes, comando, capacidades, transferencias, avaliacoes
+            resultados,
+            threads,
+            args.repeticoes,
+            comando,
+            capacidades,
+            transferencias,
+            avaliacoes,
+            baseline,
         ),
         encoding="utf-8",
     )

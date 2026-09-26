@@ -53,7 +53,12 @@ class Resultado:
     geracoes: int  # quantas gerações rodaram, somando as partidas
     parcial: bool  # o limite de tempo interrompeu a busca (UC08, E2)
     segundos: float
-    threads: int = 1  # as que calcularam os filhos: mais de uma só no modo OpenMP
+    # As que calcularam os filhos: mais de uma no modo OpenMP, e no CUDA as da
+    # GPU em cada geração.
+    threads: int = 1
+    # Só no modo CUDA: quanto de `segundos` foi criar o contexto da GPU, o custo
+    # fixo que cada processo paga antes de a placa fazer qualquer conta (H54c).
+    contexto_s: float = 0.0
 
 
 def _torneio(avaliacoes: list[Avaliacao], h1: int, h2: int) -> int:

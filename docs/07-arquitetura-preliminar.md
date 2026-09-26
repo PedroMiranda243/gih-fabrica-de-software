@@ -367,6 +367,31 @@ Resultado completo em [`nucleo/spike/RESULTADO.md`](../nucleo/spike/RESULTADO.md
   da H54c a chama para cada filho, dentro do kernel dele. O tempo medido está em
   [`docs/medicoes/nucleo.md`](medicoes/nucleo.md).
 
+**Adendo (26/09/2026, H54c) — o laço inteiro na GPU:**
+
+- **Uma geração é um kernel**, com um bloco por indivíduo da geração nova, de todas as partidas juntas:
+  4 × 48 = 192 blocos, como os 188 filhos por geração do OpenMP (adendo H53b da ADR-011). O bloco 0 de cada
+  partida copia a elite. Cada um dos outros faz os dois torneios, monta o filho gene a gene e o avalia com a
+  função da H54b, pelas mesmas threads que o escreveram. Cruzar e avaliar num kernel só evita uma volta à
+  memória global e um lançamento a mais por geração.
+- **A população nasce na placa.** A geração 0 é sorteada lá, pelas coordenadas. Da CPU vão só a instância
+  e os dois gulosos, e voltam as avaliações da última geração (40 bytes por indivíduo) e os genes do
+  vencedor, se ele não for um dos gulosos. A população nunca atravessa o barramento — no spike, mandá-la e
+  trazê-la a cada geração era 88% do tempo.
+- **O mesmo plano, por construção, e não por cópia.** O gerador, a comparação, o torneio, a elite e a
+  fórmula de cada gene são as mesmas funções da CPU, compiladas para os dois lados (`GIH_CPU_E_GPU`, em
+  `nucleo.hpp` e `genetico.hpp`); não há uma segunda versão em CUDA para divergir. O plano vencedor é
+  avaliado de novo na CPU ao voltar, e diferente seria defeito. Os testes conferem genes, avaliação e
+  gerações contra o Python nas campanhas pequenas, com oito combinações de parâmetros, e contra o C++
+  serial com 2.000 e 10.000 parceiros; a medição confere em toda execução.
+- **O limite de tempo, com a fila cheia.** Os lançamentos são assíncronos: sem espera nenhuma, a CPU
+  enfileiraria as 150 gerações num milissegundo e o limite (UC08-E2) não pararia nada. A CPU deixa até
+  quatro gerações na fila e espera a mais antiga antes de lançar a próxima. A placa não fica parada, e o
+  relógio é olhado com no máximo quatro gerações de atraso.
+- **Medido no contêiner, com a placa partindo do repouso a cada busca:** o laço leva **7,3 ms** com 2.000
+  parceiros, contra 54,5 ms do OpenMP com 8 threads (**7,4x**), e 27 ms com 10.000, contra 251 ms
+  (**9,3x**). O que sobra de custo não é conta: é o contexto da GPU, no adendo H54c da ADR-012.
+
 ---
 
 ### ADR-007 — Sessão com estado no servidor, não token autocontido
@@ -714,6 +739,34 @@ spike da issue #123 mediu se o mesmo código compila em Linux e roda **dentro da
   devagar.
 - Conferido em contêiner de verdade, nos três casos: build padrão (`sem_cuda`), com o arquivo da GPU (a RTX
   4060 aparece na API) e a mesma imagem sem a reserva (`sem_placa`).
+
+**Adendo (26/09/2026, H54c) — o modo `cuda`, e o custo fixo da GPU:**
+
+- **O modo `cuda` está nos modos de todo executável compilado com CUDA**; se há placa, quem diz é a linha
+  da GPU. A API oferece a GPU só com as duas coisas: a imagem com CUDA num contêiner sem a reserva da placa
+  mostra a GPU indisponível, com "nenhuma GPU NVIDIA disponível nesta máquina". A frase do adendo H56 para
+  a placa presente sem o modo deixou de existir.
+- **A campanha inviável é respondida antes, na CPU, em qualquer modo** — inclusive no `cuda` sem placa. A
+  viabilidade não precisa de GPU, e a resposta é a mesma.
+- **A placa que falta no meio da busca também é saída 1**: memória esgotada, driver caído, placa ocupada ou
+  sumida. A API calcula na CPU, com o mesmo plano (adendo H56). Um erro dentro do kernel continua sendo
+  defeito, com a saída 3.
+- **A GPU tem um custo fixo: ~0,2 s por cálculo.** Iniciar o driver e criar o contexto da placa custa, no
+  contêiner, de 170 a 230 ms, com 500 ou com 10.000 parceiros, antes de qualquer conta; no Windows, menos da
+  metade. O executável o informa à parte, e a medição mostra o laço sem ele e a busca inteira com ele. Com
+  2.000 parceiros, a busca inteira na GPU leva 195 ms, contra 54,5 ms do OpenMP: o laço ganha 7,4x, e o
+  contexto devolve tudo. Com 10.000, a GPU já termina antes (1,1x).
+- **O automático continua preferindo a GPU.** A diferença, nas campanhas de poucos milhares de parceiros, é
+  de décimos de segundo, que a tela não sente. Em troca, a tela deixou de prometer "o mais rápido": diz "na
+  GPU, se houver, e senão no CPU paralelo", e a descrição do modo GPU avisa que ele compensa nas campanhas
+  grandes. A leitura da RF32 está numa nota do UC08, em `docs/03`.
+- **Um processo por cálculo continua valendo.** Um núcleo residente, com o contexto criado uma vez, tiraria
+  o custo fixo, mas traria de volta o que esta ADR evitou: um processo de vida longa para a API gerenciar e
+  reerguer. Com o RNF01 e o RNF02 atendidos com folga, fica registrado como caminho, e não como pendência.
+- **RNF01 e RNF02, no cenário de referência** (2.000 parceiros e 5 ações, no contêiner): o processo inteiro
+  na GPU, da chamada à resposta, leva **248 ms**, contra a meta de 5 s. O Python leva 26,3 s, **106x** mais,
+  e dá o mesmo plano: 0,0% de diferença no uplift, contra os 2% permitidos. Números em
+  [`docs/medicoes/nucleo.md`](medicoes/nucleo.md).
 
 ---
 
