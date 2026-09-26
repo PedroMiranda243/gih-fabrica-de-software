@@ -7,6 +7,8 @@ import {
   comoFracao,
   comoPercentual,
   comoProbabilidade,
+  lerReais,
+  paraFracao,
   sentidoDa,
   TRACO,
 } from "./formato";
@@ -63,5 +65,20 @@ describe("formatação", () => {
     expect(comoProbabilidade(0.998)).toBe("mais de 99%");
     expect(comoProbabilidade(0.002)).toBe("menos de 1%");
     expect(comoProbabilidade(null)).toBe("—");
+  });
+
+  it("reais digitados viram o decimal que a API lê: ponto é milhar, vírgula é decimal", () => {
+    expect(lerReais("12.000,50")).toBe("12000.50");
+    expect(lerReais("R$ 5.000")).toBe("5000");
+    expect(lerReais("90,00")).toBe("90.00");
+    expect(lerReais("abc")).toBe("abc"); // a API recusa, com a mensagem dela
+  });
+
+  it("porcentagem digitada vira a fração da cota, sem ruído de ponto flutuante", () => {
+    expect(paraFracao("30")).toBe("0.3000");
+    expect(paraFracao("12,5")).toBe("0.1250");
+    expect(paraFracao("0.1")).toBe("0.0010");
+    expect(paraFracao("")).toBeNull();
+    expect(paraFracao("dez")).toBe("dez");
   });
 });

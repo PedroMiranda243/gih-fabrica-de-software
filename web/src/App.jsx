@@ -10,6 +10,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useSessao } from "./api/contextoSessao";
 import Casca from "./componentes/Casca";
 import Carregando from "./componentes/Carregando";
+import Campanha from "./paginas/Campanha";
 import Configuracao from "./paginas/Configuracao";
 import Importacao from "./paginas/Importacao";
 import Login from "./paginas/Login";
@@ -115,6 +116,16 @@ export default function App() {
         }
       >
         <Route path="/modelo" element={<Modelo />} />
+      </Route>
+
+      <Route
+        element={
+          <Protegido>
+            <Casca titulo="Campanha" />
+          </Protegido>
+        }
+      >
+        <Route path="/campanha" element={<Campanha />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

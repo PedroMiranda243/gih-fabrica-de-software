@@ -214,3 +214,28 @@ export function comoProbabilidade(valor) {
   if (numero >= 0.995) return "mais de 99%";
   return `${Math.round(numero * 100)}%`;
 }
+
+/**
+ * O que a pessoa digita num valor em reais, no formato que a API lê: "12.000,50"
+ * vira "12000.50". Ponto é milhar e vírgula é decimal, como se escreve aqui.
+ * Não valida: o que não for número segue como veio, e a API recusa com a
+ * mensagem dela.
+ */
+export function lerReais(texto) {
+  const limpo = String(texto ?? "")
+    .replace(/R\$/g, "")
+    .replace(/\s/g, "")
+    .replace(/\./g, "")
+    .replace(",", ".");
+  return limpo;
+}
+
+/** "30" (por cento) → "0.3000". Vazio é "sem cota"; texto que não é número vai como
+    veio, para a API recusar com a mensagem dela. */
+export function paraFracao(percentual) {
+  const texto = String(percentual ?? "").trim();
+  if (texto === "") return null;
+  const numero = Number(texto.replace(",", "."));
+  if (Number.isNaN(numero)) return texto;
+  return (Math.round(numero * 100) / 10000).toFixed(4);
+}
