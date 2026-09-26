@@ -1,17 +1,18 @@
-"""A GPU do núcleo: achar a placa, recusar sem ela, e a ida e volta (H54a, H56).
+"""A GPU do núcleo: achar a placa, recusar sem ela, a ida e volta e o kernel (H54a, H54b, H56).
 
-A ida e volta só roda com GPU; na CI, sem placa nem CUDA, ela pula — exceto com
-`GIH_GPU_OBRIGATORIA=1`, que reprova. **A recusa roda em qualquer máquina**:
+A ida e volta e o kernel só rodam com GPU; na CI, sem placa nem CUDA, eles pulam
+— exceto com `GIH_GPU_OBRIGATORIA=1`, que reprova. **A recusa roda em qualquer máquina**:
 onde há placa, ela é escondida (`CUDA_VISIBLE_DEVICES=-1`), e o executável
 precisa responder como numa máquina sem ela — saída 1, com o motivo. É o sinal
 que a API usa para cair para a CPU (RNF06).
 """
 import os
+import random
 import subprocess
 
 import pytest
 
-from gih_nucleo import nativo, verificar_viabilidade
+from gih_nucleo import avaliar, nativo, verificar_viabilidade
 from tests.conftest import sortear_instancia, sortear_viavel
 
 ESCONDIDA = {**os.environ, "CUDA_VISIBLE_DEVICES": "-1"}
@@ -76,3 +77,75 @@ def test_a_instancia_e_a_populacao_vao_e_voltam_iguais(gpu, parceiros):
     assert len(t.envio_ms) == len(t.volta_ms) == len(t.volta_um_ms) == 3
     assert all(x > 0 for x in t.envio_ms + t.volta_ms + t.volta_um_ms)
     assert t.dispositivo.nome
+
+
+# ------------------------------------------------------------ o kernel (H54b)
+def _populacao(inst, semente, individuos=40):
+    """Os extremos — ninguém com ação, todos com a última, todos com a primeira — e o
+    resto sorteado, com densidade de ação de 0 a 100%."""
+    rng = random.Random(semente)
+    n, a = inst.parceiros, inst.acoes
+    extremos = [(0,) * n, (a,) * n, (1,) * n]
+    sorteados = [
+        tuple(rng.randint(1, a) if rng.random() < densidade else 0 for _ in range(n))
+        for densidade in (rng.random() for _ in range(individuos - len(extremos)))
+    ]
+    return extremos + sorteados
+
+
+@pytest.mark.parametrize("parceiros", [1, 7, 300, 2000])
+def test_o_kernel_avalia_como_o_python(gpu, parceiros):
+    """Ganho, custo, ações, cauda, contagem por categoria e violação, indivíduo a
+    indivíduo, contra o `avaliar` do Python — a referência de tudo (ADR-011)."""
+    inst = sortear_viavel(parceiros=parceiros, acoes=5, categorias=3)
+    populacao = _populacao(inst, parceiros)
+    r = nativo.avaliar_na_gpu(inst, populacao, executavel=gpu, repeticoes=2)
+    assert list(r.avaliacoes) == [avaliar(inst, genes) for genes in populacao]
+    assert len(r.kernel_ms) == len(r.cpu_ms) == 2
+
+
+def test_o_kernel_nas_campanhas_sorteadas_viaveis_ou_nao(gpu):
+    """As 60 campanhas pequenas dos testes do Python, muitas inviáveis: cada termo da
+    violação — máximo de ações, cauda, mínimo e máximo de categoria, orçamento —
+    aparece em alguma, e precisa sair igual."""
+    termos_vistos = set()
+    for semente in range(60):
+        inst = sortear_instancia(semente)
+        populacao = _populacao(inst, semente, individuos=20)
+        r = nativo.avaliar_na_gpu(inst, populacao, executavel=gpu, repeticoes=1)
+        esperadas = [avaliar(inst, genes) for genes in populacao]
+        assert list(r.avaliacoes) == esperadas, f"campanha {semente}"
+        for av in esperadas:
+            if av.acoes > inst.maximo_acoes:
+                termos_vistos.add("máximo de ações")
+            if av.cauda < inst.minimo_cauda:
+                termos_vistos.add("cauda")
+            if av.custo > inst.orcamento:
+                termos_vistos.add("orçamento")
+            for k, n in enumerate(av.por_categoria):
+                if n < inst.minimo_categoria[k]:
+                    termos_vistos.add("mínimo de categoria")
+                if n > inst.maximo_categoria[k]:
+                    termos_vistos.add("máximo de categoria")
+    assert len(termos_vistos) == 5, termos_vistos
+
+
+def test_o_kernel_sem_categoria(gpu):
+    inst = sortear_viavel(parceiros=50, acoes=3, categorias=0)
+    populacao = _populacao(inst, 3, individuos=10)
+    r = nativo.avaliar_na_gpu(inst, populacao, executavel=gpu, repeticoes=1)
+    assert list(r.avaliacoes) == [avaliar(inst, genes) for genes in populacao]
+    assert all(av.por_categoria == () for av in r.avaliacoes)
+
+
+def test_avaliar_recusa_gene_fora_do_catalogo(executavel):
+    inst = sortear_viavel(parceiros=5, acoes=2)
+    with pytest.raises(ValueError):
+        nativo.avaliar_na_gpu(inst, [(0, 1, 2, 3, 0)], executavel=executavel)
+
+
+def test_sem_placa_avaliar_levanta_sem_gpu(executavel, monkeypatch):
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "-1")
+    inst = sortear_viavel(parceiros=5, acoes=2)
+    with pytest.raises(nativo.SemGpu):
+        nativo.avaliar_na_gpu(inst, [(0, 1, 2, 1, 0)], executavel=executavel)
