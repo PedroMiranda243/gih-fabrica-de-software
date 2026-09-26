@@ -988,6 +988,126 @@ def item_modelo(r: Relatorio, url: str, criados: dict[str, str]) -> None:
             )
 
 
+# ------------------------------------------------------------- campanha
+def _aguardar(c: httpx.Client, execucao_id: int) -> dict:
+    limite = time.monotonic() + 180
+    execucao = c.get(f"/api/otimizacoes/{execucao_id}").json()
+    while execucao.get("situacao") == "EM_ANDAMENTO" and time.monotonic() < limite:
+        time.sleep(1)
+        execucao = c.get(f"/api/otimizacoes/{execucao_id}").json()
+    return execucao
+
+
+def _reais(valor) -> str:
+    return "R$ " + f"{float(valor):,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
+
+
+def item_campanha(r: Relatorio, url: str, criados: dict[str, str]) -> None:
+    """O plano de campanha (UC08, RF29 a RF31, RN07, RN10, RN11), contra a base no ar.
+
+    Roda logo depois do modelo e antes de qualquer importação da execução, pelo
+    mesmo motivo: o plano usa as previsões da versão em uso, e uma semana de
+    verificação no futuro não tem previsão. As execuções saem na limpeza.
+    """
+    r.secao("Campanha — plano viável, cotas e recusa com o que falta")
+
+    analista = criados.get("ANALISTA")
+    if analista:
+        with sessao(url) as c:
+            entrar(c, analista, SENHA)
+            consulta = c.get("/api/campanha")
+            calculo = c.post("/api/otimizacoes", json={})
+            r.checar(
+                "o analista consulta a campanha, mas não calcula o plano",
+                consulta.status_code == 200 and calculo.status_code == 403,
+                "o plano decide onde vai a verba (UC08)",
+            )
+
+    gestor = criados.get("GESTOR")
+    if not gestor:
+        r.checar("há gestor para calcular", False)
+        return
+    with sessao(url) as c:
+        entrar(c, gestor, SENHA)
+        estado = c.get("/api/campanha").json()
+        excluidos = estado.get("excluidos") or {}
+        r.checar(
+            "a tela diz quantos parceiros entram e quantos ficam fora, e por quê (RN11)",
+            estado.get("elegiveis", 0) > 0 and "historico_curto" in excluidos,
+            f"{estado.get('elegiveis')} elegíveis; fora: "
+            + ", ".join(f"{n} {m.replace('_', ' ')}" for m, n in excluidos.items() if n),
+        )
+        if not estado.get("pode_executar"):
+            r.nota(f"plano não conferido: {estado.get('motivo_bloqueio')}")
+            return
+
+        parametros = {
+            "orcamento": "5000.00",
+            "maximo_acoes": 30,
+            "cota_cauda_longa": "0.3",
+            "aplicacao_inicio": "2026-10-05",
+            "aplicacao_fim": "2026-10-11",
+        }
+        pedido = c.post("/api/otimizacoes", json=parametros)
+        if not r.checar(
+            "o cálculo é aceito e roda fora da requisição",
+            pedido.status_code == 202 and pedido.json().get("situacao") == "EM_ANDAMENTO",
+            f"HTTP {pedido.status_code}",
+        ):
+            return
+        segundo = c.post("/api/otimizacoes", json=parametros)
+        execucao_id = pedido.json()["id"]
+        if c.get(f"/api/otimizacoes/{execucao_id}").json().get("situacao") == "EM_ANDAMENTO" or (
+            segundo.status_code == 409
+        ):
+            r.checar(
+                "um segundo cálculo, com o primeiro rodando, é recusado",
+                segundo.status_code == 409,
+                "um otimizador por vez, travado pelo banco (ADR-011)",
+            )
+        else:
+            r.nota("o primeiro cálculo terminou antes do segundo pedido; trava não conferida")
+
+        plano = _aguardar(c, execucao_id)
+        itens = plano.get("itens") or []
+        custo = sum(float(i["custo"]) for i in itens)
+        na_cauda = sum(1 for i in itens if i["cauda_longa"])
+        if not r.checar(
+            "o plano respeita orçamento, máximo de ações e cota da cauda longa (RN07)",
+            plano.get("situacao") == "CONCLUIDA"
+            and plano.get("viavel") is True
+            and len(itens) <= 30
+            and len({i["parceiro_id"] for i in itens}) == len(itens)
+            and custo <= 5000
+            and na_cauda >= 9,
+            f"{len(itens)} ações · {_reais(custo)} de {_reais(5000)} · {na_cauda} na cauda longa"
+            if plano.get("viavel")
+            else f"{plano.get('situacao')}: {plano.get('motivo')}",
+        ):
+            return
+        r.checar(
+            "o ganho do plano não fica abaixo do guloso, e sai da previsão em uso (RN10)",
+            float(plano["uplift_total"]) >= float(plano["ganho_guloso"])
+            and plano["modelo_versao"] == estado["modelo_versao"],
+            f"ganho de {_reais(plano['uplift_total'])} contra {_reais(plano['ganho_guloso'])} do "
+            f"guloso, em " + f"{plano['tempo_ms'] / 1000:.1f} s".replace(".", ","),
+        )
+
+        inviavel = c.post(
+            "/api/otimizacoes",
+            json={**parametros, "orcamento": "100.00", "cota_cauda_longa": "0.5"},
+        )
+        recusa = _aguardar(c, inviavel.json()["id"]) if inviavel.status_code == 202 else {}
+        r.checar(
+            "a campanha inviável é registrada sem plano, dizendo o que falta (RN07, UC08-A1)",
+            recusa.get("viavel") is False
+            and recusa.get("restricao_violada") == "orcamento"
+            and "faltam" in (recusa.get("motivo") or "")
+            and not recusa.get("itens"),
+            recusa.get("motivo") or f"HTTP {inviavel.status_code}",
+        )
+
+
 # --------------------------------------------------------------------- extra
 def item_limpeza(
     r: Relatorio,
@@ -1090,6 +1210,7 @@ def main() -> int:
             criados = item_cadastro(r, admin, marca)
             item_perfis(r, a.url, criados)
             item_modelo(r, a.url, criados)
+            item_campanha(r, a.url, criados)
             item_crud(r, a.url, criados, marca)
             periodo_id = item_ingestao(r, a.url, criados, marca)
             item_painel(r, a.url, criados, periodo_id)

@@ -19,14 +19,20 @@ from sqlalchemy import func, select
 
 from app.db import Sessao
 from app.modelos import (
+    AcaoComercial,
     Categoria,
+    ExecucaoOtimizador,
     Importacao,
+    ItemPlano,
     Metrica,
+    ModoExecucao,
     OrigemCategoria,
     Parceiro,
     Perfil,
     Periodo,
+    PlanoCampanha,
     Previsao,
+    SituacaoExecucao,
     SituacaoTreino,
     TreinoModelo,
     Usuario,
@@ -167,6 +173,65 @@ def test_o_treino_da_execucao_sai_e_o_de_fora_fica(execucao):
     assert _contar(TreinoModelo, TreinoModelo.id == de_fora) == 1
     assert _contar(Previsao, Previsao.modelo_versao == f"rede-{da_execucao}") == 0
     assert _contar(Previsao, Previsao.modelo_versao == f"rede-{de_fora}") == 1
+
+
+def _otimizacao(login: str, periodo_inicio: date) -> int:
+    """Uma otimização concluída de `login`, com plano e um item."""
+    s = Sessao()
+    try:
+        autor = s.scalar(select(Usuario.id).where(Usuario.login == login))
+        periodo = s.scalar(select(Periodo.id).where(Periodo.data_inicio == periodo_inicio))
+        parceiro = s.scalar(select(Parceiro.id).order_by(Parceiro.id))
+        acao = s.scalar(select(AcaoComercial.id).where(AcaoComercial.nome == "Visita"))
+        if acao is None:
+            visita = AcaoComercial(
+                nome="Visita", custo_unitario=90, efeito_crescimento=0.06, efeito_retencao=0.3
+            )
+            s.add(visita)
+            s.flush()
+            acao = visita.id
+        execucao = ExecucaoOtimizador(
+            usuario_id=autor,
+            modo=ModoExecucao.SERIAL,
+            parametros={},
+            periodo_base_id=periodo,
+            modelo_versao="rede-1",
+            semente=42,
+            situacao=SituacaoExecucao.CONCLUIDA,
+            viavel=True,
+            tempo_ms=10,
+        )
+        s.add(execucao)
+        s.flush()
+        plano = PlanoCampanha(
+            execucao_id=execucao.id, aplicacao_inicio=periodo_inicio, aplicacao_fim=periodo_inicio
+        )
+        s.add(plano)
+        s.flush()
+        s.add(
+            ItemPlano(
+                plano_id=plano.id, parceiro_id=parceiro, acao_id=acao, uplift_esperado=10, custo=90
+            )
+        )
+        s.commit()
+        return execucao.id
+    finally:
+        s.close()
+
+
+def test_a_otimizacao_da_execucao_sai_e_a_de_fora_fica(execucao):
+    """A verificação calcula um plano para provar a campanha. Ele sai com os
+    itens — antes do período, para o qual a execução aponta."""
+    de_fora = _otimizacao("analista.real", SEMANA_REAL[0])
+    da_execucao = _otimizacao(ANALISTA_DA_EXECUCAO, SEMANA_DA_EXECUCAO[0])
+
+    removidos = limpar_execucao(MARCA)
+
+    assert removidos.otimizacoes == 1
+    assert _contar(ExecucaoOtimizador, ExecucaoOtimizador.id == da_execucao) == 0
+    assert _contar(ExecucaoOtimizador, ExecucaoOtimizador.id == de_fora) == 1
+    assert _contar(PlanoCampanha) == 1
+    assert _contar(ItemPlano) == 1
 
 
 def test_o_usuario_da_execucao_fica(execucao):

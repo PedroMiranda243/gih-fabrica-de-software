@@ -59,6 +59,14 @@ class Acao(enum.StrEnum):
     # a falha tem ação própria para aparecer no filtro sem abrir cada registro.
     MODELO_TREINADO = "MODELO_TREINADO"
     MODELO_TREINO_FALHOU = "MODELO_TREINO_FALHOU"
+    # O catálogo muda o ganho de toda campanha seguinte (RN10): a trilha guarda
+    # o valor anterior junto do novo, como na configuração da segmentação.
+    ACAO_COMERCIAL_CRIADA = "ACAO_COMERCIAL_CRIADA"
+    ACAO_COMERCIAL_EDITADA = "ACAO_COMERCIAL_EDITADA"
+    # O UC08 manda registrar autor, parâmetros, modo, tempo e resultado (passo
+    # 10). A falha tem ação própria, pelo mesmo motivo da do treino.
+    OTIMIZACAO_EXECUTADA = "OTIMIZACAO_EXECUTADA"
+    OTIMIZACAO_FALHOU = "OTIMIZACAO_FALHOU"
 
 
 # Chaves que nunca podem entrar em `detalhes`. A trilha é consultável por

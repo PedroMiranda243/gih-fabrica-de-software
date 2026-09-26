@@ -92,6 +92,12 @@ class SituacaoTreino(enum.StrEnum):
     FALHOU = "FALHOU"
 
 
+class SituacaoExecucao(enum.StrEnum):
+    EM_ANDAMENTO = "EM_ANDAMENTO"
+    CONCLUIDA = "CONCLUIDA"
+    FALHOU = "FALHOU"
+
+
 # --------------------------------------------------------------------------- acesso
 class Usuario(Base):
     __tablename__ = "usuario"
@@ -507,47 +513,101 @@ class Previsao(Base):
 
 
 class AcaoComercial(Base):
-    """Tipo de ação que o otimizador pode alocar, com custo e efeito esperado."""
+    """Tipo de ação que o otimizador pode alocar, com custo e os dois efeitos da RN10.
+
+    O ganho de aplicar a ação a um parceiro é `F̂·crescimento + F̂·p·retenção`: o
+    que ela acrescenta ao faturamento previsto, mais a parte da perda que ela
+    evita quando o parceiro cairia. Os efeitos são frações (0,14 é 14%) e
+    ficam em `numeric`: a API calcula o ganho em centavos inteiros, e `float`
+    mudaria o último centavo conforme o arredondamento binário.
+    """
 
     __tablename__ = "acao_comercial"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     nome: Mapped[str] = mapped_column(String(80), unique=True)
     custo_unitario: Mapped[Decimal] = mapped_column(Numeric(10, 2))
-    uplift_esperado_pct: Mapped[float] = mapped_column()
+    efeito_crescimento: Mapped[Decimal] = mapped_column(Numeric(5, 4))
+    efeito_retencao: Mapped[Decimal] = mapped_column(Numeric(5, 4), default=Decimal("0"))
     ativa: Mapped[bool] = mapped_column(Boolean, default=True)
 
     __table_args__ = (
-        CheckConstraint("custo_unitario >= 0", name="ck_acao_custo_nao_negativo"),
+        # Positivo, e não só não negativo: a violação de orçamento é medida em
+        # ações da mais barata (ADR-011), e ação gratuita dividiria por zero.
+        CheckConstraint("custo_unitario > 0", name="ck_acao_custo_positivo"),
+        CheckConstraint(
+            "efeito_crescimento BETWEEN 0 AND 1 AND efeito_retencao BETWEEN 0 AND 1",
+            name="ck_acao_efeitos_entre_0_e_1",
+        ),
     )
 
 
 class ExecucaoOtimizador(Base):
-    """Registro de uma execução, com o modo e o tempo — é a base do benchmark (RF33, RF34)."""
+    """Uma execução do otimizador — UC08, RF30, RF31, RF34; base do benchmark (RF33).
+
+    Roda em segundo plano, no molde do treino do modelo (ADR-010): a requisição
+    grava a execução em andamento, e o resultado chega quando ela termina.
+    **Um otimizador por vez**, pelo índice único parcial sobre as em andamento.
+
+    Guarda o que torna o plano reproduzível: a versão do modelo e o período
+    das previsões que deram o ganho de cada parceiro, e a semente. Com os
+    mesmos três e os mesmos parâmetros, sai o mesmo plano (ADR-011).
+
+    Uma execução concluída é viável — e tem plano — ou inviável, com a restrição
+    que impediu e o motivo (RN07). Nunca as duas coisas.
+    """
 
     __tablename__ = "execucao_otimizador"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuario.id"))
+    situacao: Mapped[SituacaoExecucao] = mapped_column(default=SituacaoExecucao.EM_ANDAMENTO)
+    # Nulo quando a execução veio do terminal, e não de uma pessoa na tela.
+    usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id"))
     modo: Mapped[ModoExecucao] = mapped_column()
     parametros: Mapped[dict] = mapped_column(JSONB)
+    periodo_base_id: Mapped[int] = mapped_column(ForeignKey("periodo.id"))
+    modelo_versao: Mapped[str] = mapped_column(String(40))
+    semente: Mapped[int] = mapped_column(Integer)
 
-    viavel: Mapped[bool] = mapped_column(Boolean)
+    iniciada_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    concluida_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    viavel: Mapped[bool | None] = mapped_column(Boolean)
+    # O código da restrição que tornou a campanha inviável (`gih_nucleo.viabilidade`).
     restricao_violada: Mapped[str | None] = mapped_column(String(120))
     uplift_total: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
     custo_total: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
-    tempo_ms: Mapped[int] = mapped_column(Integer)
-
-    executada_em: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    tempo_ms: Mapped[int | None] = mapped_column(Integer)
+    # O limite de tempo interrompeu a busca: o plano é o melhor viável até ali (UC08-E2).
+    parcial: Mapped[bool | None] = mapped_column(Boolean)
+    # O texto para a pessoa: por que é inviável, ou por que falhou.
+    motivo: Mapped[str | None] = mapped_column(Text)
+    # O que não precisa de coluna própria: elegíveis e excluídos por motivo,
+    # cotas em contagem, folgas, gerações, e o ganho do guloso para comparação.
+    detalhes: Mapped[dict | None] = mapped_column(JSONB)
 
     __table_args__ = (
+        Index(
+            "uq_execucao_uma_em_andamento",
+            "situacao",
+            unique=True,
+            postgresql_where=text("situacao = 'EM_ANDAMENTO'"),
+        ),
         # RN07: ou o plano respeita todas as restrições, ou não existe plano.
         CheckConstraint(
             "(viavel AND restricao_violada IS NULL)"
             " OR (NOT viavel AND restricao_violada IS NOT NULL)",
             name="ck_execucao_inviavel_tem_motivo",
+        ),
+        CheckConstraint(
+            "situacao <> 'CONCLUIDA' OR (viavel IS NOT NULL AND tempo_ms IS NOT NULL)",
+            name="ck_execucao_concluida_tem_resultado",
+        ),
+        CheckConstraint(
+            "situacao <> 'FALHOU' OR motivo IS NOT NULL",
+            name="ck_execucao_falha_tem_motivo",
         ),
     )
 

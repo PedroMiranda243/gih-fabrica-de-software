@@ -22,6 +22,13 @@ COPY --from=modelo pyproject.toml /modelo/pyproject.toml
 COPY --from=modelo gih_modelo /modelo/gih_modelo
 RUN pip install --no-cache-dir --no-deps /modelo
 
+# O otimizador serial (ADR-011) chega do mesmo jeito, como contexto `nucleo`.
+# Só o pacote Python: `spike/` e o `requirements.txt` da pasta são do spike de
+# GPU, e trariam o CuPy para uma imagem que não o usa.
+COPY --from=nucleo pyproject.toml /nucleo/pyproject.toml
+COPY --from=nucleo gih_nucleo /nucleo/gih_nucleo
+RUN pip install --no-cache-dir --no-deps /nucleo
+
 COPY alembic.ini .
 COPY app ./app
 COPY migrations ./migrations

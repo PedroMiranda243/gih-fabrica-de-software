@@ -94,6 +94,16 @@ PERMISSOES: dict[tuple[str, str], object] = {
     # RF28 — Previsão e risco no cadastro do parceiro: os perfis do RF28, que
     # são os do cadastro (UC04).
     ("GET", "/api/parceiros/{parceiro_id}/previsao"): {Perfil.GESTOR, Perfil.ANALISTA},
+    # UC08 — Executar otimização: o Gestor executa, o Analista consulta. O
+    # plano decide onde vai a verba; o Administrador cuida de acesso, e não de
+    # campanha. O catálogo (RF29) segue a mesma divisão.
+    ("GET", "/api/campanha"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("POST", "/api/otimizacoes"): {Perfil.GESTOR},
+    ("GET", "/api/otimizacoes"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/otimizacoes/{execucao_id}"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/acoes-comerciais"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("POST", "/api/acoes-comerciais"): {Perfil.GESTOR},
+    ("PATCH", "/api/acoes-comerciais/{acao_id}"): {Perfil.GESTOR},
     # UC14 — Auditar ações: só Administrador
     ("GET", "/api/auditoria"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/auditoria/acoes"): {Perfil.ADMINISTRADOR},
@@ -104,7 +114,13 @@ IGNORADAS = {"/api/openapi.json", "/api/docs", "/api/docs/oauth2-redirect", "/ap
 
 # Valores de caminho para as rotas parametrizadas. O id não precisa existir: um
 # 404 já prova que a autorização deixou passar, que é o que se está medindo.
-PARAMETROS = {"usuario_id": "1", "parceiro_id": "1", "treino_id": "1"}
+PARAMETROS = {
+    "usuario_id": "1",
+    "parceiro_id": "1",
+    "treino_id": "1",
+    "execucao_id": "1",
+    "acao_id": "1",
+}
 
 
 def rotas_da_aplicacao() -> list[tuple[str, str]]:
