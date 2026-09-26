@@ -303,21 +303,27 @@ classDiagram
         +int id
         +str nome
         +Decimal custo_unitario
-        +float uplift_esperado_pct
+        +Decimal efeito_crescimento
+        +Decimal efeito_retencao
         +bool ativa
     }
 
     class ExecucaoOtimizador {
         +int id
+        +SituacaoExecucao situacao
         +int usuario_id
         +ModoExecucao modo
         +dict parametros
+        +int periodo_base_id
+        +str modelo_versao
+        +int semente
         +bool viavel
         +str restricao_violada
         +Decimal uplift_total
         +Decimal custo_total
         +int tempo_ms
-        +datetime executada_em
+        +bool parcial
+        +str motivo
     }
 
     class PlanoCampanha {
@@ -358,7 +364,13 @@ classDiagram
 
 **`ExecucaoOtimizador` existe mesmo quando não há plano.** A cardinalidade `0..1` é RN07: ou o plano
 respeita **todas** as restrições, ou não existe plano. A execução inviável fica registrada com
-`restricao_violada` preenchido, porque explicar por que não deu é mais útil que sumir com a tentativa.
+`restricao_violada` preenchido, porque explicar por que não deu é mais útil que sumir com a tentativa. Ela
+guarda também a versão do modelo, o período das previsões e a semente: com os três e os mesmos parâmetros,
+sai o mesmo plano (ADR-011).
+
+**`AcaoComercial` tem os dois efeitos da RN10.** O ganho de aplicá-la a um parceiro é o que ela acrescenta
+ao faturamento previsto mais a parte da perda que evita quando ele cairia — por isso uma ação de retenção
+vale mais para quem está em risco.
 
 **`PlanoCampanha` compõe `ItemPlano` (losango cheio).** Item sem plano não tem significado; apagar o plano
 apaga os itens.
@@ -486,10 +498,13 @@ classDiagram
         +previsao_do_parceiro(parceiro) PrevisaoLida
     }
 
-    class OrquestradorOtimizacao {
-        <<previsto>>
-        +montar_cenario(periodo) Cenario
-        +executar(modo, restricoes) ExecucaoOtimizador
+    class ServicoOtimizacao {
+        <<implementado>>
+        +elegiveis(periodo, versao) list
+        +excluidos(periodo, versao) dict
+        +montar(execucao) Montagem
+        +iniciar(parametros, usuario) ExecucaoOtimizador
+        +executar(execucao)
     }
 
     class Assistente {
@@ -502,7 +517,8 @@ classDiagram
     ServicoImportacao --> Segmentador : dispara o recálculo
     Segmentador --> Ranking : usa a ordenação
     ServicoPrevisao --> Segmentador : rotula o risco pelo mesmo critério (RN09)
-    OrquestradorOtimizacao --> Ranking : monta o cenário
+    ServicoOtimizacao --> Ranking : cauda longa pelo ranking (RN11)
+    ServicoOtimizacao --> ServicoPrevisao : previsões da versão em uso (RN10)
     Assistente --> Ranking : consome fatos apurados
 ```
 
@@ -515,6 +531,11 @@ prever é entrar em Em Risco no período seguinte (RN09), e o rótulo sai de `cr
 função que classifica o segmento. O modelo em si mora fora da API, no pacote `gih_modelo` (ADR-010): recebe
 séries e devolve números, e quem decide se uma versão entra em uso é este serviço.
 
+**`ServicoOtimizacao` traduz a campanha para o núcleo, e o núcleo não sabe o que é campanha.** Aqui ficam
+a regra de negócio e o texto: o ganho da RN10 em centavos, quem é elegível, as cotas em contagem, a cauda
+longa pelo ranking (a leitura da RN02) e a recusa com o nome da categoria e o valor em reais. O pacote
+`gih_nucleo` recebe inteiros e devolve o plano (ADR-011).
+
 **`Assistente` consome `Ranking`, nunca o banco direto.** Ele recebe fatos já apurados e redige texto em
 volta deles. Se somasse, contasse ou comparasse, o número deixaria de ser reproduzível (RN08).
 
@@ -524,8 +545,9 @@ volta deles. Se somasse, contasse ou comparasse, o número deixaria de ser repro
 ## 7. Núcleo computacional — as estruturas
 
 A parte avaliada pela disciplina de **Tópicos Avançados**. O otimizador resolve um problema combinatório:
-dados *N* parceiros e *A* ações possíveis, escolher no máximo uma ação por parceiro maximizando o uplift
-esperado sem violar orçamento, número de parceiros e cota por categoria. O espaço de busca é `(A+1)^N`.
+dados *N* parceiros e *A* ações possíveis, escolher no máximo uma ação por parceiro maximizando o ganho
+esperado sem violar orçamento, máximo de ações e cotas. O espaço de busca é `(A+1)^N`. A formulação está na
+`docs/07` §4.1, e a versão serial, no pacote `nucleo/gih_nucleo` (Sprint 9 interna).
 
 O que entra, o que sai, e quem avalia um candidato:
 
@@ -534,51 +556,65 @@ O que entra, o que sai, e quem avalia um candidato:
 classDiagram
     direction LR
 
-    class Cenario {
-        +vector~double~ uplift
-        +vector~double~ custo
-        +vector~int~ categoria
-        +int n_parceiros
-        +int n_acoes
+    class Instancia {
+        +int[][] ganho
+        +int[] custo
+        +int orcamento
+        +int maximo_acoes
+        +int[] categoria
+        +bool[] cauda
+        +int[] minimo_categoria
+        +int[] maximo_categoria
+        +int minimo_cauda
     }
 
-    class Restricoes {
-        +double orcamento
-        +int max_parceiros
-        +map cota_por_categoria
-        +respeita(plano) bool
+    class Avaliacao {
+        +int ganho
+        +int custo
+        +int acoes
+        +int violacao
+        +viavel() bool
     }
 
-    class PlanoCampanha {
-        +vector~uint8~ selecao
-        +double uplift_total
-        +double custo_total
-        +bool viavel
+    class Inviabilidade {
+        +str restricao
+        +int exigido
+        +int disponivel
+        +falta() int
     }
 
-    class AvaliadorPopulacao {
-        +avaliar(populacao, cenario, restricoes) vector~double~
+    class Problema {
+        <<módulo>>
+        +avaliar(instancia, genes) Avaliacao
+        +melhor(a, b) bool
+        +verificar_plano(instancia, genes) list
     }
 
-    AvaliadorPopulacao --> Cenario : lê
-    AvaliadorPopulacao --> Restricoes : aplica
-    AvaliadorPopulacao --> PlanoCampanha : pontua
+    Problema --> Instancia : lê
+    Problema --> Avaliacao : produz
+    Instancia ..> Inviabilidade : verificar_viabilidade
 ```
 
-**Nenhuma dessas estruturas conhece banco, sessão ou HTTP.** O núcleo recebe um cenário já montado e
-devolve um plano. É o que permitiu compilá-lo e medi-lo isoladamente oito semanas antes de o resto do
-sistema existir — e é o que permite testá-lo sem subir a aplicação.
+**Nenhuma dessas estruturas conhece banco, sessão ou HTTP.** O núcleo recebe uma instância já montada, em
+**inteiros** — ganho e custo em centavos, cotas em contagem — e devolve o plano. Foi o que permitiu medir o
+kernel oito semanas antes de o resto do sistema existir, e é o que permite testá-lo sem subir a aplicação.
 
-**`PlanoCampanha.viavel` não é redundante com o uplift.** RN07: ou o plano respeita **todas** as
-restrições, ou não existe plano. Um candidato inviável tem aptidão zero e não compete, mas continua
-existindo para que a execução consiga explicar qual restrição foi violada.
+**A violação é um número, e não um "inviável" que zera a aptidão.** Um plano inviável compete pela
+violação — em unidades de ação — contra outro inviável, e perde para qualquer viável (`melhor`, ADR-011).
+Assim a busca pode atravessar o inviável para chegar ao ótimo; e o plano devolvido ainda passa por
+`verificar_plano`, escrito sem reaproveitar `avaliar` (RN07).
+
+**`Inviabilidade` é decidida antes da busca, com exatidão.** Com as cotas em contagem, basta ver se o menor
+conjunto que as cumpre cabe no máximo de ações e no orçamento pagando a ação mais barata (`docs/07` §4.1).
 
 ---
 
 ## 8. Núcleo computacional — as três implementações
 
-Três implementações da **mesma** interface, para que o benchmark compare o que é comparável (RF32 a RF34).
-Todas recebem `Cenario` e `Restricoes` e devolvem `PlanoCampanha`.
+Três implementações do **mesmo** algoritmo, para que o benchmark compare o que é comparável (RF32 a RF34).
+Todas recebem a `Instancia` e a semente e devolvem o mesmo plano — o sorteio é por coordenadas e a
+aritmética é inteira (ADR-011). A serial, em Python, existe desde a Sprint 9 interna; as outras são das
+Sprints 10 e 11.
 
 <!-- diagrama: nucleo-otimizadores -->
 ```mermaid
@@ -587,26 +623,29 @@ classDiagram
 
     class Otimizador {
         <<abstract>>
-        +otimizar(cenario, restricoes) PlanoCampanha
+        +otimizar(instancia, semente) Resultado
         +modo() string
         #evoluir(populacao) void
     }
 
     class OtimizadorSerial {
-        +otimizar(cenario, restricoes) PlanoCampanha
+        <<implementado: gih_nucleo.serial>>
+        +otimizar(instancia, semente) Resultado
         +modo() string
     }
 
     class OtimizadorOpenMP {
+        <<previsto>>
         +int threads
-        +otimizar(cenario, restricoes) PlanoCampanha
+        +otimizar(instancia, semente) Resultado
         +modo() string
     }
 
     class OtimizadorCuda {
+        <<previsto>>
         +int blocos
         +int threads_por_bloco
-        +otimizar(cenario, restricoes) PlanoCampanha
+        +otimizar(instancia, semente) Resultado
         +modo() string
         -manter_populacao_na_gpu() void
     }
@@ -636,13 +675,13 @@ abaixo separa os dois — e o repositório comprova cada linha da coluna ✅.
 | Camada | Implementado ✅ | Previsto ⏳ |
 |---|---|---|
 | Domínio | **as 18 entidades**, com restrições `CHECK` no banco | — |
-| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `erros` | `orquestrador_otimizacao`, `assistente` |
-| Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/auditoria`, `/api/health` | otimização, mensagens, assistente |
-| Núcleo | kernel de avaliação de população validado em CUDA e OpenMP (spike H47) | `Otimizador` e as três implementações |
+| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `servico_otimizacao`, `erros` | `assistente` |
+| Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/campanha`, `/api/otimizacoes`, `/api/acoes-comerciais`, `/api/auditoria`, `/api/health` | benchmark, mensagens, assistente |
+| Núcleo | pacote `gih_nucleo`: instância, viabilidade exata, gulosos e o genético serial (H48, H49, H52); kernel de avaliação validado em CUDA e OpenMP (spike H47) | as versões em C++ com OpenMP e em CUDA |
 | Modelo preditivo | pacote `gih_modelo`: variáveis, referências, rede e treino (H41 a H43, H46) | — |
 
-Cobertura de teste da API em 24/09/2026: **557 testes, 97%**. O pacote do modelo tem a própria suíte, em
-`modelo/tests`.
+Cobertura de teste da API em 26/09/2026: **624 testes, 97%**. Os pacotes do modelo e do
+otimizador têm as próprias suítes, em `modelo/tests` e `nucleo/tests`.
 
 ---
 

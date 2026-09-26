@@ -418,6 +418,14 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 - **E2 — Execução excede o tempo limite.** O sistema encerra a execução, preserva a melhor solução encontrada
   até o momento, sinaliza que o resultado é parcial e registra a ocorrência.
 
+> **Na interface (Sprint 9 interna).** A tela **Campanha** (`/campanha`) diz, antes de qualquer campo,
+> quantos parceiros entram e quantos ficam fora, e por quê (RN11). O Gestor informa orçamento, máximo de
+> ações, cota da cauda longa, cotas por categoria e período de aplicação, confirma, e a tela acompanha o
+> cálculo até o resultado — o plano, com as cotas cumpridas, as folgas e a comparação com o plano guloso; ou
+> a campanha inviável, com a restrição e quanto falta (A1). O Analista consulta o plano e o catálogo. O
+> cálculo roda fora da requisição, um por vez (ADR-011), no modo serial. A escolha do modo (passo 4) e a
+> comparação de cenários (A3) são das Sprints 10 e 11.
+
 ---
 
 ### UC09 — Comparar desempenho serial, paralelo e GPU
