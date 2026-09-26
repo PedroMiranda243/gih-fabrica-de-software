@@ -1,0 +1,241 @@
+/* Tela da campanha (UC08): restrições, plano recomendado e catálogo. */
+
+.campanha__corpo {
+  padding: var(--esp-16);
+}
+
+.campanha__restricoes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-16);
+}
+
+/* Quem entra e quem fica fora vem antes dos campos: é o universo sobre o qual
+   as cotas vão incidir, e decidi-las sem ele é chutar. */
+.campanha__nota {
+  margin: 0;
+  max-width: 72ch;
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+  line-height: 1.55;
+}
+
+.campanha__nota strong {
+  color: var(--ink);
+  font-weight: var(--peso-nome);
+}
+
+/* Cinco campos que cabem em duas ou três colunas; abaixo de ~200 px cada um,
+   a ajuda de duas linhas vira coluna de palavra solta. */
+.campanha__campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--esp-16);
+  align-items: start;
+}
+
+.campanha__campos input:not([type="date"]) {
+  max-width: 16ch;
+  font-family: var(--fonte-dados);
+  font-variant-numeric: tabular-nums;
+}
+
+.campanha__cotas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-8);
+  margin: 0;
+  padding: var(--esp-12) var(--esp-16);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-painel);
+}
+
+.campanha__cotas legend {
+  padding: 0 var(--esp-4);
+  font-size: var(--txt-13);
+  font-weight: var(--peso-rotulo);
+  color: var(--ink);
+}
+
+.campanha__cotas > p {
+  margin: 0;
+  max-width: 72ch;
+}
+
+.campanha__cotas > .botao {
+  align-self: flex-start;
+}
+
+.campanha__cota {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-8);
+  align-items: end;
+}
+
+.campanha__cota label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-4);
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+}
+
+.campanha__cota select,
+.campanha__cota input {
+  min-height: 36px;
+  padding: var(--esp-6) var(--esp-8);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-controle);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--txt-13);
+}
+
+.campanha__cota input {
+  width: 8ch;
+  font-family: var(--fonte-dados);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Por que o botão não está ali — a frase vem pronta da API. */
+.campanha__bloqueio {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+}
+
+.campanha__acoes {
+  display: flex;
+  gap: var(--esp-8);
+}
+
+/* Andamento sem porcentagem, como no treino: o genético não sabe quanto falta
+   até o limite de gerações, e uma barra que corre diz "está trabalhando" sem
+   prometer um fim. Cinza, e não a cor de ação: não responde a clique. */
+.campanha__barra-andamento {
+  position: relative;
+  height: 3px;
+  margin-top: var(--esp-8);
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--surface-2);
+}
+
+.campanha__barra-andamento::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 30%;
+  background: var(--ink-3);
+  animation: campanha-andamento 1.4s ease-in-out infinite;
+}
+
+@keyframes campanha-andamento {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(340%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campanha__barra-andamento::after {
+    width: 100%;
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+/* Resumo antes do detalhe (`docs/09`): os fatos do plano e as cotas lado a
+   lado, e a tabela de ações embaixo. */
+.campanha__resumo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: var(--esp-24);
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .campanha__resumo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.campanha__parcial {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+}
+
+.campanha__fatos {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--esp-8) var(--esp-16);
+  margin: 0;
+}
+
+.campanha__fatos dt {
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+}
+
+.campanha__fatos dd {
+  margin: 0;
+  font-size: var(--txt-13);
+}
+
+.campanha__legenda {
+  padding-bottom: var(--esp-6);
+  text-align: left;
+  font-size: var(--txt-12);
+  font-weight: var(--peso-rotulo);
+  color: var(--ink-2);
+}
+
+.campanha__inviavel {
+  margin-bottom: var(--esp-16);
+}
+
+/* Três classes, como nas outras tabelas: `.tabela .nome` de `componentes.css`
+   tem a especificidade de duas e ganharia. */
+.campanha__catalogo.tabela .campanha__botoes,
+.campanha__edicao .campanha__botoes {
+  display: flex;
+  gap: var(--esp-6);
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.campanha__edicao input:not([type="checkbox"]) {
+  width: 100%;
+  min-width: 8ch;
+  min-height: 32px;
+  padding: var(--esp-4) var(--esp-6);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-controle);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--txt-13);
+}
+
+.campanha__edicao .numerica input {
+  text-align: right;
+  font-family: var(--fonte-dados);
+  font-variant-numeric: tabular-nums;
+}
+
+.campanha__edicao [aria-invalid="true"] {
+  border-color: var(--seg-risco);
+}
+
+.campanha__ativa {
+  display: inline-flex;
+  gap: var(--esp-6);
+  align-items: center;
+  font-size: var(--txt-13);
+}

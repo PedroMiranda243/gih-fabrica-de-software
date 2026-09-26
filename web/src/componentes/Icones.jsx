@@ -95,6 +95,17 @@ export function IconeModelo(props) {
   );
 }
 
+/* Alvo, como no protótipo aprovado (H08): a campanha é onde a verba mira. */
+export function IconeCampanha(props) {
+  return (
+    <svg {...comuns} {...props}>
+      <circle cx="8" cy="8" r="6" />
+      <circle cx="8" cy="8" r="3" />
+      <circle cx="8" cy="8" r="0.75" />
+    </svg>
+  );
+}
+
 export function IconeSair(props) {
   return (
     <svg {...comuns} {...props}>

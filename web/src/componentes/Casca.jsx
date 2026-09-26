@@ -1,11 +1,11 @@
 /**
  * Casca da aplicação: trilho lateral, cabeçalho e o conteúdo da rota.
  *
- * O trilho lista **apenas o que existe**. Campanha e aprovação estão no
- * protótipo e não entram aqui: o otimizador é a Sprint 9–10 e as mensagens são
- * a Sprint 12, então não há API atrás delas. O modelo preditivo entrou na
- * Sprint 05 da disciplina, com a API junto. Item de menu que leva a uma tela
- * vazia é pior que item ausente — promete e não entrega.
+ * O trilho lista **apenas o que existe**. A aprovação está no protótipo e não
+ * entra aqui: as mensagens são a Sprint 12, e não há API atrás delas. O modelo
+ * preditivo entrou na Sprint 05 da disciplina e a campanha na Sprint 9 interna,
+ * cada um com a API junto. Item de menu que leva a uma tela vazia é pior que
+ * item ausente — promete e não entrega.
  *
  * Pela mesma razão, **cada perfil vê só o que abre**. A lista vem do servidor
  * (`usuario.telas`), que a lê das permissões das próprias rotas: a interface
@@ -17,6 +17,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useSessao } from "../api/contextoSessao";
 import { useTema } from "../temas/useTema";
 import {
+  IconeCampanha,
   IconeConfiguracao,
   IconeImportar,
   IconeModelo,
@@ -40,6 +41,7 @@ const TELAS = [
     exige: ["importar", "historico_importacoes"],
   },
   { para: "/parceiros", rotulo: "Parceiros", Icone: IconeParceiros, exige: ["parceiros"] },
+  { para: "/campanha", rotulo: "Campanha", Icone: IconeCampanha, exige: ["campanha"] },
   { para: "/modelo", rotulo: "Modelo", Icone: IconeModelo, exige: ["modelo"] },
   { para: "/usuarios", rotulo: "Usuários", Icone: IconeUsuarios, exige: ["usuarios"] },
   {

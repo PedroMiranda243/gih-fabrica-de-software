@@ -473,3 +473,17 @@
   font-size: var(--txt-11);
   color: var(--ink-2);
 }
+
+/* Neutra de propósito, e compartilhada pelo cadastro do parceiro e pelo plano de
+   campanha: não é alerta nem segmento, é a natureza do número. Em
+   caixa alta pequena, como os rótulos de coluna. */
+.etiqueta-estimativa {
+  padding: 2px var(--esp-6);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-controle);
+  color: var(--ink-2);
+  font-size: var(--txt-11);
+  font-weight: var(--peso-rotulo);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

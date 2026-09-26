@@ -80,19 +80,6 @@
   min-width: 0;
 }
 
-/* Neutra de propósito: não é alerta nem segmento, é a natureza do número. Em
-   caixa alta pequena, como os rótulos de coluna. */
-.etiqueta-estimativa {
-  padding: 2px var(--esp-6);
-  border: 1px solid var(--border);
-  border-radius: var(--raio-controle);
-  color: var(--ink-2);
-  font-size: var(--txt-11);
-  font-weight: var(--peso-rotulo);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 .previsao__nota {
   margin: 0;
   padding: 0 var(--esp-16) var(--esp-16);
