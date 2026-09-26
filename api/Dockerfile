@@ -30,7 +30,7 @@ COPY --from=nucleo cpp/ cpp/
 # arquitetura, e a máquina da orientação pode ter outra placa. O `versao` aqui
 # diz "sem placa" — o build não vê GPU —, e confere que o executável roda.
 RUN nvcc -O2 -std=c++17 -arch=all-major -DGIH_COM_CUDA -Xcompiler=-fopenmp \
-         cpp/*.cpp cpp/gpu.cu -o gih-nucleo -lgomp \
+         cpp/*.cpp cpp/*.cu -o gih-nucleo -lgomp \
  && ./gih-nucleo versao
 
 FROM nucleo-${NUCLEO} AS nucleo-escolhido
