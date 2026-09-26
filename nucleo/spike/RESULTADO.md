@@ -4,6 +4,10 @@
 **Data:** 15/09/2026
 **Objetivo:** retirar o risco **R1** do cronograma — a cadeia de compilação de GPU funcionar nesta máquina.
 
+> **Atualizado em 26/09/2026.** A [parte 3](#parte-3--o-núcleo-dentro-do-contêiner-da-api) leva os dois
+> testes para Linux, dentro da imagem da própria API, com a GPU — o que faltava para decidir como a API chama
+> o núcleo (issue #123, ADR-012).
+>
 > **Atualizado em 15/09/2026, à tarde.** O spike original rodou sem compilador C++ e sem CUDA Toolkit,
 > compilando o kernel por NVRTC. Depois disso o toolchain nativo foi instalado, e a
 > [parte 2](#parte-2--validação-do-toolchain-nativo) valida `cl` + `nvcc` e mede o OpenMP, que o spike
@@ -269,7 +273,119 @@ O que **não** foi validado aqui, e continua sendo trabalho das histórias corre
 - **A degradação automática para CPU sem GPU** (RNF06, H56). A capacidade de CPU paralela está provada, o
   chaveamento não.
 - **O empacotamento.** Nada disso roda dentro do container ainda — o `nvcc` é usado na máquina, não na
-  imagem.
+  imagem. *Respondido na parte 3.*
 
 Decisões registradas em ADR-005 e ADR-006, em
 [`docs/07-arquitetura-preliminar.md`](../../docs/07-arquitetura-preliminar.md).
+
+---
+
+# Parte 3 — o núcleo dentro do contêiner da API
+
+**Issue:** #123 · **Data:** 26/09/2026 · **Decisão:** ADR-012
+
+A API roda num contêiner Linux (`python:3.11-slim`); o núcleo em C++ só tinha sido compilado no Windows. A
+pergunta, antes da Sprint 10: **o mesmo código compila em Linux e roda dentro da imagem da API, com a GPU
+da máquina?** Se não rodasse, o núcleo teria de ficar num serviço à parte, ou fora do Docker.
+
+## Ambiente medido
+
+| Item | Valor |
+|---|---|
+| Docker Desktop | 29.6.2, backend WSL2 (kernel 6.18), runtime `nvidia` registrado |
+| Imagem de compilação | `nvidia/cuda:13.4.1-devel-ubuntu24.04` — a mesma versão do toolkit do Windows |
+| Compiladores | `g++ -O2 -fopenmp` e `nvcc -O2 -arch=all-major`, com o `cudart` estático |
+| Imagem de execução | `python:3.11-slim` (Debian 13, glibc 2.41), a base da API |
+| GPU vista do contêiner | NVIDIA GeForce RTX 4060, driver 616.92, capacidade 8.9 |
+
+## O que funcionou, e como
+
+- **A GPU aparece no contêiner com `--gpus all`**, inclusive numa imagem que não é da NVIDIA. O Docker
+  Desktop entrega o driver pelo WSL2; não foi preciso variável de ambiente nem configuração.
+- **O binário carrega o runtime do CUDA dentro de si** (`cudart` estático, o padrão do `nvcc`). Por isso
+  roda na imagem da API, e não só na da NVIDIA: o `ldd` não lista nenhuma biblioteca CUDA.
+- **Sem GPU, o binário recusa de forma limpa**: "CUDA driver version is insufficient", código de saída 1.
+  É o sinal que a API precisa para cair para CPU (RNF06). O OpenMP roda normalmente sem GPU.
+- **A reserva de GPU pelo Compose funciona num arquivo à parte** (`deploy.resources.reservations.devices`).
+  Declarada no `docker-compose.yml` principal, ela impediria o contêiner de subir numa máquina sem placa
+  NVIDIA — e o README precisa funcionar em qualquer uma (H72).
+
+## Tamanho
+
+| Imagem | Tamanho |
+|---|--:|
+| `nvidia/cuda:13.4.1-runtime` com os binários (primeira tentativa) | 5,1 GB |
+| `python:3.11-slim` com os binários e o `libgomp1` | **201 MB** — a base sozinha tem 200 MB |
+| Os binários: `teste_cuda` (com o código de todas as arquiteturas) e `teste_openmp` | 1,1 MB e 22 KB |
+
+A imagem `runtime` da NVIDIA traz todas as bibliotecas matemáticas do CUDA, que o núcleo não usa. Com o
+`cudart` estático, o núcleo acrescenta cerca de 1 MB à imagem da API, que hoje tem 1,6 GB por causa do
+PyTorch. A imagem `devel`, com o compilador, só é baixada para compilar.
+
+## Medições
+
+Mesmos programas e cenário das partes 1 e 2, mediana de 3 execuções, dentro do contêiner.
+
+**OpenMP** (16 threads)
+
+| Planos | Serial (ms) | OpenMP (ms) | Ganho | Windows, parte 2 |
+|---:|---:|---:|---:|---:|
+| 256 | 0,71 | 0,85 | **0,8x** | 10,4x |
+| 1.024 | 2,35 | 0,38 | **6,0x** | 10,0x |
+| 4.096 | 9,49 | 1,72 | **5,5x** | 8,7x |
+| 16.384 | 37,81 | 5,79 | **6,4x** | 8,7x |
+| 65.536 | 151,11 | 19,13 | **7,9x** | 9,3x |
+
+**CUDA**
+
+| Planos | CPU serial (ms) | Envio | Kernel | Volta | GPU total | Ganho do kernel | **Ganho total** | Windows |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 256 | 0,67 | 0,17 | 0,106 | 0,07 | 0,35 | 6,3x | **1,9x** | 2,1x |
+| 1.024 | 2,40 | 0,35 | 0,105 | 0,06 | 0,52 | 22,9x | **4,6x** | 5,7x |
+| 4.096 | 9,30 | 1,03 | 0,104 | 0,06 | 1,19 | 89,4x | **7,8x** | 10,0x |
+| 16.384 | 36,72 | 3,49 | 0,370 | 0,08 | 3,95 | 99,2x | **9,3x** | 10,8x |
+| 65.536 | 150,80 | 14,84 | 1,413 | 0,15 | 16,39 | 106,7x | **9,2x** | 11,2x |
+
+Corretude: **erro relativo zero** em todas as linhas, como no Windows.
+
+## O que os números dizem
+
+1. **O kernel é o mesmo dentro e fora do contêiner**: 1,41 ms contra 1,35 ms nos 65.536 planos. O WSL2 não
+   atrapalha o cálculo na GPU.
+2. **A transferência custa ~40% a mais no contêiner** (14,8 ms contra 10,7 ms) — a cópia entre a memória e
+   a GPU atravessa a camada do WSL2. É mais um motivo para a exigência da H54c: a população **fica na GPU**
+   entre gerações, e só o melhor plano volta.
+3. **O OpenMP do GCC paga para subir as threads**, e com pouco trabalho isso não se paga: 0,8x em 256
+   planos, contra 10,4x do MSVC. Nos tamanhos que importam o ganho volta (7,9x), menor que no Windows. O
+   benchmark da Sprint 11 precisa ser medido **no contêiner**, que é onde o sistema roda, e não no Windows.
+4. **O serial é ~10% mais lento** com g++ do que com MSVC (151 ms contra 137 ms). O denominador do *speedup*
+   do RNF02 é o baseline em Python, e não este, mas a comparação honesta entre os modos precisa dos três
+   compilados no mesmo lugar.
+
+## Passar a instância ao núcleo
+
+O núcleo vai ser um **executável chamado pela API**, com a instância na entrada padrão e o plano na saída
+(ADR-012). O custo disso foi medido com o cenário de referência — 2.000 parceiros, 5 ações, ganhos em
+centavos, 76 KB de texto —, mandado a um programa que só lê e soma (`eco.cpp`, `ida_e_volta.py`):
+
+| Medida | Valor |
+|---|---:|
+| Ida e volta por subprocesso, 30 vezes | mediana de **1,9 a 2,5 ms** entre duas rodadas |
+
+Contra os 27 s do baseline serial com 2.000 parceiros (`docs/medicoes/otimizador.md`), ou mesmo contra uma
+busca de 1 s na GPU, é desprezível.
+
+## Como reproduzir a parte 3
+
+```bash
+docker build -t gih-spike nucleo/spike
+docker run --rm --gpus all gih-spike teste_cuda
+docker run --rm --gpus all gih-spike teste_openmp
+docker run --rm gih-spike python /spike/ida_e_volta.py
+docker run --rm gih-spike teste_cuda        # sem GPU: a recusa, com saída 1
+```
+
+O primeiro build baixa a imagem `devel` da NVIDIA (alguns GB) e levou 137 s nesta máquina. As imagens da
+NVIDIA vêm com a licença *NVIDIA Deep Learning Container License*: proprietária, na mesma exceção do CUDA
+Toolkit (`CLAUDE.md`, regra 2.8). Nenhuma camada delas vai para a imagem da API — só o binário, com o
+`cudart`, que a licença do CUDA permite redistribuir.
