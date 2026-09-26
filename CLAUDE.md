@@ -395,6 +395,12 @@ frente com alguma, a resposta já está aqui.
 - **A medição paralela oscila mais que a serial — reporte dispersão.** No mesmo teste, o tempo serial repetiu
   em 0,1% entre execuções enquanto o paralelo variou 45%. Um número único de *speedup* esconde isso.
 
+- **Kernel curto se mede em lote, e com a placa aquecida.** A placa parada roda em relógio baixo. Um
+  lançamento isolado, com a GPU esperando a CPU entre um e outro, mede a latência e o relógio do momento,
+  e não o kernel. O de avaliação da H54b oscilou de 11 a 88 µs com 500 parceiros, e o primeiro tamanho
+  medido saía mais lento que o seguinte. Aqueça por tempo (~200 ms de trabalho), e meça lotes de lançamentos
+  seguidos, que é como o laço na GPU lança. Ver `nucleo/cpp/avaliacao.cu` e `docs/medicoes/nucleo.md`.
+
 - **Comentário sem medição é hipótese.** Um comentário afirmando "aqui o CORS nem é exercitado" escondeu
   um bug por semanas. Se você não mediu, não escreva como certeza — a próxima pessoa vai confiar no
   comentário em vez de investigar.

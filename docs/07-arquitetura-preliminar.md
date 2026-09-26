@@ -354,6 +354,19 @@ como registro histórico.
 
 Resultado completo em [`nucleo/spike/RESULTADO.md`](../nucleo/spike/RESULTADO.md), parte 2.
 
+**Adendo (26/09/2026, H54b) — o kernel de avaliação:**
+
+- **Um bloco por indivíduo, e não uma thread por indivíduo como no spike.** A população de uma geração tem
+  4 × 48 = 192 indivíduos: uma thread para cada ocuparia uma fração da placa. Com um bloco de 256 threads, as
+  threads leem genes vizinhos, e cada uma soma uma fatia dos parceiros.
+- **Inteiros, e não `float32`.** O spike avaliava em `float32` e conferia com "erro relativo zero" porque somava
+  na mesma ordem da CPU. O kernel de verdade soma na ordem em que as threads terminam. Em centavos inteiros,
+  essa ordem não muda nada (ADR-011): o resultado é **igual**, e não próximo — ganho, custo, ações, cauda,
+  contagem por categoria e violação, conferidos indivíduo a indivíduo contra o `avaliar` do Python.
+- **A avaliação de um indivíduo é uma função de dispositivo** (`gpu_avaliacao.cuh`), e não só o kernel: o laço
+  da H54c a chama para cada filho, dentro do kernel dele. O tempo medido está em
+  [`docs/medicoes/nucleo.md`](medicoes/nucleo.md).
+
 ---
 
 ### ADR-007 — Sessão com estado no servidor, não token autocontido
@@ -674,9 +687,9 @@ spike da issue #123 mediu se o mesmo código compila em Linux e roda **dentro da
 
 **Adendo (26/09/2026, H54a) — a GPU no executável:**
 
-- **O CUDA entra num arquivo só, `gpu.cu`**, compilado quando há toolkit: pelo `construir.bat`, se acha o
-  `nvcc`, e pela imagem do núcleo. Sem ele, `sem_gpu.cpp` responde que não há GPU. A CI compila só os `.cpp`:
-  não tem placa nem toolkit.
+- **O CUDA fica nos arquivos `.cu`**, compilados quando há toolkit: pelo `construir.bat`, se acha o `nvcc`, e
+  pela imagem do núcleo. Sem ele, `sem_gpu.cpp` responde que não há GPU. A CI compila só os `.cpp`: não tem
+  placa nem toolkit.
 - **A saída 1 passa a ter dono.** É "o pedido precisa de GPU, e não há" — executável sem CUDA, nenhuma placa
   visível, driver antigo —, com o motivo no erro padrão. `gih-nucleo versao` diz a GPU ou o motivo, e
   `gih-nucleo gpu` recusa com a saída 1: é o que a API pergunta (H56).
