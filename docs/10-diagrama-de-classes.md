@@ -613,8 +613,9 @@ conjunto que as cumpre cabe no máximo de ações e no orçamento pagando a aç�
 
 Três implementações do **mesmo** algoritmo, para que o benchmark compare o que é comparável (RF32 a RF34).
 Todas recebem a `Instancia` e a semente e devolvem o mesmo plano — o sorteio é por coordenadas e a
-aritmética é inteira (ADR-011). A serial, em Python, existe desde a Sprint 9 interna; as outras são das
-Sprints 10 e 11.
+aritmética é inteira (ADR-011). A serial existe em Python (Sprint 9 interna) e em C++ (H53a), com plano
+**idêntico** conferido por teste a cada PR; o executável é chamado pela API por processo (ADR-012). OpenMP e
+CUDA são das Sprints 10 e 11.
 
 <!-- diagrama: nucleo-otimizadores -->
 ```mermaid
@@ -629,7 +630,7 @@ classDiagram
     }
 
     class OtimizadorSerial {
-        <<implementado: gih_nucleo.serial>>
+        <<implementado: Python e C++>>
         +otimizar(instancia, semente) Resultado
         +modo() string
     }
@@ -677,7 +678,7 @@ abaixo separa os dois — e o repositório comprova cada linha da coluna ✅.
 | Domínio | **as 18 entidades**, com restrições `CHECK` no banco | — |
 | Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `servico_otimizacao`, `erros` | `assistente` |
 | Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/campanha`, `/api/otimizacoes`, `/api/acoes-comerciais`, `/api/auditoria`, `/api/health` | benchmark, mensagens, assistente |
-| Núcleo | pacote `gih_nucleo`: instância, viabilidade exata, gulosos e o genético serial (H48, H49, H52); kernel de avaliação validado em CUDA e OpenMP (spike H47) | as versões em C++ com OpenMP e em CUDA |
+| Núcleo | pacote `gih_nucleo`: instância, viabilidade exata, gulosos e o genético serial (H48, H49, H52); o mesmo genético em C++, idêntico ao Python (H53a); kernel de avaliação validado em CUDA e OpenMP (spike H47) | as versões com OpenMP e em CUDA |
 | Modelo preditivo | pacote `gih_modelo`: variáveis, referências, rede e treino (H41 a H43, H46) | — |
 
 Cobertura de teste da API em 26/09/2026: **624 testes, 97%**. Os pacotes do modelo e do

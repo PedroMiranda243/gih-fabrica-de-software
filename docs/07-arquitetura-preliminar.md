@@ -627,6 +627,11 @@ spike da issue #123 mediu se o mesmo código compila em Linux e roda **dentro da
 - **O baseline serial em Python continua na API**: é o denominador do *speedup* do RNF02. O serial em C++, o
   OpenMP e o CUDA ficam no executável, com o mesmo algoritmo e o mesmo gerador aleatório (ADR-011).
 - **O benchmark é medido dentro do contêiner**, onde o sistema roda, e não no Windows.
+- **O benchmark mostra quatro colunas**, e não três: Python (o baseline do RNF02), C++ serial, OpenMP e
+  CUDA. O porte da H53a mediu o C++ serial **76x** mais rápido que o Python, com o mesmo plano (0,34 s
+  contra 25,5 s, 2.000 parceiros, no contêiner): a meta de 5x do RNF02 já cai sozinha com a compilação. O
+  ganho do **paralelismo** só se lê contra o C++ serial — anunciar o ganho da GPU sobre o Python seria
+  creditar a ela o que é do compilador.
 
 **Consequências:**
 

@@ -360,6 +360,10 @@ frente com alguma, a resposta já está aqui.
   (0,8x contra 10,4x em 256 planos). Número tirado do `construir.bat` não vale para o benchmark. Ver a
   parte 3 de `nucleo/spike/RESULTADO.md` e a ADR-012.
 
+- **Speedup contra o Python mede o compilador, não o paralelismo.** O genético em C++ serial já é 76x mais
+  rápido que o mesmo algoritmo em Python, com o mesmo plano (H53a). O ganho do OpenMP e da GPU se lê contra
+  o C++ serial; o RNF02 pede o Python como baseline, e o benchmark mostra as duas colunas.
+
 ### Como testar de verdade
 
 - **Teste o que o usuário vê, não o que o código diz.** Num projeto anterior, a tela de login "não fazia

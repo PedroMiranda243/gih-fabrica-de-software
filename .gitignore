@@ -38,6 +38,7 @@ build/
 *.exp
 *.pdb
 nucleo/spike/bin/
+nucleo/bin/
 cmake-build-*/
 CMakeFiles/
 CMakeCache.txt
