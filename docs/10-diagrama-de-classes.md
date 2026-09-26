@@ -644,7 +644,7 @@ classDiagram
     }
 
     class OtimizadorCuda {
-        <<previsto>>
+        <<em construção: estruturas na GPU (H54a)>>
         +int blocos
         +int threads_por_bloco
         +otimizar(instancia, semente) Resultado
