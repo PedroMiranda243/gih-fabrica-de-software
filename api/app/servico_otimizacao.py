@@ -1,4 +1,4 @@
-"""O plano de campanha — RF29, RF30, RF31, UC08, histórias H48 a H52.
+"""O plano de campanha — RF29 a RF32, UC08, histórias H48 a H52 e H55.
 
 A API orquestra; o pacote `gih_nucleo` otimiza (ADR-011). O que mora aqui é o
 que é regra de negócio, e é por isso que não mora lá:
@@ -17,6 +17,12 @@ que é regra de negócio, e é por isso que não mora lá:
 **A busca roda fora da requisição** (`CLAUDE.md` §3), como o treino do modelo:
 `iniciar` grava a execução em andamento, e `executar` roda em segundo plano, com
 sessão própria, e grava o resultado na mesma linha. Uma por vez, pelo banco.
+
+**Três modos, o mesmo plano** (RF32, ADR-012). O serial é o baseline em Python,
+aqui mesmo; o CPU paralelo e a GPU são o executável em C++, que diz quais modos
+tem. Sem escolha do gestor, roda o mais rápido disponível. Com escolha de um
+modo que esta instalação não tem, roda o mais rápido disponível e a execução
+diz por quê (UC08-A4).
 """
 from __future__ import annotations
 
@@ -30,6 +36,7 @@ from fractions import Fraction
 
 import gih_nucleo
 from gih_modelo import JANELA
+from gih_nucleo import nativo
 from gih_nucleo import viabilidade as v
 from gih_nucleo.guloso import GANHO, RAZAO
 from sqlalchemy import func, insert, select
@@ -68,6 +75,17 @@ SEMENTE = 42
 # encontrado até ali, marcado como parcial. A versão serial em Python leva
 # segundos na base de demonstração; o limite existe para a base grande.
 LIMITE_S = 120
+
+# Do mais rápido para o mais lento: sem escolha, roda o primeiro disponível. O
+# serial é o baseline em Python e está sempre disponível; os outros são modos
+# do executável em C++ (ADR-012).
+ORDEM = (ModoExecucao.GPU, ModoExecucao.CPU_PARALELO, ModoExecucao.SERIAL)
+NO_EXECUTAVEL = {ModoExecucao.CPU_PARALELO: "openmp", ModoExecucao.GPU: "cuda"}
+ROTULO = {
+    ModoExecucao.SERIAL: "serial",
+    ModoExecucao.CPU_PARALELO: "CPU paralelo",
+    ModoExecucao.GPU: "GPU",
+}
 
 _UM = Decimal(1)
 
@@ -125,6 +143,62 @@ def bloqueio(s: Session) -> OtimizacaoRecusada | None:
     if rodando is not None:
         return _recusa_por_andamento(rodando)
     return None
+
+
+# ------------------------------------------------------------ o modo (RF32)
+@dataclass(frozen=True)
+class Disponibilidade:
+    modo: ModoExecucao
+    disponivel: bool
+    motivo: str | None  # por que não, quando não
+
+
+def modos() -> list[Disponibilidade]:
+    """Os três modos, na ordem do mais rápido, e se cada um existe nesta instalação.
+
+    Quem diz é o executável (`gih-nucleo versao`, ADR-012), perguntado a cada
+    vez: ele pode ter sido recompilado, e a pergunta custa milissegundos.
+    """
+    try:
+        existentes = set(nativo.capacidades().modos)
+        sem_nucleo = None
+    except nativo.NucleoIndisponivel:
+        existentes, sem_nucleo = set(), "O núcleo em C++ não está nesta instalação."
+    except nativo.NucleoFalhou:
+        log.exception("O núcleo em C++ não respondeu à pergunta dos modos")
+        existentes, sem_nucleo = set(), "O núcleo em C++ não respondeu."
+
+    faltando = {
+        ModoExecucao.CPU_PARALELO: "O núcleo desta instalação foi compilado sem paralelismo.",
+        ModoExecucao.GPU: "Não há GPU compatível disponível nesta instalação.",
+    }
+    resposta = []
+    for modo in ORDEM:
+        if modo == ModoExecucao.SERIAL or NO_EXECUTAVEL[modo] in existentes:
+            resposta.append(Disponibilidade(modo, True, None))
+        else:
+            resposta.append(Disponibilidade(modo, False, sem_nucleo or faltando[modo]))
+    return resposta
+
+
+def escolher(
+    pedido: ModoExecucao | None, disponiveis: list[Disponibilidade]
+) -> tuple[ModoExecucao, str | None]:
+    """O modo que vai rodar, e por que não é o pedido quando não é (RF32, UC08-A4).
+
+    Pedido indisponível não é recusado: a campanha é calculada no mais rápido
+    que houver, e a execução diz a troca. É o que o RNF06 pede para a GPU, e
+    vale do mesmo jeito para o CPU paralelo numa instalação sem o núcleo em C++.
+    """
+    livres = [d.modo for d in disponiveis if d.disponivel]
+    mais_rapido = next(m for m in ORDEM if m in livres)
+    if pedido is None or pedido in livres:
+        return pedido or mais_rapido, None
+    motivo = next(d.motivo for d in disponiveis if d.modo == pedido)
+    return mais_rapido, (
+        f"Pedido em {ROTULO[pedido]}, calculado em {ROTULO[mais_rapido]}: "
+        f"{motivo[0].lower()}{motivo[1:]}"
+    )
 
 
 # ------------------------------------------------------------ quem entra
@@ -390,13 +464,17 @@ def iniciar(
         )
 
     concluido = servico_previsao.ultimo_concluido(s)
+    # O modo é decidido aqui, e não na busca: a tela mostra em que modo a
+    # execução roda desde o primeiro instante.
+    modo, substituicao = escolher(parametros.modo, modos())
     execucao = ExecucaoOtimizador(
         usuario_id=usuario_id,
-        modo=ModoExecucao.SERIAL,
+        modo=modo,
         parametros=parametros.model_dump(mode="json"),
         periodo_base_id=concluido.periodo_base_id,
         modelo_versao=concluido.versao_em_uso,
         semente=SEMENTE,
+        detalhes={"substituicao": substituicao} if substituicao else None,
     )
     try:
         with s.begin_nested():
@@ -450,11 +528,27 @@ def _cotas(m: Montagem, genes: tuple[int, ...] | None) -> list[dict]:
     return cotas
 
 
+def _buscar(inst: gih_nucleo.Instancia, execucao: ExecucaoOtimizador) -> gih_nucleo.Resultado:
+    """A busca no modo da execução. Os três dão o mesmo plano (ADR-011)."""
+    if execucao.modo == ModoExecucao.SERIAL:
+        return gih_nucleo.otimizar(inst, semente=execucao.semente, limite_s=LIMITE_S)
+    return nativo.otimizar(
+        inst,
+        semente=execucao.semente,
+        limite_s=LIMITE_S,
+        modo=NO_EXECUTAVEL[execucao.modo],
+        # Uma thread por núcleo físico (adendo da ADR-011). Onde não dá para
+        # saber, vale o padrão do OpenMP.
+        threads=nativo.nucleos_fisicos() if execucao.modo == ModoExecucao.CPU_PARALELO else None,
+    )
+
+
 def _executar(s: Session, execucao: ExecucaoOtimizador) -> None:
     inicio = time.perf_counter()
     m = montar(s, execucao)
     inst = m.instancia
     detalhes = {
+        **(execucao.detalhes or {}),  # a troca de modo, gravada ao iniciar
         "elegiveis": inst.parceiros,
         "excluidos": excluidos(s, execucao.periodo_base_id, execucao.modelo_versao),
         "top_n": m.top_n,
@@ -469,7 +563,7 @@ def _executar(s: Session, execucao: ExecucaoOtimizador) -> None:
         _concluir(s, execucao, inicio, {**detalhes, "ajuda": ajuda, "cotas": _cotas(m, None)})
         return
 
-    resultado = gih_nucleo.otimizar(inst, semente=execucao.semente, limite_s=LIMITE_S)
+    resultado = _buscar(inst, execucao)
     # A segunda chave da RN07: o verificador não reaproveita a avaliação que a
     # busca usou. Plano que não passa aqui é defeito, e vira falha — nunca plano.
     problemas = gih_nucleo.verificar_plano(inst, resultado.genes)
@@ -525,7 +619,8 @@ def _executar(s: Session, execucao: ExecucaoOtimizador) -> None:
             "busca": {
                 "partidas": resultado.partidas,
                 "geracoes": resultado.geracoes,
-                "segundos": round(resultado.segundos, 2),
+                "segundos": round(resultado.segundos, 3),
+                "threads": resultado.threads,
             },
         },
     )
@@ -548,6 +643,7 @@ def executar(execucao_id: int, *, origem: str | None = None) -> None:
             detalhes = {
                 "execucao": execucao.id,
                 "modo": str(execucao.modo),
+                "substituicao": (execucao.detalhes or {}).get("substituicao"),
                 "parametros": execucao.parametros,
                 "viavel": execucao.viavel,
                 "restricao_violada": execucao.restricao_violada,
