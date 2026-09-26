@@ -479,6 +479,20 @@ def test_estado_da_campanha(base, gestor):
     }
     assert [a["nome"] for a in estado["acoes"]] == [VISITA[0], VITRINE[0]]
     assert estado["pode_executar"] is True and estado["ultima"] is None
+    assert estado["pode_editar_catalogo"] is True
+
+
+def test_o_analista_consulta_e_a_api_diz_que_nao_calcula(base, criar_usuario, autenticar):
+    """A tela não deduz pelo perfil: a API diz, lendo a permissão da própria rota."""
+    base(_seis())
+    criar_usuario(login="analista", perfil=Perfil.ANALISTA)
+    estado = autenticar("analista").get("/api/campanha").json()
+    assert estado["pode_executar"] is False
+    assert estado["motivo_bloqueio"] == (
+        "Calcular o plano é do Gestor; o seu perfil consulta a campanha."
+    )
+    assert estado["pode_editar_catalogo"] is False
+    assert estado["elegiveis"] == 6  # consulta tudo o mais
 
 
 def test_o_historico_lista_da_mais_recente_para_a_mais_antiga(base, gestor):
