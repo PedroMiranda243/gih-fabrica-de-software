@@ -414,7 +414,8 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 - **A3 — Comparação de cenários.** O usuário executa uma segunda otimização com parâmetros diferentes e
   solicita a comparação lado a lado dos dois planos (RF35).
 - **A4 — GPU indisponível.** Se o modo GPU for solicitado sem placa compatível, o sistema executa em CPU
-  paralelo e informa a substituição, sem interromper a operação (RNF06).
+  paralelo e informa a substituição, sem interromper a operação (RNF06). Vale também para a GPU que responde
+  quando o cálculo começa e falha nele: a busca roda de novo no CPU paralelo, e a execução diz a troca (H56).
 
 **Exceções**
 

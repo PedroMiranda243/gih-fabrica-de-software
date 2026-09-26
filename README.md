@@ -149,7 +149,7 @@ rode com a aplicação livre. Nenhum dos scripts deixa resíduo no banco.
 
 ## Como executar
 
-**Pré-requisitos:** Docker Desktop · Python 3.11 · Node.js 22 · (opcional) NVIDIA CUDA Toolkit 12.x
+**Pré-requisitos:** Docker Desktop · Python 3.11 · Node.js 22 · (opcional) placa NVIDIA, para o modo GPU
 
 ```bash
 git clone https://github.com/PedroMiranda243/gih-fabrica-de-software.git
@@ -167,6 +167,17 @@ na API.
 
 Verificação: `http://localhost:8000/api/health` deve responder `banco: "ok"`.
 Documentação da API em `http://localhost:8000/api/docs`.
+
+**Com placa NVIDIA**, o otimizador pode usar a GPU. O núcleo é compilado com CUDA, e a placa é reservada
+para a API, por um arquivo à parte:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+```
+
+Sem ele, o sistema sobe em qualquer máquina, em CPU paralela, e a tela de campanha diz por que não há GPU
+(RNF06). A primeira vez baixa a imagem de compilação da NVIDIA, de alguns GB. No Windows, o Docker Desktop
+com WSL2 já entrega a placa ao contêiner. Para voltar à CPU, suba de novo sem o arquivo, com `--build`.
 
 ### Primeiro acesso
 
@@ -330,6 +341,14 @@ com `criar-usuario`, como acima.
 api/.venv/Scripts/python scripts/medir_painel.py        # o painel com 5.000 parceiros (H40)
 api/.venv/Scripts/python scripts/medir_modelo.py        # o modelo contra as referências (H46)
 api/.venv/Scripts/python scripts/medir_otimizador.py    # o otimizador contra o guloso e o teto (H49)
+```
+
+O núcleo em C++ é medido no contêiner, que é onde ele roda (ADR-012) — o OpenMP contra o C++ serial, e a
+transferência para a GPU:
+
+```bash
+docker build -t gih-nucleo nucleo
+docker run --rm --gpus all -v "$PWD:/repo" -w /repo gih-nucleo python scripts/medir_nucleo.py
 ```
 
 O primeiro mede o tempo de resposta do painel (RNF03) e confere por `EXPLAIN` que as consultas têm índice

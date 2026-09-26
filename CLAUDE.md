@@ -353,7 +353,9 @@ frente com alguma, a resposta já está aqui.
   resultado a ser reportado, não é defeito. Ver `nucleo/spike/RESULTADO.md`.
 
 - **GPU não é garantida.** O sistema precisa funcionar em máquina sem placa compatível, caindo para CPU
-  paralela (RNF06). Nunca assuma CUDA disponível.
+  paralela (RNF06). Nunca assuma CUDA disponível. A GPU só entra com o `docker-compose.gpu.yml`; o
+  `docker-compose.yml` sozinho não pode reservar placa, senão o sistema não sobe em máquina sem ela. E o
+  executável sem GPU sai com 1 — é o sinal para cair para a CPU, não um erro a propagar.
 
 - **O núcleo roda no contêiner, e é lá que se mede.** Dentro do Docker (WSL2), a transferência para a GPU
   custa ~40% a mais que no Windows nativo, e o OpenMP do GCC ganha menos que o do MSVC em trabalho pequeno
