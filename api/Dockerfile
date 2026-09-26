@@ -1,4 +1,26 @@
+# O núcleo em C++ (ADR-012) compila num estágio à parte, que leva o compilador;
+# para a imagem final vai só o executável. Na mesma base da API, para que ele
+# encontre lá a mesma glibc e o mesmo OpenMP com que foi compilado. Este estágio
+# não baixa nada da NVIDIA: a versão CUDA (H54) terá o seu, ligado só pelo
+# arquivo do Compose que reserva a GPU, e o sistema sobe em qualquer máquina.
+FROM python:3.11-slim AS compilar-nucleo
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends g++ \
+ && rm -rf /var/lib/apt/lists/*
+WORKDIR /nucleo
+COPY --from=nucleo cpp/ cpp/
+# Os avisos são cobrados na CI (-Werror); aqui, um aviso novo de outra versão do
+# g++ não deve impedir o sistema de subir.
+RUN g++ -O2 -fopenmp -std=c++17 cpp/*.cpp -o gih-nucleo \
+ && ./gih-nucleo versao
+
 FROM python:3.11-slim
+
+# O OpenMP do GCC é uma biblioteca à parte, que a imagem slim não traz.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends libgomp1 \
+ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -28,6 +50,9 @@ RUN pip install --no-cache-dir --no-deps /modelo
 COPY --from=nucleo pyproject.toml /nucleo/pyproject.toml
 COPY --from=nucleo gih_nucleo /nucleo/gih_nucleo
 RUN pip install --no-cache-dir --no-deps /nucleo
+
+# O executável, no PATH: é onde `gih_nucleo.nativo` o procura (H55, ADR-012).
+COPY --from=compilar-nucleo /nucleo/gih-nucleo /usr/local/bin/gih-nucleo
 
 COPY alembic.ini .
 COPY app ./app
