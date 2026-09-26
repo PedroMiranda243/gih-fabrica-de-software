@@ -18,10 +18,12 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from app.config import config
 from app.modelos import (
+    ModoExecucao,
     OrigemCategoria,
     OrigemImportacao,
     Perfil,
     Segmento,
+    SituacaoExecucao,
     SituacaoTreino,
     StatusComercial,
 )
@@ -753,3 +755,201 @@ class PrevisaoParceiro(BaseModel):
     motivo: str | None = None
     ajuda: str | None = None
 
+
+
+# --------------------------------------------------------------- campanha (UC08)
+def _fracao(descricao: str, obrigatoria: bool = True):
+    """Uma fração entre 0 e 1, com até 4 casas: 0,14 é 14%."""
+    return Field(
+        ... if obrigatoria else None,
+        ge=0,
+        le=1,
+        max_digits=5,
+        decimal_places=4,
+        description=descricao,
+    )
+
+
+class AcaoComercialEntrada(BaseModel):
+    """Uma ação do catálogo (RF29), com os dois efeitos da RN10."""
+
+    nome: str = Field(min_length=2, max_length=80)
+    custo_unitario: Decimal = Field(gt=0, max_digits=10, decimal_places=2)
+    efeito_crescimento: Decimal = _fracao(
+        "Fração do faturamento previsto que a ação acrescenta. 0,14 é 14%."
+    )
+    efeito_retencao: Decimal = _fracao(
+        "Fração do faturamento que a ação preserva quando o parceiro cairia."
+    )
+    ativa: bool = True
+
+    @field_validator("nome")
+    @classmethod
+    def nome_sem_sobra(cls, valor: str) -> str:
+        return " ".join(valor.split())
+
+
+class AcaoComercialEdicao(BaseModel):
+    """Só os campos enviados mudam."""
+
+    nome: str | None = Field(default=None, min_length=2, max_length=80)
+    custo_unitario: Decimal | None = Field(default=None, gt=0, max_digits=10, decimal_places=2)
+    efeito_crescimento: Decimal | None = _fracao("Fração, de 0 a 1.", obrigatoria=False)
+    efeito_retencao: Decimal | None = _fracao("Fração, de 0 a 1.", obrigatoria=False)
+    ativa: bool | None = None
+
+
+class AcaoComercialResposta(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    nome: str
+    custo_unitario: Decimal
+    efeito_crescimento: Decimal
+    efeito_retencao: Decimal
+    ativa: bool
+
+
+class CotaCategoria(BaseModel):
+    """Mínimo e máximo de ações para uma categoria, em fração do máximo de ações (RN11)."""
+
+    categoria_id: int
+    minimo: Decimal | None = _fracao("Fração mínima das ações da campanha.", obrigatoria=False)
+    maximo: Decimal | None = _fracao("Fração máxima das ações da campanha.", obrigatoria=False)
+
+    @model_validator(mode="after")
+    def minimo_ate_o_maximo(self):
+        if self.minimo is None and self.maximo is None:
+            raise ValueError("Informe o mínimo, o máximo ou os dois.")
+        if self.minimo is not None and self.maximo is not None and self.minimo > self.maximo:
+            raise ValueError("O mínimo da categoria não pode passar do máximo.")
+        return self
+
+
+class ParametrosCampanha(BaseModel):
+    """As restrições da campanha (RF29, UC08 passos 2 a 4).
+
+    As cotas são frações do **máximo de ações**, e viram contagem: o mínimo
+    arredonda para cima e o máximo para baixo (RN11). Frações das ações que o
+    plano acabasse escolhendo deixariam o plano vazio cumprir qualquer cota.
+    """
+
+    orcamento: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
+    maximo_acoes: int = Field(ge=1, le=10_000)
+    cota_cauda_longa: Decimal | None = _fracao(
+        "Fração mínima das ações para quem está fora do Top N.", obrigatoria=False
+    )
+    cotas_categoria: list[CotaCategoria] = Field(default_factory=list, max_length=100)
+    aplicacao_inicio: date
+    aplicacao_fim: date
+
+    @model_validator(mode="after")
+    def coerente(self):
+        if self.aplicacao_fim < self.aplicacao_inicio:
+            raise ValueError("O fim da aplicação não pode ser anterior ao início.")
+        ids = [c.categoria_id for c in self.cotas_categoria]
+        if len(ids) != len(set(ids)):
+            raise ValueError("Cada categoria entra uma vez só nas cotas.")
+        return self
+
+
+class ExcluidosCampanha(BaseModel):
+    """Quem ficou fora do plano, e por quê (RN11)."""
+
+    historico_curto: int = Field(description="Ativo, com menos de 4 períodos até o período-base.")
+    fora_do_periodo: int = Field(description="Ativo, sem dado no período-base das previsões.")
+    sem_previsao: int = Field(description="Ativo, com histórico, sem previsão da versão em uso.")
+    inativos: int
+    em_prospeccao: int
+
+
+class CotaEmContagem(BaseModel):
+    categoria_id: int | None = Field(description="Nulo na cota da cauda longa.")
+    nome: str
+    acoes: int | None = Field(description="Quantas o plano deu; nulo antes de haver plano.")
+    minimo: int
+    maximo: int
+
+
+class ItemPlanoResposta(BaseModel):
+    parceiro_id: int
+    parceiro: str
+    segmento: Segmento | None
+    categoria: str | None = Field(description="Só a categoria confirmada (RN05).")
+    cauda_longa: bool
+    acao_id: int
+    acao: str
+    custo: Decimal
+    ganho: Decimal
+
+
+class ExecucaoResposta(BaseModel):
+    """Uma execução do otimizador (UC08, RF34).
+
+    Concluída, ela é viável — com o plano — ou inviável, com a restrição e o
+    motivo (RN07). Os itens vêm só na consulta de uma execução.
+    """
+
+    id: int
+    situacao: SituacaoExecucao
+    autor: str | None
+    modo: ModoExecucao
+    iniciada_em: datetime
+    concluida_em: datetime | None
+    parametros: ParametrosCampanha
+    periodo_base: PeriodoResposta
+    modelo_versao: str
+    viavel: bool | None
+    restricao_violada: str | None
+    motivo: str | None
+    ajuda: str | None
+    uplift_total: Decimal | None
+    custo_total: Decimal | None
+    tempo_ms: int | None
+    parcial: bool | None
+    acoes: int | None
+    elegiveis: int | None
+    excluidos: ExcluidosCampanha | None
+    cotas: list[CotaEmContagem]
+    folga_orcamento: Decimal | None
+    folga_acoes: int | None
+    ganho_guloso: Decimal | None = Field(
+        description="O melhor plano guloso, para comparar: o otimizador nunca fica abaixo dele."
+    )
+    itens: list[ItemPlanoResposta] | None = None
+
+
+class PaginaExecucoes(BaseModel):
+    itens: list[ExecucaoResposta]
+    total: int
+    pagina: int
+    tamanho: int
+
+
+class CategoriaCampanha(BaseModel):
+    id: int
+    nome: str
+    elegiveis: int = Field(description="Parceiros elegíveis com esta categoria confirmada.")
+
+
+class EstadoCampanha(BaseModel):
+    """O que a tela de campanha mostra ao abrir (UC08, passo 1).
+
+    **Se dá para calcular agora é decisão da API** (regra 2.4), como na tela do
+    modelo: a tela recebe `pode_executar` e o porquê.
+    """
+
+    modelo_versao: str | None
+    periodo_base: PeriodoResposta | None
+    top_n: int
+    elegiveis: int
+    excluidos: ExcluidosCampanha | None
+    sem_categoria: int = Field(
+        description="Elegíveis sem categoria confirmada: não contam em cota."
+    )
+    categorias: list[CategoriaCampanha]
+    acoes: list[AcaoComercialResposta]
+    em_andamento: ExecucaoResposta | None
+    ultima: ExecucaoResposta | None
+    pode_executar: bool
+    motivo_bloqueio: str | None
