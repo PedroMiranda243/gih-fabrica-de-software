@@ -117,6 +117,11 @@ TELAS: dict[str, tuple[str, str]] = {
     "configuracao": ("GET", "/api/configuracao/segmentacao"),
     "modelo": ("GET", "/api/modelo"),
     "campanha": ("GET", "/api/campanha"),
+    # O histórico das execuções (RF34), e abrir o plano de uma delas: o
+    # Administrador tem a primeira e não a segunda, e a tela desenha a linha com
+    # ou sem o link a partir daqui.
+    "execucoes": ("GET", "/api/otimizacoes"),
+    "execucao": ("GET", "/api/otimizacoes/{execucao_id}"),
 }
 
 

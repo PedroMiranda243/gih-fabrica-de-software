@@ -1,9 +1,11 @@
-"""A campanha — UC08, RF29 a RF32, histórias H48 a H52 e H55.
+"""A campanha — UC08, RF29 a RF32 e RF34, histórias H48 a H52, H55 e H58.
 
 **Gestor calcula; Analista consulta**, pela matriz do UC08. O plano decide onde
 vai a verba, e quem responde por isso é o Gestor; o Analista lê o plano e o
-catálogo, mas não os muda. O Administrador não entra: cuida de acesso, e não de
-campanha.
+catálogo, mas não os muda. O Administrador cuida de acesso, e não de campanha:
+**vê o histórico das execuções** (RF34) — autor, data, parâmetros, modo, tempo e
+resultado —, mas não abre o plano de cada parceiro. Decisão de 26/09/2026,
+registrada no `docs/03`.
 
 **A busca não roda dentro da requisição** (`CLAUDE.md` §3, ADR-011), como o
 treino do modelo: o `POST` grava a execução em andamento, devolve `202` e
@@ -60,6 +62,14 @@ catalogo = APIRouter(
     prefix="/api/acoes-comerciais",
     tags=["campanha"],
     dependencies=[Depends(exigir(Perfil.GESTOR, Perfil.ANALISTA))],
+)
+
+# O histórico tem roteador próprio: a trava do roteador da campanha vale para
+# todas as rotas dele, e o Administrador entra só nesta.
+historico = APIRouter(
+    prefix="/api/otimizacoes",
+    tags=["campanha"],
+    dependencies=[Depends(exigir(Perfil.GESTOR, Perfil.ANALISTA, Perfil.ADMINISTRADOR))],
 )
 
 SO_GESTOR = [Depends(exigir(Perfil.GESTOR))]
@@ -246,13 +256,18 @@ def calcular(
     return _resposta(s, execucao)
 
 
-@router.get("/otimizacoes", response_model=PaginaExecucoes)
+@historico.get("", response_model=PaginaExecucoes)
 def listar(
     s: Banco,
     pagina: int = Query(1, ge=1),
     tamanho: int = Query(10, ge=1, le=50),
 ) -> PaginaExecucoes:
-    """O histórico de execuções, da mais recente para a mais antiga (RF34)."""
+    """O histórico de execuções, da mais recente para a mais antiga (RF34, H58).
+
+    Sem os itens do plano: cada execução vem com autor, data, parâmetros, modo,
+    tempo e resultado — o que o Administrador também vê. O plano, parceiro a
+    parceiro, só na consulta de uma execução, que é da campanha (UC08).
+    """
     total = s.scalar(select(func.count()).select_from(ExecucaoOtimizador))
     execucoes = s.scalars(
         select(ExecucaoOtimizador)
@@ -267,7 +282,8 @@ def listar(
 
 @router.get("/otimizacoes/{execucao_id}", response_model=ExecucaoResposta)
 def obter(execucao_id: int, s: Banco) -> ExecucaoResposta:
-    """Uma execução, com o plano — é o que a tela consulta enquanto ela roda."""
+    """Uma execução, com o plano: a tela consulta enquanto ela roda, e o
+    histórico a abre depois (H58)."""
     execucao = s.get(ExecucaoOtimizador, execucao_id)
     if execucao is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Otimização não encontrada.")
