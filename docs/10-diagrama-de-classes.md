@@ -636,7 +636,7 @@ classDiagram
     }
 
     class OtimizadorOpenMP {
-        <<previsto>>
+        <<implementado: C++>>
         +int threads
         +otimizar(instancia, semente) Resultado
         +modo() string
