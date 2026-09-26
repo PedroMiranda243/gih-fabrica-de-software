@@ -29,9 +29,8 @@ isso logo no topo.
   serial**: genes, avaliação e gerações. Se um divergir, o script para sem
   escrever o relatório.
 
-**A instância é sintética e montada aqui, sem banco.**
-- As ações, com custo e efeitos, são as do catálogo do gerador
-  (`gerar_dados_sinteticos.ACOES`), lidas do próprio arquivo.
+**A instância é sintética, sem banco**: a de `gih_nucleo.cenario`, a mesma
+que a tela de benchmark mede (H57), com as cinco ações do catálogo do gerador.
 - O ganho segue a RN10, e a campanha tem as cotas da RN11.
 - O tempo do genético depende do tamanho da instância, e não dos valores. A
   qualidade do plano, que depende dos valores, é medida pelo caminho de verdade
@@ -53,8 +52,6 @@ Uso, da raiz do repositório:
 from __future__ import annotations
 
 import argparse
-import ast
-import math
 import os
 import platform
 import random
@@ -63,81 +60,29 @@ import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from decimal import Decimal
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ / "nucleo"))
 
 from gih_nucleo import (  # noqa: E402
-    SEM_CATEGORIA,
     Instancia,
+    cenario,
     avaliar,
     nativo,
     verificar_viabilidade,
 )
 from gih_nucleo import serial as genetico  # noqa: E402
 
-TOP_N = 15  # quem está fora do Top N no ranking é cauda longa (RN11, RN02)
-CATEGORIAS = 5
-SEMENTE_DA_REDE = 2026
+SEMENTE_DA_REDE = cenario.SEMENTE
 PARCEIROS = [500, 2000, 10000]  # o cenário de referência e a carga do RNF04 em volta
 REPETICOES = 15
 BASELINE = 3  # execuções do Python no cenário de referência, para o RNF02
 
 
-def _acoes_do_catalogo() -> list[tuple[int, float, float]]:
-    """(custo em centavos, crescimento, retenção) de cada ação do gerador.
-
-    Lido da árvore sintática: importar o gerador exigiria o banco.
-    """
-    arvore = ast.parse((RAIZ / "scripts" / "gerar_dados_sinteticos.py").read_text(encoding="utf-8"))
-    for no in arvore.body:
-        if isinstance(no, ast.Assign) and any(
-            isinstance(alvo, ast.Name) and alvo.id == "ACOES" for alvo in no.targets
-        ):
-            return [
-                (int(Decimal(custo) * 100), float(crescimento), float(retencao))
-                for _nome, custo, crescimento, retencao in ast.literal_eval(no.value)
-            ]
-    raise SystemExit("O catálogo ACOES não foi encontrado em gerar_dados_sinteticos.py.")
-
-
 def montar_instancia(parceiros: int) -> Instancia:
-    """Uma campanha de `parceiros` elegíveis, com as restrições em proporção a eles.
-
-    O máximo de ações é 1 para cada 40 parceiros (50 no cenário de referência), e
-    o orçamento paga R$ 200 por ação, abaixo do custo médio do catálogo: as duas
-    restrições apertam. Duas categorias pedem ao menos 10% das ações, nenhuma
-    passa de 40%, e a cauda longa fica com ao menos 30% — frações do máximo de
-    ações, arredondadas como a API arredonda (RN11).
-    """
-    rng = random.Random(SEMENTE_DA_REDE + parceiros)
-    acoes = _acoes_do_catalogo()
-    previsto, ganho, categoria = [], [], []
-    for _ in range(parceiros):
-        faturamento = rng.lognormvariate(12.1, 1.0)  # centavos por período
-        risco = rng.random() * 0.6
-        previsto.append(faturamento)
-        # RN10: u = F̂·c + F̂·p·r
-        ganho.append(tuple(int(faturamento * c + faturamento * risco * r) for _, c, r in acoes))
-        # 1 em 10 ainda pendente de classificação: recebe ação, não conta em cota.
-        categoria.append(SEM_CATEGORIA if rng.random() < 0.1 else rng.randrange(CATEGORIAS))
-    ordem = sorted(range(parceiros), key=lambda i: -previsto[i])
-    no_top = set(ordem[:TOP_N])
-
-    k = parceiros // 40
-    return Instancia(
-        ganho=tuple(ganho),
-        custo=tuple(custo for custo, _, _ in acoes),
-        orcamento=k * 20_000,
-        maximo_acoes=k,
-        categoria=tuple(categoria),
-        cauda=tuple(i not in no_top for i in range(parceiros)),
-        minimo_categoria=(math.ceil(k * 0.1), math.ceil(k * 0.1), 0, 0, 0),
-        maximo_categoria=(math.floor(k * 0.4),) * CATEGORIAS,
-        minimo_cauda=math.ceil(k * 0.3),
-    )
+    """A campanha de `parceiros` elegíveis e cinco ações do cenário do benchmark."""
+    return cenario.sintetico(parceiros, 5, SEMENTE_DA_REDE)
 
 
 @dataclass
