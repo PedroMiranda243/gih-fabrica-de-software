@@ -423,8 +423,21 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 > ações, cota da cauda longa, cotas por categoria e período de aplicação, confirma, e a tela acompanha o
 > cálculo até o resultado — o plano, com as cotas cumpridas, as folgas e a comparação com o plano guloso; ou
 > a campanha inviável, com a restrição e quanto falta (A1). O Analista consulta o plano e o catálogo. O
-> cálculo roda fora da requisição, um por vez (ADR-011), no modo serial. A escolha do modo (passo 4) e a
-> comparação de cenários (A3) são das Sprints 10 e 11.
+> cálculo roda fora da requisição, um por vez (ADR-011). A comparação de cenários (A3) é da Sprint 11.
+>
+> **O modo de execução (passo 4, Sprint 10 interna, H55).** O campo "Modo de execução" oferece o
+> automático, o serial, o CPU paralelo e a GPU. Quais existem nesta instalação quem diz é o executável do
+> núcleo, que a API consulta (ADR-012). O que falta fica desabilitado, e o porquê aparece embaixo do campo.
+>
+> - **Sem escolha**, roda o mais rápido disponível. Na base de demonstração, o CPU paralelo calcula o plano
+>   em cerca de 50 ms, contra cerca de 6 s do serial, e **o plano é o mesmo** (ADR-011).
+> - **O serial** é o baseline em Python, e existe para comparar.
+> - **Um modo pedido que não existe** — pela API, já que a tela não o oferece — não é recusado. O cálculo
+>   roda no mais rápido disponível, e a execução diz a troca: "Pedido em GPU, calculado em CPU paralelo: não
+>   há GPU compatível disponível nesta instalação." É o A4, que vale do mesmo jeito para o CPU paralelo
+>   numa instalação sem o núcleo em C++.
+>
+> O plano mostra o modo usado, as threads e o tempo, e a execução registra o modo pedido e o usado.
 
 ---
 
