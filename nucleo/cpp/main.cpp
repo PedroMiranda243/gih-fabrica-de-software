@@ -1,11 +1,16 @@
 // O executável `gih-nucleo` — como a API chama o núcleo em C++ (ADR-012).
 //
-//   gih-nucleo otimizar [--semente N] [--partidas N] [--populacao N]
+//   gih-nucleo otimizar [--modo serial|openmp] [--threads N]
+//                       [--semente N] [--partidas N] [--populacao N]
 //                       [--geracoes N] [--mutacoes N] [--limite-ms N]
 //       Lê a instância pela entrada padrão e escreve o resultado na saída.
+//       `--threads` só vale no modo openmp; sem ele, vale o padrão do OpenMP.
 //   gih-nucleo sorteio C1 C2 ...
 //       O sorteio das coordenadas: o contrato do gerador com o Python.
 //   gih-nucleo versao
+//       O formato, os modos que este executável tem, as threads do OpenMP e o
+//       compilador. É por aqui que a API vai saber a que modo pode recorrer
+//       (RNF06), e que a medição registra onde o executável foi compilado.
 //
 // **Tudo em texto, tudo inteiro.** A instância chega em centavos e contagens, já
 // traduzida pela API (ADR-011), e é lida com a biblioteca padrão: nenhuma
@@ -31,6 +36,21 @@ constexpr const char* FORMATO = "GIH-NUCLEO 1";
 struct Invalida : std::runtime_error {
     using std::runtime_error::runtime_error;
 };
+
+// O mesmo código ganha bem menos com o g++ no contêiner do que com o MSVC no
+// Windows (parte 3 do `nucleo/spike/RESULTADO.md`): um número de desempenho sem
+// o compilador ao lado não se compara com nada.
+std::string compilador() {
+#if defined(__clang__)
+    return std::string("clang ") + __clang_version__;
+#elif defined(__GNUC__)
+    return std::string("g++ ") + __VERSION__;
+#elif defined(_MSC_VER)
+    return "MSVC " + std::to_string(_MSC_FULL_VER);
+#else
+    return "desconhecido";
+#endif
+}
 
 std::int64_t ler(std::istream& entrada, const char* o_que) {
     std::int64_t valor;
@@ -96,11 +116,25 @@ gih::Instancia ler_instancia(std::istream& entrada) {
     return inst;
 }
 
-gih::Parametros ler_parametros(int argc, char** argv) {
-    gih::Parametros p;
+struct Pedido {
+    std::string modo = "serial";
+    gih::Parametros parametros;
+};
+
+Pedido ler_pedido(int argc, char** argv) {
+    Pedido pedido;
+    gih::Parametros& p = pedido.parametros;
+    bool com_threads = false;
     for (int i = 2; i < argc; i += 2) {
         if (i + 1 >= argc) throw Invalida(std::string("Falta o valor de ") + argv[i] + ".");
         const std::string nome = argv[i];
+        if (nome == "--modo") {
+            pedido.modo = argv[i + 1];
+            if (pedido.modo != "serial" && pedido.modo != "openmp") {
+                throw Invalida("Modo desconhecido: " + pedido.modo + ". Os modos são serial e openmp.");
+            }
+            continue;
+        }
         char* fim = nullptr;
         const long long valor = std::strtoll(argv[i + 1], &fim, 10);
         if (*fim != '\0') throw Invalida("Valor não inteiro em " + nome + ".");
@@ -117,19 +151,30 @@ gih::Parametros ler_parametros(int argc, char** argv) {
             p.mutacoes_por_filho = static_cast<int>(valor);
         } else if (nome == "--limite-ms") {
             p.limite_ms = valor;
+        } else if (nome == "--threads") {
+            if (valor < 1) throw Invalida("O número de threads precisa ser ao menos 1.");
+            p.threads = static_cast<int>(valor);
+            com_threads = true;
         } else {
             throw Invalida("Parâmetro desconhecido: " + nome + ".");
         }
     }
-    return p;
+    // Aceitar e ignorar faria uma medição com `--threads 4` no modo serial
+    // parecer ter usado 4 threads.
+    if (com_threads && pedido.modo != "openmp") throw Invalida("--threads só vale no modo openmp.");
+    return pedido;
 }
 
 int otimizar(int argc, char** argv) {
-    const gih::Parametros p = ler_parametros(argc, argv);
+    const Pedido pedido = ler_pedido(argc, argv);
+    const gih::Parametros& p = pedido.parametros;
     // Conferidos antes da viabilidade, na mesma ordem do Python: com parâmetro
     // impossível e campanha inviável, as duas versões recusam pelo parâmetro.
     if (p.populacao < 2 || p.partidas < 1 || p.geracoes < 0) {
         throw Invalida("A busca precisa de ao menos 2 indivíduos, 1 partida e 0 gerações.");
+    }
+    if (pedido.modo == "openmp" && gih::threads_openmp() == 0) {
+        throw Invalida("Este executável foi compilado sem OpenMP: só o modo serial está disponível.");
     }
     std::ios::sync_with_stdio(false);
     const gih::Instancia inst = ler_instancia(std::cin);
@@ -145,13 +190,15 @@ int otimizar(int argc, char** argv) {
         return 0;
     }
 
-    const gih::Resultado r = gih::otimizar_serial(inst, p);
+    const gih::Resultado r =
+        pedido.modo == "openmp" ? gih::otimizar_openmp(inst, p) : gih::otimizar_serial(inst, p);
     const auto& av = r.avaliacao;
     saida << "viavel\n"
           << "avaliacao " << av.ganho << ' ' << av.custo << ' ' << av.acoes << ' ' << av.cauda << ' '
           << av.violacao << '\n'
           << "busca " << r.partidas << ' ' << r.geracoes << ' ' << (r.parcial ? 1 : 0) << ' '
           << static_cast<long long>(r.segundos * 1e6) << '\n'
+          << "execucao " << pedido.modo << ' ' << r.threads << '\n'
           << "genes";
     for (gih::Gene g : r.genes) saida << ' ' << static_cast<int>(g);
     saida << '\n';
@@ -179,7 +226,11 @@ int main(int argc, char** argv) {
         if (comando == "otimizar") return otimizar(argc, argv);
         if (comando == "sorteio") return sorteio(argc, argv);
         if (comando == "versao") {
-            std::cout << FORMATO << " serial\n";
+            const int threads = gih::threads_openmp();
+            std::cout << FORMATO << '\n'
+                      << "modos serial" << (threads > 0 ? " openmp" : "") << '\n'
+                      << "threads " << threads << '\n'
+                      << "compilador " << compilador() << '\n';
             return 0;
         }
         std::cerr << "Uso: gih-nucleo otimizar|sorteio|versao — ver o cabeçalho de main.cpp.\n";

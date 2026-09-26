@@ -16,17 +16,27 @@ deixa as três versões no mesmo plano, estão na ADR-011.
 | `serial.py` | O genético com partidas independentes, em Python puro: o baseline de corretude e de tempo (H49, RNF02) |
 | `aleatorio.py` | O gerador sem estado (SplitMix64 por coordenadas), igual em Python, C++ e CUDA |
 | `exaustivo.py` | O ótimo por enumeração, para instâncias pequenas: a régua dos testes |
-| `nativo.py` | Chama o executável em C++ com o mesmo contrato de `serial.otimizar`, e confere a avaliação que ele devolve (ADR-012) |
+| `nativo.py` | Chama o executável em C++ com o mesmo contrato de `serial.otimizar`, em qualquer modo, e confere a avaliação que ele devolve (ADR-012) |
 
 **O mesmo algoritmo em C++** (`cpp/`, H53a): o executável `gih-nucleo` lê a instância em texto e devolve o
 plano **idêntico** ao do Python — mesmos genes, mesma avaliação, mesmas gerações —, porque o sorteio é por
 coordenadas e a aritmética é inteira (ADR-011). No contêiner, com 2.000 parceiros, leva 0,34 s contra 25,5 s
-do Python: 76x. É dele que as versões OpenMP (H53b) e CUDA (H54) partem.
+do Python: 76x.
+
+| Arquivo | O que faz |
+|---|---|
+| `cpp/genetico.hpp` | Os passos que as versões fazem igual: sorteio, torneio, filho, a preparação e o relógio |
+| `cpp/serial.cpp` | O genético serial, uma partida depois da outra (H53a) |
+| `cpp/openmp.cpp` | O genético com OpenMP: as partidas avançam juntas, e os filhos de cada geração são calculados em paralelo (H53b). O mesmo plano da serial com qualquer número de threads |
+| `cpp/main.cpp` | O executável: `otimizar --modo serial\|openmp [--threads N]`, `sorteio`, e `versao`, que diz os modos que ele tem |
+
+O ganho do OpenMP é medido contra o C++ serial, no contêiner:
+[`docs/medicoes/nucleo.md`](../docs/medicoes/nucleo.md).
 
 **O pacote Python não tem dependência.** O baseline serial é o denominador do *speedup*, e vetorizá-lo com NumPy
-deixaria o ganho medido menos honesto. As versões em C++ com OpenMP (Sprint 10) e em CUDA (Sprint 11) vão
-morar aqui, seguindo o mesmo algoritmo sorteio a sorteio. `spike/` guarda a validação do toolchain de GPU
-(H47), e o `requirements.txt` desta pasta é dele, não do pacote.
+deixaria o ganho medido menos honesto. A versão em CUDA (Sprint 11) vai morar aqui também, seguindo o mesmo
+algoritmo sorteio a sorteio. `spike/` guarda a validação do toolchain de GPU (H47), e o `requirements.txt`
+desta pasta é dele, não do pacote.
 
 ## Rodando os testes
 
@@ -34,12 +44,24 @@ No mesmo ambiente virtual da API, de dentro de `nucleo/`:
 
 ```bash
 pip install --no-deps -e .
-construir.bat                                                    # Windows: compila bin\gih-nucleo.exe
-g++ -O2 -std=c++17 -Wall -Wextra cpp/*.cpp -o bin/gih-nucleo     # Linux
+construir.bat                                                            # Windows: bin\gih-nucleo.exe
+g++ -O2 -fopenmp -std=c++17 -Wall -Wextra cpp/*.cpp -o bin/gih-nucleo    # Linux
 pytest
 ```
 
-Sem o executável compilado, os testes que comparam o C++ com o Python são pulados; na CI, reprovam.
+Sem o executável compilado, ou compilado sem OpenMP, os testes que comparam o C++ com o Python são pulados;
+na CI, reprovam.
+
+**No contêiner**, como o sistema roda (ADR-012), da raiz do repositório:
+
+```bash
+docker build -t gih-nucleo nucleo
+docker run --rm gih-nucleo python -m pytest                     # os mesmos testes, em Linux
+docker run --rm -v "$PWD:/repo" -w /repo gih-nucleo python scripts/medir_nucleo.py
+```
+
+A imagem compila com o g++ da imagem de compilação da NVIDIA — o mesmo que vai compilar o CUDA — e roda na
+`python:3.11-slim`, a base da API.
 
 Os testes conferem o genético contra a enumeração exata em 40 instâncias pequenas sorteadas e a
 verificação de viabilidade contra a enumeração em 150. Também mostram onde o guloso fica abaixo do ótimo e

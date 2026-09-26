@@ -170,7 +170,7 @@ de paralelização em CPU e GPU.
 | Versão | Tecnologia | Papel |
 |---|---|---|
 | **Baseline** | Python puro | Referência de corretude e de tempo. Validado contra instância pequena com ótimo conhecido |
-| **CPU paralela** | C++17 + OpenMP | Partidas distribuídas entre os núcleos da CPU |
+| **CPU paralela** | C++17 + OpenMP | Os filhos de cada geração, de todas as partidas de uma vez, distribuídos entre os núcleos da CPU (H53b) |
 | **GPU** | CUDA | Avaliação da população em paralelo massivo na GPU |
 
 As três versões resolvem o **mesmo problema com a mesma semente**, e é isso que dá sentido à comparação: o
@@ -583,6 +583,26 @@ independentes. Faltava decidir três coisas antes da primeira linha (H48, H49):
 - Aritmética inteira limita o ganho de um plano a 2⁶³ centavos, muito acima de qualquer campanha
 - **Custo assumido:** o baseline em Python puro é lento de propósito. Na tela, o limite de tempo o protege até
   as versões em C++ chegarem (Sprint 10)
+
+**Adendo (26/09/2026, H53b) — o que o OpenMP paraleliza:**
+
+- **As partidas avançam juntas, uma geração por vez**, e os filhos de todas elas formam um único laço
+  paralelo: 4 × 47 = 188 tarefas por geração, com os parâmetros padrão. Paralelizar só as partidas, como a
+  §4.2 dizia antes, ocuparia no máximo 4 threads.
+- **O plano é o mesmo da versão serial com qualquer número de threads.** Nenhum filho lê o que outro escreve
+  na mesma geração, e o vencedor sai das partidas percorridas na ordem, com a mesma comparação estrita. Os
+  testes conferem com 1, 2, 3 e 7 threads e com o padrão; a medição confere em toda execução.
+- **Escalonamento dinâmico, um filho por vez.** Cada geração termina numa barreira, e na divisão estática
+  ela espera a thread mais atrasada. No WSL2, os processadores virtuais são divididos com o Windows, e em
+  150 gerações sempre há um que atrasa: medido no contêiner, o estático perdeu em todos os tamanhos.
+- **O limite de tempo é a única diferença visível.** Na serial, a busca interrompida encerra a partida em
+  curso e não começa as seguintes; no OpenMP, todas param na mesma geração. As duas devolvem o melhor plano
+  viável encontrado e o marcam como parcial.
+- **Tantas threads quantos núcleos físicos.** No contêiner, com 8 threads, o ganho sobre o C++ serial foi de
+  **6,0x** com 2.000 parceiros, na faixa de 5,3x a 6,5x. Com 16, todas as threads lógicas da máquina, a
+  mediana caiu para 4,6x e a faixa foi de 1,0x a 6,9x: o contêiner passa a disputar a CPU com o próprio
+  Windows. A espera passiva nas barreiras tira o pico, mas deixa tudo mais lento. A H55 faz a API pedir o
+  número de núcleos físicos. Medição completa em [`docs/medicoes/nucleo.md`](medicoes/nucleo.md).
 
 ---
 
