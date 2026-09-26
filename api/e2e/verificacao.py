@@ -1002,8 +1002,16 @@ def _reais(valor) -> str:
     return "R$ " + f"{float(valor):,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
 
 
+def _plano(execucao: dict) -> list[tuple[int, int]]:
+    return sorted((i["parceiro_id"], i["acao_id"]) for i in execucao.get("itens") or [])
+
+
+def _segundos(execucao: dict) -> str:
+    return f"{(execucao.get('tempo_ms') or 0) / 1000:.2f} s".replace(".", ",")
+
+
 def item_campanha(r: Relatorio, url: str, criados: dict[str, str]) -> None:
-    """O plano de campanha (UC08, RF29 a RF31, RN07, RN10, RN11), contra a base no ar.
+    """O plano de campanha (UC08, RF29 a RF32, RN07, RN10, RN11), contra a base no ar.
 
     Roda logo depois do modelo e antes de qualquer importação da execução, pelo
     mesmo motivo: o plano usa as previsões da versão em uso, e uma semana de
@@ -1048,7 +1056,9 @@ def item_campanha(r: Relatorio, url: str, criados: dict[str, str]) -> None:
             "aplicacao_inicio": "2026-10-05",
             "aplicacao_fim": "2026-10-11",
         }
-        pedido = c.post("/api/otimizacoes", json=parametros)
+        # O primeiro no serial, que é o baseline e leva segundos: é ele que dá
+        # tempo de conferir a trava. O automático viria depois.
+        pedido = c.post("/api/otimizacoes", json={**parametros, "modo": "SERIAL"})
         if not r.checar(
             "o cálculo é aceito e roda fora da requisição",
             pedido.status_code == 202 and pedido.json().get("situacao") == "EM_ANDAMENTO",
@@ -1091,6 +1101,20 @@ def item_campanha(r: Relatorio, url: str, criados: dict[str, str]) -> None:
             and plano["modelo_versao"] == estado["modelo_versao"],
             f"ganho de {_reais(plano['uplift_total'])} contra {_reais(plano['ganho_guloso'])} do "
             f"guloso, em " + f"{plano['tempo_ms'] / 1000:.1f} s".replace(".", ","),
+        )
+
+        disponiveis = [m["modo"] for m in estado.get("modos", []) if m["disponivel"]]
+        automatico = c.post("/api/otimizacoes", json=parametros)
+        rapido = _aguardar(c, automatico.json()["id"]) if automatico.status_code == 202 else {}
+        r.checar(
+            "sem escolha, roda o modo mais rápido disponível, com o mesmo plano do serial (RF32)",
+            rapido.get("modo") == estado.get("modo_automatico")
+            and disponiveis[:1] == [rapido.get("modo")]
+            and rapido.get("situacao") == "CONCLUIDA"
+            and _plano(rapido) == _plano(plano),
+            f"disponíveis: {', '.join(disponiveis)}; {rapido.get('modo')} em {_segundos(rapido)}"
+            + (f" com {rapido['threads']} threads" if rapido.get("threads") else "")
+            + f", contra {_segundos(plano)} do serial",
         )
 
         inviavel = c.post(

@@ -131,6 +131,32 @@ def test_openmp_identico_com_qualquer_numero_de_threads(openmp, grande, threads)
     cpp = nativo.otimizar(inst, executavel=openmp, modo="openmp", threads=threads, **parametros)
     _mesmo(python, cpp)
     assert verificar_plano(inst, cpp.genes) == []
+    assert cpp.threads == (threads or nativo.capacidades(openmp).threads)
+    assert python.threads == 1
+
+
+# Um processador de 2 núcleos com SMT: quatro threads lógicas, dois pares
+# (processador físico, núcleo). Recortado de um /proc/cpuinfo de verdade.
+CPUINFO = "\n\n".join(
+    f"processor\t: {p}\nmodel name\t: Processador de teste\nphysical id\t: 0\n"
+    f"siblings\t: 4\ncore id\t\t: {nucleo}\ncpu cores\t: 2"
+    for p, nucleo in enumerate([0, 1, 0, 1])
+)
+
+
+@pytest.mark.parametrize(
+    "cpuinfo, permitidos, esperado",
+    [
+        (CPUINFO, None, 2),
+        (CPUINFO, {0, 1, 2, 3}, 2),
+        (CPUINFO, {0, 2}, 1),  # o contêiner limitado às duas threads do núcleo 0
+        (CPUINFO.replace("core id", "outro campo"), None, None),  # sem o campo: não se sabe
+        ("", None, None),
+    ],
+)
+def test_os_nucleos_fisicos_contam_os_pares_distintos(cpuinfo, permitidos, esperado):
+    """A API pede uma thread por núcleo físico (adendo da ADR-011), e não por thread lógica."""
+    assert nativo.contar_nucleos(cpuinfo, permitidos) == esperado
 
 
 def test_openmp_na_mochila_e_sem_parceiros(openmp, mochila):

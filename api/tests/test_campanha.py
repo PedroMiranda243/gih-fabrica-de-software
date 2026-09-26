@@ -1,10 +1,14 @@
-"""A campanha pela API — UC08, RF29 a RF31, RN07, RN10, RN11, histórias H48 a H52.
+"""A campanha pela API — UC08, RF29 a RF32, RN07, RN10, RN11, histórias H48 a H52 e H55.
 
 O otimizador em si é testado em `nucleo/tests`. Aqui se testa o que é da API:
 o ganho da RN10 em centavos, quem entra e quem fica fora (RN11), as cotas em
 contagem, a categoria confirmada, a cauda longa pelo ranking (e não pelo
 segmento), a recusa com o que falta, uma execução por vez, a recuperação depois
-de reinício, a auditoria e o catálogo.
+de reinício, a auditoria, o catálogo e o modo de execução.
+
+**Por padrão, a instalação dos testes só tem o modo serial**: o resultado não
+depende de o executável em C++ estar compilado na máquina. Os testes dos outros
+modos fingem o que o executável responde, ou pedem o de verdade (`nucleo_real`).
 
 A base é gravada direto no banco — parceiros, métricas, um treino concluído e as
 previsões dele —, sem treinar de verdade: o que importa aqui é controlar o
@@ -12,12 +16,14 @@ faturamento previsto, o risco, o ranking e a categoria de cada parceiro.
 """
 from __future__ import annotations
 
+import os
 from datetime import date, timedelta
 from decimal import Decimal
 from types import SimpleNamespace
 
 import gih_nucleo
 import pytest
+from gih_nucleo import nativo
 from gih_nucleo.exaustivo import otimo
 from sqlalchemy import select
 
@@ -46,6 +52,8 @@ from app.modelos import (
     TreinoModelo,
 )
 from app.servico_otimizacao import ganho_em_centavos, maximo_em_contagem, minimo_em_contagem
+
+CAPACIDADES_REAIS = nativo.capacidades  # antes de qualquer teste trocá-la
 
 PRIMEIRA_SEMANA = date(2026, 6, 1)
 PERIODOS = 5
@@ -171,6 +179,36 @@ def base(criar_usuario):
             s.close()
 
     return montar
+
+
+@pytest.fixture(autouse=True)
+def so_o_serial(monkeypatch):
+    """A instalação sem o núcleo em C++: só o serial, em Python, na própria API."""
+
+    def indisponivel(*_a, **_k):
+        raise nativo.NucleoIndisponivel("fingido pelo teste")
+
+    monkeypatch.setattr(nativo, "capacidades", indisponivel)
+
+
+def _fingir(monkeypatch, *modos):
+    """O executável responde que tem estes modos, além do serial."""
+    monkeypatch.setattr(
+        nativo,
+        "capacidades",
+        lambda *_a, **_k: nativo.Capacidades(("serial", *modos), 8, "g++ fingido"),
+    )
+
+
+@pytest.fixture
+def nucleo_real(monkeypatch):
+    """O executável de verdade, com OpenMP. Sem ele o teste pula — exceto na CI."""
+    monkeypatch.setattr(nativo, "capacidades", CAPACIDADES_REAIS)
+    obrigatorio = os.environ.get("GIH_NUCLEO_OBRIGATORIO") == "1"
+    if nativo.localizar() is None or "openmp" not in CAPACIDADES_REAIS().modos:
+        if obrigatorio:
+            pytest.fail("O gih-nucleo com OpenMP é obrigatório aqui, e não foi encontrado.")
+        pytest.skip("gih-nucleo com OpenMP não compilado — ver nucleo/README.md.")
 
 
 @pytest.fixture
@@ -458,9 +496,100 @@ def test_a_execucao_fica_na_auditoria_com_parametros_modo_e_tempo(base, gestor):
     assert registro.usuario_id is not None
     assert registro.detalhes["execucao"] == execucao["id"]
     assert registro.detalhes["modo"] == "SERIAL"
+    assert registro.detalhes["substituicao"] is None
     assert registro.detalhes["parametros"]["maximo_acoes"] == 3
     assert registro.detalhes["tempo_ms"] == execucao["tempo_ms"]
     assert registro.detalhes["viavel"] is True
+
+
+# ================================================================ o modo (RF32, H55)
+SERIAL, CPU, GPU = ModoExecucao.SERIAL, ModoExecucao.CPU_PARALELO, ModoExecucao.GPU
+
+
+@pytest.mark.parametrize(
+    "pedido, livres, esperado, troca",
+    [
+        (None, {SERIAL}, SERIAL, False),
+        (None, {SERIAL, CPU}, CPU, False),
+        (None, {SERIAL, CPU, GPU}, GPU, False),
+        (SERIAL, {SERIAL, CPU}, SERIAL, False),  # forçar o baseline, para comparar
+        (GPU, {SERIAL, CPU}, CPU, True),  # UC08-A4
+        (CPU, {SERIAL}, SERIAL, True),
+    ],
+)
+def test_sem_escolha_roda_o_mais_rapido_e_o_indisponivel_vira_troca(
+    pedido, livres, esperado, troca
+):
+    disponiveis = [
+        servico_otimizacao.Disponibilidade(m, m in livres, None if m in livres else "Motivo.")
+        for m in servico_otimizacao.ORDEM
+    ]
+    modo, substituicao = servico_otimizacao.escolher(pedido, disponiveis)
+    assert modo == esperado
+    assert (substituicao is not None) == troca
+
+
+def test_os_modos_sao_perguntados_ao_executavel(base, gestor, monkeypatch):
+    base(_seis())
+    estado = gestor.get("/api/campanha").json()
+    assert [m["modo"] for m in estado["modos"]] == ["GPU", "CPU_PARALELO", "SERIAL"]
+    assert [m["disponivel"] for m in estado["modos"]] == [False, False, True]
+    assert estado["modos"][1]["motivo"] == "O núcleo em C++ não está nesta instalação."
+    assert estado["modo_automatico"] == "SERIAL"
+
+    _fingir(monkeypatch, "openmp")
+    estado = gestor.get("/api/campanha").json()
+    assert [m["disponivel"] for m in estado["modos"]] == [False, True, True]
+    assert estado["modos"][0]["motivo"] == "Não há GPU compatível disponível nesta instalação."
+    assert estado["modo_automatico"] == "CPU_PARALELO"
+
+
+def test_nucleo_que_nao_responde_deixa_so_o_serial(base, gestor, monkeypatch):
+    def quebrado(*_a, **_k):
+        raise nativo.NucleoFalhou("fingido pelo teste")
+
+    monkeypatch.setattr(nativo, "capacidades", quebrado)
+    base(_seis())
+    estado = gestor.get("/api/campanha").json()
+    assert estado["modo_automatico"] == "SERIAL"
+    assert estado["modos"][1]["motivo"] == "O núcleo em C++ não respondeu."
+
+
+def test_modo_indisponivel_roda_no_mais_rapido_e_diz_a_troca(base, gestor):
+    """UC08-A4: a campanha é calculada, e a execução diz o que foi pedido e o que rodou."""
+    base(_seis())
+    execucao = _calcular(gestor, modo="CPU_PARALELO")
+    assert execucao["situacao"] == "CONCLUIDA" and execucao["viavel"] is True
+    assert execucao["modo"] == "SERIAL" and execucao["parametros"]["modo"] == "CPU_PARALELO"
+    assert execucao["substituicao"] == (
+        "Pedido em CPU paralelo, calculado em serial: o núcleo em C++ não está nesta instalação."
+    )
+    assert execucao["threads"] is None
+
+
+def test_modo_desconhecido_e_recusado(base, gestor):
+    base(_seis())
+    r = gestor.post("/api/otimizacoes", json=_parametros(modo="QUANTICO"))
+    assert r.status_code == 422
+
+
+def test_cpu_paralelo_da_o_mesmo_plano_do_serial(base, gestor, nucleo_real):
+    """RF32 e ADR-011: o modo muda o tempo, e não o plano."""
+    base(_seis())
+    serial = _calcular(gestor, modo="SERIAL")
+    paralelo = _calcular(gestor)  # sem escolha: o mais rápido que houver
+    assert serial["modo"] == "SERIAL" and paralelo["modo"] == "CPU_PARALELO"
+    assert paralelo["parametros"]["modo"] is None and paralelo["substituicao"] is None
+    assert paralelo["threads"] >= 1 and serial["threads"] is None
+
+    def plano(e):
+        return [(i["parceiro_id"], i["acao_id"], i["ganho"]) for i in e["itens"]]
+
+    assert plano(paralelo) == plano(serial)
+    assert (paralelo["uplift_total"], paralelo["custo_total"]) == (
+        serial["uplift_total"],
+        serial["custo_total"],
+    )
 
 
 # ================================================================ a tela e o catálogo
