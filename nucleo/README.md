@@ -28,14 +28,22 @@ do Python: 76x.
 | `cpp/genetico.hpp` | Os passos que as versões fazem igual: sorteio, torneio, filho, a preparação e o relógio |
 | `cpp/serial.cpp` | O genético serial, uma partida depois da outra (H53a) |
 | `cpp/openmp.cpp` | O genético com OpenMP: as partidas avançam juntas, e os filhos de cada geração são calculados em paralelo (H53b). O mesmo plano da serial com qualquer número de threads |
-| `cpp/main.cpp` | O executável: `otimizar --modo serial\|openmp [--threads N]`, `sorteio`, e `versao`, que diz os modos que ele tem |
+| `cpp/gpu.hpp` | A GPU vista do resto do núcleo, sem nada do CUDA: achar a placa, e a ida e volta da instância e da população |
+| `cpp/gpu.cuh` | As estruturas na GPU (H54a): a memória com dono, a instância no layout da CPU, e a população em dois buffers — a geração atual e a seguinte —, que ficam na placa a busca inteira (ADR-006) |
+| `cpp/gpu.cu` | A ida e volta, conferida byte a byte e por uma conta feita na própria GPU. Compilado só com CUDA |
+| `cpp/sem_gpu.cpp` | O núcleo sem CUDA: diz que não há GPU, e por quê |
+| `cpp/main.cpp` | O executável: `otimizar --modo serial\|openmp [--threads N]`, `sorteio`, `gpu`, `transferir` e `versao`, que diz os modos, as threads, o compilador e a GPU |
 
-O ganho do OpenMP é medido contra o C++ serial, no contêiner:
+O ganho do OpenMP e a transferência para a GPU são medidos no contêiner:
 [`docs/medicoes/nucleo.md`](../docs/medicoes/nucleo.md).
 
+**Sem GPU, o executável recusa o que precisa dela com a saída 1**, e diz o motivo: compilado sem CUDA, nenhuma
+placa visível, driver antigo. É o sinal para a API cair para a CPU (RNF06, H56). Para ver a recusa numa máquina
+com placa, esconda-a: `CUDA_VISIBLE_DEVICES=-1 bin/gih-nucleo gpu`.
+
 **O pacote Python não tem dependência.** O baseline serial é o denominador do *speedup*, e vetorizá-lo com NumPy
-deixaria o ganho medido menos honesto. A versão em CUDA (Sprint 11) vai morar aqui também, seguindo o mesmo
-algoritmo sorteio a sorteio. `spike/` guarda a validação do toolchain de GPU (H47), e o `requirements.txt`
+deixaria o ganho medido menos honesto. O laço em CUDA (H54b, H54c) vai seguir o mesmo algoritmo sorteio a
+sorteio. `spike/` guarda a validação do toolchain de GPU (H47), e o `requirements.txt`
 desta pasta é dele, não do pacote.
 
 ## Rodando os testes
@@ -44,24 +52,27 @@ No mesmo ambiente virtual da API, de dentro de `nucleo/`:
 
 ```bash
 pip install --no-deps -e .
-construir.bat                                                            # Windows: bin\gih-nucleo.exe
-g++ -O2 -fopenmp -std=c++17 -Wall -Wextra cpp/*.cpp -o bin/gih-nucleo    # Linux
+construir.bat                                                            # Windows: com CUDA, se houver
+construir.bat cpu                                                        # Windows: só a CPU
+g++ -O2 -fopenmp -std=c++17 -Wall -Wextra cpp/*.cpp -o bin/gih-nucleo    # Linux, sem CUDA
 pytest
 ```
 
 Sem o executável compilado, ou compilado sem OpenMP, os testes que comparam o C++ com o Python são pulados;
-na CI, reprovam.
+na CI, reprovam. Os da ida e volta pulam sem GPU — a CI não tem placa nem CUDA —, e reprovam com
+`GIH_GPU_OBRIGATORIA=1`. Os da recusa sem GPU rodam em qualquer máquina.
 
 **No contêiner**, como o sistema roda (ADR-012), da raiz do repositório:
 
 ```bash
 docker build -t gih-nucleo nucleo
-docker run --rm gih-nucleo python -m pytest                     # os mesmos testes, em Linux
-docker run --rm -v "$PWD:/repo" -w /repo gih-nucleo python scripts/medir_nucleo.py
+docker run --rm --gpus all gih-nucleo python -m pytest          # os mesmos testes, em Linux, com a GPU
+docker run --rm gih-nucleo python -m pytest                     # sem GPU: a ida e volta pula
+docker run --rm --gpus all -v "$PWD:/repo" -w /repo gih-nucleo python scripts/medir_nucleo.py
 ```
 
-A imagem compila com o g++ da imagem de compilação da NVIDIA — o mesmo que vai compilar o CUDA — e roda na
-`python:3.11-slim`, a base da API.
+A imagem compila com o nvcc e o g++ da imagem de compilação da NVIDIA e roda na `python:3.11-slim`, a base da
+API. O `cudart` vai estático dentro do executável; o driver chega pelo `--gpus all`.
 
 Os testes conferem o genético contra a enumeração exata em 40 instâncias pequenas sorteadas e a
 verificação de viabilidade contra a enumeração em 150. Também mostram onde o guloso fica abaixo do ótimo e

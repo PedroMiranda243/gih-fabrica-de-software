@@ -8,17 +8,24 @@
 //   gih-nucleo sorteio C1 C2 ...
 //       O sorteio das coordenadas: o contrato do gerador com o Python.
 //   gih-nucleo versao
-//       O formato, os modos que este executável tem, as threads do OpenMP e o
-//       compilador. É por aqui que a API vai saber a que modo pode recorrer
-//       (RNF06), e que a medição registra onde o executável foi compilado.
+//       O formato, os modos que este executável tem, as threads do OpenMP, o
+//       compilador e a GPU, ou por que não há. É por aqui que a API sabe a que
+//       modo pode recorrer (RNF06), e que a medição registra onde o executável
+//       foi compilado.
+//   gih-nucleo gpu
+//       A GPU que o núcleo usaria; sem ela, o motivo e a saída 1 (H56).
+//   gih-nucleo transferir [--semente N] [--partidas N] [--populacao N]
+//                         [--repeticoes N]
+//       Lê a instância, monta a população inicial, leva as duas para a GPU,
+//       traz de volta, confere e diz quanto tempo levou (H54a).
 //
 // **Tudo em texto, tudo inteiro.** A instância chega em centavos e contagens, já
 // traduzida pela API (ADR-011), e é lida com a biblioteca padrão: nenhuma
 // dependência. O formato está em `gih_nucleo/nativo.py`, que o escreve e o lê.
 //
-// Saída 0: resultado (viável ou inviável — as duas são respostas). Saída 2:
-// instância ou argumento inválido, com a mensagem no erro padrão. Saída 3:
-// defeito interno.
+// Saída 0: resultado (viável ou inviável — as duas são respostas). Saída 1: o
+// pedido precisa de GPU, e não há (H56). Saída 2: instância ou argumento
+// inválido, com a mensagem no erro padrão. Saída 3: defeito interno.
 #include <cstdlib>
 #include <cstring>
 #include <exception>
@@ -26,7 +33,11 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <utility>
+#include <vector>
 
+#include "genetico.hpp"
+#include "gpu.hpp"
 #include "nucleo.hpp"
 
 namespace {
@@ -50,6 +61,23 @@ std::string compilador() {
 #else
     return "desconhecido";
 #endif
+}
+
+// Uma linha só, para a API e a medição lerem: `gpu 1 <capacidade> <MiB> <nome>`,
+// ou `gpu 0 <motivo>`.
+std::string linha_da_gpu() {
+    gih::gpu::Dispositivo d;
+    std::string motivo;
+    if (!gih::gpu::procurar(d, motivo)) return "gpu 0 " + motivo;
+    return "gpu 1 " + std::to_string(d.capacidade_maior) + "." + std::to_string(d.capacidade_menor) + " " +
+           std::to_string(d.memoria / (1024 * 1024)) + " " + d.nome;
+}
+
+long long inteiro(const char* texto, const std::string& nome) {
+    char* fim = nullptr;
+    const long long valor = std::strtoll(texto, &fim, 10);
+    if (*fim != '\0') throw Invalida("Valor não inteiro em " + nome + ".");
+    return valor;
 }
 
 std::int64_t ler(std::istream& entrada, const char* o_que) {
@@ -135,9 +163,7 @@ Pedido ler_pedido(int argc, char** argv) {
             }
             continue;
         }
-        char* fim = nullptr;
-        const long long valor = std::strtoll(argv[i + 1], &fim, 10);
-        if (*fim != '\0') throw Invalida("Valor não inteiro em " + nome + ".");
+        const long long valor = inteiro(argv[i + 1], nome);
         if (nome == "--semente") {
             if (valor < 0) throw Invalida("A semente não pode ser negativa.");
             p.semente = static_cast<std::uint64_t>(valor);
@@ -206,6 +232,69 @@ int otimizar(int argc, char** argv) {
     return 0;
 }
 
+int gpu() {
+    gih::gpu::Dispositivo d;
+    std::string motivo;
+    if (!gih::gpu::procurar(d, motivo)) throw gih::gpu::SemGpu(motivo);
+    std::cout << FORMATO << '\n' << linha_da_gpu() << '\n';
+    return 0;
+}
+
+int transferir(int argc, char** argv) {
+    gih::Parametros p;
+    int repeticoes = 15;
+    for (int i = 2; i < argc; i += 2) {
+        if (i + 1 >= argc) throw Invalida(std::string("Falta o valor de ") + argv[i] + ".");
+        const std::string nome = argv[i];
+        const long long valor = inteiro(argv[i + 1], nome);
+        if (nome == "--semente") {
+            if (valor < 0) throw Invalida("A semente não pode ser negativa.");
+            p.semente = static_cast<std::uint64_t>(valor);
+        } else if (nome == "--partidas") {
+            p.partidas = static_cast<int>(valor);
+        } else if (nome == "--populacao") {
+            p.populacao = static_cast<int>(valor);
+        } else if (nome == "--repeticoes") {
+            if (valor < 1) throw Invalida("A medição precisa de ao menos uma repetição.");
+            repeticoes = static_cast<int>(valor);
+        } else {
+            throw Invalida("Parâmetro desconhecido: " + nome + ".");
+        }
+    }
+    if (p.populacao < 2 || p.partidas < 1) {
+        throw Invalida("A busca precisa de ao menos 2 indivíduos e 1 partida.");
+    }
+    std::ios::sync_with_stdio(false);
+    const gih::Instancia inst = ler_instancia(std::cin);
+    if (inst.parceiros < 1) throw Invalida("A ida e volta precisa de ao menos um parceiro.");
+    std::vector<int> minimo;
+    gih::Inviabilidade motivo;
+    // A população inicial começa pelos gulosos, e o guloso só existe para uma
+    // campanha que cabe.
+    if (!gih::diagnosticar(inst, minimo, motivo)) {
+        throw Invalida("A ida e volta monta a população inicial, e ela pede uma campanha viável.");
+    }
+
+    const gih::genetico::Preparo prep = gih::genetico::preparar(inst, p);
+    const std::vector<gih::Gene> populacao = gih::genetico::populacao_inicial(inst, p, prep);
+    const gih::gpu::Transferencia t = gih::gpu::ida_e_volta(inst, populacao, p.partidas * p.populacao, repeticoes);
+    // Voltar diferente não é resposta: é defeito, e sai como defeito.
+    if (!t.identica) throw std::logic_error("A instância ou a população voltou da GPU diferente da que foi.");
+    if (!t.conferida) throw std::logic_error("A conta feita na GPU não bate com a da CPU.");
+
+    std::ostringstream saida;
+    saida << FORMATO << '\n' << linha_da_gpu() << '\n' << "bytes " << t.bytes_instancia << ' ' << t.bytes_populacao << '\n';
+    const std::pair<const char*, const std::vector<double>*> series[] = {
+        {"envio_ms", &t.envio_ms}, {"volta_ms", &t.volta_ms}, {"volta_um_ms", &t.volta_um_ms}};
+    for (const auto& [nome, valores] : series) {
+        saida << nome;
+        for (double v : *valores) saida << ' ' << v;
+        saida << '\n';
+    }
+    std::cout << saida.str();
+    return 0;
+}
+
 int sorteio(int argc, char** argv) {
     std::uint64_t h = 0;
     for (int i = 2; i < argc; ++i) {
@@ -230,11 +319,17 @@ int main(int argc, char** argv) {
             std::cout << FORMATO << '\n'
                       << "modos serial" << (threads > 0 ? " openmp" : "") << '\n'
                       << "threads " << threads << '\n'
-                      << "compilador " << compilador() << '\n';
+                      << "compilador " << compilador() << '\n'
+                      << linha_da_gpu() << '\n';
             return 0;
         }
-        std::cerr << "Uso: gih-nucleo otimizar|sorteio|versao — ver o cabeçalho de main.cpp.\n";
+        if (comando == "gpu") return gpu();
+        if (comando == "transferir") return transferir(argc, argv);
+        std::cerr << "Uso: gih-nucleo otimizar|sorteio|versao|gpu|transferir — ver o cabeçalho de main.cpp.\n";
         return 2;
+    } catch (const gih::gpu::SemGpu& e) {
+        std::cerr << e.what() << '\n';
+        return 1;
     } catch (const Invalida& e) {
         std::cerr << e.what() << '\n';
         return 2;

@@ -1,4 +1,4 @@
-"""O núcleo em C++ chamado a partir do Python (H53a, H53b, ADR-012).
+"""O núcleo em C++ chamado a partir do Python (H53a, H53b, H54a, ADR-012).
 
 O executável `gih-nucleo` faz o mesmo que `serial.otimizar`, sorteio a sorteio,
 e devolve o mesmo `Resultado`, em qualquer um dos seus modos: `serial` e
@@ -50,6 +50,19 @@ class NucleoFalhou(RuntimeError):
     """O executável respondeu com erro, ou com algo que não confere com o Python."""
 
 
+class SemGpu(RuntimeError):
+    """O pedido precisava de GPU, e não há: o executável saiu com 1 (H56)."""
+
+
+@dataclass(frozen=True)
+class Dispositivo:
+    """A GPU que o núcleo usaria."""
+
+    nome: str
+    capacidade: str  # a "compute capability", como "8.9"
+    memoria_mib: int
+
+
 @dataclass(frozen=True)
 class Capacidades:
     """O que o executável sabe fazer nesta máquina, e com que compilador foi feito."""
@@ -57,6 +70,20 @@ class Capacidades:
     modos: tuple[str, ...]
     threads: int  # as do OpenMP; 0 quando foi compilado sem ele
     compilador: str
+    gpu: Dispositivo | None = None
+    sem_gpu: str | None = None  # por que não há GPU, quando não há
+
+
+@dataclass(frozen=True)
+class Transferencia:
+    """A ida e volta da instância e da população até a GPU (H54a), em milissegundos."""
+
+    dispositivo: Dispositivo
+    bytes_instancia: int
+    bytes_populacao: int
+    envio_ms: tuple[float, ...]  # instância e população, uma medida por repetição
+    volta_ms: tuple[float, ...]  # a população inteira
+    volta_um_ms: tuple[float, ...]  # um indivíduo, o que o laço na GPU devolve
 
 
 def localizar() -> str | None:
@@ -91,8 +118,64 @@ def capacidades(executavel: str | None = None) -> Capacidades:
         resposta = r.stderr.strip() or r.stdout[:80]
         raise NucleoFalhou(f"O núcleo não respondeu à versão: {resposta!r}")
     campos = {linha.split()[0]: linha.split()[1:] for linha in linhas[1:] if linha.strip()}
+    gpu, sem_gpu = _ler_gpu(campos.get("gpu", ["0", "O executável não informa a GPU."]))
     return Capacidades(
-        tuple(campos["modos"]), int(campos["threads"][0]), " ".join(campos["compilador"])
+        tuple(campos["modos"]),
+        int(campos["threads"][0]),
+        " ".join(campos["compilador"]),
+        gpu,
+        sem_gpu,
+    )
+
+
+def _ler_gpu(campos: list[str]) -> tuple[Dispositivo | None, str | None]:
+    """`gpu 1 <capacidade> <MiB> <nome>`, ou `gpu 0 <motivo>`."""
+    if campos[0] == "1":
+        return Dispositivo(" ".join(campos[3:]), campos[1], int(campos[2])), None
+    return None, " ".join(campos[1:])
+
+
+def transferir(
+    inst: Instancia,
+    *,
+    semente: int = 42,
+    partidas: int = PARTIDAS,
+    populacao: int = POPULACAO,
+    repeticoes: int = 15,
+    executavel: str | None = None,
+) -> Transferencia:
+    """Leva a instância e a população inicial até a GPU e traz de volta (H54a).
+
+    O executável confere o que voltou — byte a byte, e por uma conta feita na
+    própria GPU —, e sai como defeito se não bater. Sem GPU, levanta `SemGpu`.
+    """
+    comando = [
+        _executavel(executavel), "transferir",
+        "--semente", str(semente),
+        "--partidas", str(partidas),
+        "--populacao", str(populacao),
+        "--repeticoes", str(repeticoes),
+    ]
+    r = subprocess.run(
+        comando, input=serializar(inst), capture_output=True, text=True, encoding="utf-8"
+    )
+    if r.returncode == 1:
+        raise SemGpu(r.stderr.strip())
+    if r.returncode == 2:
+        raise ValueError(r.stderr.strip())
+    if r.returncode != 0:
+        raise NucleoFalhou(f"O núcleo saiu com {r.returncode}: {r.stderr.strip()}")
+    linhas = r.stdout.splitlines()
+    campos = {linha.split()[0]: linha.split()[1:] for linha in linhas[1:] if linha.strip()}
+    dispositivo, _ = _ler_gpu(campos["gpu"])
+    instancia_bytes, populacao_bytes = (int(x) for x in campos["bytes"])
+    return Transferencia(
+        dispositivo,
+        instancia_bytes,
+        populacao_bytes,
+        tuple(float(x) for x in campos["envio_ms"]),
+        tuple(float(x) for x in campos["volta_ms"]),
+        tuple(float(x) for x in campos["volta_um_ms"]),
     )
 
 

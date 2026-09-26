@@ -111,6 +111,29 @@ inline Preparo preparar(const Instancia& inst, const Parametros& p) {
     return r;
 }
 
+// A população inicial de todas as partidas, contígua — partida, indivíduo,
+// gene —, que é como a GPU a guarda (H54): em cada partida, os dois gulosos na
+// frente e o resto sorteado pelas coordenadas (ADR-011). São os mesmos
+// indivíduos que as versões serial e OpenMP montam, partida a partida.
+inline std::vector<Gene> populacao_inicial(const Instancia& inst, const Parametros& p, const Preparo& prep) {
+    const int n = inst.parceiros;
+    const int tamanho = p.populacao;
+    const int n_iniciais = std::min<int>(2, tamanho);
+    std::vector<Gene> populacao(static_cast<std::size_t>(p.partidas) * tamanho * n);
+    for (int partida = 0; partida < p.partidas; ++partida) {
+        for (int j = 0; j < tamanho; ++j) {
+            Gene* genes = populacao.data() + (static_cast<std::size_t>(partida) * tamanho + j) * n;
+            if (j < n_iniciais) {
+                std::copy(prep.iniciais[j].begin(), prep.iniciais[j].end(), genes);
+            } else {
+                sorteado(inst, sorteio(p.semente, static_cast<std::uint64_t>(partida), 0, static_cast<std::uint64_t>(j)),
+                         prep.densidade, genes);
+            }
+        }
+    }
+    return populacao;
+}
+
 // Os gulosos são viáveis e o elitismo nunca perde o melhor deles: chegar ao fim
 // com um vencedor inviável seria defeito do algoritmo.
 inline void conferir_vencedor(const Avaliacao& av) {

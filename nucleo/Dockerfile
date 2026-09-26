@@ -1,28 +1,33 @@
 # O núcleo em C++ como ele roda no contêiner da API (ADR-012): para medir o
-# ganho do OpenMP (H53b) e para conferir o núcleo em Linux.
+# ganho do OpenMP (H53b) e a transferência para a GPU (H54a), e para conferir o
+# núcleo em Linux.
 #
 # Dois estágios, como no spike (parte 3 do `spike/RESULTADO.md`):
-# - **compila** na imagem `devel` da NVIDIA, com o g++ que vai compilar também a
-#   versão CUDA (H54). Os três modos são medidos com o mesmo compilador, no mesmo
-#   lugar;
+# - **compila** na imagem `devel` da NVIDIA, com o nvcc e o g++ dela. Os três
+#   modos saem do mesmo executável, compilado no mesmo lugar;
 # - **roda** na `python:3.11-slim`, a base da API. É lá que o sistema roda, e é
 #   lá que se mede (CLAUDE.md §7).
 #
-# O estágio de compilação é o que a H56 leva para o Dockerfile da API.
-#
 # Uso, da raiz do repositório:
 #   docker build -t gih-nucleo nucleo
-#   docker run --rm gih-nucleo gih-nucleo versao
-#   docker run --rm gih-nucleo python -m pytest
-#   docker run --rm -v "$PWD:/repo" -w /repo gih-nucleo python scripts/medir_nucleo.py
+#   docker run --rm --gpus all gih-nucleo gih-nucleo versao
+#   docker run --rm --gpus all gih-nucleo python -m pytest
+#   docker run --rm gih-nucleo python -m pytest         # sem GPU: a recusa
+#   docker run --rm --gpus all -v "$PWD:/repo" -w /repo gih-nucleo python scripts/medir_nucleo.py
 
 FROM nvidia/cuda:13.4.1-devel-ubuntu24.04 AS compilar
 
 WORKDIR /nucleo
 COPY cpp/ cpp/
-# Os mesmos avisos da CI: aviso ignorado no núcleo é defeito que aparece só na
-# GPU, onde é mais caro de achar.
-RUN g++ -O2 -fopenmp -std=c++17 -Wall -Wextra -Wpedantic -Werror cpp/*.cpp -o gih-nucleo
+# Primeiro a versão só de CPU, com os avisos da CI (-Werror): é a que compila em
+# qualquer máquina, e o CUDA não pode esconder um aviso nela. Depois a de
+# verdade, com o gpu.cu. `-arch=all-major` porque durante o build não há GPU para
+# o nvcc perguntar a arquitetura, e a máquina da orientação pode ter outra placa.
+# O `cudart` entra estático, o padrão do nvcc: o executável roda numa imagem que
+# não é da NVIDIA, e o driver chega pelo `--gpus all`.
+RUN g++ -O2 -fopenmp -std=c++17 -Wall -Wextra -Wpedantic -Werror cpp/*.cpp -o /tmp/so-cpu \
+ && nvcc -O2 -std=c++17 -arch=all-major -DGIH_COM_CUDA -Xcompiler=-fopenmp,-Wall,-Wextra \
+         cpp/*.cpp cpp/gpu.cu -o gih-nucleo -lgomp
 
 FROM python:3.11-slim
 
