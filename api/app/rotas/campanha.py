@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app import auditoria, servico_otimizacao, servico_previsao
 from app.auditoria import Acao
-from app.dependencias import Banco, UsuarioAtual, exigir
+from app.dependencias import Banco, UsuarioAtual, exigir, perfil_pode
 from app.esquemas import (
     AcaoComercialEdicao,
     AcaoComercialEntrada,
@@ -152,11 +152,13 @@ def _recusa(recusa: servico_otimizacao.OtimizacaoRecusada) -> HTTPException:
 
 # ------------------------------------------------------------ a campanha
 @router.get("/campanha", response_model=EstadoCampanha)
-def estado(s: Banco) -> EstadoCampanha:
+def estado(request: Request, s: Banco, usuario: UsuarioAtual) -> EstadoCampanha:
     """O que a tela de campanha precisa ao abrir (UC08, passo 1).
 
     Quantos parceiros entram e quantos ficam fora, com o motivo (RN11); as
-    categorias para as cotas; o catálogo; e se dá para calcular agora.
+    categorias para as cotas; o catálogo; e se **quem pergunta** pode calcular e
+    editar o catálogo agora — lido das permissões das próprias rotas, para a
+    tela não reescrever a matriz do UC08 (regras 2.4 e 2.5).
     """
     concluido = servico_previsao.ultimo_concluido(s)
     elegiveis, excluidos = [], None
@@ -172,7 +174,13 @@ def estado(s: Banco) -> EstadoCampanha:
     for e in elegiveis:
         if e.categoria_id is not None:
             por_categoria[e.categoria_id] = por_categoria.get(e.categoria_id, 0) + 1
+    rotas = request.app.routes
+    calcula = perfil_pode(rotas, usuario.perfil, "POST", "/api/otimizacoes")
     recusa = servico_otimizacao.bloqueio(s)
+    if not calcula:
+        motivo = "Calcular o plano é do Gestor; o seu perfil consulta a campanha."
+    else:
+        motivo = recusa.erro if recusa else None
     return EstadoCampanha(
         modelo_versao=concluido.versao_em_uso if concluido else None,
         periodo_base=(
@@ -196,8 +204,9 @@ def estado(s: Banco) -> EstadoCampanha:
         ],
         em_andamento=_resposta(s, servico_otimizacao.em_andamento(s)),
         ultima=_resposta(s, servico_otimizacao.ultima_concluida(s), com_itens=True),
-        pode_executar=recusa is None,
-        motivo_bloqueio=recusa.erro if recusa else None,
+        pode_executar=calcula and recusa is None,
+        motivo_bloqueio=motivo,
+        pode_editar_catalogo=perfil_pode(rotas, usuario.perfil, "POST", "/api/acoes-comerciais"),
     )
 
 

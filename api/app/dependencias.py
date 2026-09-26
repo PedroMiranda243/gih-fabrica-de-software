@@ -132,6 +132,21 @@ def perfis_da_rota(rota: APIRoute) -> frozenset[Perfil] | None:
     return frozenset.intersection(*conjuntos) if conjuntos else None
 
 
+def perfil_pode(rotas: Iterable, perfil: Perfil, metodo: str, caminho: str) -> bool:
+    """Se o perfil passa pela autorização da rota — lida da própria rota.
+
+    É o que uma tela usa para saber se mostra um botão sem reescrever a matriz
+    de autorização (regras 2.4 e 2.5), do mesmo jeito que `telas_de` monta o
+    menu. Rota que não existe responde `False`: melhor esconder um botão que
+    oferecer um que o servidor recusaria.
+    """
+    for rota in rotas:
+        if isinstance(rota, APIRoute) and rota.path == caminho and metodo in rota.methods:
+            perfis = perfis_da_rota(rota)
+            return perfis is None or perfil in perfis
+    return False
+
+
 def telas_de(rotas: Iterable, perfil: Perfil) -> list[str]:
     """As áreas que o perfil abre, na ordem de `TELAS`."""
     indice = {

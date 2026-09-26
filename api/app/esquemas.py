@@ -953,3 +953,6 @@ class EstadoCampanha(BaseModel):
     ultima: ExecucaoResposta | None
     pode_executar: bool
     motivo_bloqueio: str | None
+    pode_editar_catalogo: bool = Field(
+        description="Se o perfil de quem pergunta edita o catálogo (RF29: o Gestor)."
+    )
