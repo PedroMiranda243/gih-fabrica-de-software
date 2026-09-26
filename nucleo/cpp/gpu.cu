@@ -63,23 +63,28 @@ bool conferir_no_dispositivo(const Instancia& inst, const InstanciaNaGpu& na_gpu
 
 }  // namespace
 
-bool procurar(Dispositivo& dispositivo, std::string& motivo) {
+bool procurar(Dispositivo& dispositivo, Ausencia& ausencia, std::string& motivo) {
     int quantas = 0;
     const cudaError_t erro = cudaGetDeviceCount(&quantas);
     if (erro != cudaSuccess) {
         // Sem driver NVIDIA — um contêiner sem `--gpus`, uma máquina sem placa —
-        // o runtime responde que o driver é insuficiente. A mensagem dele vai
-        // junto, para quem for investigar.
+        // o runtime responde que o driver é insuficiente, ou que não há
+        // dispositivo. Os dois são "sem placa" para quem usa; qualquer outro erro
+        // é a placa falhando. A mensagem do runtime vai junto, para quem investiga.
+        const bool sem_placa = erro == cudaErrorInsufficientDriver || erro == cudaErrorNoDevice;
+        ausencia = sem_placa ? Ausencia::SemPlaca : Ausencia::Erro;
         motivo = std::string("Nenhuma GPU NVIDIA disponível (CUDA: ") + cudaGetErrorString(erro) + ").";
         cudaGetLastError();  // limpa o erro, para não contaminar a próxima chamada
         return false;
     }
     if (quantas == 0) {
+        ausencia = Ausencia::SemPlaca;
         motivo = "Nenhuma GPU NVIDIA disponível.";
         return false;
     }
     cudaDeviceProp p{};
     if (cudaGetDeviceProperties(&p, 0) != cudaSuccess) {
+        ausencia = Ausencia::Erro;
         motivo = "A GPU não respondeu às propriedades.";
         cudaGetLastError();
         return false;
@@ -91,8 +96,9 @@ bool procurar(Dispositivo& dispositivo, std::string& motivo) {
 Transferencia ida_e_volta(const Instancia& inst, const std::vector<Gene>& populacao, int individuos,
                           int repeticoes) {
     Dispositivo d;
+    Ausencia ausencia{};
     std::string motivo;
-    if (!procurar(d, motivo)) throw SemGpu(motivo);
+    if (!procurar(d, ausencia, motivo)) throw SemGpu(motivo);
     if (individuos < 1 || inst.parceiros < 1) {
         throw std::invalid_argument("A ida e volta precisa de ao menos um indivíduo e um parceiro.");
     }

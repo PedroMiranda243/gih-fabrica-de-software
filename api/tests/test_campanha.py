@@ -191,13 +191,20 @@ def so_o_serial(monkeypatch):
     monkeypatch.setattr(nativo, "capacidades", indisponivel)
 
 
-def _fingir(monkeypatch, *modos):
-    """O executável responde que tem estes modos, além do serial."""
-    monkeypatch.setattr(
-        nativo,
-        "capacidades",
-        lambda *_a, **_k: nativo.Capacidades(("serial", *modos), 8, "g++ fingido"),
+RTX = nativo.Dispositivo("NVIDIA GeForce RTX 4060", "8.9", 8187)
+
+
+def _fingir(monkeypatch, *modos, gpu=None, ausencia="sem_cuda"):
+    """O executável responde que tem estes modos, além do serial, e a GPU ou por que não."""
+    capacidades = nativo.Capacidades(
+        ("serial", *modos),
+        8,
+        "g++ fingido",
+        gpu,
+        None if gpu else "texto do executável, para quem investiga",
+        None if gpu else ausencia,
     )
+    monkeypatch.setattr(nativo, "capacidades", lambda *_a, **_k: capacidades)
 
 
 @pytest.fixture
@@ -540,8 +547,83 @@ def test_os_modos_sao_perguntados_ao_executavel(base, gestor, monkeypatch):
     _fingir(monkeypatch, "openmp")
     estado = gestor.get("/api/campanha").json()
     assert [m["disponivel"] for m in estado["modos"]] == [False, True, True]
-    assert estado["modos"][0]["motivo"] == "Não há GPU compatível disponível nesta instalação."
+    assert estado["modos"][0]["motivo"] == "Esta instalação foi montada sem suporte a GPU."
     assert estado["modo_automatico"] == "CPU_PARALELO"
+
+
+@pytest.mark.parametrize(
+    "gpu, ausencia, motivo",
+    [
+        (None, "sem_cuda", "Esta instalação foi montada sem suporte a GPU."),
+        (None, "sem_placa", "Nenhuma GPU NVIDIA disponível nesta máquina."),
+        (None, "erro", "A GPU desta máquina não respondeu."),
+        (
+            RTX,
+            None,
+            "A GPU desta máquina (NVIDIA GeForce RTX 4060) está disponível, mas o otimizador em "
+            "GPU ainda não faz parte desta versão.",
+        ),
+    ],
+)
+def test_a_tela_diz_por_que_nao_ha_gpu(base, gestor, monkeypatch, gpu, ausencia, motivo):
+    """RNF06: sem GPU, o sistema funciona em CPU paralelo e diz por quê — com uma frase
+    para o gestor, e não a mensagem do runtime do CUDA."""
+    _fingir(monkeypatch, "openmp", gpu=gpu, ausencia=ausencia)
+    base(_seis())
+    estado = gestor.get("/api/campanha").json()
+    assert estado["modos"][0] == {"modo": "GPU", "disponivel": False, "motivo": motivo}
+    assert estado["modo_automatico"] == "CPU_PARALELO"
+
+
+def _gpu_que_falha(monkeypatch):
+    """A GPU responde à pergunta dos modos e falha no cálculo: o executável sai com 1.
+
+    Os outros modos respondem com o plano do serial em Python, que é o mesmo
+    (ADR-011): o teste não depende do executável compilado.
+    """
+    _fingir(monkeypatch, "openmp", "cuda", gpu=RTX)
+    chamados = []
+
+    def otimizar(inst, *, modo, semente, limite_s, **_k):
+        chamados.append(modo)
+        if modo == "cuda":
+            raise nativo.SemGpu("fingido: a placa sumiu")
+        return gih_nucleo.otimizar(inst, semente=semente, limite_s=limite_s)
+
+    monkeypatch.setattr(nativo, "otimizar", otimizar)
+    return chamados
+
+
+@pytest.mark.parametrize(
+    "pedido, como",
+    [(None, "Sem escolha, rodaria em GPU"), ("GPU", "Pedido em GPU")],
+)
+def test_a_gpu_que_falha_no_calculo_cai_para_a_cpu(base, gestor, monkeypatch, pedido, como):
+    """RNF06 e UC08-A4 (H56): a execução termina, no mais rápido que sobrou, e diz a troca."""
+    base(_seis())
+    serial = _calcular(gestor, modo="SERIAL")
+    chamados = _gpu_que_falha(monkeypatch)
+
+    execucao = _calcular(gestor, **({"modo": pedido} if pedido else {}))
+    assert chamados == ["cuda", "openmp"]
+    assert execucao["situacao"] == "CONCLUIDA" and execucao["viavel"] is True
+    assert execucao["modo"] == "CPU_PARALELO"
+    assert execucao["substituicao"] == (
+        f"{como}; calculado em CPU paralelo: a GPU não respondeu no início do cálculo."
+    )
+    assert [(i["parceiro_id"], i["acao_id"]) for i in execucao["itens"]] == [
+        (i["parceiro_id"], i["acao_id"]) for i in serial["itens"]
+    ]
+
+    s = Sessao()
+    try:
+        registro = s.scalars(
+            select(Auditoria).where(Auditoria.acao == "OTIMIZACAO_EXECUTADA")
+        ).all()[-1]
+    finally:
+        s.close()
+    assert registro.detalhes["modo"] == "CPU_PARALELO"
+    assert registro.detalhes["substituicao"] == execucao["substituicao"]
 
 
 def test_nucleo_que_nao_responde_deixa_so_o_serial(base, gestor, monkeypatch):

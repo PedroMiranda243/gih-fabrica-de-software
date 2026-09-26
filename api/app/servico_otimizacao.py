@@ -22,7 +22,8 @@ sessão própria, e grava o resultado na mesma linha. Uma por vez, pelo banco.
 aqui mesmo; o CPU paralelo e a GPU são o executável em C++, que diz quais modos
 tem. Sem escolha do gestor, roda o mais rápido disponível. Com escolha de um
 modo que esta instalação não tem, roda o mais rápido disponível e a execução
-diz por quê (UC08-A4).
+diz por quê (UC08-A4). **Sem GPU, o sistema funciona igual** (RNF06, H56): a
+tela diz por que ela falta, e a GPU que falha no meio do cálculo cai para a CPU.
 """
 from __future__ import annotations
 
@@ -85,6 +86,15 @@ ROTULO = {
     ModoExecucao.SERIAL: "serial",
     ModoExecucao.CPU_PARALELO: "CPU paralelo",
     ModoExecucao.GPU: "GPU",
+}
+
+# Por que não há GPU, para quem está na tela (RNF06, H56), a partir do código que
+# o executável dá. A mensagem dele, com a do runtime do CUDA, serve a quem
+# investiga (`gih-nucleo versao`), e não ao gestor.
+SEM_GPU = {
+    "sem_cuda": "Esta instalação foi montada sem suporte a GPU.",
+    "sem_placa": "Nenhuma GPU NVIDIA disponível nesta máquina.",
+    "erro": "A GPU desta máquina não respondeu.",
 }
 
 _UM = Decimal(1)
@@ -159,8 +169,10 @@ def modos() -> list[Disponibilidade]:
     Quem diz é o executável (`gih-nucleo versao`, ADR-012), perguntado a cada
     vez: ele pode ter sido recompilado, e a pergunta custa milissegundos.
     """
+    capacidades = None
     try:
-        existentes = set(nativo.capacidades().modos)
+        capacidades = nativo.capacidades()
+        existentes = set(capacidades.modos)
         sem_nucleo = None
     except nativo.NucleoIndisponivel:
         existentes, sem_nucleo = set(), "O núcleo em C++ não está nesta instalação."
@@ -170,7 +182,7 @@ def modos() -> list[Disponibilidade]:
 
     faltando = {
         ModoExecucao.CPU_PARALELO: "O núcleo desta instalação foi compilado sem paralelismo.",
-        ModoExecucao.GPU: "Não há GPU compatível disponível nesta instalação.",
+        ModoExecucao.GPU: _sem_gpu(capacidades),
     }
     resposta = []
     for modo in ORDEM:
@@ -179,6 +191,19 @@ def modos() -> list[Disponibilidade]:
         else:
             resposta.append(Disponibilidade(modo, False, sem_nucleo or faltando[modo]))
     return resposta
+
+
+def _sem_gpu(capacidades: nativo.Capacidades | None) -> str:
+    """Por que o modo GPU não está disponível, com o que o executável disse."""
+    if capacidades is None or capacidades.gpu is None:
+        codigo = capacidades.ausencia_gpu if capacidades else None
+        return SEM_GPU.get(codigo, SEM_GPU["erro"])
+    # A placa está lá, e o executável ainda não tem o modo: o otimizador em
+    # GPU é da H54c.
+    return (
+        f"A GPU desta máquina ({capacidades.gpu.nome}) está disponível, mas o otimizador em "
+        "GPU ainda não faz parte desta versão."
+    )
 
 
 def escolher(
@@ -528,7 +553,37 @@ def _cotas(m: Montagem, genes: tuple[int, ...] | None) -> list[dict]:
     return cotas
 
 
-def _buscar(inst: gih_nucleo.Instancia, execucao: ExecucaoOtimizador) -> gih_nucleo.Resultado:
+def _buscar(
+    inst: gih_nucleo.Instancia, execucao: ExecucaoOtimizador
+) -> tuple[gih_nucleo.Resultado, str | None]:
+    """A busca, e por que não rodou no modo da execução, quando não rodou.
+
+    **A GPU que falha no meio não derruba o cálculo** (RNF06, UC08-A4, H56). O
+    modo foi escolhido quando a GPU respondia; se o executável sai com 1 — a
+    placa sumiu, o driver caiu —, a busca roda de novo no mais rápido que sobrou,
+    e a execução passa a dizer esse modo e a troca. Como os modos dão o mesmo
+    plano (ADR-011), o gestor recebe o mesmo resultado, mais devagar.
+    """
+    try:
+        return _buscar_no_modo(inst, execucao), None
+    except nativo.SemGpu as falha:
+        if execucao.modo != ModoExecucao.GPU:
+            raise
+        log.warning("Otimização %s: a GPU não respondeu (%s); o cálculo cai para a CPU",
+                    execucao.id, falha)
+    sobram = [d for d in modos() if d.modo != ModoExecucao.GPU]
+    execucao.modo, _ = escolher(None, sobram)
+    pedido = ModoExecucao(execucao.parametros["modo"]) if execucao.parametros.get("modo") else None
+    como = "Pedido em GPU" if pedido == ModoExecucao.GPU else "Sem escolha, rodaria em GPU"
+    troca = (
+        f"{como}; calculado em {ROTULO[execucao.modo]}: a GPU não respondeu no início do cálculo."
+    )
+    return _buscar_no_modo(inst, execucao), troca
+
+
+def _buscar_no_modo(
+    inst: gih_nucleo.Instancia, execucao: ExecucaoOtimizador
+) -> gih_nucleo.Resultado:
     """A busca no modo da execução. Os três dão o mesmo plano (ADR-011)."""
     if execucao.modo == ModoExecucao.SERIAL:
         return gih_nucleo.otimizar(inst, semente=execucao.semente, limite_s=LIMITE_S)
@@ -563,7 +618,9 @@ def _executar(s: Session, execucao: ExecucaoOtimizador) -> None:
         _concluir(s, execucao, inicio, {**detalhes, "ajuda": ajuda, "cotas": _cotas(m, None)})
         return
 
-    resultado = _buscar(inst, execucao)
+    resultado, troca = _buscar(inst, execucao)
+    if troca:
+        detalhes["substituicao"] = troca
     # A segunda chave da RN07: o verificador não reaproveita a avaliação que a
     # busca usou. Plano que não passa aqui é defeito, e vira falha — nunca plano.
     problemas = gih_nucleo.verificar_plano(inst, resultado.genes)
@@ -642,7 +699,7 @@ def executar(execucao_id: int, *, origem: str | None = None) -> None:
             _executar(s, execucao)
             detalhes = {
                 "execucao": execucao.id,
-                "modo": str(execucao.modo),
+                "modo": str(execucao.modo),  # o que rodou, depois de uma troca
                 "substituicao": (execucao.detalhes or {}).get("substituicao"),
                 "parametros": execucao.parametros,
                 "viavel": execucao.viavel,

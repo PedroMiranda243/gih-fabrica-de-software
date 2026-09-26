@@ -23,11 +23,26 @@ struct Dispositivo {
     std::size_t memoria = 0;  // bytes
 };
 
-// A GPU que o otimizador usaria, ou por que não há uma: executável compilado sem
-// CUDA, nenhuma placa NVIDIA visível, driver antigo demais para o runtime. Nunca
-// lança: é o que `gih-nucleo versao` pergunta toda vez que a API quer saber os
-// modos (ADR-012).
-bool procurar(Dispositivo& dispositivo, std::string& motivo);
+// Por que não há GPU, num código que a API traduz para quem está na tela (H56):
+// a mensagem do runtime do CUDA serve a quem investiga, e não ao gestor.
+enum class Ausencia {
+    SemCuda,  // o executável foi compilado sem CUDA
+    SemPlaca,  // nenhuma placa NVIDIA visível: sem placa, sem driver, contêiner sem `--gpus`
+    Erro,  // a placa existe, e o runtime falhou ao falar com ela
+};
+
+inline const char* codigo(Ausencia ausencia) {
+    switch (ausencia) {
+        case Ausencia::SemCuda: return "sem_cuda";
+        case Ausencia::SemPlaca: return "sem_placa";
+        case Ausencia::Erro: return "erro";
+    }
+    return "erro";
+}
+
+// A GPU que o otimizador usaria, ou por que não há uma. Nunca lança: é o que
+// `gih-nucleo versao` pergunta toda vez que a API quer saber os modos (ADR-012).
+bool procurar(Dispositivo& dispositivo, Ausencia& ausencia, std::string& motivo);
 
 // Sem GPU, as operações que precisam dela recusam com esta exceção — e o
 // executável, com a saída 1, que é o sinal para a API cair para a CPU (H56).

@@ -687,6 +687,21 @@ spike da issue #123 mediu se o mesmo código compila em Linux e roda **dentro da
   campanha continua mostrando a GPU como indisponível. A transferência medida está em
   [`docs/medicoes/nucleo.md`](medicoes/nucleo.md).
 
+**Adendo (26/09/2026, H56) — sem GPU, o sistema funciona igual:**
+
+- **O arquivo à parte existe: `docker-compose.gpu.yml`.** Ele passa `NUCLEO=cuda` ao build da API, que compila
+  o núcleo no estágio da imagem da NVIDIA, e reserva a placa. Sem ele, o estágio de CPU é o único construído,
+  e a imagem da NVIDIA nem é baixada.
+- **O executável diz por que não há GPU num código**: `sem_cuda`, `sem_placa` ou `erro`. A API o traduz para
+  a tela, e a mensagem do runtime do CUDA fica para quem investiga. Com a placa presente e o modo `cuda` ainda
+  fora do executável, a tela diz isso também: a GPU está lá, e o otimizador nela é da H54c.
+- **A GPU que falha no meio do cálculo cai para a CPU.** O modo é escolhido quando a GPU responde. Se o
+  executável sai com 1 no cálculo, a busca roda de novo no mais rápido que sobrou, e a execução passa a dizer
+  esse modo e a troca (UC08-A4). Os modos dão o mesmo plano (ADR-011): o gestor recebe o mesmo resultado, mais
+  devagar.
+- Conferido em contêiner de verdade, nos três casos: build padrão (`sem_cuda`), com o arquivo da GPU (a RTX
+  4060 aparece na API) e a mesma imagem sem a reserva (`sem_placa`).
+
 ---
 
 ## 6. Ambiente de desenvolvimento

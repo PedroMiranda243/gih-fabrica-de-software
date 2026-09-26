@@ -64,11 +64,14 @@ std::string compilador() {
 }
 
 // Uma linha só, para a API e a medição lerem: `gpu 1 <capacidade> <MiB> <nome>`,
-// ou `gpu 0 <motivo>`.
+// ou `gpu 0 <código> <motivo>` — o código é o que a API traduz (H56).
 std::string linha_da_gpu() {
     gih::gpu::Dispositivo d;
+    gih::gpu::Ausencia ausencia{};
     std::string motivo;
-    if (!gih::gpu::procurar(d, motivo)) return "gpu 0 " + motivo;
+    if (!gih::gpu::procurar(d, ausencia, motivo)) {
+        return std::string("gpu 0 ") + gih::gpu::codigo(ausencia) + " " + motivo;
+    }
     return "gpu 1 " + std::to_string(d.capacidade_maior) + "." + std::to_string(d.capacidade_menor) + " " +
            std::to_string(d.memoria / (1024 * 1024)) + " " + d.nome;
 }
@@ -234,8 +237,9 @@ int otimizar(int argc, char** argv) {
 
 int gpu() {
     gih::gpu::Dispositivo d;
+    gih::gpu::Ausencia ausencia{};
     std::string motivo;
-    if (!gih::gpu::procurar(d, motivo)) throw gih::gpu::SemGpu(motivo);
+    if (!gih::gpu::procurar(d, ausencia, motivo)) throw gih::gpu::SemGpu(motivo);
     std::cout << FORMATO << '\n' << linha_da_gpu() << '\n';
     return 0;
 }

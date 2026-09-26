@@ -8,7 +8,8 @@
 
 namespace gih::gpu {
 
-bool procurar(Dispositivo&, std::string& motivo) {
+bool procurar(Dispositivo&, Ausencia& ausencia, std::string& motivo) {
+    ausencia = Ausencia::SemCuda;
     motivo = "Este executável foi compilado sem CUDA.";
     return false;
 }

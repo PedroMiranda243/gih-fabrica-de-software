@@ -1,0 +1,28 @@
+# A GPU para o otimizador (ADR-012, H56): o núcleo compilado com CUDA, e a placa
+# reservada para a API.
+#
+# **É um arquivo à parte de propósito.** Declarada no docker-compose.yml, a
+# reserva impediria o contêiner de subir numa máquina sem placa NVIDIA, e o
+# README precisa funcionar em qualquer uma (RNF06, H72). Sem este arquivo, o
+# sistema sobe em CPU paralela e a tela diz que a instalação não tem GPU.
+#
+# Uso, da raiz do repositório, numa máquina com placa NVIDIA e o Docker vendo a
+# GPU (no Windows, o Docker Desktop com WSL2 já vê):
+#
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+#
+# Para voltar à CPU, suba de novo sem ele, com --build: a imagem da API é uma
+# só, e é o build que decide qual núcleo vai dentro dela.
+
+services:
+  api:
+    build:
+      args:
+        NUCLEO: cuda
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
