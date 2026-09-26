@@ -1,6 +1,5 @@
 # O núcleo em C++ como ele roda no contêiner da API (ADR-012): para medir o
-# ganho do OpenMP (H53b) e a transferência para a GPU (H54a), e para conferir o
-# núcleo em Linux.
+# ganho do OpenMP (H53b) e o da GPU (H54), e para conferir o núcleo em Linux.
 #
 # Dois estágios, como no spike (parte 3 do `spike/RESULTADO.md`):
 # - **compila** na imagem `devel` da NVIDIA, com o nvcc e o g++ dela. Os três
