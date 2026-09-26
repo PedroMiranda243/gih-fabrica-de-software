@@ -162,6 +162,13 @@ kernel CUDA compilado e conferido contra a CPU.
 ### Sprint 9 — Otimizador: formalização e baseline · 02/11 – 06/11 · 29 pts
 `H45` retreino (5) · `H48` formalizar o problema (5) · `H49` baseline serial (8) · `H50` restrições da campanha (5) · `H52` recusar inviável (3) · `H39` portal do parceiro (3)
 
+> **Adiantada para 25/09 a 26/09**, na semana livre antes do enunciado 6. A H45 já tinha ido com a Sprint 8.
+> Entraram as regras RN10 (o ganho de uma ação) e RN11 (cotas e elegibilidade), decididas na issue #117; a
+> ADR-011 (o genético, a aritmética inteira e o gerador sem estado que deixam as três versões no mesmo
+> plano); o pacote `nucleo/gih_nucleo`; a campanha na API; e a tela. A **H51** — executar e ver o plano —
+> foi junto no modo serial, porque sem ela a tela não teria fluxo. A medição (`docs/medicoes/otimizador.md`)
+> fixa o denominador do *speedup*: 27 s com 2.000 parceiros. A **H39**, de prioridade C, ficou para depois.
+
 ### Sprint 10 — Otimizador integrado e CPU paralela · 09/11 – 13/11 · 30 pts
 `H51` executar e retornar o plano (8) · **`H53a` porte para C++ (8)** · **`H53b` OpenMP (5)** · `H55` escolha de modo (3) · `H56` degradação para CPU (3) · `H58` histórico de execuções (3)
 

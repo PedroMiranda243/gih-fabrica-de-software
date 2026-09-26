@@ -25,7 +25,7 @@ erDiagram
     USUARIO ||--o{ SESSAO_ACESSO : abre
     USUARIO ||--o{ AUDITORIA : gera
     USUARIO ||--o{ IMPORTACAO : realiza
-    USUARIO ||--o{ EXECUCAO_OTIMIZADOR : dispara
+    USUARIO |o--o{ EXECUCAO_OTIMIZADOR : dispara
     USUARIO ||--o{ MENSAGEM : decide
     USUARIO }o--o| PARCEIRO : representa
     USUARIO |o--o| CONFIGURACAO_SEGMENTACAO : ajusta
@@ -38,6 +38,7 @@ erDiagram
     PERIODO ||--o{ HISTORICO_SEGMENTO : delimita
     PERIODO ||--o{ PREVISAO : baseia
     PERIODO ||--o{ TREINO_MODELO : baseia
+    PERIODO ||--o{ EXECUCAO_OTIMIZADOR : baseia
 
     IMPORTACAO ||--o{ METRICA : origina
 
@@ -78,8 +79,8 @@ entidades e mais de cem atributos, a figura ficaria ilegível impressa, que é c
 | **ConfiguracaoSegmentacao** | Os limiares de RN01, configuráveis (RF21) | tamanho do Top N, períodos de tendência, períodos para ser recém-chegado, quem alterou e quando |
 | **Previsao** | Estimativa do modelo para um parceiro | faturamento previsto, probabilidade de queda, versão do modelo |
 | **TreinoModelo** | Uma execução do treino do modelo preditivo (RF27) | autor, situação, período-base, volume de dados, métricas lado a lado com as referências, se entrou em uso, versão em uso depois dele, motivo, pesos |
-| **AcaoComercial** | Tipo de ação que a campanha pode alocar | nome, custo unitário, uplift esperado, situação |
-| **ExecucaoOtimizador** | Uma rodada do otimizador | modo, parâmetros, viabilidade, restrição violada, uplift, custo, tempo |
+| **AcaoComercial** | Tipo de ação que a campanha pode alocar | nome, custo unitário, efeito de crescimento, efeito de retenção (RN10), situação |
+| **ExecucaoOtimizador** | Uma rodada do otimizador (UC08) | autor, situação, modo, parâmetros, período e versão das previsões usadas, semente, início e fim, viabilidade, restrição violada e motivo, ganho, custo, tempo, se foi parcial |
 | **PlanoCampanha** | O plano resultante de uma execução viável | janela de aplicação |
 | **ItemPlano** | Par (parceiro, ação) escolhido pelo otimizador | uplift esperado, custo |
 | **Mensagem** | Comunicação gerada para um parceiro | texto gerado, texto final, estado, autor da decisão, motivo da rejeição |
@@ -126,9 +127,10 @@ treino_modelo(id, situacao, usuario_id*, periodo_base_id*, semente, iniciado_em,
               mape_modelo, mape_ultimo, mape_media_movel, brier_modelo, brier_referencia,
               calibracao_modelo, calibracao_referencia, detalhes, promovido, versao_em_uso,
               motivo, pesos)
-acao_comercial(id, nome, custo_unitario, uplift_esperado_pct, ativa)
-execucao_otimizador(id, usuario_id*, modo, parametros, viavel, restricao_violada, uplift_total,
-                    custo_total, tempo_ms, executada_em)
+acao_comercial(id, nome, custo_unitario, efeito_crescimento, efeito_retencao, ativa)
+execucao_otimizador(id, situacao, usuario_id*, modo, parametros, periodo_base_id*, modelo_versao,
+                    semente, iniciada_em, concluida_em, viavel, restricao_violada, uplift_total,
+                    custo_total, tempo_ms, parcial, motivo, detalhes)
 plano_campanha(id, execucao_id*, aplicacao_inicio, aplicacao_fim)
 item_plano(id, plano_id*, parceiro_id*, acao_id*, uplift_esperado, custo)
 
@@ -369,33 +371,45 @@ A ligação entre treino e previsão é **tracejada** porque não é chave estra
 uso não fica em configuração à parte**: é o que o último treino concluído registra. Duas fontes para a
 mesma resposta acabariam discordando.
 
-**acao_comercial**
+**acao_comercial** — os efeitos entraram na Sprint 9 interna (RN10, issue #117)
 
 | Coluna | Tipo | Chave | Restrição |
 |---|---|---|---|
 | id | serial | **PK** | |
 | nome | varchar(80) | | **único** |
-| custo_unitario | numeric(10,2) | | `CHECK >= 0` |
-| uplift_esperado_pct | double | | |
-| ativa | boolean | | padrão verdadeiro |
+| custo_unitario | numeric(10,2) | | `CHECK > 0` — a violação de orçamento é medida em ações da mais barata (ADR-011) |
+| efeito_crescimento | numeric(5,4) | | fração do faturamento previsto que a ação acrescenta; `CHECK entre 0 e 1` |
+| efeito_retencao | numeric(5,4) | | fração que ela preserva quando o parceiro cairia; `CHECK entre 0 e 1` |
+| ativa | boolean | | padrão verdadeiro; a inativa não entra na campanha |
 
-**execucao_otimizador**
+Os efeitos são `numeric`, e não `double`: o ganho de cada ação é calculado em **centavos inteiros**, e
+`float` mudaria o último centavo conforme o arredondamento binário.
+
+**execucao_otimizador** — passou a registrar a busca em segundo plano na Sprint 9 interna (H49 a H52, ADR-011)
 
 | Coluna | Tipo | Chave | Restrição |
 |---|---|---|---|
 | id | serial | **PK** | |
-| usuario_id | integer | **FK** → usuario | |
+| situacao | enum | | EM_ANDAMENTO, CONCLUIDA, FALHOU — **uma só em andamento**, por índice único parcial |
+| usuario_id | integer | **FK** → usuario | nulo quando a execução veio do terminal |
 | modo | enum | | SERIAL, CPU_PARALELO, GPU |
-| parametros | jsonb | | restrições usadas na rodada |
-| viavel | boolean | | |
-| restricao_violada | varchar(120) | | |
+| parametros | jsonb | | as restrições da rodada: orçamento, máximo de ações, cotas, período de aplicação |
+| periodo_base_id | integer | **FK** → periodo | o período das previsões que deram o ganho |
+| modelo_versao | varchar(40) | | a versão das previsões — com a semente, o que torna o plano reproduzível |
+| semente | integer | | |
+| iniciada_em, concluida_em | timestamptz | | |
+| viavel | boolean | | nulo enquanto roda |
+| restricao_violada | varchar(120) | | o código da restrição que tornou a campanha inviável |
 | uplift_total | numeric(12,2) | | nulo quando inviável |
 | custo_total | numeric(12,2) | | nulo quando inviável |
-| tempo_ms | integer | | base do benchmark (RF33, RF34) |
-| executada_em | timestamptz | | padrão `now()` |
+| tempo_ms | integer | | base do benchmark (RF33, RF34); nulo enquanto roda |
+| parcial | boolean | | o limite de tempo interrompeu a busca (UC08-E2) |
+| motivo | text | | por que é inviável, ou por que falhou, em texto para a pessoa |
+| detalhes | jsonb | | elegíveis e excluídos por motivo, cotas em contagem, folgas, ganho do guloso |
 
 `CHECK (viavel AND restricao_violada IS NULL) OR (NOT viavel AND restricao_violada IS NOT NULL)` — é RN07
-no banco: execução inviável **tem** que dizer o que violou.
+no banco: execução inviável **tem** que dizer o que violou. E mais dois, no molde do treino: execução
+concluída tem resultado e tempo; execução que falhou tem motivo.
 
 **plano_campanha**
 
@@ -456,12 +470,13 @@ Cada índice existe por causa de uma consulta concreta, não por precaução (RN
 | `ix_mensagem_estado` | mensagem | estado | Fila de aprovação (RF37) |
 | `ix_previsao_periodo_versao` | previsao | periodo_base_id, modelo_versao | As previsões de uma versão sobre um período, para a rede toda |
 | `uq_treino_um_em_andamento` | treino_modelo | situacao, só onde é `EM_ANDAMENTO` (único, parcial) | Um treino por vez, travado pelo banco e não pela memória do processo (ADR-010) |
+| `uq_execucao_uma_em_andamento` | execucao_otimizador | situacao, só onde é `EM_ANDAMENTO` (único, parcial) | Um otimizador por vez, pelo mesmo motivo (ADR-011) |
 
 ---
 
 ## 4. Tipos enumerados
 
-Oito tipos `ENUM` do PostgreSQL, em vez de texto livre. O banco recusa valor fora da lista, o que é mais
+Nove tipos `ENUM` do PostgreSQL, em vez de texto livre. O banco recusa valor fora da lista, o que é mais
 forte que uma validação de aplicação que alguém pode esquecer de chamar.
 
 | Tipo | Valores |
@@ -474,6 +489,7 @@ forte que uma validação de aplicação que alguém pode esquecer de chamar.
 | `modoexecucao` | SERIAL, CPU_PARALELO, GPU |
 | `estadomensagem` | PENDENTE, APROVADA, REJEITADA |
 | `situacaotreino` | EM_ANDAMENTO, CONCLUIDO, FALHOU |
+| `situacaoexecucao` | EM_ANDAMENTO, CONCLUIDA, FALHOU |
 
 > **Armadilha registrada:** o `autogenerate` do Alembic **não** remove tipos ENUM no `downgrade` — só
 > derruba as tabelas. Sem acrescentar `DROP TYPE` à mão, reverter e reaplicar falha com *type already
@@ -483,7 +499,7 @@ forte que uma validação de aplicação que alguém pode esquecer de chamar.
 
 ## 5. O que o banco garante sozinho
 
-Onze restrições `CHECK` que impedem estado inválido independentemente do código da aplicação. É a diferença
+Catorze restrições `CHECK` que impedem estado inválido independentemente do código da aplicação. É a diferença
 entre uma regra que vale e uma regra que valeria se ninguém esquecesse de chamá-la.
 
 | Restrição | Garante |
@@ -494,8 +510,11 @@ entre uma regra que vale e uma regra que valeria se ninguém esquecesse de cham�
 | `ck_metrica_faturamento_nao_negativo` | Faturamento ≥ 0 |
 | `ck_metrica_pedidos_nao_negativo` | Pedidos ≥ 0 |
 | `ck_previsao_probabilidade` | Probabilidade entre 0 e 1 |
-| `ck_acao_custo_nao_negativo` | Custo de ação ≥ 0 |
+| `ck_acao_custo_positivo` | Custo de ação > 0 — a violação de orçamento é medida em ações da mais barata (ADR-011) |
+| `ck_acao_efeitos_entre_0_e_1` | Os dois efeitos da ação são frações (RN10) |
 | `ck_execucao_inviavel_tem_motivo` | Execução inviável **tem** motivo registrado (RN07) |
+| `ck_execucao_concluida_tem_resultado` | Execução concluída **diz** se é viável, e quanto tempo levou |
+| `ck_execucao_falha_tem_motivo` | Execução que falhou **diz** por quê |
 | `ck_mensagem_decisao_tem_autor` | Mensagem decidida **tem** autor e data (RN06) |
 | `ck_treino_concluido_tem_versao` | Treino concluído **diz** qual versão ficou em uso (UC07-A1) |
 | `ck_treino_falho_tem_motivo` | Treino que falhou **diz** por quê |
@@ -511,7 +530,7 @@ O esquema não está só desenhado: está aplicado e em uso. O ambiente sobe com
 
 ```
 $ docker compose exec api alembic current
-d2c9b1a21c53 (head)
+f4b7a9c31e20 (head)
 ```
 
 **Tabelas criadas** (`docker compose exec postgres psql -U gih -d gih -c "\dt"`):
@@ -550,18 +569,20 @@ qual versão do esquema está aplicada.
 |---|---|
 | Tabelas de domínio | 18 |
 | Chaves primárias | 18 |
-| Chaves estrangeiras | 24 |
+| Chaves estrangeiras | 25 |
 | Restrições `UNIQUE` | 11 |
-| Restrições `CHECK` declaradas | 15 |
-| Índices | 39 |
-| Tipos `ENUM` | 8 |
+| Restrições `CHECK` declaradas | 18 |
+| Índices | 40 |
+| Tipos `ENUM` | 9 |
 
-Medido em 24/09/2026, contra o banco no ar. **Na Sprint 02 eram 16, 16, 21, 11, 9, 34 e 7.** A diferença é
-de três migrações: o nome normalizado do parceiro com o índice de trigrama (Sprint 6, +1 índice), a
-configuração da segmentação (Sprint 7, +1 tabela, +1 chave estrangeira, +4 `CHECK`, +1 índice) e o treino
+Medido em 26/09/2026, contra o banco no ar. **Na Sprint 02 eram 16, 16, 21, 11, 9, 34 e 7.** A diferença é
+de quatro migrações: o nome normalizado do parceiro com o índice de trigrama (Sprint 6, +1 índice), a
+configuração da segmentação (Sprint 7, +1 tabela, +1 chave estrangeira, +4 `CHECK`, +1 índice), o treino
 do modelo (Sprint 05 da disciplina, +1 tabela, +2 chaves estrangeiras, +2 `CHECK`, +3 índices contando o da
-chave primária, +1 enum). O índice único parcial do treino não aparece entre as restrições `UNIQUE`: é
-índice, e não restrição — o PostgreSQL só aceita condição (`WHERE`) em índice.
+chave primária, +1 enum) e a campanha (Sprint 9 interna: +1 chave estrangeira, o período-base da execução;
++3 `CHECK`, contando o custo positivo que substituiu o não negativo; +1 índice; +1 enum). Os índices únicos
+parciais do treino e da execução não aparecem entre as restrições `UNIQUE`: são índices, e não restrições —
+o PostgreSQL só aceita condição (`WHERE`) em índice.
 
 **O esquema é gerado por migração versionada, não por script solto.** Isso é o que permite qualquer
 integrante chegar ao mesmo estado a partir de um clone limpo, e é o que torna a evolução do banco
@@ -574,6 +595,11 @@ auditável no histórico do repositório.
 O ciclo de reverter e reaplicar foi testado **duas vezes**, e não uma: a falha de ENUM da seção 4 só
 aparece na segunda execução. A migração do treino do modelo, que cria o enum `situacaotreino`, passou pelo
 mesmo ciclo em 24/09/2026, num banco descartável.
+
+A da campanha, que cria o enum `situacaoexecucao`, passou em 26/09/2026 — e com uma execução do otimizador
+gravada antes de cada reversão, **sem autor e falha**, que o esquema anterior não representa. O downgrade
+apaga essas execuções antes de exigir de novo autor, resultado e tempo; sem isso, o `resetar_banco.py`, que
+reverte tudo até a base, quebraria no primeiro banco que tivesse uma otimização interrompida.
 
 ```bash
 alembic upgrade head     # aplica
@@ -595,5 +621,5 @@ implantar.
 | As entidades em código | [`api/app/modelos.py`](../api/app/modelos.py) |
 | A migração que cria o esquema | [`api/migrations/versions/`](../api/migrations/versions/) |
 | Diagrama de classes, incluindo serviços e núcleo | [`10-diagrama-de-classes.md`](10-diagrama-de-classes.md) |
-| Decisões de arquitetura (ADR-001 a ADR-010) | [`07-arquitetura-preliminar.md`](07-arquitetura-preliminar.md) |
+| Decisões de arquitetura (ADR-001 a ADR-011) | [`07-arquitetura-preliminar.md`](07-arquitetura-preliminar.md) |
 | Massa de demonstração sintética | [`scripts/gerar_dados_sinteticos.py`](../scripts/gerar_dados_sinteticos.py) |

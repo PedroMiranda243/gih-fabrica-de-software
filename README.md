@@ -220,6 +220,10 @@ As regras são as da tela: com menos de 8 períodos na base o treino é recusado
 só entra em uso se superar as referências (UC07-A1). O `scripts/resetar_banco.py` já treina depois de
 segmentar, e a base de demonstração nasce com previsão.
 
+A campanha (UC08) se calcula pela tela **Campanha**, só pelo Gestor; o Analista consulta. O plano parte das
+previsões da versão em uso: sem modelo treinado, a tela diz isso e não calcula. A busca roda em segundo
+plano, uma por vez, e a campanha inviável é registrada sem plano, dizendo a restrição e quanto falta (RN07).
+
 #### O administrador inicial
 
 **Não existe senha padrão.** Este repositório é público, e um `admin/admin` no código seria porta aberta
@@ -246,6 +250,7 @@ cd api
 python -m venv .venv && .venv/Scripts/activate      # Linux/Mac: source .venv/bin/activate
 pip install -r requirements-dev.txt -r ../modelo/requirements.txt
 pip install --no-deps -e ../modelo                   # o modelo preditivo, que a API chama
+pip install --no-deps -e ../nucleo                   # o otimizador serial, idem
 alembic upgrade head
 uvicorn app.main:app --reload
 ```
@@ -322,12 +327,15 @@ com `criar-usuario`, como acima.
 ### Medição de desempenho
 
 ```bash
-api/.venv/Scripts/python scripts/medir_painel.py
+api/.venv/Scripts/python scripts/medir_painel.py        # o painel com 5.000 parceiros (H40)
+api/.venv/Scripts/python scripts/medir_modelo.py        # o modelo contra as referências (H46)
+api/.venv/Scripts/python scripts/medir_otimizador.py    # o otimizador contra o guloso e o teto (H49)
 ```
 
-Mede o tempo de resposta do painel com 5.000 parceiros (H40, RNF03) e confere por `EXPLAIN` que as
-consultas têm índice que as atenda. Cria o banco `gih_medicao` na mesma instância e gera a massa lá — **o
-banco de trabalho não é tocado**, então dá para medir com a aplicação aberta em outra janela.
+O primeiro mede o tempo de resposta do painel (RNF03) e confere por `EXPLAIN` que as consultas têm índice
+que as atenda; o último fixa o tempo do baseline serial, que é o denominador do *speedup* (RNF02). Os três
+criam o banco `gih_medicao` na mesma instância e geram a massa lá — **o banco de trabalho não é tocado**,
+então dá para medir com a aplicação aberta em outra janela.
 
 O resultado é gravado em [`docs/medicoes/`](docs/medicoes/), com o comando e a semente que o produzem.
 

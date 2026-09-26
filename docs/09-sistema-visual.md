@@ -185,7 +185,7 @@ Aprovação registrada na issue **#8**. Só depois disso começa o CSS em `web/`
 
 ## 9. Telas e navegação
 
-Onze telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
+Doze telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
 passo, um recorte filtrado precisa poder ser mandado por link, e um cadastro precisa poder ser aberto
 direto — tudo isso depende de a tela estar na URL, e não num estado escondido da página.
 
@@ -205,6 +205,7 @@ flowchart TD
     Conta["Conta do usuário<br/>/usuarios/:id"]
     Configuracao["Limiares<br/>/configuracao"]
     Modelo["Modelo preditivo<br/>/modelo"]
+    Campanha["Campanha<br/>/campanha"]
 
     Login -- "entrar" --> Menu
     Menu -. "todos" .-> Painel
@@ -213,6 +214,7 @@ flowchart TD
     Menu -. "administrador" .-> Usuarios
     Menu -. "administrador" .-> Configuracao
     Menu -. "administrador e gestor" .-> Modelo
+    Menu -. "gestor e analista" .-> Campanha
     Painel -- "base vazia:<br/>importar um relatório" --> Importacao
     Importacao -- "importação concluída:<br/>ver no painel" --> Painel
     Parceiros -- "nome do parceiro" --> Cadastro
@@ -228,6 +230,8 @@ flowchart TD
     NovoUsuario -- "login em uso:<br/>abrir a conta" --> Conta
     Conta -- "voltar, com o<br/>mesmo filtro" --> Usuarios
     Modelo -- "treinar:<br/>acompanha até terminar" --> Modelo
+    Campanha -- "calcular:<br/>acompanha até o plano" --> Campanha
+    Campanha -- "parceiro do plano" --> Cadastro
 ```
 
 **O menu lateral aparece como um nó só**, com setas tracejadas: ele fica visível em todas as telas depois do
@@ -238,8 +242,10 @@ caminhos que **a própria tela** oferece.
 **O menu mostra só o que o perfil abre.** A lista vem do servidor — a sessão traz as telas do perfil, lidas
 das permissões das próprias rotas —, e a interface só desenha o que ouviu (regras 2.4 e 2.5 do
 `CLAUDE.md`). O Administrador vê Painel, Importação (só o histórico, pelo RF13), Modelo, Usuários e Limiares; o
-Gestor vê Painel, Importação, Parceiros e Modelo; o Analista, Painel, Importação e Parceiros — ele lê a
-previsão no cadastro do parceiro (RF28), mas não treina o modelo (UC07). Esconder o item não é controle de acesso: quem abre o
+Gestor vê Painel, Importação, Parceiros, Campanha e Modelo; o Analista, Painel, Importação, Parceiros e
+Campanha — ele lê a previsão no cadastro do parceiro (RF28) e consulta o plano, mas não treina o modelo
+(UC07) nem calcula a campanha (UC08). Dentro da tela, o botão de calcular e o de editar o catálogo seguem a
+mesma regra: a API diz a quem pergunta se ele pode, lendo a permissão da própria rota. Esconder o item não é controle de acesso: quem abre o
 endereço direto recebe a recusa da rota.
 
 Três comportamentos que o desenho não mostra, e que valem para todas as telas:
@@ -250,7 +256,7 @@ Três comportamentos que o desenho não mostra, e que valem para todas as telas:
   exportar é a mesma consulta em outro formato. A lista de usuários abre nos ativos; "todas as situações"
   tem valor próprio no endereço.
 - **Estimativa não se veste de medição.** A previsão do modelo aparece com a etiqueta "Estimativa", o
-  período de onde parte e a versão que a produziu; na série do parceiro, o trecho até o próximo período é
+  período de onde parte e a versão que a produziu — e o ganho esperado do plano de campanha também; na série do parceiro, o trecho até o próximo período é
   tracejado, com marcador vazado e legenda — cor diferente sozinha não bastaria (H44).
 - **Toda tela vazia oferece a saída.** Base sem dados leva à importação; parceiro ou usuário inexistente
   leva de volta à lista — nunca uma tela em branco sem explicação (seção 6).
