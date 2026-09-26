@@ -364,11 +364,11 @@ frente com alguma, a resposta já está aqui.
   rápido que o mesmo algoritmo em Python, com o mesmo plano (H53a). O ganho do OpenMP e da GPU se lê contra
   o C++ serial; o RNF02 pede o Python como baseline, e o benchmark mostra as duas colunas.
 
-- **No contêiner, mais threads não é mais rápido.** Com 8 threads, uma por núcleo físico, o OpenMP ganhou
-  6,0x do C++ serial com 2.000 parceiros, numa faixa estreita. Com 16, todas as threads lógicas, a mediana
-  caiu para 4,6x e uma execução ficou em 1,0x: o contêiner passa a disputar a CPU com o próprio Windows.
-  Use o número de núcleos físicos, não o padrão do OpenMP. Ver `docs/medicoes/nucleo.md` e o adendo da
-  ADR-011.
+- **No contêiner, mais threads não é mais previsível.** Com 8 threads, uma por núcleo físico, o OpenMP
+  ganhou do C++ serial 6,0x numa medição e 6,3x na seguinte, com 2.000 parceiros e faixa estreita. Com 16,
+  todas as threads lógicas, a mediana foi de 4,6x numa e 7,2x na outra, e houve execução em 1,0x: o
+  contêiner disputa a CPU com o próprio Windows. Use o número de núcleos físicos, não o padrão do OpenMP.
+  Ver `docs/medicoes/nucleo.md` e o adendo da ADR-011.
 
 ### Como testar de verdade
 

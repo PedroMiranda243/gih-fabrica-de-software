@@ -598,11 +598,15 @@ independentes. Faltava decidir três coisas antes da primeira linha (H48, H49):
 - **O limite de tempo é a única diferença visível.** Na serial, a busca interrompida encerra a partida em
   curso e não começa as seguintes; no OpenMP, todas param na mesma geração. As duas devolvem o melhor plano
   viável encontrado e o marcam como parcial.
-- **Tantas threads quantos núcleos físicos.** No contêiner, com 8 threads, o ganho sobre o C++ serial foi de
-  **6,0x** com 2.000 parceiros, na faixa de 5,3x a 6,5x. Com 16, todas as threads lógicas da máquina, a
-  mediana caiu para 4,6x e a faixa foi de 1,0x a 6,9x: o contêiner passa a disputar a CPU com o próprio
-  Windows. A espera passiva nas barreiras tira o pico, mas deixa tudo mais lento. A H55 faz a API pedir o
-  número de núcleos físicos. Medição completa em [`docs/medicoes/nucleo.md`](medicoes/nucleo.md).
+- **Tantas threads quantos núcleos físicos.** No contêiner, com 2.000 parceiros, duas medições:
+  - com 8 threads, o ganho sobre o C++ serial foi de **6,0x** numa e **6,3x** na outra, sempre em faixa
+    estreita (5,3x a 7,0x, somadas as duas);
+  - com 16, todas as threads lógicas da máquina, a mediana foi de 4,6x numa e 7,2x na outra, e a faixa foi
+    de 1,0x a 8,7x. O contêiner passa a disputar a CPU com o próprio Windows.
+
+  Um número que muda assim de uma medição para a outra não vai para a frente da banca. A espera passiva nas
+  barreiras tira o pico, mas deixa tudo mais lento. A H55 faz a API pedir o número de núcleos físicos.
+  Medição mais recente em [`docs/medicoes/nucleo.md`](medicoes/nucleo.md).
 
 ---
 
@@ -667,6 +671,21 @@ spike da issue #123 mediu se o mesmo código compila em Linux e roda **dentro da
   referência para medir e para rodar o sistema
 - **Custo assumido:** o build com CUDA baixa a imagem de compilação da NVIDIA, de alguns GB, sob licença
   proprietária — a mesma exceção do CUDA Toolkit na regra 2.8 do `CLAUDE.md`
+
+**Adendo (26/09/2026, H54a) — a GPU no executável:**
+
+- **O CUDA entra num arquivo só, `gpu.cu`**, compilado quando há toolkit: pelo `construir.bat`, se acha o
+  `nvcc`, e pela imagem do núcleo. Sem ele, `sem_gpu.cpp` responde que não há GPU. A CI compila só os `.cpp`:
+  não tem placa nem toolkit.
+- **A saída 1 passa a ter dono.** É "o pedido precisa de GPU, e não há" — executável sem CUDA, nenhuma placa
+  visível, driver antigo —, com o motivo no erro padrão. `gih-nucleo versao` diz a GPU ou o motivo, e
+  `gih-nucleo gpu` recusa com a saída 1: é o que a API pergunta (H56).
+- **As estruturas na GPU seguem o layout da CPU**: a tabela de ganho achatada, em centavos, e os genes de um
+  byte. A população tem dois buffers, a geração atual e a seguinte, trocados por ponteiro, que ficam na placa
+  a busca inteira (ADR-006, H54c).
+- **O modo `cuda` só aparece nos modos do executável com a H54c**, quando `otimizar` rodar na GPU. Até lá, a
+  campanha continua mostrando a GPU como indisponível. A transferência medida está em
+  [`docs/medicoes/nucleo.md`](medicoes/nucleo.md).
 
 ---
 

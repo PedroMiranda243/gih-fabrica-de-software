@@ -201,7 +201,10 @@ jobs:
       # O executável em C++ (H53a), com os avisos ligados: aviso ignorado no
       # núcleo é defeito que aparece só na GPU, onde é mais caro de achar. Com
       # OpenMP (H53b): o runner tem poucos núcleos, mas a identidade com o
-      # serial se confere com qualquer número de threads.
+      # serial se confere com qualquer número de threads. Sem CUDA (H54a): o
+      # runner não tem placa nem toolkit, e o gpu.cu é compilado na imagem do
+      # núcleo (nucleo/Dockerfile); aqui, o executável diz que não há GPU, e os
+      # testes da recusa rodam do mesmo jeito.
       - name: Compilar o núcleo em C++
         working-directory: nucleo
         run: |

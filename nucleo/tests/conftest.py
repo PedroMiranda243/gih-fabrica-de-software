@@ -1,11 +1,30 @@
-"""Instâncias de teste: pequenas o bastante para a enumeração conferir o ótimo."""
+"""Instâncias de teste — pequenas o bastante para a enumeração conferir o ótimo — e o
+executável em C++.
+
+Sem o executável compilado, os testes que o usam são pulados: quem mexe só no
+Python não precisa do compilador. **Na CI não**: lá `GIH_NUCLEO_OBRIGATORIO=1`, e
+a falta dele reprova.
+"""
 from __future__ import annotations
 
+import os
 import random
 
 import pytest
 
-from gih_nucleo import SEM_CATEGORIA, Instancia
+from gih_nucleo import SEM_CATEGORIA, Instancia, nativo
+
+OBRIGATORIO = os.environ.get("GIH_NUCLEO_OBRIGATORIO") == "1"
+
+
+@pytest.fixture(scope="session")
+def executavel():
+    caminho = nativo.localizar()
+    if caminho is None:
+        if OBRIGATORIO:
+            pytest.fail("O executável gih-nucleo não foi encontrado, e aqui ele é obrigatório.")
+        pytest.skip("gih-nucleo não compilado — ver nucleo/construir.bat ou o g++ do README.")
+    return caminho
 
 
 def sortear_instancia(

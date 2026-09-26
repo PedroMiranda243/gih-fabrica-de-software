@@ -15,6 +15,7 @@ Dockerfile  text eol=lf
 *.cpp       text eol=lf
 *.cu        text eol=lf
 *.hpp       text eol=lf
+*.cuh       text eol=lf
 
 # Estes sao executados pelo cmd do Windows e precisam de CRLF.
 *.bat       text eol=crlf
