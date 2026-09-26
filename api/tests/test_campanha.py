@@ -620,6 +620,40 @@ def test_o_historico_lista_da_mais_recente_para_a_mais_antiga(base, gestor):
     assert pagina["itens"][0]["itens"] is None  # o plano só vem na consulta de uma
 
 
+def test_o_historico_traz_o_que_o_rf34_pede(base, gestor):
+    """Autor, data, parâmetros, modo, tempo e resultado de cada execução (H58)."""
+    base(_seis())
+    viavel = _calcular(gestor, modo="SERIAL")
+    inviavel = _calcular(gestor, orcamento="10.00", cota_cauda_longa="1")
+    por_id = {e["id"]: e for e in gestor.get("/api/otimizacoes").json()["itens"]}
+
+    e = por_id[viavel["id"]]
+    assert e["autor"] == "Gestora" and e["iniciada_em"] and e["concluida_em"]
+    assert e["parametros"]["orcamento"] == "500.00" and e["parametros"]["modo"] == "SERIAL"
+    assert e["modo"] == "SERIAL" and e["tempo_ms"] is not None
+    assert e["viavel"] is True and e["acoes"] == viavel["acoes"]
+    assert e["uplift_total"] == viavel["uplift_total"]
+
+    r = por_id[inviavel["id"]]
+    assert r["viavel"] is False and r["restricao_violada"] and r["motivo"]
+
+
+def test_o_administrador_ve_o_historico_mas_nao_abre_o_plano(
+    base, gestor, criar_usuario, autenticar
+):
+    """RF34 e UC08: o histórico é dele também; o plano, parceiro a parceiro, não."""
+    base(_seis())
+    execucao = _calcular(gestor)
+    criar_usuario(login="admin2", perfil=Perfil.ADMINISTRADOR)
+    admin = autenticar("admin2")
+
+    pagina = admin.get("/api/otimizacoes")
+    assert pagina.status_code == 200
+    assert [e["id"] for e in pagina.json()["itens"]] == [execucao["id"]]
+    assert pagina.json()["itens"][0]["itens"] is None
+    assert admin.get(f"/api/otimizacoes/{execucao['id']}").status_code == 403
+
+
 def test_catalogo_cria_edita_e_audita(base, gestor):
     base(_seis())
     nova = {

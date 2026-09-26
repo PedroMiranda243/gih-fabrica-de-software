@@ -40,6 +40,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.campanha__historico {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--txt-13);
+}
+
 /* A ajuda do modo diz o que o escolhido é e por que os outros faltam: em linha
    larga demais, ela vira uma faixa que ninguém lê. */
 .campanha__modo {

@@ -23,15 +23,16 @@ import Campo from "../componentes/Campo";
 import { Esqueleto } from "../componentes/Carregando";
 import Confirmacao from "../componentes/Confirmacao";
 import EstadoVazio from "../componentes/EstadoVazio";
-import Segmento from "../componentes/Segmento";
+import PlanoDeCampanha from "../componentes/PlanoDeCampanha";
 import {
   comoDataHora,
-  comoDecimal,
   comoDinheiro,
   comoFracao,
   comoInteiro,
   comoPeriodo,
   lerReais,
+  MODOS_DE_EXECUCAO,
+  NOME_MODO,
   paraFracao,
   TRACO,
 } from "../formato";
@@ -45,21 +46,6 @@ export const INTERVALO_MS = 2000;
    uma do meio, e o React reaproveitaria o campo errado. */
 let proximaChave = 0;
 const novaCota = () => ({ chave: ++proximaChave, categoria_id: "", minimo: "", maximo: "" });
-
-/* Na ordem em que aceleram, a mesma das séries do benchmark (docs/09): o rótulo
-   do seletor, o nome no meio da frase e o que o modo é. */
-const MODOS = [
-  ["SERIAL", "Serial", "serial", "A referência, em Python: o mesmo plano, em muito mais tempo. Serve para comparar."],
-  ["CPU_PARALELO", "CPU paralelo", "CPU paralelo", "O núcleo em C++, com os núcleos do processador em paralelo."],
-  ["GPU", "GPU", "GPU", "O núcleo em CUDA, na placa de vídeo."],
-];
-const ROTULO_DO_MODO = Object.fromEntries(MODOS.map(([modo, rotulo]) => [modo, rotulo]));
-const NOME_DO_MODO = Object.fromEntries(MODOS.map(([modo, , nome]) => [modo, nome]));
-
-/** Abaixo de um segundo, em milissegundos: "0,1 s" esconderia a diferença entre os modos. */
-function comoDuracao(ms) {
-  return ms < 1000 ? `${comoInteiro(ms)} ms` : `${comoDecimal(ms / 1000, 1)} s`;
-}
 
 const MOTIVOS_FORA = [
   ["historico_curto", "com histórico curto"],
@@ -247,7 +233,13 @@ export default function Campanha() {
       </section>
 
       {acompanhando && <Andamento execucao={acompanhando} />}
-      {!acompanhando && plano && <Plano execucao={plano} />}
+      {!acompanhando && plano && <PlanoDeCampanha execucao={plano} />}
+      {estado.ultima && (
+        <p className="campanha__historico">
+          <Link to="/execucoes">Ver as execuções anteriores</Link>, com quem calculou, os parâmetros e o
+          resultado de cada uma.
+        </p>
+      )}
 
       <Catalogo estado={estado} aoMudar={() => setRecarga((r) => r + 1)} />
     </>
@@ -375,8 +367,8 @@ function Restricoes({
             `Calcular o plano com orçamento de ${comoDinheiro(lerReais(valores.orcamento))} e até ` +
             `${valores.maximo_acoes || TRACO} ações, ` +
             (valores.modo
-              ? `no modo ${NOME_DO_MODO[valores.modo]}`
-              : `no modo mais rápido disponível (${NOME_DO_MODO[estado.modo_automatico]})`) +
+              ? `no modo ${NOME_MODO[valores.modo]}`
+              : `no modo mais rápido disponível (${NOME_MODO[estado.modo_automatico]})`) +
             "? O cálculo roda em segundo plano; o plano nunca passa de nenhuma restrição."
           }
           acao="Calcular"
@@ -404,12 +396,12 @@ function Restricoes({
  */
 function ModoDeExecucao({ estado, valor, aoMudar }) {
   const daApi = Object.fromEntries((estado.modos ?? []).map((m) => [m.modo, m]));
-  const escolhido = MODOS.find(([modo]) => modo === valor);
+  const escolhido = MODOS_DE_EXECUCAO.find(([modo]) => modo === valor);
   const ajuda = [
     escolhido
       ? escolhido[3]
-      : `Sem escolha, roda o mais rápido disponível nesta instalação: ${NOME_DO_MODO[estado.modo_automatico]}.`,
-    ...MODOS.filter(([modo]) => daApi[modo] && !daApi[modo].disponivel).map(
+      : `Sem escolha, roda o mais rápido disponível nesta instalação: ${NOME_MODO[estado.modo_automatico]}.`,
+    ...MODOS_DE_EXECUCAO.filter(([modo]) => daApi[modo] && !daApi[modo].disponivel).map(
       ([modo, rotulo]) => `${rotulo}: ${daApi[modo].motivo}`,
     ),
   ].join(" ");
@@ -418,8 +410,8 @@ function ModoDeExecucao({ estado, valor, aoMudar }) {
     <div className="campanha__modo">
       <Campo id="modo" rotulo="Modo de execução" ajuda={ajuda}>
         <select id="campo-modo" value={valor} onChange={(e) => aoMudar(e.target.value)}>
-          <option value="">Automático ({NOME_DO_MODO[estado.modo_automatico]})</option>
-          {MODOS.map(([modo, rotulo]) => {
+          <option value="">Automático ({NOME_MODO[estado.modo_automatico]})</option>
+          {MODOS_DE_EXECUCAO.map(([modo, rotulo]) => {
             const disponivel = Boolean(daApi[modo]?.disponivel);
             return (
               <option key={modo} value={modo} disabled={!disponivel}>
@@ -507,183 +499,12 @@ function Andamento({ execucao }) {
       <p className="aviso__titulo">Calculando o plano…</p>
       <p className="aviso__ajuda">
         Iniciado {comoDataHora(execucao.iniciada_em)}
-        {execucao.autor ? ` por ${execucao.autor}` : " pelo terminal"}, no modo {NOME_DO_MODO[execucao.modo]}.
+        {execucao.autor ? ` por ${execucao.autor}` : " pelo terminal"}, no modo {NOME_MODO[execucao.modo]}.
         A tela se atualiza sozinha quando o cálculo terminar; você pode sair e voltar.
       </p>
       {execucao.substituicao && <p className="aviso__ajuda">{execucao.substituicao}</p>}
       <div className="campanha__barra-andamento" aria-hidden="true" />
     </div>
-  );
-}
-
-function Plano({ execucao }) {
-  if (execucao.situacao === "FALHOU") {
-    return (
-      <div className="aviso" role="alert">
-        <p className="aviso__titulo">O cálculo falhou.</p>
-        <p className="aviso__ajuda">{execucao.motivo}</p>
-      </div>
-    );
-  }
-  if (execucao.viavel === false) {
-    return (
-      <section className="painel" aria-labelledby="titulo-plano">
-        <div className="painel__cabecalho">
-          <h2 className="painel__titulo" id="titulo-plano">
-            Plano recomendado
-          </h2>
-          <span className="painel__nota">{comoDataHora(execucao.concluida_em)}</span>
-        </div>
-        <div className="campanha__corpo">
-          <div className="aviso campanha__inviavel">
-            <p className="aviso__titulo">Sem solução viável. {execucao.motivo}</p>
-            {execucao.ajuda && <p className="aviso__ajuda">{execucao.ajuda}</p>}
-            <p className="aviso__ajuda">O sistema não entrega plano que viole restrição (RN07).</p>
-          </div>
-          <Cotas cotas={execucao.cotas} />
-        </div>
-      </section>
-    );
-  }
-
-  const p = execucao.parametros;
-  const melhora =
-    execucao.ganho_guloso && Number(execucao.ganho_guloso) > 0
-      ? Number(execucao.uplift_total) / Number(execucao.ganho_guloso) - 1
-      : null;
-
-  return (
-    <section className="painel" aria-labelledby="titulo-plano">
-      <div className="painel__cabecalho">
-        <h2 className="painel__titulo" id="titulo-plano">
-          Plano recomendado
-        </h2>
-        <span className="etiqueta-estimativa">Estimativa</span>
-        <span className="painel__nota num">
-          {comoInteiro(execucao.acoes)} ações · {comoDinheiro(execucao.custo_total)} de{" "}
-          {comoDinheiro(p.orcamento)} · ganho esperado {comoDinheiro(execucao.uplift_total)}
-        </span>
-      </div>
-
-      <div className="campanha__corpo campanha__resumo">
-        {execucao.parcial && (
-          <p className="campanha__parcial">
-            O cálculo atingiu o limite de tempo: este é o melhor plano viável encontrado até ali.
-          </p>
-        )}
-        {execucao.substituicao && <p className="campanha__parcial">{execucao.substituicao}</p>}
-        <dl className="campanha__fatos">
-          <dt>Previsões</dt>
-          <dd>
-            {execucao.modelo_versao}, com dados até {comoPeriodo(execucao.periodo_base)}
-          </dd>
-          <dt>Aplicação</dt>
-          <dd>{comoPeriodo({ data_inicio: p.aplicacao_inicio, data_fim: p.aplicacao_fim })}</dd>
-          <dt>Folga</dt>
-          <dd className="num">
-            {comoDinheiro(execucao.folga_orcamento)} do orçamento · {comoInteiro(execucao.folga_acoes)}{" "}
-            {execucao.folga_acoes === 1 ? "ação" : "ações"}
-          </dd>
-          <dt>Contra o guloso</dt>
-          <dd className="num">
-            {melhora === null
-              ? TRACO
-              : melhora > 0.00005
-                ? `${comoFracao(melhora)} acima do plano guloso (${comoDinheiro(execucao.ganho_guloso)})`
-                : `igual ao plano guloso (${comoDinheiro(execucao.ganho_guloso)})`}
-          </dd>
-          <dt>Cálculo</dt>
-          <dd className="num">
-            {ROTULO_DO_MODO[execucao.modo]}
-            {execucao.threads ? `, ${comoInteiro(execucao.threads)} threads` : ""} ·{" "}
-            {comoDuracao(execucao.tempo_ms)} · {comoDataHora(execucao.concluida_em)}
-            {execucao.autor ? ` · ${execucao.autor}` : ""}
-          </dd>
-        </dl>
-        <Cotas cotas={execucao.cotas} />
-      </div>
-
-      {execucao.itens?.length ? (
-        <div className="tabela-rolagem">
-          <table className="tabela campanha__itens">
-            <caption className="so-leitor">Ações do plano, do maior ganho esperado para o menor</caption>
-            <thead>
-              <tr>
-                <th scope="col">Parceiro</th>
-                <th scope="col">Segmento</th>
-                <th scope="col">Categoria</th>
-                <th scope="col">Cauda longa</th>
-                <th scope="col">Ação</th>
-                <th scope="col" className="numerica">
-                  Custo
-                </th>
-                <th scope="col" className="numerica">
-                  Ganho esperado
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {execucao.itens.map((item) => (
-                <tr key={item.parceiro_id}>
-                  <td className="nome">
-                    <Link className="nome__link" to={`/parceiros/${item.parceiro_id}`}>
-                      {item.parceiro}
-                    </Link>
-                  </td>
-                  <td>
-                    <Segmento valor={item.segmento} />
-                  </td>
-                  <td>{item.categoria ?? "Pendente"}</td>
-                  <td>{item.cauda_longa ? "Sim" : "Não"}</td>
-                  <td>{item.acao}</td>
-                  <td className="numerica">{comoDinheiro(item.custo)}</td>
-                  <td className="numerica">{comoDinheiro(item.ganho)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <EstadoVazio
-          titulo="O plano não tem ações"
-          texto="Nenhuma ação do catálogo cabe no orçamento com ganho esperado."
-        />
-      )}
-    </section>
-  );
-}
-
-/** As cotas em contagem (RN11), com quanto o plano deu a cada uma. */
-function Cotas({ cotas }) {
-  if (!cotas?.length) return null;
-  return (
-    <table className="tabela campanha__cotas-tabela">
-      <caption className="campanha__legenda">Cotas, em número de ações</caption>
-      <thead>
-        <tr>
-          <th scope="col">Cota</th>
-          <th scope="col" className="numerica">
-            Mínimo
-          </th>
-          <th scope="col" className="numerica">
-            Máximo
-          </th>
-          <th scope="col" className="numerica">
-            No plano
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {cotas.map((c) => (
-          <tr key={c.categoria_id ?? "cauda"}>
-            <td>{c.nome}</td>
-            <td className="numerica">{comoInteiro(c.minimo)}</td>
-            <td className="numerica">{comoInteiro(c.maximo)}</td>
-            <td className="numerica">{c.acoes === null ? TRACO : comoInteiro(c.acoes)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
   );
 }
 

@@ -182,6 +182,38 @@ export function comoDecimal(valor, casas = 3) {
   return Number.isNaN(numero) ? TRACO : numero.toFixed(casas).replace(".", ",");
 }
 
+/** Abaixo de um segundo, em milissegundos: "0,1 s" esconderia a diferença entre os modos de execução. */
+export function comoDuracao(ms) {
+  if (ms === null || ms === undefined) return TRACO;
+  return ms < 1000 ? `${comoInteiro(ms)} ms` : `${comoDecimal(ms / 1000, 1)} s`;
+}
+
+/**
+ * Os modos de execução do otimizador (RF32), na ordem em que aceleram — a mesma
+ * das séries do benchmark (docs/09): o rótulo, o nome no meio da frase e o que o
+ * modo é.
+ */
+export const MODOS_DE_EXECUCAO = [
+  ["SERIAL", "Serial", "serial", "A referência, em Python: o mesmo plano, em muito mais tempo. Serve para comparar."],
+  ["CPU_PARALELO", "CPU paralelo", "CPU paralelo", "O núcleo em C++, com os núcleos do processador em paralelo."],
+  ["GPU", "GPU", "GPU", "O núcleo em CUDA, na placa de vídeo."],
+];
+export const ROTULO_MODO = Object.fromEntries(MODOS_DE_EXECUCAO.map(([modo, rotulo]) => [modo, rotulo]));
+export const NOME_MODO = Object.fromEntries(MODOS_DE_EXECUCAO.map(([modo, , nome]) => [modo, nome]));
+
+/**
+ * A restrição que tornou a campanha inviável (RN07), pelo código da API — em
+ * poucas palavras, para caber numa linha do histórico. A frase inteira, com o
+ * quanto falta, vem da API no `motivo`.
+ */
+export const ROTULO_RESTRICAO = {
+  orcamento: "orçamento",
+  maximo_acoes: "máximo de ações",
+  cauda_longa: "cota da cauda longa",
+  cota_categoria: "cota de categoria",
+  elegiveis_categoria: "elegíveis da categoria",
+};
+
 /** A situação de um treino do modelo (UC07). */
 export const ROTULO_SITUACAO_TREINO = {
   EM_ANDAMENTO: "Em andamento",

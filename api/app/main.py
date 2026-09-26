@@ -76,6 +76,7 @@ app.include_router(configuracao.router)
 app.include_router(modelo.router)
 app.include_router(campanha.router)
 app.include_router(campanha.catalogo)
+app.include_router(campanha.historico)
 app.include_router(auditoria.router)
 
 

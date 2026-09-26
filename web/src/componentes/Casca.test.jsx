@@ -50,6 +50,16 @@ describe("menu lateral", () => {
     expect(itens).toEqual(["Painel", "Importação", "Parceiros", "Modelo"]);
   });
 
+  it("o Administrador vê as execuções do otimizador sem a Campanha (RF34, H58)", () => {
+    const itens = menu({
+      nome: "Admin",
+      perfil: "ADMINISTRADOR",
+      telas: ["painel", "historico_importacoes", "modelo", "execucoes", "usuarios", "configuracao"],
+    });
+
+    expect(itens).toEqual(["Painel", "Importação", "Execuções", "Modelo", "Usuários", "Configuração"]);
+  });
+
   it("sessão de antes da atualização, sem telas, mantém o menu anterior", () => {
     /* Uma aba aberta durante a atualização não pode ficar com o trilho vazio. */
     const itens = menu({ nome: "Antiga", perfil: "GESTOR" });
