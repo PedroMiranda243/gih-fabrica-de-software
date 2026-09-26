@@ -49,11 +49,14 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 from app.config import Config
 from app.modelos import (
     Categoria,
+    ExecucaoOtimizador,
     HistoricoSegmento,
     Importacao,
+    ItemPlano,
     Metrica,
     Parceiro,
     Periodo,
+    PlanoCampanha,
     Previsao,
     TreinoModelo,
     Usuario,
@@ -78,6 +81,7 @@ class Contagem:
     parceiros: int = 0
     categorias: int = 0
     treinos: int = 0
+    otimizacoes: int = 0
 
     def __str__(self) -> str:
         nomes = (
@@ -87,6 +91,7 @@ class Contagem:
             ("parceiro", "parceiros"),
             ("categoria", "categorias"),
             ("treino", "treinos"),
+            ("otimização", "otimizações"),
         )
         partes = [
             f"{n} {um if n == 1 else varios}"
@@ -140,7 +145,8 @@ def limpar_execucao(marca: str, url: str | None = None) -> Contagem:
     - parceiros e categorias: a marca aparece no nome como palavra inteira;
     - treinos do modelo: disparados por um desses usuários, com as previsões
       das versões que eles produziram. Sem o treino, a versão em uso volta a
-      ser a do último treino de fora da execução.
+      ser a do último treino de fora da execução;
+    - otimizações: disparadas por um desses usuários, com o plano e os itens.
 
     **Recusa em vez de apagar dado alheio.** Se alguém de fora da execução
     importou num desses períodos, ou se algo fora dela aponta para um parceiro
@@ -207,6 +213,20 @@ def _apagar(c: Connection, marca: str, destino: str) -> Contagem:
             "de fora da execução"
         )
 
+    # A otimização da execução sai com o plano e os itens, antes do treino e
+    # dos períodos: ela aponta para o período-base das previsões que usou.
+    execucoes = c.scalars(
+        select(ExecucaoOtimizador.id).where(ExecucaoOtimizador.usuario_id.in_(usuarios))
+    ).all()
+    planos = c.scalars(
+        select(PlanoCampanha.id).where(PlanoCampanha.execucao_id.in_(execucoes))
+    ).all()
+    c.execute(delete(ItemPlano).where(ItemPlano.plano_id.in_(planos)))
+    c.execute(delete(PlanoCampanha).where(PlanoCampanha.id.in_(planos)))
+    otimizacoes = c.execute(
+        delete(ExecucaoOtimizador).where(ExecucaoOtimizador.id.in_(execucoes))
+    ).rowcount
+
     # O treino da execução sai com as previsões das versões que ele produziu —
     # `rede-7` e `referencia-7` vêm do treino 7. Antes dos períodos: o treino
     # aponta para o período-base, e a chave estrangeira recusaria apagá-lo.
@@ -224,7 +244,7 @@ def _apagar(c: Connection, marca: str, destino: str) -> Contagem:
     # Postgres: a marca `t12345` não pode casar com o meio de outro nome.
     palavra = rf"\m{marca}\M"
 
-    removidos = Contagem()
+    removidos = Contagem(otimizacoes=otimizacoes)
     removidos.treinos = c.execute(
         delete(TreinoModelo).where(TreinoModelo.id.in_(treinos))
     ).rowcount
