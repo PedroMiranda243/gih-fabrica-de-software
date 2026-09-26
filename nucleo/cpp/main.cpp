@@ -18,6 +18,10 @@
 //                         [--repeticoes N]
 //       Lê a instância, monta a população inicial, leva as duas para a GPU,
 //       traz de volta, confere e diz quanto tempo levou (H54a).
+//   gih-nucleo avaliar [--repeticoes N]
+//       Lê a instância e, depois dela, `populacao <m>` e os genes de m
+//       indivíduos. Avalia a população na GPU e na CPU, confere uma contra a
+//       outra e escreve as avaliações e o tempo de cada lado (H54b).
 //
 // **Tudo em texto, tudo inteiro.** A instância chega em centavos e contagens, já
 // traduzida pela API (ADR-011), e é lida com a biblioteca padrão: nenhuma
@@ -26,6 +30,7 @@
 // Saída 0: resultado (viável ou inviável — as duas são respostas). Saída 1: o
 // pedido precisa de GPU, e não há (H56). Saída 2: instância ou argumento
 // inválido, com a mensagem no erro padrão. Saída 3: defeito interno.
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <exception>
@@ -299,6 +304,72 @@ int transferir(int argc, char** argv) {
     return 0;
 }
 
+int avaliar(int argc, char** argv) {
+    int repeticoes = 15;
+    for (int i = 2; i < argc; i += 2) {
+        if (i + 1 >= argc) throw Invalida(std::string("Falta o valor de ") + argv[i] + ".");
+        const std::string nome = argv[i];
+        const long long valor = inteiro(argv[i + 1], nome);
+        if (nome != "--repeticoes") throw Invalida("Parâmetro desconhecido: " + nome + ".");
+        if (valor < 1) throw Invalida("A medição precisa de ao menos uma repetição.");
+        repeticoes = static_cast<int>(valor);
+    }
+    std::ios::sync_with_stdio(false);
+    const gih::Instancia inst = ler_instancia(std::cin);
+    std::string marca;
+    if (!(std::cin >> marca) || marca != "populacao") throw Invalida("Depois da instância, vem `populacao <m>`.");
+    const std::int64_t individuos = ler(std::cin, "número de indivíduos");
+    if (individuos < 1 || inst.parceiros < 1) throw Invalida("A avaliação precisa de ao menos um indivíduo e um parceiro.");
+    std::vector<gih::Gene> populacao(static_cast<std::size_t>(individuos) * inst.parceiros);
+    for (auto& g : populacao) {
+        const std::int64_t gene = ler(std::cin, "gene");
+        if (gene < 0 || gene > inst.acoes) throw Invalida("Gene fora do catálogo: vai de 0 ao número de ações.");
+        g = static_cast<gih::Gene>(gene);
+    }
+
+    const gih::gpu::PopulacaoAvaliada na_gpu =
+        gih::gpu::avaliar_na_gpu(inst, populacao, static_cast<int>(individuos), repeticoes);
+
+    // A mesma população na CPU, com o `avaliar` de sempre: é a referência que a
+    // GPU precisa reproduzir, e o tempo contra o qual o kernel se compara.
+    std::vector<double> cpu_ms;
+    std::vector<gih::Avaliacao> na_cpu(static_cast<std::size_t>(individuos));
+    for (int rodada = 0; rodada <= repeticoes; ++rodada) {
+        const auto inicio = std::chrono::steady_clock::now();
+        for (std::int64_t j = 0; j < individuos; ++j) {
+            na_cpu[j] = gih::avaliar(inst, populacao.data() + static_cast<std::size_t>(j) * inst.parceiros);
+        }
+        const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - inicio).count();
+        if (rodada > 0) cpu_ms.push_back(ms);
+    }
+    for (std::int64_t j = 0; j < individuos; ++j) {
+        const gih::Avaliacao& g = na_gpu.avaliacoes[j];
+        const gih::Avaliacao& c = na_cpu[j];
+        if (g.ganho != c.ganho || g.custo != c.custo || g.acoes != c.acoes || g.cauda != c.cauda ||
+            g.violacao != c.violacao || g.por_categoria != c.por_categoria) {
+            // Diferente não é resposta: é defeito do kernel, e sai como defeito.
+            throw std::logic_error("A GPU avaliou o indivíduo " + std::to_string(j) + " diferente da CPU.");
+        }
+    }
+
+    std::ostringstream saida;
+    saida << FORMATO << '\n' << linha_da_gpu() << '\n';
+    const std::pair<const char*, const std::vector<double>*> series[] = {{"kernel_ms", &na_gpu.kernel_ms},
+                                                                         {"cpu_ms", &cpu_ms}};
+    for (const auto& [nome, valores] : series) {
+        saida << nome;
+        for (double v : *valores) saida << ' ' << v;
+        saida << '\n';
+    }
+    for (const gih::Avaliacao& av : na_gpu.avaliacoes) {
+        saida << "av " << av.ganho << ' ' << av.custo << ' ' << av.acoes << ' ' << av.cauda << ' ' << av.violacao;
+        for (std::int64_t n : av.por_categoria) saida << ' ' << n;
+        saida << '\n';
+    }
+    std::cout << saida.str();
+    return 0;
+}
+
 int sorteio(int argc, char** argv) {
     std::uint64_t h = 0;
     for (int i = 2; i < argc; ++i) {
@@ -329,7 +400,8 @@ int main(int argc, char** argv) {
         }
         if (comando == "gpu") return gpu();
         if (comando == "transferir") return transferir(argc, argv);
-        std::cerr << "Uso: gih-nucleo otimizar|sorteio|versao|gpu|transferir — ver o cabeçalho de main.cpp.\n";
+        if (comando == "avaliar") return avaliar(argc, argv);
+        std::cerr << "Uso: gih-nucleo otimizar|sorteio|versao|gpu|transferir|avaliar — ver o cabeçalho de main.cpp.\n";
         return 2;
     } catch (const gih::gpu::SemGpu& e) {
         std::cerr << e.what() << '\n';

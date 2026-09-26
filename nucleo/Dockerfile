@@ -21,13 +21,13 @@ WORKDIR /nucleo
 COPY cpp/ cpp/
 # Primeiro a versão só de CPU, com os avisos da CI (-Werror): é a que compila em
 # qualquer máquina, e o CUDA não pode esconder um aviso nela. Depois a de
-# verdade, com o gpu.cu. `-arch=all-major` porque durante o build não há GPU para
+# verdade, com os .cu. `-arch=all-major` porque durante o build não há GPU para
 # o nvcc perguntar a arquitetura, e a máquina da orientação pode ter outra placa.
 # O `cudart` entra estático, o padrão do nvcc: o executável roda numa imagem que
 # não é da NVIDIA, e o driver chega pelo `--gpus all`.
 RUN g++ -O2 -fopenmp -std=c++17 -Wall -Wextra -Wpedantic -Werror cpp/*.cpp -o /tmp/so-cpu \
  && nvcc -O2 -std=c++17 -arch=all-major -DGIH_COM_CUDA -Xcompiler=-fopenmp,-Wall,-Wextra \
-         cpp/*.cpp cpp/gpu.cu -o gih-nucleo -lgomp
+         cpp/*.cpp cpp/*.cu -o gih-nucleo -lgomp
 
 FROM python:3.11-slim
 

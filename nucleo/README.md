@@ -31,8 +31,10 @@ do Python: 76x.
 | `cpp/gpu.hpp` | A GPU vista do resto do núcleo, sem nada do CUDA: achar a placa, e a ida e volta da instância e da população |
 | `cpp/gpu.cuh` | As estruturas na GPU (H54a): a memória com dono, a instância no layout da CPU, e a população em dois buffers — a geração atual e a seguinte —, que ficam na placa a busca inteira (ADR-006) |
 | `cpp/gpu.cu` | A ida e volta, conferida byte a byte e por uma conta feita na própria GPU. Compilado só com CUDA |
+| `cpp/gpu_avaliacao.cuh` | A avaliação de um indivíduo por um bloco de threads, com as contas de `avaliar` em inteiros (H54b). É o que o laço da H54c chama para cada filho |
+| `cpp/avaliacao.cu` | O kernel que avalia a população inteira, um bloco por indivíduo, e mede o próprio tempo. Compilado só com CUDA |
 | `cpp/sem_gpu.cpp` | O núcleo sem CUDA: diz que não há GPU, e por quê |
-| `cpp/main.cpp` | O executável: `otimizar --modo serial\|openmp [--threads N]`, `sorteio`, `gpu`, `transferir` e `versao`, que diz os modos, as threads, o compilador e a GPU |
+| `cpp/main.cpp` | O executável: `otimizar --modo serial\|openmp [--threads N]`, `sorteio`, `gpu`, `transferir`, `avaliar` e `versao`, que diz os modos, as threads, o compilador e a GPU |
 
 O ganho do OpenMP e a transferência para a GPU são medidos no contêiner:
 [`docs/medicoes/nucleo.md`](../docs/medicoes/nucleo.md).

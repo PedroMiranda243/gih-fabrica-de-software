@@ -18,6 +18,10 @@ Transferencia ida_e_volta(const Instancia&, const std::vector<Gene>&, int, int) 
     throw SemGpu("Este executável foi compilado sem CUDA.");
 }
 
+PopulacaoAvaliada avaliar_na_gpu(const Instancia&, const std::vector<Gene>&, int, int) {
+    throw SemGpu("Este executável foi compilado sem CUDA.");
+}
+
 }  // namespace gih::gpu
 
 #endif

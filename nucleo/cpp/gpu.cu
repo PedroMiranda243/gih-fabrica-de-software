@@ -117,8 +117,13 @@ Transferencia ida_e_volta(const Instancia& inst, const std::vector<Gene>& popula
     t.bytes_instancia = na_gpu.bytes();
     t.bytes_populacao = pop.bytes();
 
-    // Uma rodada de aquecimento, descartada, e as medidas: a primeira cópia de
-    // cada tamanho paga a alocação dos buffers de passagem do driver.
+    // O aquecimento por tempo (`aquecer`), e uma rodada ainda descartada: a
+    // primeira cópia de cada tamanho paga a alocação dos buffers de passagem do
+    // driver.
+    aquecer([&] {
+        na_gpu.enviar();
+        pop.enviar(populacao);
+    });
     for (int r = 0; r <= repeticoes; ++r) {
         auto inicio = std::chrono::steady_clock::now();
         na_gpu.enviar();
