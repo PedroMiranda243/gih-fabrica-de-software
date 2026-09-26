@@ -1105,15 +1105,17 @@ def item_campanha(r: Relatorio, url: str, criados: dict[str, str]) -> None:
 
         disponiveis = [m["modo"] for m in estado.get("modos", []) if m["disponivel"]]
         automatico = c.post("/api/otimizacoes", json=parametros)
-        rapido = _aguardar(c, automatico.json()["id"]) if automatico.status_code == 202 else {}
+        sem_escolha = _aguardar(c, automatico.json()["id"]) if automatico.status_code == 202 else {}
         r.checar(
-            "sem escolha, roda o modo mais rápido disponível, com o mesmo plano do serial (RF32)",
-            rapido.get("modo") == estado.get("modo_automatico")
-            and disponiveis[:1] == [rapido.get("modo")]
-            and rapido.get("situacao") == "CONCLUIDA"
-            and _plano(rapido) == _plano(plano),
-            f"disponíveis: {', '.join(disponiveis)}; {rapido.get('modo')} em {_segundos(rapido)}"
-            + (f" com {rapido['threads']} threads" if rapido.get("threads") else "")
+            "sem escolha, roda o primeiro modo disponível — GPU, CPU paralelo, serial —, com o "
+            "mesmo plano do serial (RF32)",
+            sem_escolha.get("modo") == estado.get("modo_automatico")
+            and disponiveis[:1] == [sem_escolha.get("modo")]
+            and sem_escolha.get("situacao") == "CONCLUIDA"
+            and _plano(sem_escolha) == _plano(plano),
+            f"disponíveis: {', '.join(disponiveis)}; {sem_escolha.get('modo')} em "
+            f"{_segundos(sem_escolha)}"
+            + (f" com {sem_escolha['threads']} threads" if sem_escolha.get("threads") else "")
             + f", contra {_segundos(plano)} do serial",
         )
 
@@ -1133,7 +1135,7 @@ def item_campanha(r: Relatorio, url: str, criados: dict[str, str]) -> None:
 
         historico = c.get("/api/otimizacoes", params={"tamanho": 10}).json().get("itens", [])
         deste = {e["id"]: e for e in historico}
-        calculadas = [execucao_id, rapido.get("id"), recusa.get("id")]
+        calculadas = [execucao_id, sem_escolha.get("id"), recusa.get("id")]
         r.checar(
             "o histórico traz cada execução com autor, parâmetros, modo, tempo e resultado (RF34)",
             all(i in deste for i in calculadas)
