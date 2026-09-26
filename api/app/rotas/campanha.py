@@ -1,4 +1,4 @@
-"""A campanha — UC08, RF29, RF30, RF31, histórias H48 a H52.
+"""A campanha — UC08, RF29 a RF32, histórias H48 a H52 e H55.
 
 **Gestor calcula; Analista consulta**, pela matriz do UC08. O plano decide onde
 vai a verba, e quem responde por isso é o Gestor; o Analista lê o plano e o
@@ -29,6 +29,7 @@ from app.esquemas import (
     ExcluidosCampanha,
     ExecucaoResposta,
     ItemPlanoResposta,
+    ModoCampanha,
     PaginaExecucoes,
     ParametrosCampanha,
     PeriodoResposta,
@@ -39,6 +40,7 @@ from app.modelos import (
     ExecucaoOtimizador,
     HistoricoSegmento,
     ItemPlano,
+    ModoExecucao,
     OrigemCategoria,
     Parceiro,
     Perfil,
@@ -117,6 +119,12 @@ def _resposta(
         situacao=execucao.situacao,
         autor=autor.nome if autor else None,
         modo=execucao.modo,
+        substituicao=detalhes.get("substituicao"),
+        threads=(
+            detalhes.get("busca", {}).get("threads")
+            if execucao.modo == ModoExecucao.CPU_PARALELO
+            else None
+        ),
         iniciada_em=execucao.iniciada_em,
         concluida_em=execucao.concluida_em,
         parametros=ParametrosCampanha.model_validate(execucao.parametros),
@@ -156,7 +164,8 @@ def estado(s: Banco) -> EstadoCampanha:
     """O que a tela de campanha precisa ao abrir (UC08, passo 1).
 
     Quantos parceiros entram e quantos ficam fora, com o motivo (RN11); as
-    categorias para as cotas; o catálogo; e se dá para calcular agora.
+    categorias para as cotas; o catálogo; os modos de execução que esta
+    instalação tem, e qual roda sem escolha (RF32); e se dá para calcular agora.
     """
     concluido = servico_previsao.ultimo_concluido(s)
     elegiveis, excluidos = [], None
@@ -173,6 +182,7 @@ def estado(s: Banco) -> EstadoCampanha:
         if e.categoria_id is not None:
             por_categoria[e.categoria_id] = por_categoria.get(e.categoria_id, 0) + 1
     recusa = servico_otimizacao.bloqueio(s)
+    modos = servico_otimizacao.modos()
     return EstadoCampanha(
         modelo_versao=concluido.versao_em_uso if concluido else None,
         periodo_base=(
@@ -198,6 +208,8 @@ def estado(s: Banco) -> EstadoCampanha:
         ultima=_resposta(s, servico_otimizacao.ultima_concluida(s), com_itens=True),
         pode_executar=recusa is None,
         motivo_bloqueio=recusa.erro if recusa else None,
+        modos=[ModoCampanha(modo=m.modo, disponivel=m.disponivel, motivo=m.motivo) for m in modos],
+        modo_automatico=servico_otimizacao.escolher(None, modos)[0],
     )
 
 
@@ -214,11 +226,12 @@ def calcular(
     s: Banco,
     autor: UsuarioAtual,
 ) -> ExecucaoResposta:
-    """Calcula o plano (UC08, passos 5 a 10; RF30).
+    """Calcula o plano (UC08, passos 4 a 10; RF30, RF32).
 
     Recusa com `409` sem modelo treinado (UC08-E1), sem ação ativa no catálogo
     ou com outra otimização rodando. Campanha inviável **não** é recusada aqui:
-    ela é calculada, registrada como inviável e explicada (RN07, UC08-A1).
+    ela é calculada, registrada como inviável e explicada (RN07, UC08-A1). Nem
+    modo indisponível: roda no mais rápido que houver, e diz a troca (UC08-A4).
     """
     try:
         execucao = servico_otimizacao.iniciar(s, parametros, usuario_id=autor.id)

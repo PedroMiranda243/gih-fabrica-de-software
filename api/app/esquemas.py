@@ -827,7 +827,7 @@ class CotaCategoria(BaseModel):
 
 
 class ParametrosCampanha(BaseModel):
-    """As restrições da campanha (RF29, UC08 passos 2 a 4).
+    """As restrições da campanha e o modo de execução (RF29, RF32, UC08 passos 2 a 4).
 
     As cotas são frações do **máximo de ações**, e viram contagem: o mínimo
     arredonda para cima e o máximo para baixo (RN11). Frações das ações que o
@@ -842,6 +842,11 @@ class ParametrosCampanha(BaseModel):
     cotas_categoria: list[CotaCategoria] = Field(default_factory=list, max_length=100)
     aplicacao_inicio: date
     aplicacao_fim: date
+    modo: ModoExecucao | None = Field(
+        default=None,
+        description="O modo pedido (RF32). Nulo: o mais rápido disponível. O usado fica na "
+        "execução, que diz a troca quando o pedido não está disponível (UC08-A4).",
+    )
 
     @model_validator(mode="after")
     def coerente(self):
@@ -893,7 +898,13 @@ class ExecucaoResposta(BaseModel):
     id: int
     situacao: SituacaoExecucao
     autor: str | None
-    modo: ModoExecucao
+    modo: ModoExecucao = Field(description="O modo em que rodou; o pedido está nos parâmetros.")
+    substituicao: str | None = Field(
+        default=None, description="Por que o modo pedido não foi o usado (UC08-A4)."
+    )
+    threads: int | None = Field(
+        default=None, description="As threads que calcularam, no CPU paralelo."
+    )
     iniciada_em: datetime
     concluida_em: datetime | None
     parametros: ParametrosCampanha
@@ -932,6 +943,14 @@ class CategoriaCampanha(BaseModel):
     elegiveis: int = Field(description="Parceiros elegíveis com esta categoria confirmada.")
 
 
+class ModoCampanha(BaseModel):
+    """Um modo de execução e se ele existe nesta instalação (RF32)."""
+
+    modo: ModoExecucao
+    disponivel: bool
+    motivo: str | None = Field(description="Por que não está disponível.")
+
+
 class EstadoCampanha(BaseModel):
     """O que a tela de campanha mostra ao abrir (UC08, passo 1).
 
@@ -953,3 +972,7 @@ class EstadoCampanha(BaseModel):
     ultima: ExecucaoResposta | None
     pode_executar: bool
     motivo_bloqueio: str | None
+    modos: list[ModoCampanha] = Field(description="Do mais rápido para o mais lento.")
+    modo_automatico: ModoExecucao = Field(
+        description="O que roda quando o gestor não escolhe: o mais rápido disponível."
+    )

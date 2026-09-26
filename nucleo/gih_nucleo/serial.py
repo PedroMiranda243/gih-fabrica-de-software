@@ -53,6 +53,7 @@ class Resultado:
     geracoes: int  # quantas gerações rodaram, somando as partidas
     parcial: bool  # o limite de tempo interrompeu a busca (UC08, E2)
     segundos: float
+    threads: int = 1  # as que calcularam os filhos: mais de uma só no modo OpenMP
 
 
 def _torneio(avaliacoes: list[Avaliacao], h1: int, h2: int) -> int:

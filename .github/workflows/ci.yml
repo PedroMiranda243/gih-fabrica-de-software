@@ -102,6 +102,16 @@ jobs:
         working-directory: api
         run: ruff check .
 
+      # O CPU paralelo da campanha é o executável em C++ (H55, ADR-012). Sem
+      # ele, o teste que compara o plano do CPU paralelo com o do serial pela
+      # API pularia — aqui, reprova (GIH_NUCLEO_OBRIGATORIO).
+      - name: Compilar o núcleo em C++
+        if: steps.existe.outputs.pronto == 'sim'
+        working-directory: nucleo
+        run: |
+          mkdir -p bin
+          g++ -O2 -fopenmp -std=c++17 cpp/*.cpp -o bin/gih-nucleo
+
       - name: Testes
         if: steps.existe.outputs.pronto == 'sim'
         working-directory: api
@@ -109,6 +119,8 @@ jobs:
           # O conftest cria um banco `<nome>_teste` separado a partir desta URL
           # e aplica as migracoes nele com `alembic upgrade head`.
           DATABASE_URL: postgresql+psycopg://gih:gih@localhost:5432/gih
+          GIH_NUCLEO: ${{ github.workspace }}/nucleo/bin/gih-nucleo
+          GIH_NUCLEO_OBRIGATORIO: "1"
         run: pytest --cov=app --cov-report=term-missing
 
       # O núcleo de regras tem um piso próprio, e reprova o PR que o furar

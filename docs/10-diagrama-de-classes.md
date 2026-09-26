@@ -613,9 +613,10 @@ conjunto que as cumpre cabe no máximo de ações e no orçamento pagando a aç�
 
 Três implementações do **mesmo** algoritmo, para que o benchmark compare o que é comparável (RF32 a RF34).
 Todas recebem a `Instancia` e a semente e devolvem o mesmo plano — o sorteio é por coordenadas e a
-aritmética é inteira (ADR-011). A serial existe em Python (Sprint 9 interna) e em C++ (H53a), com plano
-**idêntico** conferido por teste a cada PR; o executável é chamado pela API por processo (ADR-012). OpenMP e
-CUDA são das Sprints 10 e 11.
+aritmética é inteira (ADR-011). A serial existe em Python (Sprint 9 interna) e em C++ (H53a), e a OpenMP em
+C++ (H53b), todas com plano **idêntico** conferido por teste a cada PR. O executável é chamado pela API por
+processo (ADR-012). Na tela de campanha, o modo **serial** é o de Python, e o **CPU paralelo** é o OpenMP
+(H55). O C++ serial aparece só no benchmark (H57), e a CUDA é da Sprint 11.
 
 <!-- diagrama: nucleo-otimizadores -->
 ```mermaid

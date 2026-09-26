@@ -642,8 +642,10 @@ spike da issue #123 mediu se o mesmo código compila em Linux e roda **dentro da
   arquivo à parte do Compose pede — e é esse arquivo que reserva a GPU. Sem ele, `docker compose up` não
   baixa os GB da imagem de compilação da NVIDIA nem exige placa NVIDIA: o sistema sobe em qualquer máquina,
   em CPU paralela (RNF06, H72).
-- **A API pergunta ao executável quais modos existem.** Sem GPU, o CUDA recusa com saída 1, e a API cai para
-  CPU paralela com aviso (ADR-004, H56).
+- **A API pergunta ao executável quais modos existem** (`gih-nucleo versao`). Sem GPU, o CUDA recusa com
+  saída 1, e a API cai para CPU paralela com aviso (ADR-004, H56). Desde a H55, a imagem da API compila o
+  executável num estágio com g++ e OpenMP, na mesma base `python:3.11-slim`. O modo pedido que não existe
+  roda no mais rápido disponível, e a execução diz a troca.
 - **O baseline serial em Python continua na API**: é o denominador do *speedup* do RNF02. O serial em C++, o
   OpenMP e o CUDA ficam no executável, com o mesmo algoritmo e o mesmo gerador aleatório (ADR-011).
 - **O benchmark é medido dentro do contêiner**, onde o sistema roda, e não no Windows.
