@@ -1,0 +1,182 @@
+/* Tela do benchmark (UC09): o cenário, o andamento, o comparativo, o gráfico de
+   escalabilidade e o histórico. */
+
+.benchmark__corpo {
+  padding: var(--esp-16);
+}
+
+.benchmark__cenario,
+.benchmark__resultado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-16);
+}
+
+/* Três campos numéricos curtos: lado a lado enquanto couberem. */
+.benchmark__campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--esp-16);
+  align-items: start;
+}
+
+.benchmark__campos input {
+  max-width: 12ch;
+  font-family: var(--fonte-dados);
+  font-variant-numeric: tabular-nums;
+}
+
+.benchmark__subtitulo {
+  margin: 0 0 var(--esp-8);
+  font-size: var(--txt-13);
+  font-weight: var(--peso-rotulo);
+  color: var(--ink);
+}
+
+/* Os modos que a máquina tem (UC09, passo 3). O que falta não some da lista:
+   fica em tinta secundária, com o motivo escrito — a cor da chave sozinha não
+   diria nada a quem não a distingue. */
+.benchmark__modos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--txt-13);
+}
+
+.benchmark__modos li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--esp-8);
+}
+
+.benchmark__modo-nome {
+  min-width: 10ch;
+  font-weight: var(--peso-rotulo);
+  color: var(--ink);
+}
+
+.benchmark__modo-situacao {
+  color: var(--ink-2);
+}
+
+.benchmark__modo--fora .benchmark__modo-nome {
+  color: var(--ink-2);
+}
+
+/* A chave de cor da série: marca, e não texto (skill de visualização). */
+.benchmark__chave {
+  display: inline-block;
+  flex: none;
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.benchmark__estimativa {
+  margin: 0;
+  max-width: 72ch;
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+  line-height: 1.55;
+}
+
+.benchmark__acoes {
+  display: flex;
+  gap: var(--esp-8);
+}
+
+/* Andamento com passo e total, ao contrário da campanha: aqui se sabe quantas
+   buscas faltam. Cinza, e não a cor de ação: não responde a clique. */
+.benchmark__barra {
+  display: block;
+  width: 100%;
+  height: 4px;
+  margin-top: var(--esp-8);
+  border: 0;
+  border-radius: 2px;
+  background: var(--surface-2);
+  appearance: none;
+}
+
+.benchmark__barra::-webkit-progress-bar {
+  border-radius: 2px;
+  background: var(--surface-2);
+}
+
+.benchmark__barra::-webkit-progress-value {
+  border-radius: 2px;
+  background: var(--ink-3);
+}
+
+.benchmark__barra::-moz-progress-bar {
+  border-radius: 2px;
+  background: var(--ink-3);
+}
+
+/* A frase que resume a tabela: o primeiro que o olho lê. */
+.benchmark__manchete {
+  margin: 0;
+  max-width: 72ch;
+  font-size: var(--txt-14);
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+/* O comparativo: as medidas nas linhas, os modos nas colunas. O tempo médio e o
+   ganho sobre o Python em peso de nome — é o que se compara primeiro; o resto em
+   tinta secundária. */
+.benchmark__tabela th[scope="row"] {
+  color: var(--ink-2);
+  font-weight: var(--peso-corpo);
+  white-space: nowrap;
+}
+
+.benchmark__tabela th[scope="row"].nome {
+  color: var(--ink);
+  font-weight: var(--peso-rotulo);
+}
+
+.benchmark__tabela td {
+  color: var(--ink-2);
+}
+
+.benchmark__tabela td.benchmark__forte {
+  color: var(--ink);
+  font-weight: var(--peso-nome);
+}
+
+.benchmark__coluna {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-6);
+}
+
+.benchmark__coluna-fora {
+  display: block;
+  font-size: var(--txt-11);
+  font-weight: var(--peso-corpo);
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink-2);
+}
+
+.benchmark__tabela td.benchmark__divergente {
+  color: var(--ink);
+  font-weight: var(--peso-nome);
+}
+
+.benchmark__notas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+  line-height: 1.5;
+}

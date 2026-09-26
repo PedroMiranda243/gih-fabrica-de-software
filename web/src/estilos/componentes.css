@@ -465,6 +465,69 @@
   padding: var(--esp-16);
 }
 
+/* O gráfico de escalabilidade do benchmark (H57): quatro linhas, uma cor por
+   modo, que o componente passa pela coluna. A legenda fica acima, em uma linha. */
+.escalabilidade__legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-6) var(--esp-16);
+  margin: 0 0 var(--esp-8);
+  padding: 0;
+  list-style: none;
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+}
+
+.escalabilidade__legenda li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-6);
+}
+
+.escalabilidade__linha {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* O anel da cor do fundo separa as marcas onde as linhas se cruzam. */
+.escalabilidade__ponto {
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+
+.escalabilidade__rotulo {
+  fill: var(--ink-2);
+  font-family: var(--fonte-interface);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* O tamanho que a tela mostra: uma faixa de fundo, e não uma cor de dado. */
+.escalabilidade__destaque {
+  stroke: var(--surface-2);
+  stroke-width: 14;
+}
+
+.escalabilidade__dica-linha {
+  display: grid;
+  grid-template-columns: 10px auto auto;
+  align-items: center;
+  gap: var(--esp-6);
+  justify-content: start;
+}
+
+.escalabilidade__dica-linha .num {
+  padding-left: var(--esp-8);
+}
+
+.escalabilidade__chave {
+  width: 10px;
+  height: 3px;
+  border-radius: 2px;
+}
+
 .grafico__legenda-lacuna {
   display: flex;
   align-items: center;

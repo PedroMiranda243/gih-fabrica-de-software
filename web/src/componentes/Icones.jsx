@@ -117,6 +117,17 @@ export function IconeExecucoes(props) {
   );
 }
 
+/* Um velocímetro: o benchmark mede a velocidade de cada modo. */
+export function IconeBenchmark(props) {
+  return (
+    <svg {...comuns} {...props}>
+      <path d="M2.3 11.5a6 6 0 1 1 11.4 0" />
+      <path d="M8 9.5l2.8-3.3" />
+      <circle cx="8" cy="9.8" r="1" />
+    </svg>
+  );
+}
+
 export function IconeSair(props) {
   return (
     <svg {...comuns} {...props}>
