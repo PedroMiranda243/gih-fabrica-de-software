@@ -71,7 +71,11 @@ class Capacidades:
     threads: int  # as do OpenMP; 0 quando foi compilado sem ele
     compilador: str
     gpu: Dispositivo | None = None
-    sem_gpu: str | None = None  # por que não há GPU, quando não há
+    sem_gpu: str | None = None  # por que não há GPU, para quem investiga
+    # O mesmo, em código, para a API traduzir para a tela (H56): `sem_cuda` (o
+    # executável foi compilado sem CUDA), `sem_placa` (nenhuma placa NVIDIA
+    # visível) ou `erro` (a placa existe, e o runtime falhou ao falar com ela).
+    ausencia_gpu: str | None = None
 
 
 @dataclass(frozen=True)
@@ -118,21 +122,24 @@ def capacidades(executavel: str | None = None) -> Capacidades:
         resposta = r.stderr.strip() or r.stdout[:80]
         raise NucleoFalhou(f"O núcleo não respondeu à versão: {resposta!r}")
     campos = {linha.split()[0]: linha.split()[1:] for linha in linhas[1:] if linha.strip()}
-    gpu, sem_gpu = _ler_gpu(campos.get("gpu", ["0", "O executável não informa a GPU."]))
+    gpu, ausencia, sem_gpu = _ler_gpu(
+        campos.get("gpu", ["0", "erro", "O executável não informa a GPU."])
+    )
     return Capacidades(
         tuple(campos["modos"]),
         int(campos["threads"][0]),
         " ".join(campos["compilador"]),
         gpu,
         sem_gpu,
+        ausencia,
     )
 
 
-def _ler_gpu(campos: list[str]) -> tuple[Dispositivo | None, str | None]:
-    """`gpu 1 <capacidade> <MiB> <nome>`, ou `gpu 0 <motivo>`."""
+def _ler_gpu(campos: list[str]) -> tuple[Dispositivo | None, str | None, str | None]:
+    """`gpu 1 <capacidade> <MiB> <nome>`, ou `gpu 0 <código> <motivo>`."""
     if campos[0] == "1":
-        return Dispositivo(" ".join(campos[3:]), campos[1], int(campos[2])), None
-    return None, " ".join(campos[1:])
+        return Dispositivo(" ".join(campos[3:]), campos[1], int(campos[2])), None, None
+    return None, campos[1], " ".join(campos[2:])
 
 
 def transferir(
@@ -167,7 +174,7 @@ def transferir(
         raise NucleoFalhou(f"O núcleo saiu com {r.returncode}: {r.stderr.strip()}")
     linhas = r.stdout.splitlines()
     campos = {linha.split()[0]: linha.split()[1:] for linha in linhas[1:] if linha.strip()}
-    dispositivo, _ = _ler_gpu(campos["gpu"])
+    dispositivo, _, _ = _ler_gpu(campos["gpu"])
     instancia_bytes, populacao_bytes = (int(x) for x in campos["bytes"])
     return Transferencia(
         dispositivo,
@@ -214,8 +221,9 @@ def otimizar(
     `threads` só vale no modo `openmp`, e sem ele vale o padrão do OpenMP.
 
     Levanta `Inviavel` quando as cotas não cabem, `ValueError` para parâmetro
-    impossível ou modo que o executável não tem, `NucleoIndisponivel` sem
-    executável e `NucleoFalhou` quando ele erra ou diverge do Python.
+    impossível ou modo que o executável não tem, `SemGpu` quando o modo precisa
+    de GPU e ela não responde, `NucleoIndisponivel` sem executável e
+    `NucleoFalhou` quando ele erra ou diverge do Python.
     """
     executavel = _executavel(executavel)
     comando = [
@@ -235,6 +243,8 @@ def otimizar(
     r = subprocess.run(
         comando, input=serializar(inst), capture_output=True, text=True, encoding="utf-8"
     )
+    if r.returncode == 1:
+        raise SemGpu(r.stderr.strip())
     if r.returncode == 2:
         raise ValueError(r.stderr.strip())
     if r.returncode != 0:
