@@ -17,6 +17,7 @@
 
 #include <cuda_runtime.h>
 
+#include <chrono>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
@@ -34,6 +35,21 @@ inline void checar(cudaError_t erro, const char* chamada) {
 }
 
 #define GIH_CUDA(chamada) ::gih::gpu::checar((chamada), #chamada)
+
+// Aquece a placa antes de medir: repete `trabalho` por `ms` milissegundos.
+//
+// Uma rodada só não basta. A placa parada roda em relógio baixo, e leva dezenas
+// de milissegundos de carga para subir; sem isto, o primeiro tamanho medido
+// saía lento e disperso — 56 µs de mediana com 500 parceiros, contra 10 µs com
+// 2.000, e faixa de 7 a 272 µs (CLAUDE.md §7: aqueça antes de medir).
+template <typename Trabalho>
+void aquecer(Trabalho trabalho, int ms = 200) {
+    const auto fim = std::chrono::steady_clock::now() + std::chrono::milliseconds(ms);
+    do {
+        trabalho();
+        GIH_CUDA(cudaDeviceSynchronize());
+    } while (std::chrono::steady_clock::now() < fim);
+}
 
 // Memória da GPU com dono: liberada no destrutor, também quando uma exceção
 // atravessa — sem isso, cada falha deixaria memória presa na placa até o

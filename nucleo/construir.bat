@@ -9,13 +9,14 @@ REM
 REM /openmp liga o modo openmp (H53b); o OpenMP do MSVC e o 2.0, e o codigo
 REM foi escrito dentro dele.
 REM
-REM Com o CUDA Toolkit instalado, o nvcc compila tudo - os .cpp pelo cl, e o
-REM gpu.cu - e o executavel sai com a GPU (H54a). Sem ele, so o cl: o
+REM Com o CUDA Toolkit instalado, o nvcc compila tudo - os .cpp pelo cl, e os
+REM .cu - e o executavel sai com a GPU (H54a, H54b). Sem ele, so o cl: o
 REM executavel diz que foi compilado sem CUDA e roda igual, em CPU (RNF06).
 REM -arch=native gera codigo para a placa desta maquina. /wd4211 cala um aviso do
-REM codigo que o proprio nvcc gera para o gpu.cu (o stub), e nao do nosso.
+REM codigo que o proprio nvcc gera para os .cu (o stub), e nao do nosso.
 REM
-REM O nvcc nao expande cpp\*.cpp como o cl: a lista de fontes e montada aqui.
+REM O nvcc nao expande cpp\*.cpp nem cpp\*.cu como o cl: a lista de fontes e
+REM montada aqui.
 REM
 REM Uso: construir.bat          com CUDA, se houver
 REM      construir.bat cpu      so a CPU, mesmo com o CUDA instalado
@@ -33,8 +34,8 @@ where nvcc >nul 2>nul
 if errorlevel 1 goto cpu
 
 set "FONTES="
-for %%f in (cpp\*.cpp) do call set "FONTES=%%FONTES%% %%f"
-nvcc -O2 -std=c++17 -arch=native -DGIH_COM_CUDA -Xcompiler=/openmp,/EHsc,/W4,/wd4211,/utf-8 %FONTES% cpp\gpu.cu -o bin\gih-nucleo.exe
+for %%f in (cpp\*.cpp cpp\*.cu) do call set "FONTES=%%FONTES%% %%f"
+nvcc -O2 -std=c++17 -arch=native -DGIH_COM_CUDA -Xcompiler=/openmp,/EHsc,/W4,/wd4211,/utf-8 %FONTES% -o bin\gih-nucleo.exe
 if errorlevel 1 goto falhou
 goto pronto
 

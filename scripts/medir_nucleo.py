@@ -1,5 +1,5 @@
-"""Mede o núcleo em C++: o ganho do OpenMP sobre o serial (H53b) e a transferência
-para a GPU (H54a).
+"""Mede o núcleo em C++: o ganho do OpenMP sobre o serial (H53b), a transferência
+para a GPU (H54a) e o kernel de avaliação da população (H54b).
 
 **O ganho é lido contra o C++ serial**, e não contra o Python. O C++ serial já é
 dezenas de vezes mais rápido que o mesmo algoritmo em Python (H53a), e comparar
@@ -32,8 +32,11 @@ isso logo no topo.
 
 **A transferência** é medida pelo próprio executável (`gih-nucleo transferir`):
 a instância e a população inicial vão para a GPU e voltam, conferidas byte a
-byte. Sem GPU — sem `--gpus all`, ou numa máquina sem placa —, a seção diz por
-quê, e o resto do relatório sai igual.
+byte. **O kernel** também (`gih-nucleo avaliar`): uma população do tamanho da
+busca é avaliada na GPU e pelo `avaliar` em C++, uma contra a outra, e cada
+avaliação ainda é conferida aqui contra o `avaliar` do Python. Sem GPU — sem
+`--gpus all`, ou numa máquina sem placa —, as seções dizem por quê, e o resto
+do relatório sai igual.
 
 Uso, da raiz do repositório:
 
@@ -59,7 +62,13 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ / "nucleo"))
 
-from gih_nucleo import SEM_CATEGORIA, Instancia, nativo, verificar_viabilidade  # noqa: E402
+from gih_nucleo import (  # noqa: E402
+    SEM_CATEGORIA,
+    Instancia,
+    avaliar,
+    nativo,
+    verificar_viabilidade,
+)
 from gih_nucleo import serial as genetico  # noqa: E402
 
 TOP_N = 15  # quem está fora do Top N no ranking é cauda longa (RN11, RN02)
@@ -202,6 +211,60 @@ def _faixa_curta(valores) -> str:
     )
 
 
+def populacao_de_medicao(inst, semente: int) -> list[tuple[int, ...]]:
+    """Uma população do tamanho da busca, com a densidade de ações da inicial.
+
+    A população inicial sorteia uma ação para cerca de K de cada N parceiros
+    (`genetico.hpp`, `sorteado`); aqui é igual, com o gerador do Python — o
+    kernel lê todos os genes de qualquer jeito, e o tempo depende de N.
+    """
+    rng = random.Random(semente)
+    densidade = inst.maximo_acoes / inst.parceiros
+    return [
+        tuple(rng.randint(1, inst.acoes) if rng.random() < densidade else 0
+              for _ in range(inst.parceiros))
+        for _ in range(genetico.PARTIDAS * genetico.POPULACAO)
+    ]
+
+
+def _secao_kernel(capacidades, avaliacoes, repeticoes) -> list[str]:
+    linhas = ["## Avaliação da população na GPU — H54b", ""]
+    if capacidades.gpu is None:
+        return linhas + [f"Não medida: {capacidades.sem_gpu}", ""]
+    individuos = genetico.PARTIDAS * genetico.POPULACAO
+    linhas += [
+        f"Os {individuos} indivíduos de uma geração de todas as partidas, avaliados de uma vez: "
+        "um bloco de 256 threads por indivíduo, com ganho, custo, ações, cauda, contagem por "
+        "categoria e violação. A mesma população passa pelo `avaliar` em C++, na CPU, em série — "
+        "e as duas são conferidas uma contra a outra no executável, e contra o `avaliar` do "
+        f"Python aqui. Mediana de {repeticoes} repetições, e a faixa.",
+        "",
+        "O kernel é medido pela própria GPU, sem a transferência (que é a seção de cima), e **em "
+        "lotes de lançamentos seguidos**, como o laço da H54c vai lançar uma geração depois da "
+        "outra: cada medida é a média por lançamento num lote de uns 2 ms. Um lançamento isolado, "
+        "com a placa esperando a CPU entre um e outro, mede a latência, e ela oscilou de 11 a "
+        "88 µs com 500 parceiros, conforme o relógio da placa subia ou não.",
+        "",
+        "| Parceiros | Kernel na GPU, por lançamento | `avaliar` na CPU, em série | Ganho do kernel "
+        "| Iguais ao Python |",
+        "|--:|--:|--:|--:|--:|",
+    ]
+    for n, r, iguais in avaliacoes:
+        ganho = statistics.median(r.cpu_ms) / statistics.median(r.kernel_ms)
+        linhas.append(
+            f"| {_mil(n)} | {_faixa_curta(r.kernel_ms)} | {_faixa_curta(r.cpu_ms)} "
+            f"| **{_x(ganho)}** | {iguais} de {len(r.avaliacoes)} |"
+        )
+    linhas += [
+        "",
+        "- **O kernel sozinho não é o modo GPU.** A busca na GPU (H54c) também sorteia, "
+        "cruza e muta na placa, e paga o lançamento de um kernel por geração. O ganho da GPU "
+        "sobre o OpenMP só se mede com o laço inteiro, e esta tabela não o antecipa.",
+        "",
+    ]
+    return linhas
+
+
 def _secao_gpu(capacidades, transferencias, resultados, threads, repeticoes) -> list[str]:
     linhas = ["## Transferência para a GPU — H54a", ""]
     if capacidades.gpu is None:
@@ -299,7 +362,9 @@ def _secao(inst, referencia, medidas) -> list[str]:
     return linhas
 
 
-def montar_relatorio(resultados, threads, repeticoes, comando, capacidades, transferencias) -> str:
+def montar_relatorio(
+    resultados, threads, repeticoes, comando, capacidades, transferencias, avaliacoes
+) -> str:
     no_conteiner = Path("/.dockerenv").exists()
     processador = _cpuinfo("model name") or platform.processor() or platform.machine()
     nucleos = _cpuinfo("cpu cores")
@@ -312,7 +377,7 @@ def montar_relatorio(resultados, threads, repeticoes, comando, capacidades, tran
     else:
         smt = ""
     linhas = [
-        "# Medição do núcleo em C++: serial, OpenMP e transferência para a GPU — H53b, H54a",
+        "# Medição do núcleo em C++: serial, OpenMP e GPU — H53b, H54a, H54b",
         "",
         "> Gerado por `scripts/medir_nucleo.py`. **Não edite à mão**: número escrito à mão "
         "não é evidência. Para atualizar, rode o comando abaixo de novo.",
@@ -376,6 +441,7 @@ def montar_relatorio(resultados, threads, repeticoes, comando, capacidades, tran
     for inst, referencia, medidas in resultados:
         linhas += _secao(inst, referencia, medidas)
     linhas += _secao_gpu(capacidades, transferencias, resultados, threads, repeticoes)
+    linhas += _secao_kernel(capacidades, avaliacoes, repeticoes)
     return "\n".join(linhas)
 
 
@@ -402,14 +468,25 @@ def main() -> None:
         print(f"{_mil(parceiros)} parceiros", flush=True)
         resultados.append(medir(parceiros, threads, args.repeticoes, executavel))
 
-    transferencias = []
+    transferencias, avaliacoes = [], []
     if capacidades.gpu is not None:
         for parceiros in args.parceiros:
-            print(f"transferência, {_mil(parceiros)} parceiros", flush=True)
+            print(f"transferência e kernel, {_mil(parceiros)} parceiros", flush=True)
             inst = montar_instancia(parceiros)
             transferencias.append(
                 (parceiros, nativo.transferir(inst, repeticoes=args.repeticoes, executavel=executavel))
             )
+            populacao = populacao_de_medicao(inst, SEMENTE_DA_REDE + parceiros)
+            r = nativo.avaliar_na_gpu(
+                inst, populacao, repeticoes=args.repeticoes, executavel=executavel
+            )
+            iguais = sum(a == avaliar(inst, g) for a, g in zip(r.avaliacoes, populacao, strict=True))
+            if iguais != len(populacao):
+                raise SystemExit(
+                    f"O kernel avaliou {len(populacao) - iguais} indivíduos diferente do Python "
+                    f"({parceiros} parceiros). Relatório não escrito: é defeito."
+                )
+            avaliacoes.append((parceiros, r, iguais))
 
     opcoes = []
     if args.parceiros != PARCEIROS:
@@ -426,7 +503,9 @@ def main() -> None:
     destino = Path(args.relatorio)
     destino.parent.mkdir(parents=True, exist_ok=True)
     destino.write_text(
-        montar_relatorio(resultados, threads, args.repeticoes, comando, capacidades, transferencias),
+        montar_relatorio(
+            resultados, threads, args.repeticoes, comando, capacidades, transferencias, avaliacoes
+        ),
         encoding="utf-8",
     )
     print(f"\nrelatório: {destino}")

@@ -68,4 +68,15 @@ struct Transferencia {
 Transferencia ida_e_volta(const Instancia& inst, const std::vector<Gene>& populacao, int individuos,
                           int repeticoes);
 
+// A avaliação da população inteira na GPU (H54b): as mesmas contas de
+// `avaliar`, em inteiros, e por isso o mesmo resultado (ADR-011). O tempo é só o
+// do kernel, medido pela própria GPU; a transferência é a da H54a.
+struct PopulacaoAvaliada {
+    std::vector<Avaliacao> avaliacoes;  // uma por indivíduo, na ordem da população
+    std::vector<double> kernel_ms;  // uma por repetição
+};
+
+PopulacaoAvaliada avaliar_na_gpu(const Instancia& inst, const std::vector<Gene>& populacao, int individuos,
+                                 int repeticoes);
+
 }  // namespace gih::gpu

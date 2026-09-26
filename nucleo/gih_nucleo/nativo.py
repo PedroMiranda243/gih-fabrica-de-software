@@ -1,4 +1,4 @@
-"""O núcleo em C++ chamado a partir do Python (H53a, H53b, H54a, ADR-012).
+"""O núcleo em C++ chamado a partir do Python (H53a, H53b, H54a, H54b, ADR-012).
 
 O executável `gih-nucleo` faz o mesmo que `serial.otimizar`, sorteio a sorteio,
 e devolve o mesmo `Resultado`, em qualquer um dos seus modos: `serial` e
@@ -28,10 +28,11 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from gih_nucleo.problema import Instancia, avaliar
+from gih_nucleo.problema import Avaliacao, Instancia, avaliar
 from gih_nucleo.serial import GERACOES, MUTACOES_POR_FILHO, PARTIDAS, POPULACAO, Resultado
 from gih_nucleo.viabilidade import Inviabilidade, Inviavel
 
@@ -88,6 +89,15 @@ class Transferencia:
     envio_ms: tuple[float, ...]  # instância e população, uma medida por repetição
     volta_ms: tuple[float, ...]  # a população inteira
     volta_um_ms: tuple[float, ...]  # um indivíduo, o que o laço na GPU devolve
+
+
+@dataclass(frozen=True)
+class PopulacaoAvaliada:
+    """A população avaliada na GPU (H54b), e o tempo dos dois lados, em milissegundos."""
+
+    avaliacoes: tuple[Avaliacao, ...]  # uma por indivíduo, na ordem da população
+    kernel_ms: tuple[float, ...]  # só o kernel, medido pela própria GPU
+    cpu_ms: tuple[float, ...]  # a mesma população pelo `avaliar` em C++, em série
 
 
 def localizar() -> str | None:
@@ -327,3 +337,44 @@ def contar_nucleos(cpuinfo: str, permitidos: set[int] | None = None) -> int | No
             continue
         nucleos.add((campos.get("physical id", "0"), campos["core id"]))
     return len(nucleos) or None
+
+
+def avaliar_na_gpu(
+    inst: Instancia,
+    populacao: Sequence[Sequence[int]],
+    *,
+    repeticoes: int = 15,
+    executavel: str | None = None,
+) -> PopulacaoAvaliada:
+    """Avalia a população na GPU e na CPU, em C++, e devolve o que a GPU calculou (H54b).
+
+    O executável confere uma contra a outra e sai como defeito se diferirem; quem
+    chama ainda pode conferir contra o `avaliar` daqui, que é a referência. Sem
+    GPU, levanta `SemGpu`.
+    """
+    corpo = serializar(inst) + f"populacao {len(populacao)}\n" + "".join(
+        " ".join(map(str, genes)) + "\n" for genes in populacao
+    )
+    r = subprocess.run(
+        [_executavel(executavel), "avaliar", "--repeticoes", str(repeticoes)],
+        input=corpo, capture_output=True, text=True, encoding="utf-8",
+    )
+    if r.returncode == 1:
+        raise SemGpu(r.stderr.strip())
+    if r.returncode == 2:
+        raise ValueError(r.stderr.strip())
+    if r.returncode != 0:
+        raise NucleoFalhou(f"O núcleo saiu com {r.returncode}: {r.stderr.strip()}")
+
+    tempos: dict[str, tuple[float, ...]] = {}
+    avaliacoes = []
+    for linha in r.stdout.splitlines()[1:]:
+        campos = linha.split()
+        if campos[0] in ("kernel_ms", "cpu_ms"):
+            tempos[campos[0]] = tuple(float(x) for x in campos[1:])
+        elif campos[0] == "av":
+            ganho, custo, acoes, cauda, violacao, *por_categoria = (int(x) for x in campos[1:])
+            avaliacoes.append(Avaliacao(ganho, custo, acoes, tuple(por_categoria), cauda, violacao))
+    if len(avaliacoes) != len(populacao):
+        raise NucleoFalhou("O núcleo não devolveu uma avaliação por indivíduo.")
+    return PopulacaoAvaliada(tuple(avaliacoes), tempos["kernel_ms"], tempos["cpu_ms"])
