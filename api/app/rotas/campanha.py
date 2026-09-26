@@ -241,7 +241,7 @@ def calcular(
     Recusa com `409` sem modelo treinado (UC08-E1), sem ação ativa no catálogo
     ou com outra otimização rodando. Campanha inviável **não** é recusada aqui:
     ela é calculada, registrada como inviável e explicada (RN07, UC08-A1). Nem
-    modo indisponível: roda no mais rápido que houver, e diz a troca (UC08-A4).
+    modo indisponível: roda no primeiro modo disponível, e diz a troca (UC08-A4).
     """
     try:
         execucao = servico_otimizacao.iniciar(s, parametros, usuario_id=autor.id)

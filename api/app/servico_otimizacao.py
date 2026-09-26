@@ -20,10 +20,11 @@ sessão própria, e grava o resultado na mesma linha. Uma por vez, pelo banco.
 
 **Três modos, o mesmo plano** (RF32, ADR-012). O serial é o baseline em Python,
 aqui mesmo; o CPU paralelo e a GPU são o executável em C++, que diz quais modos
-tem. Sem escolha do gestor, roda o mais rápido disponível. Com escolha de um
-modo que esta instalação não tem, roda o mais rápido disponível e a execução
-diz por quê (UC08-A4). **Sem GPU, o sistema funciona igual** (RNF06, H56): a
-tela diz por que ela falta, e a GPU que falha no meio do cálculo cai para a CPU.
+tem. Sem escolha do gestor, roda a GPU, se houver, e senão o CPU paralelo. Com
+escolha de um modo que esta instalação não tem, roda o primeiro disponível
+nessa ordem, e a execução diz por quê (UC08-A4). **Sem GPU, o sistema funciona
+igual** (RNF06, H56): a tela diz por que ela falta, e a GPU que falha no meio
+do cálculo cai para a CPU.
 """
 from __future__ import annotations
 
@@ -77,9 +78,16 @@ SEMENTE = 42
 # segundos na base de demonstração; o limite existe para a base grande.
 LIMITE_S = 120
 
-# Do mais rápido para o mais lento: sem escolha, roda o primeiro disponível. O
-# serial é o baseline em Python e está sempre disponível; os outros são modos
-# do executável em C++ (ADR-012).
+# A preferência do automático, e a ordem da tela: sem escolha, roda o primeiro
+# disponível. O serial é o baseline em Python e está sempre disponível; os
+# outros são modos do executável em C++ (ADR-012).
+#
+# **A GPU vem primeiro pelo laço, e não pelo tempo de ponta a ponta.** O laço na
+# placa é o mais rápido dos três — 7x o do CPU paralelo com 2.000 parceiros
+# (H54c) —, mas cada cálculo paga ~0,2 s para iniciar o driver e criar o
+# contexto da GPU. Em campanhas de poucos milhares de parceiros, o CPU paralelo
+# termina antes. A diferença é de décimos de segundo, que a tela não sente, e a
+# tela não promete "o mais rápido" (adendo H54c da ADR-012).
 ORDEM = (ModoExecucao.GPU, ModoExecucao.CPU_PARALELO, ModoExecucao.SERIAL)
 NO_EXECUTAVEL = {ModoExecucao.CPU_PARALELO: "openmp", ModoExecucao.GPU: "cuda"}
 ROTULO = {
@@ -164,10 +172,12 @@ class Disponibilidade:
 
 
 def modos() -> list[Disponibilidade]:
-    """Os três modos, na ordem do mais rápido, e se cada um existe nesta instalação.
+    """Os três modos, na ordem da preferência, e se cada um existe nesta instalação.
 
     Quem diz é o executável (`gih-nucleo versao`, ADR-012), perguntado a cada
-    vez: ele pode ter sido recompilado, e a pergunta custa milissegundos.
+    vez: ele pode ter sido recompilado, e a pergunta custa milissegundos. A GPU
+    precisa das duas coisas: o modo `cuda`, que o executável compilado com CUDA
+    tem, e a placa, que esta máquina pode não ter.
     """
     capacidades = None
     try:
@@ -184,9 +194,13 @@ def modos() -> list[Disponibilidade]:
         ModoExecucao.CPU_PARALELO: "O núcleo desta instalação foi compilado sem paralelismo.",
         ModoExecucao.GPU: _sem_gpu(capacidades),
     }
+    com_placa = capacidades is not None and capacidades.gpu is not None
     resposta = []
     for modo in ORDEM:
-        if modo == ModoExecucao.SERIAL or NO_EXECUTAVEL[modo] in existentes:
+        existe = modo == ModoExecucao.SERIAL or NO_EXECUTAVEL[modo] in existentes
+        if modo == ModoExecucao.GPU:
+            existe = existe and com_placa
+        if existe:
             resposta.append(Disponibilidade(modo, True, None))
         else:
             resposta.append(Disponibilidade(modo, False, sem_nucleo or faltando[modo]))
@@ -194,16 +208,13 @@ def modos() -> list[Disponibilidade]:
 
 
 def _sem_gpu(capacidades: nativo.Capacidades | None) -> str:
-    """Por que o modo GPU não está disponível, com o que o executável disse."""
-    if capacidades is None or capacidades.gpu is None:
-        codigo = capacidades.ausencia_gpu if capacidades else None
-        return SEM_GPU.get(codigo, SEM_GPU["erro"])
-    # A placa está lá, e o executável ainda não tem o modo: o otimizador em
-    # GPU é da H54c.
-    return (
-        f"A GPU desta máquina ({capacidades.gpu.nome}) está disponível, mas o otimizador em "
-        "GPU ainda não faz parte desta versão."
-    )
+    """Por que o modo GPU não está disponível, com o código que o executável deu.
+
+    Um executável sem CUDA diz `sem_cuda`; com CUDA, numa máquina sem placa —
+    ou num contêiner sem a reserva dela —, `sem_placa`.
+    """
+    codigo = capacidades.ausencia_gpu if capacidades else None
+    return SEM_GPU.get(codigo, SEM_GPU["erro"])
 
 
 def escolher(
@@ -211,17 +222,18 @@ def escolher(
 ) -> tuple[ModoExecucao, str | None]:
     """O modo que vai rodar, e por que não é o pedido quando não é (RF32, UC08-A4).
 
-    Pedido indisponível não é recusado: a campanha é calculada no mais rápido
-    que houver, e a execução diz a troca. É o que o RNF06 pede para a GPU, e
-    vale do mesmo jeito para o CPU paralelo numa instalação sem o núcleo em C++.
+    Pedido indisponível não é recusado: a campanha é calculada no primeiro modo
+    disponível da preferência (`ORDEM`), e a execução diz a troca. É o que o
+    RNF06 pede para a GPU, e vale do mesmo jeito para o CPU paralelo numa
+    instalação sem o núcleo em C++.
     """
     livres = [d.modo for d in disponiveis if d.disponivel]
-    mais_rapido = next(m for m in ORDEM if m in livres)
+    preferido = next(m for m in ORDEM if m in livres)
     if pedido is None or pedido in livres:
-        return pedido or mais_rapido, None
+        return pedido or preferido, None
     motivo = next(d.motivo for d in disponiveis if d.modo == pedido)
-    return mais_rapido, (
-        f"Pedido em {ROTULO[pedido]}, calculado em {ROTULO[mais_rapido]}: "
+    return preferido, (
+        f"Pedido em {ROTULO[pedido]}, calculado em {ROTULO[preferido]}: "
         f"{motivo[0].lower()}{motivo[1:]}"
     )
 
@@ -560,9 +572,9 @@ def _buscar(
 
     **A GPU que falha no meio não derruba o cálculo** (RNF06, UC08-A4, H56). O
     modo foi escolhido quando a GPU respondia; se o executável sai com 1 — a
-    placa sumiu, o driver caiu —, a busca roda de novo no mais rápido que sobrou,
-    e a execução passa a dizer esse modo e a troca. Como os modos dão o mesmo
-    plano (ADR-011), o gestor recebe o mesmo resultado, mais devagar.
+    placa sumiu, o driver caiu, a memória dela acabou —, a busca roda de novo no
+    primeiro modo que sobrou, e a execução passa a dizer esse modo e a troca.
+    Como os modos dão o mesmo plano (ADR-011), o gestor recebe o mesmo resultado.
     """
     try:
         return _buscar_no_modo(inst, execucao), None

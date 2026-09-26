@@ -844,8 +844,9 @@ class ParametrosCampanha(BaseModel):
     aplicacao_fim: date
     modo: ModoExecucao | None = Field(
         default=None,
-        description="O modo pedido (RF32). Nulo: o mais rápido disponível. O usado fica na "
-        "execução, que diz a troca quando o pedido não está disponível (UC08-A4).",
+        description="O modo pedido (RF32). Nulo: o primeiro disponível, na ordem GPU, CPU "
+        "paralelo e serial. O usado fica na execução, que diz a troca quando o pedido não "
+        "está disponível (UC08-A4).",
     )
 
     @model_validator(mode="after")
@@ -972,7 +973,9 @@ class EstadoCampanha(BaseModel):
     ultima: ExecucaoResposta | None
     pode_executar: bool
     motivo_bloqueio: str | None
-    modos: list[ModoCampanha] = Field(description="Do mais rápido para o mais lento.")
+    modos: list[ModoCampanha] = Field(
+        description="Na ordem da preferência do automático: GPU, CPU paralelo e serial."
+    )
     modo_automatico: ModoExecucao = Field(
-        description="O que roda quando o gestor não escolhe: o mais rápido disponível."
+        description="O que roda quando o gestor não escolhe: o primeiro modo disponível."
     )
