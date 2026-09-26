@@ -352,6 +352,13 @@ frente com alguma, a resposta já está aqui.
   GPU. O benchmark usa o cenário de referência de 2.000 parceiros por isso — e essa limitação faz parte do
   resultado a ser reportado, não é defeito. Ver `nucleo/spike/RESULTADO.md`.
 
+- **A GPU paga ~0,2 s antes de qualquer conta, a cada cálculo.** Iniciar o driver e criar o contexto da
+  placa custa isso no contêiner, com 500 ou com 10.000 parceiros. Com a população residente, o laço na GPU
+  ganha 7,4x do OpenMP com 2.000 parceiros; com o contexto, a busca inteira perde dele, e só passa a ganhar
+  perto de 10.000. Não compare o laço de um modo com o processo inteiro de outro: o `gih-nucleo` informa o
+  contexto à parte, e o `medir_nucleo.py` mostra os dois. E não crie o contexto "para aquecer" antes de
+  medir a busca — ele é parte do que o gestor espera. Ver o adendo H54c da ADR-012.
+
 - **GPU não é garantida.** O sistema precisa funcionar em máquina sem placa compatível, caindo para CPU
   paralela (RNF06). Nunca assuma CUDA disponível. A GPU só entra com o `docker-compose.gpu.yml`; o
   `docker-compose.yml` sozinho não pode reservar placa, senão o sistema não sobe em máquina sem ela. E o

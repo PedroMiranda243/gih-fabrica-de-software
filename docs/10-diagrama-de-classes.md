@@ -644,7 +644,7 @@ classDiagram
     }
 
     class OtimizadorCuda {
-        <<em construção: estruturas e avaliação na GPU (H54a, H54b)>>
+        <<implementado: C++ e CUDA (H54a a H54c)>>
         +int blocos
         +int threads_por_bloco
         +otimizar(instancia, semente) Resultado
@@ -662,6 +662,9 @@ existir.** O spike da história H47 mediu: com transferência a cada geração, 
 1,3x** do OpenMP, e abaixo de ~4.000 planos candidatos **perde**. Sem a transferência, o kernel ganha
 **11x**. A residência da população entre gerações deixou de ser otimização e virou o requisito que
 sustenta o caminho CUDA. Medições completas em [`nucleo/spike/RESULTADO.md`](../nucleo/spike/RESULTADO.md).
+Na H54c, com a população residente, o laço inteiro na GPU ganha **7,4x** do OpenMP com 2.000 parceiros; o
+custo que sobrou é o contexto da placa, cerca de 0,2 s por cálculo ([`docs/medicoes/nucleo.md`](medicoes/nucleo.md),
+ADR-012).
 
 **`Otimizador` é abstrato e a escolha do modo é em tempo de execução.** Sem GPU compatível, o sistema cai
 para CPU paralela e avisa na interface (RNF06, ADR-004). Nunca se assume CUDA disponível.
@@ -679,7 +682,7 @@ abaixo separa os dois — e o repositório comprova cada linha da coluna ✅.
 | Domínio | **as 18 entidades**, com restrições `CHECK` no banco | — |
 | Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `servico_otimizacao`, `erros` | `assistente` |
 | Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/campanha`, `/api/otimizacoes`, `/api/acoes-comerciais`, `/api/auditoria`, `/api/health` | benchmark, mensagens, assistente |
-| Núcleo | pacote `gih_nucleo`: instância, viabilidade exata, gulosos e o genético serial (H48, H49, H52); o mesmo genético em C++, idêntico ao Python (H53a); kernel de avaliação validado em CUDA e OpenMP (spike H47) | as versões com OpenMP e em CUDA |
+| Núcleo | pacote `gih_nucleo`: instância, viabilidade exata, gulosos e o genético serial (H48, H49, H52); o mesmo genético em C++, idêntico ao Python (H53a), com OpenMP (H53b) e inteiro na GPU (H54a a H54c), com o mesmo plano nos quatro | — |
 | Modelo preditivo | pacote `gih_modelo`: variáveis, referências, rede e treino (H41 a H43, H46) | — |
 
 Cobertura de teste da API em 26/09/2026: **624 testes, 97%**. Os pacotes do modelo e do

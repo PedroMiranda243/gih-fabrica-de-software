@@ -169,7 +169,8 @@ Verificação: `http://localhost:8000/api/health` deve responder `banco: "ok"`.
 Documentação da API em `http://localhost:8000/api/docs`.
 
 **Com placa NVIDIA**, o otimizador pode usar a GPU. O núcleo é compilado com CUDA, e a placa é reservada
-para a API, por um arquivo à parte:
+para a API, por um arquivo à parte. Com ele, o modo GPU aparece na tela de campanha, e é o que roda quando o
+gestor não escolhe:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
@@ -343,8 +344,8 @@ api/.venv/Scripts/python scripts/medir_modelo.py        # o modelo contra as ref
 api/.venv/Scripts/python scripts/medir_otimizador.py    # o otimizador contra o guloso e o teto (H49)
 ```
 
-O núcleo em C++ é medido no contêiner, que é onde ele roda (ADR-012) — o OpenMP contra o C++ serial, e a
-transferência para a GPU:
+O núcleo em C++ é medido no contêiner, que é onde ele roda (ADR-012) — o OpenMP e a GPU contra o C++
+serial, o RNF01 e o RNF02 no cenário de referência, a transferência para a GPU e o kernel de avaliação:
 
 ```bash
 docker build -t gih-nucleo nucleo

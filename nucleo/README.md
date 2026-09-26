@@ -6,7 +6,7 @@ uma instância já em números inteiros e devolve o plano. Não conhece banco, F
 o que é ganho (RN10), quem é elegível e o que é cauda longa (RN11) são decididos pela API.
 
 O problema está formalizado em [`docs/07`](../docs/07-arquitetura-preliminar.md) §4.1. O algoritmo, e o que
-deixa as três versões no mesmo plano, estão na ADR-011.
+deixa as quatro versões — Python, C++ serial, OpenMP e CUDA — no mesmo plano, estão na ADR-011.
 
 | Arquivo | O que faz |
 |---|---|
@@ -25,28 +25,31 @@ do Python: 76x.
 
 | Arquivo | O que faz |
 |---|---|
-| `cpp/genetico.hpp` | Os passos que as versões fazem igual: sorteio, torneio, filho, a preparação e o relógio |
+| `cpp/genetico.hpp` | Os passos que as versões fazem igual: sorteio, torneio, filho, a preparação e o relógio. O sorteio, o torneio, a elite e a fórmula de cada gene são compilados também para a GPU: é a mesma função nos dois lados |
 | `cpp/serial.cpp` | O genético serial, uma partida depois da outra (H53a) |
 | `cpp/openmp.cpp` | O genético com OpenMP: as partidas avançam juntas, e os filhos de cada geração são calculados em paralelo (H53b). O mesmo plano da serial com qualquer número de threads |
-| `cpp/gpu.hpp` | A GPU vista do resto do núcleo, sem nada do CUDA: achar a placa, e a ida e volta da instância e da população |
-| `cpp/gpu.cuh` | As estruturas na GPU (H54a): a memória com dono, a instância no layout da CPU, e a população em dois buffers — a geração atual e a seguinte —, que ficam na placa a busca inteira (ADR-006) |
+| `cpp/gpu.hpp` | A GPU vista do resto do núcleo, sem nada do CUDA: achar a placa, a ida e volta, a avaliação e a busca inteira |
+| `cpp/gpu.cuh` | As estruturas na GPU (H54a): a memória com dono, a instância no layout da CPU, e a população em dois buffers — a geração atual e a seguinte —, que ficam na placa a busca inteira (ADR-006). E o que é falta de GPU e o que é defeito, numa falha do CUDA |
 | `cpp/gpu.cu` | A ida e volta, conferida byte a byte e por uma conta feita na própria GPU. Compilado só com CUDA |
 | `cpp/gpu_avaliacao.cuh` | A avaliação de um indivíduo por um bloco de threads, com as contas de `avaliar` em inteiros (H54b). É o que o laço da H54c chama para cada filho |
 | `cpp/avaliacao.cu` | O kernel que avalia a população inteira, um bloco por indivíduo, e mede o próprio tempo. Compilado só com CUDA |
+| `cpp/busca.cu` | O genético inteiro na GPU (H54c): a população nasce na placa e fica lá; cada geração é um kernel, com um bloco por indivíduo; só as avaliações da última geração e o plano vencedor voltam. O mesmo plano das outras versões. Compilado só com CUDA |
 | `cpp/sem_gpu.cpp` | O núcleo sem CUDA: diz que não há GPU, e por quê |
-| `cpp/main.cpp` | O executável: `otimizar --modo serial\|openmp [--threads N]`, `sorteio`, `gpu`, `transferir`, `avaliar` e `versao`, que diz os modos, as threads, o compilador e a GPU |
+| `cpp/main.cpp` | O executável: `otimizar --modo serial\|openmp\|cuda [--threads N]`, `sorteio`, `gpu`, `transferir`, `avaliar` e `versao`, que diz os modos, as threads, o compilador e a GPU |
 
-O ganho do OpenMP e a transferência para a GPU são medidos no contêiner:
-[`docs/medicoes/nucleo.md`](../docs/medicoes/nucleo.md).
+O ganho do OpenMP e o da GPU, a transferência e o kernel são medidos no contêiner:
+[`docs/medicoes/nucleo.md`](../docs/medicoes/nucleo.md). **A GPU tem um custo fixo**: iniciar o driver e criar o
+contexto, uma vez por processo, antes de qualquer conta. O modo `cuda` o informa à parte, e a medição mostra o
+laço sem ele e a busca inteira com ele.
 
 **Sem GPU, o executável recusa o que precisa dela com a saída 1**, e diz o motivo: compilado sem CUDA, nenhuma
-placa visível, driver antigo. É o sinal para a API cair para a CPU (RNF06, H56). Para ver a recusa numa máquina
-com placa, esconda-a: `CUDA_VISIBLE_DEVICES=-1 bin/gih-nucleo gpu`.
+placa visível, driver antigo — ou a placa que fica sem memória ou some no meio da busca. É o sinal para a API
+cair para a CPU (RNF06, H56). Para ver a recusa numa máquina com placa, esconda-a:
+`CUDA_VISIBLE_DEVICES=-1 bin/gih-nucleo gpu`. A campanha inviável é respondida antes, na CPU, em qualquer modo.
 
 **O pacote Python não tem dependência.** O baseline serial é o denominador do *speedup*, e vetorizá-lo com NumPy
-deixaria o ganho medido menos honesto. O laço em CUDA (H54b, H54c) vai seguir o mesmo algoritmo sorteio a
-sorteio. `spike/` guarda a validação do toolchain de GPU (H47), e o `requirements.txt`
-desta pasta é dele, não do pacote.
+deixaria o ganho medido menos honesto. `spike/` guarda a validação do toolchain de GPU (H47), e o
+`requirements.txt` desta pasta é dele, não do pacote.
 
 ## Rodando os testes
 
@@ -61,15 +64,16 @@ pytest
 ```
 
 Sem o executável compilado, ou compilado sem OpenMP, os testes que comparam o C++ com o Python são pulados;
-na CI, reprovam. Os da ida e volta pulam sem GPU — a CI não tem placa nem CUDA —, e reprovam com
-`GIH_GPU_OBRIGATORIA=1`. Os da recusa sem GPU rodam em qualquer máquina.
+na CI, reprovam. Os que precisam de placa — a ida e volta, o kernel e a busca na GPU — pulam sem ela, porque a
+CI não tem placa nem CUDA, e reprovam com `GIH_GPU_OBRIGATORIA=1`. Os da recusa sem GPU rodam em qualquer
+máquina.
 
 **No contêiner**, como o sistema roda (ADR-012), da raiz do repositório:
 
 ```bash
 docker build -t gih-nucleo nucleo
 docker run --rm --gpus all gih-nucleo python -m pytest          # os mesmos testes, em Linux, com a GPU
-docker run --rm gih-nucleo python -m pytest                     # sem GPU: a ida e volta pula
+docker run --rm gih-nucleo python -m pytest                     # sem GPU: o que precisa de placa pula
 docker run --rm --gpus all -v "$PWD:/repo" -w /repo gih-nucleo python scripts/medir_nucleo.py
 ```
 
