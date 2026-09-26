@@ -79,12 +79,17 @@ CATEGORIAS = {
     "Petshop": (58.0, 4),
 }
 
+# (nome, custo, efeito de crescimento, efeito de retenção) — RN10. São dado de
+# exemplo, editável pelo Gestor no catálogo, e não regra: o que importa para a
+# demonstração é o contraste. As de alcance (vitrine, campanha) fazem crescer;
+# a visita e o frete seguram quem está para cair, e por isso pesam mais em
+# parceiro com risco alto.
 ACOES = [
-    ("Cupom de primeira compra", 120.00, 0.08),
-    ("Destaque na vitrine", 260.00, 0.14),
-    ("Campanha de categoria", 480.00, 0.22),
-    ("Visita de relacionamento", 90.00, 0.06),
-    ("Frete subsidiado", 350.00, 0.18),
+    ("Cupom de primeira compra", "120.00", "0.08", "0.03"),
+    ("Destaque na vitrine", "260.00", "0.14", "0.05"),
+    ("Campanha de categoria", "480.00", "0.22", "0.08"),
+    ("Visita de relacionamento", "90.00", "0.06", "0.30"),
+    ("Frete subsidiado", "350.00", "0.18", "0.12"),
 ]
 
 # Perfis de trajetória: (rótulo, peso, tendência por período, volatilidade)
@@ -138,10 +143,13 @@ def gerar(n_parceiros: int, n_periodos: int, semente: int, limpar: bool) -> None
             c = Categoria(nome=nome)
             s.add(c)
             categorias[nome] = c
-        for nome, custo, uplift in ACOES:
+        for nome, custo, crescimento, retencao in ACOES:
             s.add(
                 AcaoComercial(
-                    nome=nome, custo_unitario=Decimal(str(custo)), uplift_esperado_pct=uplift
+                    nome=nome,
+                    custo_unitario=Decimal(custo),
+                    efeito_crescimento=Decimal(crescimento),
+                    efeito_retencao=Decimal(retencao),
                 )
             )
         s.flush()
