@@ -10,27 +10,14 @@ Sem o executável compilado, os testes são pulados — quem mexe só no Python 
 precisa do compilador. **Na CI não**: lá `GIH_NUCLEO_OBRIGATORIO=1`, e a falta do
 executável, ou do modo OpenMP nele, reprova.
 """
-import os
 import subprocess
 
 import pytest
 
 from gih_nucleo import Instancia, Inviavel, nativo, otimizar, verificar_plano, verificar_viabilidade
 from gih_nucleo.aleatorio import sorteio
-from tests.conftest import sortear_instancia, sortear_viavel
+from tests.conftest import OBRIGATORIO, sortear_instancia, sortear_viavel
 from tests.test_otimizador import VIAVEIS
-
-OBRIGATORIO = os.environ.get("GIH_NUCLEO_OBRIGATORIO") == "1"
-
-
-@pytest.fixture(scope="module")
-def executavel():
-    caminho = nativo.localizar()
-    if caminho is None:
-        if OBRIGATORIO:
-            pytest.fail("O executável gih-nucleo não foi encontrado, e aqui ele é obrigatório.")
-        pytest.skip("gih-nucleo não compilado — ver nucleo/construir.bat ou o g++ do README.")
-    return caminho
 
 
 @pytest.fixture(scope="module")
