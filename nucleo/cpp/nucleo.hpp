@@ -104,6 +104,7 @@ struct Parametros {
     int geracoes = 150;
     int mutacoes_por_filho = 1;
     std::int64_t limite_ms = -1;  // negativo: sem limite
+    int threads = 0;  // só o modo OpenMP lê; 0: o padrão do OpenMP (OMP_NUM_THREADS ou os núcleos)
 };
 
 struct Resultado {
@@ -113,9 +114,18 @@ struct Resultado {
     std::int64_t geracoes = 0;
     bool parcial = false;
     double segundos = 0;
+    int threads = 1;  // as que calcularam os filhos
 };
 
 // `serial.otimizar`, depois de a viabilidade ter sido conferida.
 Resultado otimizar_serial(const Instancia& inst, const Parametros& p);
+
+// A versão OpenMP (H53b): sem limite de tempo, o mesmo plano, a mesma avaliação
+// e as mesmas gerações da serial, com qualquer número de threads.
+Resultado otimizar_openmp(const Instancia& inst, const Parametros& p);
+
+// As threads que a versão OpenMP usa por padrão; 0 quando o executável foi
+// compilado sem OpenMP, e só o modo serial existe.
+int threads_openmp();
 
 }  // namespace gih

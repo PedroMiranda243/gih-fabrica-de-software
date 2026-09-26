@@ -1,0 +1,9 @@
+# O que fica fora da imagem do núcleo: o executável compilado no Windows, os
+# ambientes locais e o spike, que tem a sua própria imagem.
+bin/
+spike/
+.venv/
+**/__pycache__/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
