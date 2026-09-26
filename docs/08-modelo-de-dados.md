@@ -621,5 +621,5 @@ implantar.
 | As entidades em código | [`api/app/modelos.py`](../api/app/modelos.py) |
 | A migração que cria o esquema | [`api/migrations/versions/`](../api/migrations/versions/) |
 | Diagrama de classes, incluindo serviços e núcleo | [`10-diagrama-de-classes.md`](10-diagrama-de-classes.md) |
-| Decisões de arquitetura (ADR-001 a ADR-011) | [`07-arquitetura-preliminar.md`](07-arquitetura-preliminar.md) |
+| Decisões de arquitetura (ADR-001 a ADR-012) | [`07-arquitetura-preliminar.md`](07-arquitetura-preliminar.md) |
 | Massa de demonstração sintética | [`scripts/gerar_dados_sinteticos.py`](../scripts/gerar_dados_sinteticos.py) |

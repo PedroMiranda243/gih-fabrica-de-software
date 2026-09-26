@@ -355,6 +355,11 @@ frente com alguma, a resposta já está aqui.
 - **GPU não é garantida.** O sistema precisa funcionar em máquina sem placa compatível, caindo para CPU
   paralela (RNF06). Nunca assuma CUDA disponível.
 
+- **O núcleo roda no contêiner, e é lá que se mede.** Dentro do Docker (WSL2), a transferência para a GPU
+  custa ~40% a mais que no Windows nativo, e o OpenMP do GCC ganha menos que o do MSVC em trabalho pequeno
+  (0,8x contra 10,4x em 256 planos). Número tirado do `construir.bat` não vale para o benchmark. Ver a
+  parte 3 de `nucleo/spike/RESULTADO.md` e a ADR-012.
+
 ### Como testar de verdade
 
 - **Teste o que o usuário vê, não o que o código diz.** Num projeto anterior, a tela de login "não fazia

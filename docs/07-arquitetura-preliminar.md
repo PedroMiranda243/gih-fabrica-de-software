@@ -349,7 +349,8 @@ como registro histórico.
 - **Custo assumido:** compilar deixa de ser reprodutível só com `pip`. Quem for mexer no `nucleo/` precisa
   do Build Tools e do Toolkit instalados. Para o restante da equipe nada muda — `api/`, `web/` e `modelo/`
   não dependem disso
-- A imagem Docker do núcleo ainda não foi construída; empacotar o `nvcc` é trabalho em aberto
+- A imagem Docker do núcleo ainda não foi construída; empacotar o `nvcc` é trabalho em aberto —
+  *resolvido pelo spike da parte 3 e pela ADR-012, em 26/09/2026*
 
 Resultado completo em [`nucleo/spike/RESULTADO.md`](../nucleo/spike/RESULTADO.md), parte 2.
 
@@ -582,6 +583,63 @@ independentes. Faltava decidir três coisas antes da primeira linha (H48, H49):
 - Aritmética inteira limita o ganho de um plano a 2⁶³ centavos, muito acima de qualquer campanha
 - **Custo assumido:** o baseline em Python puro é lento de propósito. Na tela, o limite de tempo o protege até
   as versões em C++ chegarem (Sprint 10)
+
+---
+
+### ADR-012 — O núcleo é um executável dentro da imagem da API, chamado por processo
+
+**Status:** Decidido
+**Data:** 26/09/2026
+
+**Situação:** a API roda num contêiner Linux, e o núcleo em C++ com OpenMP e CUDA (H53, H54) só tinha sido
+compilado no Windows (ADR-006). A Sprint 10 precisa que a API chame o C++. Antes de escrever o porte, o
+spike da issue #123 mediu se o mesmo código compila em Linux e roda **dentro da imagem da API**, com a GPU
+([`nucleo/spike/RESULTADO.md`](../nucleo/spike/RESULTADO.md), parte 3).
+
+**Alternativas — onde o núcleo roda:**
+
+| Opção | Avaliação |
+|---|---|
+| **Na imagem da API, como executável** | **Escolhida.** Medido: roda em `python:3.11-slim` com `--gpus all`, acrescenta ~1 MB à imagem e recusa de forma limpa sem GPU |
+| Serviço próprio no Compose, com a imagem da NVIDIA | Mais um serviço, mais uma chamada pela rede, e 5,1 GB de imagem para bibliotecas que o núcleo não usa |
+| Nativo no host Windows | Sai do Docker: quebra o "sobe com um comando" (RNF07) e depende de a máquina da avaliação ter o MSVC e o toolkit |
+
+**Alternativas — como a API chama:**
+
+| Opção | Avaliação |
+|---|---|
+| **Executável, com a instância na entrada padrão e o plano na saída** | **Escolhida.** A ida e volta do cenário de referência (2.000 parceiros, 76 KB de texto) mediu cerca de 2 ms. Uma falha na GPU derruba o processo do núcleo, e não o da API |
+| Módulo de extensão (pybind11, BSD) | Chamada sem cópia, mas amarra o binário à versão do Python e põe a GPU dentro do processo da API: um erro no kernel derruba o servidor inteiro |
+
+**Decisão:**
+
+- **O C++ vira um executável, compilado num estágio do Dockerfile da API** e copiado para a imagem final,
+  com o runtime do CUDA embutido (`cudart` estático, o padrão do `nvcc`). A imagem da API continua sendo a
+  `python:3.11-slim`; nenhuma camada da NVIDIA vai para ela.
+- **A instância vai em texto, em inteiros** — os mesmos centavos e contagens da ADR-011 —, e o plano volta em
+  texto. Lido com a biblioteca padrão do C++: nenhuma dependência nova.
+- **O CUDA é opcional no build.** O estágio de CPU (g++ com OpenMP) roda sempre; o de CUDA, só quando um
+  arquivo à parte do Compose pede — e é esse arquivo que reserva a GPU. Sem ele, `docker compose up` não
+  baixa os GB da imagem de compilação da NVIDIA nem exige placa NVIDIA: o sistema sobe em qualquer máquina,
+  em CPU paralela (RNF06, H72).
+- **A API pergunta ao executável quais modos existem.** Sem GPU, o CUDA recusa com saída 1, e a API cai para
+  CPU paralela com aviso (ADR-004, H56).
+- **O baseline serial em Python continua na API**: é o denominador do *speedup* do RNF02. O serial em C++, o
+  OpenMP e o CUDA ficam no executável, com o mesmo algoritmo e o mesmo gerador aleatório (ADR-011).
+- **O benchmark é medido dentro do contêiner**, onde o sistema roda, e não no Windows.
+
+**Consequências:**
+
+- Uma falha do núcleo volta à API como saída diferente de zero e vira execução `FALHOU` com motivo, como no
+  treino do modelo — a API continua de pé
+- No WSL2, a transferência para a GPU custa ~40% a mais que no Windows nativo (parte 3). É mais um motivo
+  para a população ficar residente na GPU entre gerações (H54c, ADR-006)
+- O OpenMP do GCC ganha menos que o do MSVC nos tamanhos pequenos (0,8x contra 10,4x em 256 planos). O
+  benchmark vai mostrar isso, e não esconder
+- O `construir.bat` continua sendo o caminho para desenvolver o kernel no Windows; o contêiner é a
+  referência para medir e para rodar o sistema
+- **Custo assumido:** o build com CUDA baixa a imagem de compilação da NVIDIA, de alguns GB, sob licença
+  proprietária — a mesma exceção do CUDA Toolkit na regra 2.8 do `CLAUDE.md`
 
 ---
 
