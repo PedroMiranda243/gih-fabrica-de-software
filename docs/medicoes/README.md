@@ -8,11 +8,15 @@ aparece na frente da banca.
 |---|---|---|
 | [`painel-5000.md`](painel-5000.md) | Tempo de resposta do painel com 5.000 parceiros | H40 (RNF03, RNF05) |
 | [`painel-10000.md`](painel-10000.md) | O mesmo no teto de carga do RNF04 | H40 |
+| [`modelo.md`](modelo.md) | O modelo preditivo contra as referências, em várias redes e sementes | H42, H43, H46 |
+| [`otimizador.md`](otimizador.md) | O otimizador serial contra o guloso e contra um teto do ótimo; o tempo do baseline | H48, H49 (RNF02) |
 
 ## Como refazer
 
 ```bash
 api/.venv/Scripts/python scripts/medir_painel.py
+api/.venv/Scripts/python scripts/medir_modelo.py
+api/.venv/Scripts/python scripts/medir_otimizador.py
 ```
 
 O script cria o banco `gih_medicao` na mesma instância do Postgres e gera a massa lá. **O banco de
