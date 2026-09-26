@@ -206,6 +206,8 @@ flowchart TD
     Configuracao["Limiares<br/>/configuracao"]
     Modelo["Modelo preditivo<br/>/modelo"]
     Campanha["Campanha<br/>/campanha"]
+    Execucoes["Execuções do otimizador<br/>/execucoes"]
+    Execucao["Execução<br/>/execucoes/:id"]
 
     Login -- "entrar" --> Menu
     Menu -. "todos" .-> Painel
@@ -215,6 +217,7 @@ flowchart TD
     Menu -. "administrador" .-> Configuracao
     Menu -. "administrador e gestor" .-> Modelo
     Menu -. "gestor e analista" .-> Campanha
+    Menu -. "gestor, analista<br/>e administrador" .-> Execucoes
     Painel -- "base vazia:<br/>importar um relatório" --> Importacao
     Importacao -- "importação concluída:<br/>ver no painel" --> Painel
     Parceiros -- "nome do parceiro" --> Cadastro
@@ -232,6 +235,9 @@ flowchart TD
     Modelo -- "treinar:<br/>acompanha até terminar" --> Modelo
     Campanha -- "calcular:<br/>acompanha até o plano" --> Campanha
     Campanha -- "parceiro do plano" --> Cadastro
+    Campanha -- "execuções anteriores" --> Execucoes
+    Execucoes -- "data da execução:<br/>gestor e analista" --> Execucao
+    Execucao -- "parceiro do plano" --> Cadastro
 ```
 
 **O menu lateral aparece como um nó só**, com setas tracejadas: ele fica visível em todas as telas depois do
@@ -241,10 +247,11 @@ caminhos que **a própria tela** oferece.
 
 **O menu mostra só o que o perfil abre.** A lista vem do servidor — a sessão traz as telas do perfil, lidas
 das permissões das próprias rotas —, e a interface só desenha o que ouviu (regras 2.4 e 2.5 do
-`CLAUDE.md`). O Administrador vê Painel, Importação (só o histórico, pelo RF13), Modelo, Usuários e Limiares; o
-Gestor vê Painel, Importação, Parceiros, Campanha e Modelo; o Analista, Painel, Importação, Parceiros e
-Campanha — ele lê a previsão no cadastro do parceiro (RF28) e consulta o plano, mas não treina o modelo
-(UC07) nem calcula a campanha (UC08). Dentro da tela, o botão de calcular e o de editar o catálogo seguem a
+`CLAUDE.md`). O Administrador vê Painel, Importação (só o histórico, pelo RF13), Execuções (sem abrir o
+plano, pelo RF34), Modelo, Usuários e Limiares; o Gestor vê Painel, Importação, Parceiros, Campanha,
+Execuções e Modelo; o Analista, Painel, Importação, Parceiros, Campanha e Execuções — ele lê a previsão no
+cadastro do parceiro (RF28) e consulta o plano, mas não treina o modelo (UC07) nem calcula a campanha
+(UC08). Dentro da tela, o botão de calcular e o de editar o catálogo seguem a
 mesma regra: a API diz a quem pergunta se ele pode, lendo a permissão da própria rota. Esconder o item não é controle de acesso: quem abre o
 endereço direto recebe a recusa da rota.
 

@@ -72,6 +72,11 @@ No UC03, o "somente leitura" do Administrador é o **histórico das importaçõe
 período, quando e quanto — que o RF13 lhe atribui. Importar continua sendo de Gestor e Analista. A matriz
 dizia "sem acesso" e contradizia o RF13; o RF13 é o que vale.
 
+No UC08, o "sem acesso" do Administrador tem a mesma exceção. O RF34 lhe dá o **histórico das execuções
+do otimizador**: quem calculou, quando, com que parâmetros, em que modo, em quanto tempo e com que
+resultado. O plano de cada execução, parceiro a parceiro, continua sendo da campanha, e só o Gestor e o
+Analista o abrem. Decisão de 26/09/2026, na H58.
+
 ---
 
 ## 4. Especificação detalhada
@@ -438,6 +443,11 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 >   numa instalação sem o núcleo em C++.
 >
 > O plano mostra o modo usado, as threads e o tempo, e a execução registra o modo pedido e o usado.
+>
+> **O histórico (passo 10, Sprint 10 interna, H58).** A tela **Execuções** (`/execucoes`) lista cada
+> execução com autor, data, parâmetros, modo, tempo e resultado (RF34), da mais recente para a mais antiga.
+> O Gestor e o Analista abrem uma execução antiga e veem o que foi pedido e o plano que saiu, do mesmo jeito
+> que a Campanha o mostrou. O Administrador vê a lista, mas não abre o plano (nota da matriz, na seção 3).
 
 ---
 
