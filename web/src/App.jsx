@@ -12,6 +12,8 @@ import Casca from "./componentes/Casca";
 import Carregando from "./componentes/Carregando";
 import Campanha from "./paginas/Campanha";
 import Configuracao from "./paginas/Configuracao";
+import Execucao from "./paginas/Execucao";
+import Execucoes from "./paginas/Execucoes";
 import Importacao from "./paginas/Importacao";
 import Login from "./paginas/Login";
 import Modelo from "./paginas/Modelo";
@@ -126,6 +128,17 @@ export default function App() {
         }
       >
         <Route path="/campanha" element={<Campanha />} />
+      </Route>
+
+      <Route
+        element={
+          <Protegido>
+            <Casca titulo="Execuções do otimizador" />
+          </Protegido>
+        }
+      >
+        <Route path="/execucoes" element={<Execucoes />} />
+        <Route path="/execucoes/:id" element={<Execucao />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

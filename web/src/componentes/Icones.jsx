@@ -106,6 +106,17 @@ export function IconeCampanha(props) {
   );
 }
 
+/* Relógio com a seta voltando: o que já foi calculado (H58). */
+export function IconeExecucoes(props) {
+  return (
+    <svg {...comuns} {...props}>
+      <path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9L2.5 5.7" />
+      <path d="M2.5 2.8v2.9h2.9" />
+      <path d="M8 5.2V8l2 1.3" />
+    </svg>
+  );
+}
+
 export function IconeSair(props) {
   return (
     <svg {...comuns} {...props}>

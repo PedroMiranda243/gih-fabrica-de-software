@@ -1,0 +1,27 @@
+/* O histórico das execuções do otimizador (H58) e uma execução aberta por ele. */
+
+.execucoes__corpo {
+  padding: var(--esp-16);
+}
+
+.execucoes__nota {
+  margin: 0;
+  padding: var(--esp-12) var(--esp-16);
+  border-bottom: 1px solid var(--border);
+  max-width: 72ch;
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+  line-height: 1.55;
+}
+
+.execucoes__tabela .quando {
+  white-space: nowrap;
+}
+
+/* O detalhe embaixo do valor — a troca de modo, o motivo da falha, a restrição —
+   em linha própria e tinta secundária: a coluna lê o resultado primeiro. */
+.execucoes__detalhe {
+  display: block;
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+}
