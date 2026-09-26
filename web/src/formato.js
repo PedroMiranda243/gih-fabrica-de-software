@@ -196,7 +196,7 @@ export function comoDuracao(ms) {
 export const MODOS_DE_EXECUCAO = [
   ["SERIAL", "Serial", "serial", "A referência, em Python: o mesmo plano, em muito mais tempo. Serve para comparar."],
   ["CPU_PARALELO", "CPU paralelo", "CPU paralelo", "O núcleo em C++, com os núcleos do processador em paralelo."],
-  ["GPU", "GPU", "GPU", "O núcleo em CUDA, na placa de vídeo."],
+  ["GPU", "GPU", "GPU", "O núcleo em CUDA, na placa de vídeo. Leva uns décimos de segundo para começar: compensa nas campanhas grandes."],
 ];
 export const ROTULO_MODO = Object.fromEntries(MODOS_DE_EXECUCAO.map(([modo, rotulo]) => [modo, rotulo]));
 export const NOME_MODO = Object.fromEntries(MODOS_DE_EXECUCAO.map(([modo, , nome]) => [modo, nome]));

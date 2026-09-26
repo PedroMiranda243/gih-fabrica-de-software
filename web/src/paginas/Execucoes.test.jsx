@@ -182,7 +182,7 @@ describe("execução aberta pelo histórico", () => {
     expect(pedido).toHaveTextContent("R$ 12.000,00");
     expect(pedido).toHaveTextContent("ao menos 30% das ações");
     expect(pedido).toHaveTextContent("Pizzaria: mín. 10%");
-    expect(pedido).toHaveTextContent("Automático, o mais rápido disponível");
+    expect(pedido).toHaveTextContent("Automático: GPU, se houver, e senão CPU paralelo");
 
     const plano = screen.getByRole("region", { name: /Plano recomendado/ });
     expect(plano).toHaveTextContent("CPU paralelo, 8 threads · 62 ms");

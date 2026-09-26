@@ -199,7 +199,7 @@ describe("tela da campanha", () => {
       cotas_categoria: [{ categoria_id: 3, minimo: "0.1000", maximo: null }],
       aplicacao_inicio: "2026-09-21",
       aplicacao_fim: "2026-09-27",
-      modo: null, // sem escolha: a API roda o mais rápido disponível
+      modo: null, // sem escolha: a API roda a GPU, se houver, e senão o CPU paralelo
     });
     expect(await screen.findByText("Calculando o plano…")).toBeInTheDocument();
 
@@ -238,7 +238,7 @@ describe("tela da campanha", () => {
     expect(within(modo).getByRole("option", { name: "Serial" })).toBeEnabled();
     // A opção desabilitada não se explica sozinha: o porquê está na ajuda do campo.
     expect(modo).toHaveAccessibleDescription(
-      `Sem escolha, roda o mais rápido disponível nesta instalação: CPU paralelo. GPU: ${SEM_GPU}`,
+      `Sem escolha, roda na GPU, se houver, e senão no CPU paralelo. Nesta instalação: CPU paralelo. GPU: ${SEM_GPU}`,
     );
 
     await usuario.selectOptions(modo, "SERIAL");
