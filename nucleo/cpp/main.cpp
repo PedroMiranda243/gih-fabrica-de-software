@@ -1,17 +1,21 @@
 // O executável `gih-nucleo` — como a API chama o núcleo em C++ (ADR-012).
 //
-//   gih-nucleo otimizar [--modo serial|openmp] [--threads N]
+//   gih-nucleo otimizar [--modo serial|openmp|cuda] [--threads N]
 //                       [--semente N] [--partidas N] [--populacao N]
 //                       [--geracoes N] [--mutacoes N] [--limite-ms N]
 //       Lê a instância pela entrada padrão e escreve o resultado na saída.
 //       `--threads` só vale no modo openmp; sem ele, vale o padrão do OpenMP.
+//       O modo cuda precisa de GPU (H54c): sem ela, a saída 1 — inclusive
+//       num executável sem CUDA, porque para quem pediu é a mesma falta. A
+//       campanha inviável é respondida antes, na CPU, em qualquer modo.
 //   gih-nucleo sorteio C1 C2 ...
 //       O sorteio das coordenadas: o contrato do gerador com o Python.
 //   gih-nucleo versao
 //       O formato, os modos que este executável tem, as threads do OpenMP, o
 //       compilador e a GPU, ou por que não há. É por aqui que a API sabe a que
 //       modo pode recorrer (RNF06), e que a medição registra onde o executável
-//       foi compilado.
+//       foi compilado. O modo cuda está nos modos quando o executável foi
+//       compilado com CUDA; se há placa, quem diz é a linha da GPU.
 //   gih-nucleo gpu
 //       A GPU que o núcleo usaria; sem ela, o motivo e a saída 1 (H56).
 //   gih-nucleo transferir [--semente N] [--partidas N] [--populacao N]
@@ -166,8 +170,8 @@ Pedido ler_pedido(int argc, char** argv) {
         const std::string nome = argv[i];
         if (nome == "--modo") {
             pedido.modo = argv[i + 1];
-            if (pedido.modo != "serial" && pedido.modo != "openmp") {
-                throw Invalida("Modo desconhecido: " + pedido.modo + ". Os modos são serial e openmp.");
+            if (pedido.modo != "serial" && pedido.modo != "openmp" && pedido.modo != "cuda") {
+                throw Invalida("Modo desconhecido: " + pedido.modo + ". Os modos são serial, openmp e cuda.");
             }
             continue;
         }
@@ -224,16 +228,19 @@ int otimizar(int argc, char** argv) {
         return 0;
     }
 
-    const gih::Resultado r =
-        pedido.modo == "openmp" ? gih::otimizar_openmp(inst, p) : gih::otimizar_serial(inst, p);
+    const gih::Resultado r = pedido.modo == "openmp" ? gih::otimizar_openmp(inst, p)
+                             : pedido.modo == "cuda" ? gih::gpu::otimizar_na_gpu(inst, p)
+                                                     : gih::otimizar_serial(inst, p);
     const auto& av = r.avaliacao;
     saida << "viavel\n"
           << "avaliacao " << av.ganho << ' ' << av.custo << ' ' << av.acoes << ' ' << av.cauda << ' '
           << av.violacao << '\n'
           << "busca " << r.partidas << ' ' << r.geracoes << ' ' << (r.parcial ? 1 : 0) << ' '
           << static_cast<long long>(r.segundos * 1e6) << '\n'
-          << "execucao " << pedido.modo << ' ' << r.threads << '\n'
-          << "genes";
+          << "execucao " << pedido.modo << ' ' << r.threads << '\n';
+    // O custo fixo da GPU, que já está dentro da busca: a medição o mostra à parte.
+    if (pedido.modo == "cuda") saida << "contexto " << static_cast<long long>(r.contexto_segundos * 1e6) << '\n';
+    saida << "genes";
     for (gih::Gene g : r.genes) saida << ' ' << static_cast<int>(g);
     saida << '\n';
     std::cout << saida.str();
@@ -392,7 +399,8 @@ int main(int argc, char** argv) {
         if (comando == "versao") {
             const int threads = gih::threads_openmp();
             std::cout << FORMATO << '\n'
-                      << "modos serial" << (threads > 0 ? " openmp" : "") << '\n'
+                      << "modos serial" << (threads > 0 ? " openmp" : "")
+                      << (gih::gpu::COM_CUDA ? " cuda" : "") << '\n'
                       << "threads " << threads << '\n'
                       << "compilador " << compilador() << '\n'
                       << linha_da_gpu() << '\n';

@@ -29,12 +29,6 @@ __global__ void avaliar_populacao(VisaoDaInstancia inst, const Gene* populacao, 
     }
 }
 
-// Os contadores por categoria moram na memória compartilhada do bloco, que tem
-// 48 KB por padrão. Um int por categoria: cabem 12 mil, muito acima de qualquer
-// rede real — mas passar disso seria falha silenciosa no lançamento, e aqui vira
-// recusa com motivo.
-constexpr int CATEGORIAS_MAXIMAS = 10000;
-
 }  // namespace
 
 PopulacaoAvaliada avaliar_na_gpu(const Instancia& inst, const std::vector<Gene>& populacao, int individuos,
@@ -60,7 +54,7 @@ PopulacaoAvaliada avaliar_na_gpu(const Instancia& inst, const std::vector<Gene>&
     Memoria<AvaliacaoNoDispositivo> saida(static_cast<std::size_t>(individuos));
     // Pelo menos um int, para o ponteiro existir mesmo sem categoria.
     Memoria<int> por_categoria(std::max<std::size_t>(1, static_cast<std::size_t>(individuos) * inst.categorias));
-    const std::size_t compartilhada = std::max<std::size_t>(1, inst.categorias) * sizeof(int);
+    const std::size_t compartilhada = compartilhada_por_bloco(inst.categorias);
 
     auto lancar = [&] {
         avaliar_populacao<<<individuos, THREADS_POR_BLOCO, compartilhada>>>(na_gpu.visao(), pop.atual(),
@@ -100,12 +94,7 @@ PopulacaoAvaliada avaliar_na_gpu(const Instancia& inst, const std::vector<Gene>&
     const std::vector<int> contagens = por_categoria.trazer();
     r.avaliacoes.reserve(static_cast<std::size_t>(individuos));
     for (int j = 0; j < individuos; ++j) {
-        Avaliacao av;
-        av.ganho = avs[j].ganho;
-        av.custo = avs[j].custo;
-        av.acoes = avs[j].acoes;
-        av.cauda = avs[j].cauda;
-        av.violacao = avs[j].violacao;
+        Avaliacao av = como_avaliacao(avs[j]);
         av.por_categoria.assign(contagens.begin() + static_cast<std::ptrdiff_t>(j) * inst.categorias,
                                 contagens.begin() + static_cast<std::ptrdiff_t>(j + 1) * inst.categorias);
         r.avaliacoes.push_back(std::move(av));

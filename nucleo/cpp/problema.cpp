@@ -1,5 +1,6 @@
-// A avaliação de uma solução e a comparação por viabilidade — reproduz
-// `gih_nucleo/problema.py` (`avaliar`, `melhor`, `acao_mais_barata`).
+// A avaliação de uma solução — reproduz `gih_nucleo/problema.py` (`avaliar`,
+// `acao_mais_barata`). A comparação, `melhor`, está em `nucleo.hpp`: a GPU usa
+// a mesma.
 #include <algorithm>
 
 #include "nucleo.hpp"
@@ -41,13 +42,6 @@ Avaliacao avaliar(const Instancia& inst, const Gene* genes) {
         av.violacao += (excesso + barata - 1) / barata;  // divisão para cima, os dois positivos
     }
     return av;
-}
-
-bool melhor(const Avaliacao& a, const Avaliacao& b) {
-    if (a.viavel() != b.viavel()) return a.viavel();
-    if (a.viavel()) return a.ganho > b.ganho;
-    if (a.violacao != b.violacao) return a.violacao < b.violacao;
-    return a.ganho > b.ganho;
 }
 
 }  // namespace gih

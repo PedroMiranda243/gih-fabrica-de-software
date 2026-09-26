@@ -29,10 +29,34 @@ struct AvaliacaoNoDispositivo {
     long long violacao;
 };
 
+// A mesma avaliação, na CPU: a contagem por categoria fica de fora, e quem a
+// quer avalia de novo lá (`avaliar`).
+inline Avaliacao como_avaliacao(const AvaliacaoNoDispositivo& d) {
+    Avaliacao av;
+    av.ganho = d.ganho;
+    av.custo = d.custo;
+    av.acoes = d.acoes;
+    av.cauda = d.cauda;
+    av.violacao = d.violacao;
+    return av;
+}
+
 // Threads por bloco. Múltiplo de 32, que é o tamanho do warp: a soma do bloco
 // conta com isso.
 constexpr int THREADS_POR_BLOCO = 256;
 constexpr int WARPS_POR_BLOCO = THREADS_POR_BLOCO / 32;
+
+// Os contadores por categoria moram na memória compartilhada do bloco, que tem
+// 48 KB por padrão. Um int por categoria: cabem 12 mil, muito acima de qualquer
+// rede real — mas passar disso seria falha silenciosa no lançamento, e quem
+// lança recusa antes, com motivo.
+constexpr int CATEGORIAS_MAXIMAS = 10000;
+
+// A memória compartilhada que cada bloco pede no lançamento: os contadores, e
+// pelo menos um, para o ponteiro existir mesmo sem categoria.
+inline std::size_t compartilhada_por_bloco(int categorias) {
+    return static_cast<std::size_t>(categorias > 0 ? categorias : 1) * sizeof(int);
+}
 
 __device__ inline long long maior(long long a, long long b) { return a > b ? a : b; }
 

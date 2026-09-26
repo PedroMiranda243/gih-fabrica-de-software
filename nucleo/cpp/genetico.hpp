@@ -1,10 +1,15 @@
-// Os passos do genético que as versões serial e OpenMP fazem igual (ADR-011).
+// Os passos do genético que as versões serial, OpenMP e CUDA fazem igual (ADR-011).
 //
 // Nenhum destes passos guarda estado. O sorteio vem das coordenadas (semente,
 // partida, geração, indivíduo), e o filho só lê a geração anterior. É por isso
 // que a versão OpenMP pode calcular os filhos em qualquer ordem, em qualquer
 // thread, e chegar ao mesmo plano da serial. Um gerador com estado, como o
 // `std::mt19937`, tornaria o resultado dependente da ordem de execução.
+//
+// **A GPU usa as mesmas funções** (H54c): o sorteio, o torneio, a elite e a
+// fórmula de cada gene levam `GIH_CPU_E_GPU`, e os kernels as chamam. O que
+// muda na GPU é só quem percorre os genes: aqui, um laço; lá, as threads de um
+// bloco, cada uma com a sua fatia (`busca.cu`).
 #pragma once
 
 #include <algorithm>
@@ -16,42 +21,65 @@
 
 namespace gih::genetico {
 
-inline std::uint64_t sorteio(std::uint64_t semente, std::uint64_t partida, std::uint64_t geracao,
-                             std::uint64_t individuo) {
+GIH_CPU_E_GPU inline std::uint64_t sorteio(std::uint64_t semente, std::uint64_t partida, std::uint64_t geracao,
+                                           std::uint64_t individuo) {
     return encadear(encadear(encadear(encadear(0, semente), partida), geracao), individuo);
 }
 
-inline int torneio(const std::vector<Avaliacao>& av, std::uint64_t h1, std::uint64_t h2) {
-    const auto p = static_cast<std::uint64_t>(av.size());
-    const auto r1 = static_cast<int>(h1 % p), r2 = static_cast<int>(h2 % p);
-    return melhor(av[r2], av[r1]) ? r2 : r1;  // no empate, o primeiro sorteado
+// O vencedor entre dois sorteados de uma população de `p`; no empate, o
+// primeiro sorteado.
+template <typename A>
+GIH_CPU_E_GPU int torneio(const A* av, int p, std::uint64_t h1, std::uint64_t h2) {
+    const auto up = static_cast<std::uint64_t>(p);
+    const auto r1 = static_cast<int>(h1 % up), r2 = static_cast<int>(h2 % up);
+    return melhor(av[r2], av[r1]) ? r2 : r1;
 }
 
-inline int indice_do_melhor(const std::vector<Avaliacao>& av) {
+// O melhor de uma população de `p`; no empate, o de menor índice.
+template <typename A>
+GIH_CPU_E_GPU int indice_do_melhor(const A* av, int p) {
     int escolhido = 0;
-    for (int j = 1; j < static_cast<int>(av.size()); ++j) {
+    for (int j = 1; j < p; ++j) {
         if (melhor(av[j], av[escolhido])) escolhido = j;
     }
     return escolhido;
 }
 
+inline int torneio(const std::vector<Avaliacao>& av, std::uint64_t h1, std::uint64_t h2) {
+    return torneio(av.data(), static_cast<int>(av.size()), h1, h2);
+}
+
+inline int indice_do_melhor(const std::vector<Avaliacao>& av) {
+    return indice_do_melhor(av.data(), static_cast<int>(av.size()));
+}
+
+// O gene `i` de um indivíduo sorteado da geração 0: o parceiro recebe ação com
+// chance `densidade` em `n`, e a ação é outro pedaço do mesmo sorteio.
+GIH_CPU_E_GPU inline Gene gene_sorteado(std::uint64_t base, int i, std::uint64_t n, std::uint64_t acoes,
+                                        std::int64_t densidade) {
+    const std::uint64_t h = encadear(base, static_cast<std::uint64_t>(i));
+    return (h % n) < static_cast<std::uint64_t>(densidade) ? static_cast<Gene>(1 + (h >> 32) % acoes) : 0;
+}
+
+// O gene `i` do filho, com um sorteio por gene: o bit mais baixo escolhe o pai
+// ou a mãe, os seguintes decidem se há mutação, e os do meio dão o valor novo.
+GIH_CPU_E_GPU inline Gene gene_do_filho(const Gene* pai, const Gene* mae, int i, std::uint64_t base,
+                                        std::uint64_t taxa_ppm, std::uint64_t valores) {
+    const std::uint64_t h = encadear(base, static_cast<std::uint64_t>(i));
+    Gene gene = (h & 1) ? mae[i] : pai[i];
+    if ((h >> 1) % MILHAO < taxa_ppm) gene = static_cast<Gene>((h >> 21) % valores);
+    return gene;
+}
+
 inline void sorteado(const Instancia& inst, std::uint64_t base, std::int64_t densidade, Gene* genes) {
     const auto n = static_cast<std::uint64_t>(inst.parceiros);
     const auto a = static_cast<std::uint64_t>(inst.acoes);
-    for (int i = 0; i < inst.parceiros; ++i) {
-        const std::uint64_t h = encadear(base, static_cast<std::uint64_t>(i));
-        genes[i] = (h % n) < static_cast<std::uint64_t>(densidade) ? static_cast<Gene>(1 + (h >> 32) % a) : 0;
-    }
+    for (int i = 0; i < inst.parceiros; ++i) genes[i] = gene_sorteado(base, i, n, a, densidade);
 }
 
 inline void filho(const Gene* pai, const Gene* mae, int n, std::uint64_t base, std::uint64_t taxa_ppm,
                   std::uint64_t valores, Gene* saida) {
-    for (int i = 0; i < n; ++i) {
-        const std::uint64_t h = encadear(base, static_cast<std::uint64_t>(i));
-        Gene gene = (h & 1) ? mae[i] : pai[i];
-        if ((h >> 1) % MILHAO < taxa_ppm) gene = static_cast<Gene>((h >> 21) % valores);
-        saida[i] = gene;
-    }
+    for (int i = 0; i < n; ++i) saida[i] = gene_do_filho(pai, mae, i, base, taxa_ppm, valores);
 }
 
 inline Gene* individuo(std::vector<Gene>& populacao, int j, int n) {

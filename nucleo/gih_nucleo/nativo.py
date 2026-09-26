@@ -1,9 +1,9 @@
-"""O núcleo em C++ chamado a partir do Python (H53a, H53b, H54a, H54b, ADR-012).
+"""O núcleo em C++ chamado a partir do Python (H53a, H53b, H54a, H54b, H54c, ADR-012).
 
 O executável `gih-nucleo` faz o mesmo que `serial.otimizar`, sorteio a sorteio,
-e devolve o mesmo `Resultado`, em qualquer um dos seus modos: `serial` e
-`openmp` agora, `cuda` depois. É assim que a API vai chegar às versões
-compiladas sem conhecer nenhuma delas: escreve a instância, lê o plano.
+e devolve o mesmo `Resultado`, em qualquer um dos seus modos: `serial`,
+`openmp` e `cuda`. É assim que a API chega às versões compiladas sem conhecer
+nenhuma delas: escreve a instância, lê o plano.
 
 **O formato é texto, em inteiros**, e é este módulo que o escreve e o lê:
 
@@ -15,9 +15,9 @@ compiladas sem conhecer nenhuma delas: escreve a instância, lê o plano.
     <máximo de cada categoria>
     <categoria> <cauda> <ganho de cada ação>      ← uma linha por parceiro
 
-A resposta é `viavel` com a avaliação, a busca, o modo e os genes, ou
-`inviavel` com a restrição, o exigido e o disponível — os mesmos de
-`viabilidade.Inviabilidade`.
+A resposta é `viavel` com a avaliação, a busca, o modo e os genes — e, no
+modo `cuda`, o tempo do contexto da GPU —, ou `inviavel` com a restrição, o
+exigido e o disponível — os mesmos de `viabilidade.Inviabilidade`.
 
 **O Python confere o que o C++ diz.** A avaliação do plano devolvido é refeita
 aqui, com `problema.avaliar`; se ela divergir da que o executável informou, é
@@ -37,7 +37,7 @@ from gih_nucleo.serial import GERACOES, MUTACOES_POR_FILHO, PARTIDAS, POPULACAO,
 from gih_nucleo.viabilidade import Inviabilidade, Inviavel
 
 FORMATO = "GIH-NUCLEO 1"
-MODOS = ("serial", "openmp")
+MODOS = ("serial", "openmp", "cuda")
 
 # Onde o `construir.bat` e o comando de Linux deixam o executável.
 _COMPILADO = Path(__file__).resolve().parent.parent / "bin"
@@ -228,7 +228,8 @@ def otimizar(
     """O mesmo contrato de `serial.otimizar`, rodando no executável em C++.
 
     `modo` escolhe a versão; sem limite de tempo, todas dão o mesmo plano.
-    `threads` só vale no modo `openmp`, e sem ele vale o padrão do OpenMP.
+    `threads` só vale no modo `openmp`, e sem ele vale o padrão do OpenMP. No
+    modo `cuda`, `contexto_s` diz quanto da busca foi criar o contexto da GPU.
 
     Levanta `Inviavel` quando as cotas não cabem, `ValueError` para parâmetro
     impossível ou modo que o executável não tem, `SemGpu` quando o modo precisa
@@ -296,8 +297,16 @@ def _ler(inst: Instancia, saida: str, modo: str) -> Resultado:
         avaliacao.violacao,
     ):
         raise NucleoFalhou("A avaliação do núcleo em C++ diverge da do Python.")
+    contexto = int(campos["contexto"][0]) / 1e6 if "contexto" in campos else 0.0
     return Resultado(
-        genes, avaliacao, iniciadas, rodadas, bool(parcial), microssegundos / 1e6, int(threads)
+        genes,
+        avaliacao,
+        iniciadas,
+        rodadas,
+        bool(parcial),
+        microssegundos / 1e6,
+        int(threads),
+        contexto,
     )
 
 

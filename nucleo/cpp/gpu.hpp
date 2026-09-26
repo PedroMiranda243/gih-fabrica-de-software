@@ -16,6 +16,14 @@
 
 namespace gih::gpu {
 
+// O executável foi compilado com CUDA? É o que põe o modo `cuda` na lista de
+// `gih-nucleo versao` (H54c). Se há placa nesta máquina, quem diz é `procurar`.
+#ifdef GIH_COM_CUDA
+constexpr bool COM_CUDA = true;
+#else
+constexpr bool COM_CUDA = false;
+#endif
+
 struct Dispositivo {
     std::string nome;
     int capacidade_maior = 0;  // a "compute capability", 8.9 na RTX 4060
@@ -46,6 +54,8 @@ bool procurar(Dispositivo& dispositivo, Ausencia& ausencia, std::string& motivo)
 
 // Sem GPU, as operações que precisam dela recusam com esta exceção — e o
 // executável, com a saída 1, que é o sinal para a API cair para a CPU (H56).
+// Vale também para a placa que some ou fica sem memória no meio da busca
+// (`checar`, em `gpu.cuh`): para quem pediu, é a mesma falta de GPU.
 class SemGpu : public std::runtime_error {
 public:
     using std::runtime_error::runtime_error;
@@ -78,5 +88,11 @@ struct PopulacaoAvaliada {
 
 PopulacaoAvaliada avaliar_na_gpu(const Instancia& inst, const std::vector<Gene>& populacao, int individuos,
                                  int repeticoes);
+
+// O genético inteiro na GPU (H54c): o mesmo plano, a mesma avaliação e as
+// mesmas gerações da versão OpenMP, e da serial sem limite de tempo. A
+// população nasce e fica na placa a busca inteira (ADR-006); só as avaliações
+// da última geração e o plano vencedor voltam. Sem GPU, `SemGpu`.
+Resultado otimizar_na_gpu(const Instancia& inst, const Parametros& p);
 
 }  // namespace gih::gpu
