@@ -1160,6 +1160,68 @@ def item_campanha(r: Relatorio, url: str, criados: dict[str, str]) -> None:
             )
 
 
+def _tempo(segundos: float) -> str:
+    texto = f"{segundos:.2f} s" if segundos >= 1 else f"{segundos * 1000:.1f} ms"
+    return texto.replace(".", ",")
+
+
+def _aguardar_benchmark(c: httpx.Client, execucao_id: int) -> dict:
+    limite = time.monotonic() + 300
+    execucao = c.get(f"/api/benchmarks/{execucao_id}").json()
+    while execucao.get("situacao") == "EM_ANDAMENTO" and time.monotonic() < limite:
+        time.sleep(1)
+        execucao = c.get(f"/api/benchmarks/{execucao_id}").json()
+    return execucao
+
+
+def item_benchmark(r: Relatorio, url: str, criados: dict[str, str]) -> None:
+    """O benchmark (UC09, RF33), no menor cenário: o mesmo problema em cada modo desta
+    instalação, e o mesmo plano em todos. O benchmark sai na limpeza."""
+    r.secao("Benchmark — o mesmo problema em cada modo, com o mesmo plano")
+
+    analista = criados.get("ANALISTA")
+    if analista:
+        with sessao(url) as c:
+            entrar(c, analista, SENHA)
+            r.checar(
+                "o analista não tem o benchmark (UC09)",
+                c.get("/api/benchmark").status_code == 403,
+            )
+
+    gestor = criados.get("GESTOR")
+    if not gestor:
+        r.nota("sem gestor criado, o benchmark não foi disparado")
+        return
+    with sessao(url) as c:
+        entrar(c, gestor, SENHA)
+        estado = c.get("/api/benchmark").json()
+        disponiveis = [m["coluna"] for m in estado.get("colunas", []) if m["disponivel"]]
+        pedido = c.post("/api/benchmarks", json={"parceiros": 100, "acoes": 2, "repeticoes": 1})
+        execucao = _aguardar_benchmark(c, pedido.json()["id"]) if pedido.status_code == 202 else {}
+        colunas = execucao.get("colunas", [])
+        medidas = [col for col in colunas if col["situacao"] == "MEDIDA"]
+        r.checar(
+            "mede cada modo desta instalação, com o mesmo plano em todos (RF33, RNF02)",
+            execucao.get("situacao") == "CONCLUIDA"
+            and [col["coluna"] for col in medidas] == disponiveis
+            and all(col["diferenca_uplift"] == 0 for col in medidas),
+            ", ".join(f"{col['coluna']} em {_tempo(col['media_s'])}" for col in medidas)
+            or f"HTTP {pedido.status_code}: {execucao.get('motivo') or pedido.text[:120]}",
+        )
+        fora = [col for col in colunas if col["situacao"] != "MEDIDA"]
+        r.checar(
+            "o modo que falta nesta máquina diz por quê (UC09-A1)",
+            all(col["motivo"] for col in fora),
+            "; ".join(f"{col['coluna']}: {col['motivo']}" for col in fora) or "nenhum falta",
+        )
+        series = (execucao.get("escalabilidade") or {}).get("series", [])
+        r.checar(
+            "o gráfico de escalabilidade traz o tamanho medido (UC09, passo 7)",
+            any(p["execucao_id"] == execucao.get("id") for s in series for p in s["pontos"]),
+            f"{len(series)} série(s)",
+        )
+
+
 # --------------------------------------------------------------------- extra
 def item_limpeza(
     r: Relatorio,
@@ -1263,6 +1325,7 @@ def main() -> int:
             item_perfis(r, a.url, criados)
             item_modelo(r, a.url, criados)
             item_campanha(r, a.url, criados)
+            item_benchmark(r, a.url, criados)
             item_crud(r, a.url, criados, marca)
             periodo_id = item_ingestao(r, a.url, criados, marca)
             item_painel(r, a.url, criados, periodo_id)
