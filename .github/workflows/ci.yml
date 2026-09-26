@@ -187,20 +187,23 @@ jobs:
           pip install --no-deps -e nucleo
 
       # O executável em C++ (H53a), com os avisos ligados: aviso ignorado no
-      # núcleo é defeito que aparece só na GPU, onde é mais caro de achar.
+      # núcleo é defeito que aparece só na GPU, onde é mais caro de achar. Com
+      # OpenMP (H53b): o runner tem poucos núcleos, mas a identidade com o
+      # serial se confere com qualquer número de threads.
       - name: Compilar o núcleo em C++
         working-directory: nucleo
         run: |
           mkdir -p bin
-          g++ -O2 -std=c++17 -Wall -Wextra -Wpedantic -Werror cpp/*.cpp -o bin/gih-nucleo
+          g++ -O2 -fopenmp -std=c++17 -Wall -Wextra -Wpedantic -Werror cpp/*.cpp -o bin/gih-nucleo
           bin/gih-nucleo versao
 
       - name: Análise estática
         working-directory: nucleo
         run: ruff check .
 
-      # Os testes de identidade C++ × Python pulam quando não há executável —
-      # aqui não: sem ele, reprovam (GIH_NUCLEO_OBRIGATORIO).
+      # Os testes de identidade C++ × Python pulam quando não há executável, ou
+      # quando ele não tem OpenMP — aqui não: sem eles, reprovam
+      # (GIH_NUCLEO_OBRIGATORIO).
       - name: Testes
         working-directory: nucleo
         env:
