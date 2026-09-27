@@ -1450,6 +1450,76 @@ def item_mensagens(r: Relatorio, url: str, criados: dict[str, str]) -> None:
         )
 
 
+def item_portal(
+    r: Relatorio, url: str, admin: httpx.Client, criados: dict[str, str], marca: str
+) -> None:
+    """O portal do Parceiro (UC13, RF26): um usuário Parceiro, vinculado ao parceiro de
+    maior faturamento da base, vê o histórico dele e é barrado em tudo o que é da rede.
+    O usuário é desativado na limpeza, como os outros da execução."""
+    r.secao("Portal do Parceiro — só o próprio histórico, nada da rede")
+
+    gestor = criados.get("GESTOR")
+    if not gestor:
+        r.checar("há gestor para achar um parceiro com histórico", False)
+        return
+    with sessao(url) as c:
+        entrar(c, gestor, SENHA)
+        lista = c.get(
+            "/api/parceiros",
+            params={"ordenar_por": "faturamento", "descendente": "true", "tamanho": 2},
+        ).json()
+    itens = lista.get("itens", [])
+    if len(itens) < 2:
+        r.nota("a base tem menos de dois parceiros: o portal não foi conferido")
+        return
+    dele, outro = itens[0], itens[1]
+    login = f"{marca}.parceiro"
+    criado = admin.post(
+        "/api/usuarios",
+        json={
+            "login": login,
+            "nome": "Verificação Parceiro",
+            "senha": SENHA,
+            "perfil": "PARCEIRO",
+            "parceiro_id": dele["id"],
+        },
+    )
+    if not r.checar("cria o usuário Parceiro vinculado a um parceiro", criado.status_code == 201):
+        return
+
+    with sessao(url) as c:
+        entrar(c, login, SENHA)
+        telas = c.get("/api/sessao/atual").json().get("telas", [])
+        r.checar(
+            "o menu do Parceiro tem só o portal dele", telas == ["meu_desempenho"], ", ".join(telas)
+        )
+        meu = c.get("/api/meu-desempenho")
+        corpo = meu.json() if meu.status_code == 200 else {}
+        r.checar(
+            "vê o próprio histórico, sem ranking nem comparação (UC13, RF26)",
+            corpo.get("parceiro") == dele["nome"]
+            and len(corpo.get("pontos", [])) > 0
+            and set(corpo) == {"parceiro", "categoria", "atual", "anterior", "variacao", "pontos"},
+            f"{len(corpo.get('pontos', []))} período(s) de {corpo.get('parceiro')}"
+            if corpo
+            else f"HTTP {meu.status_code}",
+        )
+        recusas = {
+            caminho: c.get(caminho).status_code
+            for caminho in (
+                f"/api/parceiros/{outro['id']}",
+                f"/api/painel/series?parceiro_id={outro['id']}",
+                "/api/painel/ranking",
+                "/api/mensagens",
+            )
+        }
+        r.checar(
+            "o dado da rede e o de outro parceiro são recusados no servidor (UC13-E1, RNF14)",
+            set(recusas.values()) == {403},
+            ", ".join(f"{c.split('?')[0]} {s}" for c, s in recusas.items()),
+        )
+
+
 # --------------------------------------------------------------------- extra
 def item_limpeza(
     r: Relatorio,
@@ -1555,6 +1625,7 @@ def main() -> int:
             item_campanha(r, a.url, criados)
             item_benchmark(r, a.url, criados)
             item_mensagens(r, a.url, criados)
+            item_portal(r, a.url, admin, criados, marca)
             item_crud(r, a.url, criados, marca)
             periodo_id = item_ingestao(r, a.url, criados, marca)
             item_painel(r, a.url, criados, periodo_id)

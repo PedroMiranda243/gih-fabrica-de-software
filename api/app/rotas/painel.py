@@ -26,6 +26,7 @@ from sqlalchemy.orm import Session
 from app.calculos import ticket_medio as _ticket
 from app.calculos import variacao_percentual as _variacao
 from app.dependencias import Banco, exigir
+from app.desempenho import serie_historica
 from app.esquemas import (
     ContagemSegmento,
     DistribuicaoSegmentos,
@@ -36,7 +37,6 @@ from app.esquemas import (
     MovimentoTopN,
     PaginaRanking,
     PeriodoResposta,
-    PontoSerie,
     SerieHistorica,
     VariacaoIndicadores,
 )
@@ -295,12 +295,8 @@ def series(
     de: Annotated[date | None, Query(description="Períodos a partir deste dia.")] = None,
     ate: Annotated[date | None, Query(description="Períodos que terminam até este dia.")] = None,
 ) -> SerieHistorica:
-    """Série histórica da rede ou de um parceiro (RF19, H32).
-
-    **A consulta parte dos períodos, não das métricas.** É o que faz a lacuna
-    aparecer: período sem medição para aquele parceiro vem com os três valores
-    nulos, em vez de sumir da lista. Omitir o ponto faria o gráfico ligar os
-    vizinhos com uma reta e desenhar uma tendência onde não houve medição.
+    """Série histórica da rede ou de um parceiro (RF19, H32), com a lacuna explícita
+    onde não houve medição — ver `desempenho.serie_historica`.
 
     Não há paginação: a quantidade de períodos é limitada pelo que foi
     importado, e o RNF04 fixa o teto em 52. O recorte por data existe para quem
@@ -315,37 +311,7 @@ def series(
                 detail=f"Não existe parceiro com id {parceiro_id}.",
             )
 
-    # O filtro do parceiro entra na **junção**, e não no `where`: no `where` ele
-    # descartaria os períodos sem métrica dele, que são justamente as lacunas
-    # que esta rota existe para mostrar.
-    juncao = [Metrica.periodo_id == Periodo.id]
-    if parceiro_id is not None:
-        juncao.append(Metrica.parceiro_id == parceiro_id)
-
-    consulta = (
-        select(
-            Periodo,
-            func.sum(Metrica.faturamento),
-            func.sum(Metrica.pedidos),
-        )
-        .outerjoin(Metrica, and_(*juncao))
-        .group_by(Periodo.id)
-        .order_by(Periodo.data_inicio, Periodo.id)
-    )
-    if de is not None:
-        consulta = consulta.where(Periodo.data_inicio >= de)
-    if ate is not None:
-        consulta = consulta.where(Periodo.data_fim <= ate)
-
-    pontos = [
-        PontoSerie(
-            periodo=PeriodoResposta.model_validate(periodo),
-            faturamento=faturamento,
-            pedidos=pedidos,
-            ticket_medio=_ticket(faturamento, pedidos),
-        )
-        for periodo, faturamento, pedidos in s.execute(consulta).all()
-    ]
+    pontos = serie_historica(s, parceiro_id, de=de, ate=ate)
 
     return SerieHistorica(
         escopo="parceiro" if parceiro else "rede",

@@ -25,6 +25,7 @@ from app.rotas import (
     configuracao,
     importacoes,
     mensagens,
+    meu_desempenho,
     modelo,
     painel,
     parceiros,
@@ -122,6 +123,7 @@ app.include_router(campanha.catalogo)
 app.include_router(campanha.historico)
 app.include_router(benchmark.router)
 app.include_router(mensagens.router)
+app.include_router(meu_desempenho.router)
 app.include_router(auditoria.router)
 
 

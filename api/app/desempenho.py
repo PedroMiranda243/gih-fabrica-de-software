@@ -1,4 +1,4 @@
-"""O desempenho de cada parceiro no período mais recente — uma consulta, num lugar só.
+"""O desempenho de cada parceiro — o do período mais recente e a série — num lugar só.
 
 A lista de parceiros (H32, H37) e a geração de mensagens (H60) mostram **os mesmos
 números**: faturamento, pedidos, ticket e variação do período mais recente, com o
@@ -7,9 +7,13 @@ correção — e a mensagem diria ao parceiro um número que a tela não mostra.
 """
 from __future__ import annotations
 
-from sqlalchemy import func, literal, select
+from datetime import date
+
+from sqlalchemy import and_, func, literal, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.calculos import ticket_medio
+from app.esquemas import PeriodoResposta, PontoSerie
 from app.modelos import HistoricoSegmento, Metrica, Parceiro, Periodo, Segmento
 
 # Os rótulos do segmento, no CSV exportado e na descrição do público das
@@ -106,3 +110,51 @@ def com_desempenho(s: Session, alvo: Periodo | None, anterior: Periodo | None):
         }
 
     return consulta, colunas
+
+
+def serie_historica(
+    s: Session,
+    parceiro_id: int | None = None,
+    *,
+    de: date | None = None,
+    ate: date | None = None,
+) -> list[PontoSerie]:
+    """A série por período, da rede ou de um parceiro (RF19, H32) — o painel e o portal
+    do Parceiro (H39) leem a mesma.
+
+    **A consulta parte dos períodos, não das métricas.** É o que faz a lacuna
+    aparecer: período sem medição para aquele parceiro vem com os três valores
+    nulos, em vez de sumir da lista. Omitir o ponto faria o gráfico ligar os
+    vizinhos com uma reta e desenhar uma tendência onde não houve medição.
+    """
+    # O filtro do parceiro entra na **junção**, e não no `where`: no `where` ele
+    # descartaria os períodos sem métrica dele, que são justamente as lacunas
+    # que esta consulta existe para mostrar.
+    juncao = [Metrica.periodo_id == Periodo.id]
+    if parceiro_id is not None:
+        juncao.append(Metrica.parceiro_id == parceiro_id)
+
+    consulta = (
+        select(
+            Periodo,
+            func.sum(Metrica.faturamento),
+            func.sum(Metrica.pedidos),
+        )
+        .outerjoin(Metrica, and_(*juncao))
+        .group_by(Periodo.id)
+        .order_by(Periodo.data_inicio, Periodo.id)
+    )
+    if de is not None:
+        consulta = consulta.where(Periodo.data_inicio >= de)
+    if ate is not None:
+        consulta = consulta.where(Periodo.data_fim <= ate)
+
+    return [
+        PontoSerie(
+            periodo=PeriodoResposta.model_validate(periodo),
+            faturamento=faturamento,
+            pedidos=pedidos,
+            ticket_medio=ticket_medio(faturamento, pedidos),
+        )
+        for periodo, faturamento, pedidos in s.execute(consulta).all()
+    ]

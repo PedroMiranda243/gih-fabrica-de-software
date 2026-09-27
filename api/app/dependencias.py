@@ -127,6 +127,7 @@ TELAS: dict[str, tuple[str, str]] = {
     "aprovacao": ("GET", "/api/mensagens"),
     # Não é tela: é a capacidade de decidir, que a fila usa para mostrar os botões.
     "decidir_mensagens": ("POST", "/api/mensagens/{mensagem_id}/aprovacao"),
+    "meu_desempenho": ("GET", "/api/meu-desempenho"),
 }
 
 
