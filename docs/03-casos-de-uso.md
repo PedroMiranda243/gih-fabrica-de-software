@@ -577,6 +577,29 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 > **O texto é redigido pelo modelo; os números, não.** O contexto entregue ao assistente já vem calculado
 > pelo núcleo determinístico, e ele é proibido de produzir valor que não recebeu (RN08, RF43). Um modelo que
 > soma tira a reprodutibilidade do resultado — e reprodutibilidade é critério de avaliação.
+>
+> **Na API (Sprint 12 interna, H60).** A geração é do Analista e do Gestor, pela matriz, e roda no servidor,
+> um lote por vez. A tela acompanha o lote e recebe as mensagens prontas até ali (A1). O parceiro que falha
+> fica no lote com o motivo, e "tentar de novo" gera só os que faltaram (A2) — inclusive os que ficaram de
+> fora quando a API reiniciou no meio.
+>
+> **O que o UC10 deixava em aberto, e como ficou:**
+>
+> - **O público** é um segmento, uma categoria, os dois juntos ("Em risco, em Mercado"), um plano de campanha
+>   calculado e viável — cada parceiro com a ação dele — ou uma seleção manual. A categoria só conta
+>   confirmada (RN05), e o parceiro desativado fica de fora; a prévia diz quantos saíram, e por quê. Um lote
+>   gera até 500 mensagens: com o modelo, cada uma leva segundos (RNF15).
+> - **O contexto factual (passo 3) é só do parceiro**: o nome, o desempenho do período mais recente —
+>   faturamento, pedidos, ticket médio e variação, pela mesma consulta da lista de parceiros — e a ação do
+>   plano, com o período dela. **O segmento, a posição no ranking e a previsão não entram**: são informação
+>   da rede, e não do parceiro (RF26). O segmento escolhe o tom (passo 4) — reaproximação para Em risco,
+>   reconhecimento para Em ascensão, agradecimento para o Top, boas-vindas para o Recém-chegado, relacionamento
+>   para o Estável —, mas não aparece no texto.
+> - **O texto que chega à fila passou por duas guardas.** A numérica recusa número que não veio dos fatos
+>   (RN08); a outra recusa o termo interno ("em risco", "segmento", "ranking"). Reprovado, ou com o modelo
+>   fora do ar, o texto sai do **modelo fixo** da equipe, com os mesmos fatos, e a mensagem guarda o motivo.
+>   A fila funciona em qualquer máquina, com ou sem o modelo (ADR-013).
+> - **Nenhuma mensagem é enviada.** Toda nasce pendente (RF37), e aprovar é do Gestor (UC11, RN06).
 
 ---
 
