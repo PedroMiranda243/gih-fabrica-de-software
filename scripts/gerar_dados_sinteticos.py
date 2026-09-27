@@ -131,7 +131,7 @@ def gerar(n_parceiros: int, n_periodos: int, semente: int, limpar: bool) -> None
             s.execute(
                 text(
                     "TRUNCATE metrica, importacao, historico_segmento, previsao,"
-                    " item_plano, mensagem, plano_campanha, execucao_otimizador,"
+                    " item_plano, mensagem, lote_mensagens, plano_campanha, execucao_otimizador,"
                     " periodo, parceiro, categoria, acao_comercial RESTART IDENTITY CASCADE"
                 )
             )

@@ -46,6 +46,8 @@ import httpx
 # A matriz de permissões vem do módulo de teste, e não é copiada para cá: duas
 # cópias divergiriam, e a daqui é a que ninguém olharia.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from app.guarda_numerica import numeros_sem_origem  # noqa: E402
+from app.servico_mensagens import termos_internos  # noqa: E402
 from e2e.limpeza import LimpezaRecusada, desativar_usuarios, limpar_execucao  # noqa: E402
 from tests.test_autorizacao import PERMISSOES, PUBLICO, concretizar  # noqa: E402
 
@@ -1240,6 +1242,128 @@ def item_benchmark(r: Relatorio, url: str, criados: dict[str, str]) -> None:
         )
 
 
+def _aguardar_lote(c: httpx.Client, lote_id: int) -> dict:
+    # Com o modelo de linguagem, a primeira mensagem paga o carregamento (~45 s),
+    # e cada uma das outras leva de 2 a 4 s (ADR-013).
+    limite = time.monotonic() + 900
+    lote = c.get(f"/api/mensagens/lotes/{lote_id}").json()
+    while lote.get("situacao") == "EM_ANDAMENTO" and time.monotonic() < limite:
+        time.sleep(2)
+        lote = c.get(f"/api/mensagens/lotes/{lote_id}").json()
+    return lote
+
+
+def item_mensagens(r: Relatorio, url: str, criados: dict[str, str]) -> None:
+    """As mensagens do último plano (UC10, RF36, RF37, RN08), pelo Analista.
+
+    Roda depois da campanha, que deixa um plano calculado. Com o modelo de
+    linguagem no ar, ele redige; sem ele, o modelo fixo — e as duas coisas são
+    resultado certo (ADR-013). O que não pode, nos dois casos, é número no texto
+    que não veio dos fatos. O lote e as mensagens saem na limpeza.
+    """
+    r.secao("Mensagens — do plano à fila, sem número que o núcleo não calculou")
+
+    admin = criados.get("ADMINISTRADOR")
+    if admin:
+        with sessao(url) as c:
+            entrar(c, admin, SENHA)
+            r.checar(
+                "o administrador não gera mensagens (UC10)",
+                c.get("/api/mensagens/geracao").status_code == 403
+                and c.post("/api/mensagens/lotes", json={"tipo": "SELECAO", "parceiros": [1]})
+                .status_code == 403,
+            )
+
+    analista = criados.get("ANALISTA")
+    if not analista:
+        r.checar("há analista para gerar", False)
+        return
+    with sessao(url) as c:
+        entrar(c, analista, SENHA)
+        estado = c.get("/api/mensagens/geracao").json()
+        assistente = estado.get("assistente") or {}
+        if assistente.get("disponivel"):
+            r.nota(f"assistente no ar: {assistente.get('modelo')}")
+        else:
+            motivo = assistente.get("motivo")
+            r.nota(f"assistente fora: {motivo} — as mensagens saem do modelo fixo")
+
+        vazio = {"tipo": "SELECAO", "parceiros": [2_000_000_000]}
+        previa_vazia = c.post("/api/mensagens/publico", json=vazio).json()
+        recusa = c.post("/api/mensagens/lotes", json=vazio)
+        r.checar(
+            "público vazio: a prévia diz, e nada é gerado (UC10-E1)",
+            previa_vazia.get("total") == 0
+            and previa_vazia.get("pode_gerar") is False
+            and recusa.status_code == 422,
+            (recusa.json().get("detail") or {}).get("erro", recusa.text[:120])
+            if recusa.status_code == 422
+            else f"HTTP {recusa.status_code}",
+        )
+
+        viaveis = [
+            e
+            for e in c.get("/api/otimizacoes", params={"tamanho": 20}).json().get("itens", [])
+            if e.get("situacao") == "CONCLUIDA" and e.get("viavel")
+        ]
+        if not viaveis:
+            r.nota("sem plano viável no histórico, as mensagens do plano não foram geradas")
+            return
+        execucao = c.get(f"/api/otimizacoes/{viaveis[0]['id']}").json()
+        acoes = {i["parceiro_id"]: i["acao"] for i in execucao.get("itens") or []}
+        publico = {"tipo": "PLANO", "execucao_id": execucao["id"]}
+        previa = c.post("/api/mensagens/publico", json=publico).json()
+        r.checar(
+            "a prévia do plano traz os parceiros dele, com a ação de cada um (UC10, passo 2)",
+            {p["id"]: p["acao"] for p in previa.get("parceiros", [])} == acoes and acoes,
+            f"{previa.get('descricao')}: {previa.get('total')} parceiro(s)",
+        )
+
+        pedido = c.post("/api/mensagens/lotes", json=publico)
+        inicio = time.monotonic()
+        lote = _aguardar_lote(c, pedido.json()["id"]) if pedido.status_code == 202 else {}
+        mensagens = lote.get("mensagens") or []
+        r.checar(
+            "uma mensagem por parceiro do plano, todas pendentes (RF36, RF37)",
+            lote.get("situacao") == "CONCLUIDA"
+            and not lote.get("falhas")
+            and sorted(m["parceiro_id"] for m in mensagens) == sorted(acoes)
+            and all(m["estado"] == "PENDENTE" for m in mensagens),
+            f"{lote.get('geradas')} de {lote.get('total')} em {_tempo(time.monotonic() - inicio)}: "
+            f"{lote.get('pelo_modelo')} pelo modelo, "
+            f"{(lote.get('geradas') or 0) - (lote.get('pelo_modelo') or 0)} pelo modelo fixo"
+            if lote
+            else f"HTTP {pedido.status_code}: {pedido.text[:120]}",
+        )
+        sem_origem = {
+            m["parceiro"]: numeros_sem_origem(m["texto"], m["fatos"])
+            for m in mensagens
+            if numeros_sem_origem(m["texto"], m["fatos"])
+        }
+        r.checar(
+            "nenhum texto tem número que não veio dos fatos (RN08, RF43)",
+            bool(mensagens) and not sem_origem,
+            "; ".join(f"{p}: {', '.join(n)}" for p, n in sem_origem.items())
+            or f"{len(mensagens)} texto(s) conferido(s)",
+        )
+        internos = {m["parceiro"]: termos_internos(m["texto"]) for m in mensagens}
+        r.checar(
+            "nenhum texto conta ao parceiro a classificação da rede (RF26)",
+            bool(mensagens) and not any(internos.values()),
+            "; ".join(f"{p}: {', '.join(t)}" for p, t in internos.items() if t) or "",
+        )
+        r.checar(
+            "cada mensagem leva a ação do plano, e a do modelo fixo diz por quê (ADR-013)",
+            bool(mensagens)
+            and all(m["acao"] == acoes.get(m["parceiro_id"]) for m in mensagens)
+            and all(m["motivo_redator"] for m in mensagens if m["redator"] == "MODELO_FIXO"),
+            "; ".join(
+                sorted({m["motivo_redator"] for m in mensagens if m["redator"] == "MODELO_FIXO"})
+            )[:200]
+            or "todas pelo modelo",
+        )
+
+
 # --------------------------------------------------------------------- extra
 def item_limpeza(
     r: Relatorio,
@@ -1344,6 +1468,7 @@ def main() -> int:
             item_modelo(r, a.url, criados)
             item_campanha(r, a.url, criados)
             item_benchmark(r, a.url, criados)
+            item_mensagens(r, a.url, criados)
             item_crud(r, a.url, criados, marca)
             periodo_id = item_ingestao(r, a.url, criados, marca)
             item_painel(r, a.url, criados, periodo_id)
