@@ -938,6 +938,59 @@ class PaginaExecucoes(BaseModel):
     tamanho: int
 
 
+class SituacaoNaComparacao(enum.StrEnum):
+    """Onde o parceiro está nos dois planos (RF35)."""
+
+    MUDOU = "MUDOU"  # nos dois, com ações diferentes
+    SO_A = "SO_A"  # só no primeiro
+    SO_B = "SO_B"  # só no segundo
+    IGUAL = "IGUAL"  # nos dois, com a mesma ação
+
+
+class ItemComparado(BaseModel):
+    parceiro_id: int
+    parceiro: str
+    segmento: Segmento | None
+    situacao: SituacaoNaComparacao
+    acao_a: str | None
+    acao_b: str | None
+    ganho_a: Decimal | None
+    ganho_b: Decimal | None
+
+
+class ResumoComparacao(BaseModel):
+    mudaram: int
+    so_a: int
+    so_b: int
+    iguais: int
+
+
+class ComparacaoPlanos(BaseModel):
+    """Dois planos lado a lado, com o que difere (RF35, UC08-A3, H59).
+
+    As diferenças são **do segundo para o primeiro**: `diferenca_uplift` positivo
+    quer dizer que o segundo plano espera ganhar mais.
+    """
+
+    a: ExecucaoResposta
+    b: ExecucaoResposta
+    parametros_diferentes: list[str] = Field(
+        description="Os campos dos parâmetros que mudaram de um plano para o outro."
+    )
+    mesmas_previsoes: bool = Field(
+        description="Os dois partiram da mesma versão do modelo e do mesmo período. Sem isso, "
+        "o ganho de um parceiro pode ter mudado por causa da previsão, e não do plano."
+    )
+    diferenca_uplift: Decimal
+    diferenca_custo: Decimal
+    diferenca_acoes: int
+    resumo: ResumoComparacao
+    itens: list[ItemComparado] = Field(
+        description="Os parceiros dos dois planos: primeiro os que mudaram de ação, depois os "
+        "que só estão num deles, e por fim os iguais."
+    )
+
+
 class CategoriaCampanha(BaseModel):
     id: int
     nome: str
