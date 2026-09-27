@@ -70,6 +70,39 @@ app = FastAPI(
 )
 
 
+class SemAdivinharOTipo:
+    """`X-Content-Type-Options: nosniff` em toda resposta (RNF12, H70).
+
+    A API devolve JSON com o que o usuário digitou — nome de parceiro, de
+    categoria, de ação. Sem este cabeçalho, um navegador pode "adivinhar" que um
+    JSON com `<script>` dentro é HTML e executá-lo, se alguém o abrir direto. Com
+    ele, vale o tipo declarado, e JSON nunca é página.
+
+    Um middleware ASGI, e não o `@app.middleware("http")`: aquele envolve a
+    resposta inteira, e atrapalha a exportação em fluxo e as tarefas de fundo.
+    Este só acrescenta o cabeçalho quando a resposta começa.
+    """
+
+    def __init__(self, aplicacao) -> None:
+        self.aplicacao = aplicacao
+
+    async def __call__(self, escopo, receber, enviar):
+        if escopo["type"] != "http":
+            await self.aplicacao(escopo, receber, enviar)
+            return
+
+        async def com_cabecalho(mensagem):
+            if mensagem["type"] == "http.response.start":
+                mensagem.setdefault("headers", [])
+                mensagem["headers"].append((b"x-content-type-options", b"nosniff"))
+            await enviar(mensagem)
+
+        await self.aplicacao(escopo, receber, com_cabecalho)
+
+
+app.add_middleware(SemAdivinharOTipo)
+
+
 # As rotas entram aqui, e a ordem não importa: cada módulo declara o próprio
 # prefixo e a própria exigência de perfil.
 app.include_router(autenticacao.router)
