@@ -129,6 +129,8 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("POST", "/api/mensagens/{mensagem_id}/aprovacao"): {Perfil.GESTOR},
     ("POST", "/api/mensagens/{mensagem_id}/edicao"): {Perfil.GESTOR},
     ("POST", "/api/mensagens/{mensagem_id}/rejeicao"): {Perfil.GESTOR},
+    # UC13 — Consultar meu desempenho: só o Parceiro, e só o próprio (RF26, RNF14).
+    ("GET", "/api/meu-desempenho"): {Perfil.PARCEIRO},
     # UC14 — Auditar ações: só Administrador
     ("GET", "/api/auditoria"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/auditoria/acoes"): {Perfil.ADMINISTRADOR},
