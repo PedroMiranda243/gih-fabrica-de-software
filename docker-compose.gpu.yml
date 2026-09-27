@@ -26,3 +26,17 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+
+  # O modelo de linguagem, quando o perfil `assistente` está ligado (ADR-013).
+  # Sem o perfil, esta reserva não cria nada. Os dois cabem na placa de 8 GB:
+  # o modelo ocupa 4,4 GiB, e o otimizador, poucos MB.
+  #
+  #   docker compose -f docker-compose.yml -f docker-compose.gpu.yml --profile assistente up -d --build
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
