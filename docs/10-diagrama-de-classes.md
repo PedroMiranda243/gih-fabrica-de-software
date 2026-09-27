@@ -38,7 +38,7 @@ classDiagram
 
     class Dominio {
         <<SQLAlchemy>>
-        +18 entidades
+        +19 entidades
     }
 
     class Nucleo {
@@ -616,7 +616,8 @@ Todas recebem a `Instancia` e a semente e devolvem o mesmo plano — o sorteio �
 aritmética é inteira (ADR-011). A serial existe em Python (Sprint 9 interna) e em C++ (H53a), e a OpenMP em
 C++ (H53b), todas com plano **idêntico** conferido por teste a cada PR. O executável é chamado pela API por
 processo (ADR-012). Na tela de campanha, o modo **serial** é o de Python, e o **CPU paralelo** é o OpenMP
-(H55). O C++ serial aparece só no benchmark (H57), e a CUDA é da Sprint 11.
+(H55). O C++ serial aparece só no benchmark (H57), que roda o mesmo problema nas quatro — o Python, o C++
+serial, o OpenMP e a CUDA — e compara o tempo e o plano.
 
 <!-- diagrama: nucleo-otimizadores -->
 ```mermaid
@@ -679,13 +680,13 @@ abaixo separa os dois — e o repositório comprova cada linha da coluna ✅.
 
 | Camada | Implementado ✅ | Previsto ⏳ |
 |---|---|---|
-| Domínio | **as 18 entidades**, com restrições `CHECK` no banco | — |
-| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `servico_otimizacao`, `erros` | `assistente` |
-| Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/campanha`, `/api/otimizacoes`, `/api/acoes-comerciais`, `/api/auditoria`, `/api/health` | benchmark, mensagens, assistente |
+| Domínio | **as 19 entidades**, com restrições `CHECK` no banco | — |
+| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `servico_otimizacao`, `servico_benchmark`, `erros` | `assistente` |
+| Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/campanha`, `/api/otimizacoes`, `/api/acoes-comerciais`, `/api/benchmark`, `/api/benchmarks`, `/api/auditoria`, `/api/health` | mensagens, assistente |
 | Núcleo | pacote `gih_nucleo`: instância, viabilidade exata, gulosos e o genético serial (H48, H49, H52); o mesmo genético em C++, idêntico ao Python (H53a), com OpenMP (H53b) e inteiro na GPU (H54a a H54c), com o mesmo plano nos quatro | — |
 | Modelo preditivo | pacote `gih_modelo`: variáveis, referências, rede e treino (H41 a H43, H46) | — |
 
-Cobertura de teste da API em 26/09/2026: **624 testes, 97%**. Os pacotes do modelo e do
+Cobertura de teste da API em 27/09/2026: **685 testes, 97%**. Os pacotes do modelo e do
 otimizador têm as próprias suítes, em `modelo/tests` e `nucleo/tests`.
 
 ---
@@ -698,7 +699,7 @@ Diagrama que diverge do código é pior que diagrama ausente. As três verifica�
    corresponde a uma `class` desse arquivo, com os mesmos atributos.
 2. **Serviços e assinaturas** — os módulos de [`api/app/`](../api/app/). Os métodos listados nas seções 5 e 6
    são as funções públicas de cada um.
-3. **Tabelas realmente criadas** — `docker compose exec postgres psql -U gih -d gih -c "\dt"`. São 18
+3. **Tabelas realmente criadas** — `docker compose exec postgres psql -U gih -d gih -c "\dt"`. São 19
    tabelas de domínio mais a `alembic_version`, de controle das migrações.
 
 Modelo de dados detalhado, com tipos, chaves e índices, em

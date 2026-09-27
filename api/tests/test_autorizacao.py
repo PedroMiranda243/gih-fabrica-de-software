@@ -105,6 +105,12 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("GET", "/api/acoes-comerciais"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("POST", "/api/acoes-comerciais"): {Perfil.GESTOR},
     ("PATCH", "/api/acoes-comerciais/{acao_id}"): {Perfil.GESTOR},
+    # UC09 — Benchmark: Gestor e Administrador. Mede a máquina num problema
+    # sintético, sem parceiro nem plano; o Analista não o tem.
+    ("GET", "/api/benchmark"): {Perfil.GESTOR, Perfil.ADMINISTRADOR},
+    ("POST", "/api/benchmarks"): {Perfil.GESTOR, Perfil.ADMINISTRADOR},
+    ("GET", "/api/benchmarks"): {Perfil.GESTOR, Perfil.ADMINISTRADOR},
+    ("GET", "/api/benchmarks/{execucao_id}"): {Perfil.GESTOR, Perfil.ADMINISTRADOR},
     # UC14 — Auditar ações: só Administrador
     ("GET", "/api/auditoria"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/auditoria/acoes"): {Perfil.ADMINISTRADOR},

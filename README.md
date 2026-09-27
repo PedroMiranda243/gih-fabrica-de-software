@@ -170,7 +170,7 @@ Documentação da API em `http://localhost:8000/api/docs`.
 
 **Com placa NVIDIA**, o otimizador pode usar a GPU. O núcleo é compilado com CUDA, e a placa é reservada
 para a API, por um arquivo à parte. Com ele, o modo GPU aparece na tela de campanha, e é o que roda quando o
-gestor não escolhe:
+gestor não escolhe; e a tela de benchmark mede os quatro modos lado a lado, com o mesmo plano:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build

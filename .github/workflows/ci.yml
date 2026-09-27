@@ -126,7 +126,7 @@ jobs:
       # O núcleo de regras tem um piso próprio, e reprova o PR que o furar
       # (RNF24, história H69). A H69 nomeia segmentação, ranking, previsão e
       # otimização; a previsão entrou com o módulo da Sprint 05, e a otimização
-      # com a campanha da Sprint 9 interna. Cobertura que
+      # com a campanha da Sprint 9 interna, e o benchmark com a H57. Cobertura que
       # não é cobrada decai: o número medido na segmentação era 99%, e o piso
       # fica no que o requisito exige, 70% — largo
       # de propósito, porque piso colado no valor atual reprova por qualquer
@@ -140,7 +140,7 @@ jobs:
         working-directory: api
         run: >-
           coverage report
-          --include=app/servico_segmentacao.py,app/ranking.py,app/rotas/painel.py,app/calculos.py,app/servico_previsao.py,app/servico_otimizacao.py
+          --include=app/servico_segmentacao.py,app/ranking.py,app/rotas/painel.py,app/calculos.py,app/servico_previsao.py,app/servico_otimizacao.py,app/servico_benchmark.py
           --fail-under=70
 
       - name: Módulo ainda não criado

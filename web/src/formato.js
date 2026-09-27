@@ -189,6 +189,47 @@ export function comoDuracao(ms) {
 }
 
 /**
+ * Um tempo medido, em segundos, com três algarismos onde eles importam: "7,3 ms",
+ * "195 ms", "1,56 s", "26,3 s", "2 min 10 s".
+ *
+ * O benchmark vai de milissegundos da GPU a minutos do Python. Uma casa só,
+ * como em `comoDuracao`, diria "0 ms" para a busca de 400 µs, e "7 ms" contra
+ * "7 ms" para duas buscas que diferem 40%.
+ */
+export function comoTempo(segundos) {
+  if (segundos === null || segundos === undefined) return TRACO;
+  const s = Number(segundos);
+  if (s < 1) {
+    const ms = s * 1000;
+    return `${ms < 10 ? comoDecimal(ms, 2) : ms < 100 ? comoDecimal(ms, 1) : comoInteiro(Math.round(ms))} ms`;
+  }
+  if (s < 60) return `${comoDecimal(s, s < 10 ? 2 : 1)} s`;
+  const minutos = Math.floor(s / 60);
+  return `${minutos} min ${Math.round(s - minutos * 60)} s`;
+}
+
+/** Um fator de ganho: `8` vira "8,0x", `135.4` vira "135x". */
+export function comoVezes(fator) {
+  if (fator === null || fator === undefined) return TRACO;
+  const f = Number(fator);
+  return `${f >= 100 ? comoInteiro(Math.round(f)) : comoDecimal(f, 1)}x`;
+}
+
+/**
+ * As quatro colunas do benchmark (ADR-012), na ordem em que aparecem: o rótulo,
+ * a cor da série no gráfico e o que cada uma é. A cor segue a coluna, e não a
+ * posição: sem a GPU, o OpenMP continua laranja (`docs/09`).
+ */
+export const COLUNAS_BENCHMARK = [
+  ["PYTHON", "Python", "var(--serie-1)", "O baseline do RNF02: o mesmo genético, em Python puro."],
+  ["CPP_SERIAL", "C++ serial", "var(--serie-4)", "O mesmo genético compilado, numa thread só: mostra quanto é do compilador."],
+  ["OPENMP", "OpenMP", "var(--serie-2)", "O C++ com os núcleos do processador em paralelo: o CPU paralelo da campanha."],
+  ["GPU", "GPU", "var(--serie-3)", "O C++ com CUDA, na placa de vídeo: o modo GPU da campanha."],
+];
+export const ROTULO_COLUNA = Object.fromEntries(COLUNAS_BENCHMARK.map(([c, rotulo]) => [c, rotulo]));
+export const COR_COLUNA = Object.fromEntries(COLUNAS_BENCHMARK.map(([c, , cor]) => [c, cor]));
+
+/**
  * Os modos de execução do otimizador (RF32), na ordem em que aceleram — a mesma
  * das séries do benchmark (docs/09): o rótulo, o nome no meio da frase e o que o
  * modo é.

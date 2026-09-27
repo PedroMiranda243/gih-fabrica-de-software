@@ -30,6 +30,7 @@ erDiagram
     USUARIO }o--o| PARCEIRO : representa
     USUARIO |o--o| CONFIGURACAO_SEGMENTACAO : ajusta
     USUARIO |o--o{ TREINO_MODELO : dispara
+    USUARIO |o--o{ EXECUCAO_BENCHMARK : dispara
 
     CATEGORIA ||--o{ PARCEIRO : classifica
 
@@ -59,7 +60,7 @@ tentativas de autenticação inclusive contra logins que não existem, e por iss
 estrangeira para `USUARIO`. Ligá-la quebraria justamente o caso que ela existe para cobrir — o ataque por
 dicionário usa login desconhecido (RNF11).
 
-Os atributos de cada entidade estão na tabela abaixo, e não dentro das caixas do desenho: com dezessete
+Os atributos de cada entidade estão na tabela abaixo, e não dentro das caixas do desenho: com dezenove
 entidades e mais de cem atributos, a figura ficaria ilegível impressa, que é critério de aceite da entrega.
 
 ### Entidades e atributos, na linguagem do negócio
@@ -83,6 +84,7 @@ entidades e mais de cem atributos, a figura ficaria ilegível impressa, que é c
 | **ExecucaoOtimizador** | Uma rodada do otimizador (UC08) | autor, situação, modo, parâmetros, período e versão das previsões usadas, semente, início e fim, viabilidade, restrição violada e motivo, ganho, custo, tempo, se foi parcial |
 | **PlanoCampanha** | O plano resultante de uma execução viável | janela de aplicação |
 | **ItemPlano** | Par (parceiro, ação) escolhido pelo otimizador | uplift esperado, custo |
+| **ExecucaoBenchmark** | Uma medição do benchmark (UC09): o mesmo problema sintético em cada modo | autor, situação, parceiros, tipos de ação, repetições, semente, início e fim, andamento, as medidas cruas de cada modo, onde mediu, se outro cálculo disputou a máquina, motivo |
 | **Mensagem** | Comunicação gerada para um parceiro | texto gerado, texto final, estado, autor da decisão, motivo da rejeição |
 
 ### Quatro relacionamentos que carregam regra de negócio
@@ -133,6 +135,8 @@ execucao_otimizador(id, situacao, usuario_id*, modo, parametros, periodo_base_id
                     custo_total, tempo_ms, parcial, motivo, detalhes)
 plano_campanha(id, execucao_id*, aplicacao_inicio, aplicacao_fim)
 item_plano(id, plano_id*, parceiro_id*, acao_id*, uplift_esperado, custo)
+execucao_benchmark(id, situacao, usuario_id*, parceiros, acoes, repeticoes, semente, iniciada_em,
+                   concluida_em, progresso, resultados, ambiente, disputada, motivo)
 
 mensagem(id, parceiro_id*, item_plano_id*, texto_gerado, texto_final, estado, decidida_por_id*,
          motivo_rejeicao, gerada_em, decidida_em)
@@ -431,6 +435,29 @@ concluída tem resultado e tempo; execução que falhou tem motivo.
 | uplift_esperado | numeric(12,2) | | |
 | custo | numeric(10,2) | | |
 
+**execucao_benchmark** — Sprint 11 interna (H57, UC09, RF33)
+
+| Coluna | Tipo | Chave | Restrição |
+|---|---|---|---|
+| id | serial | **PK** | |
+| situacao | enum | | o mesmo `situacaoexecucao` do otimizador — **um só em andamento**, por índice único parcial |
+| usuario_id | integer | **FK** → usuario | nulo quando o benchmark veio do terminal |
+| parceiros | integer | | entre 100 e 10.000, a faixa do gerador (RF16) |
+| acoes | integer | | entre 1 e 10 |
+| repeticoes | integer | | entre 1 e 10 |
+| semente | integer | | a da busca; a do problema sintético fica em `ambiente` |
+| iniciada_em, concluida_em | timestamptz | | |
+| progresso | jsonb | | enquanto roda: o passo, o total e o que está medindo |
+| resultados | jsonb | | um item por modo — medido, com o tempo e o ganho de **cada repetição**; indisponível ou falho, com o motivo |
+| ambiente | jsonb | | onde mediu: as threads do OpenMP, a GPU, o compilador |
+| disputada | boolean | | uma otimização ou um treino rodou junto, e os tempos podem ter saído maiores |
+| motivo | text | | por que falhou |
+
+**As medidas cruas, e não só a média.** A média, o desvio e os ganhos se calculam delas, na leitura; e o
+gráfico de escalabilidade junta execuções de tamanhos diferentes (UC09, passo 7). O problema medido é
+sintético (`gih_nucleo.cenario`), e por isso a tabela não aponta para parceiro nem período: o benchmark
+mede a máquina, e não a campanha.
+
 ### 2.5 Comunicação
 
 **mensagem**
@@ -471,6 +498,7 @@ Cada índice existe por causa de uma consulta concreta, não por precaução (RN
 | `ix_previsao_periodo_versao` | previsao | periodo_base_id, modelo_versao | As previsões de uma versão sobre um período, para a rede toda |
 | `uq_treino_um_em_andamento` | treino_modelo | situacao, só onde é `EM_ANDAMENTO` (único, parcial) | Um treino por vez, travado pelo banco e não pela memória do processo (ADR-010) |
 | `uq_execucao_uma_em_andamento` | execucao_otimizador | situacao, só onde é `EM_ANDAMENTO` (único, parcial) | Um otimizador por vez, pelo mesmo motivo (ADR-011) |
+| `uq_benchmark_um_em_andamento` | execucao_benchmark | situacao, só onde é `EM_ANDAMENTO` (único, parcial) | Um benchmark por vez: dois dividiriam a máquina e mediriam a disputa (H57) |
 
 ---
 
@@ -499,7 +527,7 @@ forte que uma validação de aplicação que alguém pode esquecer de chamar.
 
 ## 5. O que o banco garante sozinho
 
-Catorze restrições `CHECK` que impedem estado inválido independentemente do código da aplicação. É a diferença
+Dezenove restrições `CHECK` que impedem estado inválido independentemente do código da aplicação. É a diferença
 entre uma regra que vale e uma regra que valeria se ninguém esquecesse de chamá-la.
 
 | Restrição | Garante |
@@ -518,6 +546,9 @@ entre uma regra que vale e uma regra que valeria se ninguém esquecesse de cham�
 | `ck_mensagem_decisao_tem_autor` | Mensagem decidida **tem** autor e data (RN06) |
 | `ck_treino_concluido_tem_versao` | Treino concluído **diz** qual versão ficou em uso (UC07-A1) |
 | `ck_treino_falho_tem_motivo` | Treino que falhou **diz** por quê |
+| `ck_benchmark_parceiros`, `ck_benchmark_acoes`, `ck_benchmark_repeticoes` | O cenário do benchmark fica na faixa do gerador e da tela (UC09) |
+| `ck_benchmark_concluido_tem_resultado` | Benchmark concluído **tem** as medidas |
+| `ck_benchmark_falha_tem_motivo` | Benchmark que falhou **diz** por quê |
 
 ---
 
@@ -530,7 +561,7 @@ O esquema não está só desenhado: está aplicado e em uso. O ambiente sobe com
 
 ```
 $ docker compose exec api alembic current
-f4b7a9c31e20 (head)
+9c1d7e4b2a60 (head)
 ```
 
 **Tabelas criadas** (`docker compose exec postgres psql -U gih -d gih -c "\dt"`):
@@ -543,6 +574,7 @@ f4b7a9c31e20 (head)
  public | auditoria                | table | gih
  public | categoria                | table | gih
  public | configuracao_segmentacao | table | gih
+ public | execucao_benchmark       | table | gih
  public | execucao_otimizador      | table | gih
  public | historico_segmento       | table | gih
  public | importacao               | table | gih
@@ -557,10 +589,10 @@ f4b7a9c31e20 (head)
  public | tentativa_login          | table | gih
  public | treino_modelo            | table | gih
  public | usuario                  | table | gih
-(19 rows)
+(20 rows)
 ```
 
-São as 18 tabelas de domínio mais `alembic_version`, que é da própria ferramenta de migração e registra
+São as 19 tabelas de domínio mais `alembic_version`, que é da própria ferramenta de migração e registra
 qual versão do esquema está aplicada.
 
 **Contagem por consulta ao catálogo do PostgreSQL:**

@@ -122,6 +122,7 @@ TELAS: dict[str, tuple[str, str]] = {
     # ou sem o link a partir daqui.
     "execucoes": ("GET", "/api/otimizacoes"),
     "execucao": ("GET", "/api/otimizacoes/{execucao_id}"),
+    "benchmark": ("GET", "/api/benchmark"),
 }
 
 

@@ -10,6 +10,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useSessao } from "./api/contextoSessao";
 import Casca from "./componentes/Casca";
 import Carregando from "./componentes/Carregando";
+import Benchmark from "./paginas/Benchmark";
 import Campanha from "./paginas/Campanha";
 import Configuracao from "./paginas/Configuracao";
 import Execucao from "./paginas/Execucao";
@@ -139,6 +140,16 @@ export default function App() {
       >
         <Route path="/execucoes" element={<Execucoes />} />
         <Route path="/execucoes/:id" element={<Execucao />} />
+      </Route>
+
+      <Route
+        element={
+          <Protegido>
+            <Casca titulo="Benchmark" />
+          </Protegido>
+        }
+      >
+        <Route path="/benchmark" element={<Benchmark />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

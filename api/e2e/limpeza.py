@@ -49,6 +49,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 from app.config import Config
 from app.modelos import (
     Categoria,
+    ExecucaoBenchmark,
     ExecucaoOtimizador,
     HistoricoSegmento,
     Importacao,
@@ -82,6 +83,7 @@ class Contagem:
     categorias: int = 0
     treinos: int = 0
     otimizacoes: int = 0
+    benchmarks: int = 0
 
     def __str__(self) -> str:
         nomes = (
@@ -92,6 +94,7 @@ class Contagem:
             ("categoria", "categorias"),
             ("treino", "treinos"),
             ("otimização", "otimizações"),
+            ("benchmark", "benchmarks"),
         )
         partes = [
             f"{n} {um if n == 1 else varios}"
@@ -146,7 +149,8 @@ def limpar_execucao(marca: str, url: str | None = None) -> Contagem:
     - treinos do modelo: disparados por um desses usuários, com as previsões
       das versões que eles produziram. Sem o treino, a versão em uso volta a
       ser a do último treino de fora da execução;
-    - otimizações: disparadas por um desses usuários, com o plano e os itens.
+    - otimizações: disparadas por um desses usuários, com o plano e os itens;
+    - benchmarks: disparados por um desses usuários.
 
     **Recusa em vez de apagar dado alheio.** Se alguém de fora da execução
     importou num desses períodos, ou se algo fora dela aponta para um parceiro
@@ -244,7 +248,12 @@ def _apagar(c: Connection, marca: str, destino: str) -> Contagem:
     # Postgres: a marca `t12345` não pode casar com o meio de outro nome.
     palavra = rf"\m{marca}\M"
 
-    removidos = Contagem(otimizacoes=otimizacoes)
+    # O benchmark não aponta para nada da execução além do autor (H57).
+    benchmarks = c.execute(
+        delete(ExecucaoBenchmark).where(ExecucaoBenchmark.usuario_id.in_(usuarios))
+    ).rowcount
+
+    removidos = Contagem(otimizacoes=otimizacoes, benchmarks=benchmarks)
     removidos.treinos = c.execute(
         delete(TreinoModelo).where(TreinoModelo.id.in_(treinos))
     ).rowcount
