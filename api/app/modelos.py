@@ -86,6 +86,13 @@ class EstadoMensagem(enum.StrEnum):
     REJEITADA = "REJEITADA"
 
 
+class RedatorMensagem(enum.StrEnum):
+    """Quem escreveu o texto (ADR-013): o modelo de linguagem, ou o modelo fixo da equipe."""
+
+    MODELO = "MODELO"
+    MODELO_FIXO = "MODELO_FIXO"
+
+
 class SituacaoTreino(enum.StrEnum):
     EM_ANDAMENTO = "EM_ANDAMENTO"
     CONCLUIDO = "CONCLUIDO"
@@ -679,8 +686,8 @@ class ExecucaoBenchmark(Base):
     resultados: Mapped[list | None] = mapped_column(JSONB)
     # Onde mediu: a GPU, as threads do OpenMP e o compilador daquele momento.
     ambiente: Mapped[dict | None] = mapped_column(JSONB)
-    # Outro cálculo pesado rodou junto — uma otimização, um treino —, e os
-    # tempos podem ter saído maiores do que são.
+    # Outro cálculo pesado rodou junto — uma otimização, um treino, o modelo de
+    # linguagem —, e os tempos podem ter saído maiores do que são.
     disputada: Mapped[bool | None] = mapped_column(Boolean)
     motivo: Mapped[str | None] = mapped_column(Text)
 
@@ -707,11 +714,61 @@ class ExecucaoBenchmark(Base):
 
 
 # --------------------------------------------------------------------------- comunicação
+class LoteMensagens(Base):
+    """Uma geração de mensagens — UC10, RF36, história H60.
+
+    O público é resolvido **na hora do pedido**, e a lista de quem entra fica
+    gravada em `alvos`: o que a prévia mostrou é o que se gera, mesmo que um
+    parceiro mude de segmento no meio. Cada mensagem é gravada assim que fica
+    pronta (UC10-A1); o parceiro que falha fica em `falhas`, com o motivo, e não
+    para o lote (A2). **Um lote por vez**, pelo índice único parcial, como o
+    otimizador e o benchmark.
+    """
+
+    __tablename__ = "lote_mensagens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    situacao: Mapped[SituacaoExecucao] = mapped_column(default=SituacaoExecucao.EM_ANDAMENTO)
+    usuario_id: Mapped[int | None] = mapped_column(ForeignKey("usuario.id"))
+    # O pedido, como a pessoa o fez: o tipo de público e o critério.
+    publico: Mapped[dict] = mapped_column(JSONB)
+    # Quem entra, resolvido no pedido: `[{"parceiro_id": 3, "item_plano_id": 12}, ...]`.
+    alvos: Mapped[list] = mapped_column(JSONB)
+    # Quem falhou, com o motivo: `[{"parceiro_id": 3, "parceiro": "...", "motivo": "..."}]`.
+    falhas: Mapped[list] = mapped_column(JSONB, default=list)
+    # O modelo de linguagem usado, se algum texto saiu dele. Nulo: tudo do modelo fixo.
+    modelo: Mapped[str | None] = mapped_column(String(60))
+
+    iniciado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    concluido_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Por que o lote inteiro parou — um erro fora de qualquer parceiro, ou a API
+    # que reiniciou no meio.
+    motivo: Mapped[str | None] = mapped_column(Text)
+
+    __table_args__ = (
+        Index(
+            "uq_lote_mensagens_um_em_andamento",
+            "situacao",
+            unique=True,
+            postgresql_where=text("situacao = 'EM_ANDAMENTO'"),
+        ),
+        CheckConstraint(
+            "situacao <> 'FALHOU' OR motivo IS NOT NULL", name="ck_lote_mensagens_falha_tem_motivo"
+        ),
+    )
+
+
 class Mensagem(Base):
     """Mensagem gerada por segmento, sujeita a aprovação humana.
 
     `texto_gerado` e `texto_final` são separados de propósito: se o Gestor
     editar antes de aprovar, o original permanece para auditoria.
+
+    `fatos` é o que o código calculou e entregou para a redação — os números
+    que o texto pode ter (RN08). Fica gravado para a auditoria conferir o texto
+    contra eles, e para a guarda numérica conferir a edição (H62).
     """
 
     __tablename__ = "mensagem"
@@ -719,6 +776,16 @@ class Mensagem(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     parceiro_id: Mapped[int] = mapped_column(ForeignKey("parceiro.id"))
     item_plano_id: Mapped[int | None] = mapped_column(ForeignKey("item_plano.id"))
+    lote_id: Mapped[int | None] = mapped_column(ForeignKey("lote_mensagens.id"))
+    # O segmento do parceiro quando a mensagem foi gerada: dá o tom, e a fila
+    # filtra por ele (H61). Nulo quando o parceiro ainda não tinha segmento.
+    segmento: Mapped[Segmento | None] = mapped_column()
+    fatos: Mapped[list] = mapped_column(JSONB, default=list)
+    redator: Mapped[RedatorMensagem] = mapped_column(default=RedatorMensagem.MODELO_FIXO)
+    modelo: Mapped[str | None] = mapped_column(String(60))
+    # Por que o texto saiu do modelo fixo: o modelo fora do ar, ou o texto dele
+    # que a guarda reprovou, com os números sem origem.
+    motivo_redator: Mapped[str | None] = mapped_column(Text)
 
     texto_gerado: Mapped[str] = mapped_column(Text)
     texto_final: Mapped[str | None] = mapped_column(Text)
@@ -739,5 +806,12 @@ class Mensagem(Base):
             " AND decidida_em IS NOT NULL)",
             name="ck_mensagem_decisao_tem_autor",
         ),
+        # Texto do modelo de linguagem diz qual modelo; o do modelo fixo, por quê.
+        CheckConstraint(
+            "(redator = 'MODELO' AND modelo IS NOT NULL)"
+            " OR (redator = 'MODELO_FIXO' AND motivo_redator IS NOT NULL)",
+            name="ck_mensagem_redator_explicado",
+        ),
         Index("ix_mensagem_estado", "estado"),
+        Index("ix_mensagem_lote", "lote_id"),
     )

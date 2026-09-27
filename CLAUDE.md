@@ -406,6 +406,11 @@ frente com alguma, a resposta já está aqui.
   frases diferentes para os mesmos fatos. Não escreva teste que compare o texto do modelo; compare os números
   dele contra os fatos, que é o que a guarda faz.
 
+- **Guarda que reprova demais some em silêncio.** O texto reprovado vira modelo fixo, e a mensagem continua
+  certa — só que sem o modelo. Foi assim que o "05/10", data sem o ano, derrubou 2 das 23 mensagens de um
+  plano: a guarda lia o dia e o mês como números soltos. A verificação de ponta a ponta diz quantas saíram de
+  cada redator e o motivo das do modelo fixo; se elas crescerem, leia os motivos antes de mexer na instrução.
+
 - **Sem o modelo, o sistema funciona igual.** O `docker compose up` sozinho não sobe o Ollama: ele está no
   perfil `assistente`. Nunca faça uma tela ou um teste depender dele: as mensagens saem do modelo fixo, e o
   assistente se diz indisponível. Os testes usam um Ollama de mentira (`tests/test_redator.py`).

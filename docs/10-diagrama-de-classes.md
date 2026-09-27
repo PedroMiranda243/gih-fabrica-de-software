@@ -38,7 +38,7 @@ classDiagram
 
     class Dominio {
         <<SQLAlchemy>>
-        +19 entidades
+        +20 entidades
     }
 
     class Nucleo {
@@ -342,10 +342,24 @@ classDiagram
         +Decimal custo
     }
 
+    class LoteMensagens {
+        +int id
+        +SituacaoExecucao situacao
+        +int usuario_id
+        +dict publico
+        +list alvos
+        +list falhas
+        +str modelo
+    }
+
     class Mensagem {
         +int id
         +int parceiro_id
         +int item_plano_id
+        +int lote_id
+        +Segmento segmento
+        +list fatos
+        +RedatorMensagem redator
         +str texto_gerado
         +str texto_final
         +EstadoMensagem estado
@@ -359,6 +373,7 @@ classDiagram
     PlanoCampanha "1" *-- "1..*" ItemPlano : compõe
     AcaoComercial "1" --> "0..*" ItemPlano : é alocada em
     ItemPlano "0..1" --> "0..*" Mensagem : justifica
+    LoteMensagens "0..1" --> "0..*" Mensagem : gera
     TreinoModelo "1" ..> "0..*" Previsao : versão que as gerou
 ```
 
@@ -382,7 +397,11 @@ referências (UC07-A1). O treino guarda a métrica da rede ao lado da de cada re
 
 **`Mensagem` separa `texto_gerado` de `texto_final`.** Se o Gestor editar antes de aprovar, o original
 permanece — é o que permite responder depois *"o que a IA escreveu, e o que de fato foi enviado?"*, e
-medir se o modelo está acertando o tom.
+medir se o modelo está acertando o tom. Ela guarda também os `fatos` que o código entregou para a redação e
+quem a redigiu — o modelo de linguagem ou o modelo fixo, com o motivo (ADR-013).
+
+**`LoteMensagens` grava o público resolvido.** Quem entra fica em `alvos` no momento do pedido: o que a
+prévia mostrou é o que se gera. Quem falha fica em `falhas`, com o motivo, e não some (UC10-A2).
 
 ---
 
@@ -520,6 +539,16 @@ classDiagram
         +numeros_sem_origem(texto, fatos) list
     }
 
+    class ServicoMensagens {
+        <<implementado>>
+        +resolver(publico) Previa
+        +fatos_do_parceiro(...) list
+        +redigir(redator, segmento, fatos) Redacao
+        +iniciar(publico, usuario) LoteMensagens
+        +executar(lote)
+        +refazer(lote) LoteMensagens
+    }
+
     class Assistente {
         <<previsto>>
         +responder(pergunta) Resposta
@@ -531,6 +560,9 @@ classDiagram
     ServicoPrevisao --> Segmentador : rotula o risco pelo mesmo critério (RN09)
     ServicoOtimizacao --> Ranking : cauda longa pelo ranking (RN11)
     ServicoOtimizacao --> ServicoPrevisao : previsões da versão em uso (RN10)
+    ServicoMensagens --> Ranking : desempenho do período, pela consulta da lista
+    ServicoMensagens --> Redator : redige com os fatos
+    ServicoMensagens --> GuardaNumerica : confere o texto (RN08)
     Assistente --> Ranking : consome fatos apurados
     Assistente --> Redator : identifica a pergunta e redige
     Assistente --> GuardaNumerica : confere o texto (RN08)
@@ -558,6 +590,12 @@ volta deles. Se somasse, contasse ou comparasse, o número deixaria de ser repro
 por que está fora do ar quando está. A `GuardaNumerica` recebe o texto pronto e os fatos, e aponta os números
 do texto que os fatos não sustentam. Quem monta os fatos, e quem troca o texto reprovado pelo modelo fixo, é
 o serviço que usa os dois.
+
+**`ServicoMensagens` monta os fatos, e o segmento fica de fora deles.** O desempenho do parceiro sai da
+mesma consulta da lista de parceiros (`app/desempenho.py`), para a mensagem não dizer um número que a tela
+não mostra. O segmento escolhe o tom e não entra no texto: a classificação é da rede, e não do parceiro
+(RF26). O texto do modelo passa pela guarda numérica e por uma lista de termos internos; reprovado, ou com o
+modelo fora do ar, sai o modelo fixo da equipe.
 
 ---
 
@@ -700,13 +738,13 @@ abaixo separa os dois — e o repositório comprova cada linha da coluna ✅.
 
 | Camada | Implementado ✅ | Previsto ⏳ |
 |---|---|---|
-| Domínio | **as 19 entidades**, com restrições `CHECK` no banco | — |
-| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `servico_otimizacao`, `servico_comparacao`, `servico_benchmark`, `redator`, `guarda_numerica`, `erros` | `servico_mensagens`, `assistente` |
-| Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/campanha`, `/api/otimizacoes`, `/api/acoes-comerciais`, `/api/benchmark`, `/api/benchmarks`, `/api/auditoria`, `/api/health` | mensagens, assistente |
+| Domínio | **as 20 entidades**, com restrições `CHECK` no banco | — |
+| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `servico_otimizacao`, `servico_comparacao`, `servico_benchmark`, `desempenho`, `redator`, `guarda_numerica`, `servico_mensagens`, `erros` | `assistente` |
+| Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/campanha`, `/api/otimizacoes`, `/api/acoes-comerciais`, `/api/benchmark`, `/api/benchmarks`, `/api/mensagens`, `/api/auditoria`, `/api/health` | a fila das mensagens, assistente |
 | Núcleo | pacote `gih_nucleo`: instância, viabilidade exata, gulosos e o genético serial (H48, H49, H52); o mesmo genético em C++, idêntico ao Python (H53a), com OpenMP (H53b) e inteiro na GPU (H54a a H54c), com o mesmo plano nos quatro | — |
 | Modelo preditivo | pacote `gih_modelo`: variáveis, referências, rede e treino (H41 a H43, H46) | — |
 
-Cobertura de teste da API em 27/09/2026: **808 testes, 97%**. Os pacotes do modelo e do
+Cobertura de teste da API em 27/09/2026: **913 testes, 97%**. Os pacotes do modelo e do
 otimizador têm as próprias suítes, em `modelo/tests` e `nucleo/tests`.
 
 ---

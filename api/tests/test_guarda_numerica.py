@@ -43,10 +43,22 @@ FATOS = {
         ("3º lugar", [("3º", Tipo.NUMERO, Decimal(3))]),
         ("08/2026", [("08/2026", Tipo.DATA, (None, 8, 2026))]),
         ("15/08/2026", [("15/08/2026", Tipo.DATA, (15, 8, 2026))]),
+        ("15/08", [("15/08", Tipo.DATA, (15, 8, None))]),
+        ("40/50", [("40", Tipo.NUMERO, Decimal(40)), ("50", Tipo.NUMERO, Decimal(50))]),
         ("2026-08-01", [("2026-08-01", Tipo.DATA, (1, 8, 2026))]),
         ("agosto de 2026", [("agosto de 2026", Tipo.DATA, (None, 8, 2026))]),
         ("Março/2026", [("Março/2026", Tipo.DATA, (None, 3, 2026))]),
         ("em agosto", [("agosto", Tipo.DATA, (None, 8, None))]),
+        ("14 de setembro", [("14 de setembro", Tipo.DATA, (14, 9, None))]),
+        ("14 de setembro de 2026", [("14 de setembro de 2026", Tipo.DATA, (14, 9, 2026))]),
+        ("1º de outubro", [("1º de outubro", Tipo.DATA, (1, 10, None))]),
+        (
+            "de 14 a 20 de setembro",
+            [
+                ("14 a 20 de setembro", Tipo.DATA, (14, 9, None)),
+                ("14 a 20 de setembro", Tipo.DATA, (20, 9, None)),
+            ],
+        ),
         ("três ações", [("três", Tipo.NUMERO, Decimal(3))]),
         ("tres ações", [("tres", Tipo.NUMERO, Decimal(3))]),
         ("vinte e cinco", [("vinte e cinco", Tipo.NUMERO, Decimal(25))]),
@@ -170,6 +182,40 @@ def test_numero_que_nao_veio_dos_fatos_e_apontado(texto, sem_origem):
 def test_numero_do_nome_do_parceiro_esta_nos_fatos():
     fatos = {"parceiro": "Mercadinho 24 Horas", "pedidos": "412"}
     assert numeros_sem_origem("O Mercadinho 24 Horas fez 412 pedidos.", fatos) == []
+
+
+PERIODO_POR_DIA = [{"fato": "Período", "valor": "14/09/2026 a 20/09/2026"}]
+
+
+@pytest.mark.parametrize(
+    "texto",
+    [
+        "Na semana de 14 a 20 de setembro.",
+        "Entre 14 e 20 de setembro de 2026.",
+        "Desde 14 de setembro.",
+        "No período de 14/09/2026 a 20/09/2026.",
+        "De 14/09 a 20/09.",
+        "De 14 a 20/09.",
+        "Entre 14 e 20/09/2026.",
+        "Em setembro de 2026.",
+    ],
+)
+def test_o_periodo_por_dia_escrito_de_outro_jeito_passa(texto):
+    assert numeros_sem_origem(texto, PERIODO_POR_DIA) == []
+
+
+@pytest.mark.parametrize(
+    ("texto", "sem_origem"),
+    [
+        ("Desde 15 de setembro.", ["15 de setembro"]),
+        ("De 14 a 21 de setembro.", ["14 a 21 de setembro"]),
+        ("Em 14 de outubro.", ["14 de outubro"]),
+        ("De 14/09 a 21/09.", ["21/09"]),
+        ("De 14 a 21/09.", ["14 a 21/09"]),
+    ],
+)
+def test_outro_dia_nao_passa(texto, sem_origem):
+    assert numeros_sem_origem(texto, PERIODO_POR_DIA) == sem_origem
 
 
 def test_sem_fatos_nenhum_numero_passa():

@@ -13,7 +13,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
-from app import servico_benchmark, servico_otimizacao, servico_previsao
+from app import servico_benchmark, servico_mensagens, servico_otimizacao, servico_previsao
 from app.db import sessao
 from app.erros import erro_de_validacao
 from app.rotas import (
@@ -24,6 +24,7 @@ from app.rotas import (
     categorias,
     configuracao,
     importacoes,
+    mensagens,
     modelo,
     painel,
     parceiros,
@@ -39,8 +40,8 @@ async def ciclo_de_vida(_app: FastAPI):
     deixou em andamento.
 
     Sem isto, a trava do um por vez ficaria presa para sempre, e as telas do
-    modelo, da campanha e do benchmark recusariam todo pedido novo (ADR-010,
-    ADR-011). Banco
+    modelo, da campanha, do benchmark e das mensagens recusariam todo pedido
+    novo (ADR-010, ADR-011). Banco
     fora do ar não impede a subida: a verificação de saúde é quem diz isso, e a
     API volta a funcionar quando o banco voltar.
     """
@@ -49,12 +50,15 @@ async def ciclo_de_vida(_app: FastAPI):
             interrompidos = servico_previsao.recuperar_interrompidos(s)
             interrompidas = servico_otimizacao.recuperar_interrompidas(s)
             benchmarks = servico_benchmark.recuperar_interrompidos(s)
+            lotes = servico_mensagens.recuperar_interrompidos(s)
         if interrompidos:
             log.warning("%d treino(s) interrompido(s) marcado(s) como falho(s)", interrompidos)
         if interrompidas:
             log.warning("%d otimização(ões) interrompida(s) marcada(s) como falha", interrompidas)
         if benchmarks:
             log.warning("%d benchmark(s) interrompido(s) marcado(s) como falho(s)", benchmarks)
+        if lotes:
+            log.warning("%d geração(ões) de mensagens interrompida(s)", lotes)
     except Exception:
         log.exception("Não foi possível conferir o que ficou em andamento")
     yield
@@ -117,6 +121,7 @@ app.include_router(campanha.router)
 app.include_router(campanha.catalogo)
 app.include_router(campanha.historico)
 app.include_router(benchmark.router)
+app.include_router(mensagens.router)
 app.include_router(auditoria.router)
 
 

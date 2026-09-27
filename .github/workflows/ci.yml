@@ -140,7 +140,7 @@ jobs:
         working-directory: api
         run: >-
           coverage report
-          --include=app/servico_segmentacao.py,app/ranking.py,app/rotas/painel.py,app/calculos.py,app/servico_previsao.py,app/servico_otimizacao.py,app/servico_benchmark.py,app/guarda_numerica.py
+          --include=app/servico_segmentacao.py,app/ranking.py,app/rotas/painel.py,app/calculos.py,app/servico_previsao.py,app/servico_otimizacao.py,app/servico_benchmark.py,app/guarda_numerica.py,app/servico_mensagens.py
           --fail-under=70
 
       - name: Módulo ainda não criado

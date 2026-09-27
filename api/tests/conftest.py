@@ -70,6 +70,9 @@ from app.seguranca import gerar_hash  # noqa: E402
 
 SENHA_PADRAO = "senha-de-teste-123"
 
+# A rede de parceiros da campanha e das mensagens, como fixture de todos os testes.
+from tests.rede import base  # noqa: E402, F401
+
 
 def _criar_banco_se_faltar() -> None:
     partes = urlsplit(URL_TESTE)
@@ -100,6 +103,21 @@ def esquema():
     if r.returncode != 0:
         pytest.fail(f"Falha ao aplicar as migrações no banco de teste:\n{r.stdout}\n{r.stderr}")
     yield
+
+
+@pytest.fixture(autouse=True)
+def sem_modelo_de_linguagem(monkeypatch):
+    """Nenhum teste fala com o Ollama por acaso (ADR-013).
+
+    O `api/.env` de quem desenvolve aponta para o Ollama da máquina, e sem isto a
+    tela de mensagens, nos testes, perguntaria a ele se está no ar — e o
+    resultado dependeria do modelo estar carregado. Quem quer o modelo de verdade
+    pede (`test_redator.py::modelo_real`); quem quer um de mentira troca
+    `app.redator.atual`.
+    """
+    from app.config import config
+
+    monkeypatch.setattr(config, "ollama_base_url", "")
 
 
 @pytest.fixture(autouse=True)

@@ -866,6 +866,25 @@ Uma sonda contra o `qwen2.5:7b`, na RTX 4060, mediu o que segue (issue #154).
 - A CI não tem o modelo. Os testes usam um Ollama de mentira, e os que falam com o de verdade pulam — exceto
   com `GIH_ASSISTENTE_OBRIGATORIO=1`, como a GPU.
 
+**Adendo (27/09/2026, H60) — as mensagens, contra o modelo de verdade:**
+
+- **A instrução foi ajustada contra uma amostra**, e não pela intuição. Com os fatos reais da base, a primeira
+  versão escreveu em terceira pessoa ("o faturamento da Esquina da Serra caiu"), afirmou o que os fatos não
+  dizem ("bateu novo recorde"), trocou o sentido de um número ("seus pedidos somaram R$ 20.358,11") e
+  assinou como carta. Cada frase da instrução em `servico_mensagens.SISTEMA` responde a um desses. O que
+  sobra — quebra de linha e "Atenciosamente" — o código tira.
+- **A guarda aprendeu a data sem o ano.** Na verificação de ponta a ponta, 2 das 23 mensagens do plano
+  caíram para o modelo fixo porque o modelo escreveu o período da ação como "05/10 a 11/10", e a guarda lia
+  os dias e os meses como números soltos; na rodada seguinte, 1 caiu por "de 05 a 11/10". Hoje ela lê
+  `05/10`, `de 05 a 11/10`, `14 de setembro` e `de 14 a 20 de setembro` como datas, e as confere contra as
+  dos fatos.
+- **O juízo continua passando.** "Parabéns pelo bom momento" num parceiro em ascensão é o tom pedido;
+  "excelente desempenho" num parceiro estável não é, e nenhuma guarda o pega, porque não é número. É o que a
+  aprovação humana existe para pegar (RN06, H62).
+- **Medido pela verificação de ponta a ponta**, com o Ollama do Windows e o modelo já carregado: as 23
+  mensagens de um plano em 60 s, todas redigidas pelo modelo, e nenhuma com número fora dos fatos. Sem o
+  modelo, as mesmas 23 saem do modelo fixo na hora.
+
 ---
 
 ## 6. Ambiente de desenvolvimento

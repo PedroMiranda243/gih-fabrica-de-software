@@ -14,8 +14,9 @@ fixo, que só tem os números dos fatos.
 - valores em reais (`R$ 12.345,67`);
 - percentuais (`12,8%`, `12,8 por cento`), que só casam com percentual dos fatos;
 - ordinais (`3º`, `terceiro`);
-- datas (`08/2026`, `15/08/2026`, `agosto de 2026`, `agosto`), que só casam com
-  data dos fatos, componente a componente;
+- datas (`08/2026`, `15/08/2026`, `15/08`, `de 05 a 11/10`, `agosto de 2026`,
+  `agosto`, `14 de setembro`, `de 14 a 20 de setembro`), que só casam com data
+  dos fatos, componente a componente;
 - números por extenso (`três`, `vinte e cinco`, `doze mil`);
 - **comparações** (`dobro`, `triplo`, `metade`): não há fato que as sustente,
   porque comparar é conta, e conta é do código (regra 2.3).
@@ -105,6 +106,15 @@ _DATAS = re.compile(
     r"(?P<iso>\b(?P<ia>\d{4})-(?P<im>\d{2})-(?P<id>\d{2})\b)"
     r"|(?P<dma>\b(?P<d>\d{1,2})/(?P<m>\d{1,2})/(?P<a>\d{4})\b)"
     r"|(?P<ma>\b(?P<m2>\d{1,2})/(?P<a2>\d{4})\b)"
+    # "de 05 a 11/10": dois dias do mesmo mês, com o mês só no fim.
+    r"|(?P<faixa2>\b(?P<gd1>[0-3]?\d)\s+(?:a|e)\s+(?P<gd2>[0-3]?\d)/(?P<gm>[01]?\d)"
+    r"(?:/(?P<ga>\d{4}))?\b)"
+    # "05/10", sem o ano: o modelo encurta assim o período da ação.
+    r"|(?P<dm>\b(?P<d7>[0-3]?\d)/(?P<m7>[01]?\d)\b(?!/))"
+    # "de 14 a 20 de setembro": dois dias do mesmo mês.
+    rf"|(?P<faixa>\b(?P<fd1>\d{{1,2}})\s+(?:a|e)\s+(?P<fd2>\d{{1,2}})\s+de\s+(?P<fmes>{_MES})"
+    r"(?:\s+de\s+(?P<fa>\d{4}))?\b)"
+    rf"|(?P<dia>\b(?P<dd>\d{{1,2}})º?\s+de\s+(?P<dmes>{_MES})(?:\s+de\s+(?P<da>\d{{4}}))?\b)"
     rf"|(?P<nome>\b(?P<mes>{_MES})(?:\s+de\s+|\s*/\s*)(?P<a3>\d{{4}})\b)",
     re.IGNORECASE,
 )
@@ -154,14 +164,31 @@ def numeros(texto: str) -> list[Numero]:
     # Datas primeiro: "08/2026" é uma data, e não o 8 e o 2026.
     for m in _DATAS.finditer(texto):
         if m.group("iso"):
-            valor = (int(m.group("id")), int(m.group("im")), int(m.group("ia")))
+            valores = [(int(m.group("id")), int(m.group("im")), int(m.group("ia")))]
         elif m.group("dma"):
-            valor = (int(m.group("d")), int(m.group("m")), int(m.group("a")))
+            valores = [(int(m.group("d")), int(m.group("m")), int(m.group("a")))]
         elif m.group("ma"):
-            valor = (None, int(m.group("m2")), int(m.group("a2")))
+            valores = [(None, int(m.group("m2")), int(m.group("a2")))]
+        elif m.group("faixa2"):
+            mes = int(m.group("gm"))
+            ano = int(m.group("ga")) if m.group("ga") else None
+            valores = [(int(m.group("gd1")), mes, ano), (int(m.group("gd2")), mes, ano)]
+        elif m.group("dm"):
+            dia, mes = int(m.group("d7")), int(m.group("m7"))
+            if not (1 <= dia <= 31 and 1 <= mes <= 12):
+                continue  # "40/50" não é data: os números seguem para a leitura comum
+            valores = [(dia, mes, None)]
+        elif m.group("faixa"):
+            mes = MESES[m.group("fmes").lower()]
+            ano = int(m.group("fa")) if m.group("fa") else None
+            valores = [(int(m.group("fd1")), mes, ano), (int(m.group("fd2")), mes, ano)]
+        elif m.group("dia"):
+            ano = int(m.group("da")) if m.group("da") else None
+            valores = [(int(m.group("dd")), MESES[m.group("dmes").lower()], ano)]
         else:
-            valor = (None, MESES[m.group("mes").lower()], int(m.group("a3")))
-        achados.append((m.start(), Numero(m.group(0), Tipo.DATA, valor)))
+            valores = [(None, MESES[m.group("mes").lower()], int(m.group("a3")))]
+        for valor in valores:
+            achados.append((m.start(), Numero(m.group(0), Tipo.DATA, valor)))
         marcar(m.start(), m.end())
 
     for m in _ALGARISMOS.finditer(texto):

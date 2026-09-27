@@ -54,6 +54,8 @@ from app.modelos import (
     HistoricoSegmento,
     Importacao,
     ItemPlano,
+    LoteMensagens,
+    Mensagem,
     Metrica,
     Parceiro,
     Periodo,
@@ -84,6 +86,8 @@ class Contagem:
     treinos: int = 0
     otimizacoes: int = 0
     benchmarks: int = 0
+    lotes: int = 0
+    mensagens: int = 0
 
     def __str__(self) -> str:
         nomes = (
@@ -95,6 +99,8 @@ class Contagem:
             ("treino", "treinos"),
             ("otimização", "otimizações"),
             ("benchmark", "benchmarks"),
+            ("lote de mensagens", "lotes de mensagens"),
+            ("mensagem", "mensagens"),
         )
         partes = [
             f"{n} {um if n == 1 else varios}"
@@ -150,7 +156,8 @@ def limpar_execucao(marca: str, url: str | None = None) -> Contagem:
       das versões que eles produziram. Sem o treino, a versão em uso volta a
       ser a do último treino de fora da execução;
     - otimizações: disparadas por um desses usuários, com o plano e os itens;
-    - benchmarks: disparados por um desses usuários.
+    - benchmarks: disparados por um desses usuários;
+    - lotes de mensagens: pedidos por um desses usuários, com as mensagens deles.
 
     **Recusa em vez de apagar dado alheio.** Se alguém de fora da execução
     importou num desses períodos, ou se algo fora dela aponta para um parceiro
@@ -217,6 +224,12 @@ def _apagar(c: Connection, marca: str, destino: str) -> Contagem:
             "de fora da execução"
         )
 
+    # As mensagens saem antes de tudo: apontam para o item do plano e para o
+    # parceiro. O lote aponta só para o autor (H60).
+    lotes = c.scalars(select(LoteMensagens.id).where(LoteMensagens.usuario_id.in_(usuarios))).all()
+    mensagens = c.execute(delete(Mensagem).where(Mensagem.lote_id.in_(lotes))).rowcount
+    lotes_removidos = c.execute(delete(LoteMensagens).where(LoteMensagens.id.in_(lotes))).rowcount
+
     # A otimização da execução sai com o plano e os itens, antes do treino e
     # dos períodos: ela aponta para o período-base das previsões que usou.
     execucoes = c.scalars(
@@ -253,7 +266,12 @@ def _apagar(c: Connection, marca: str, destino: str) -> Contagem:
         delete(ExecucaoBenchmark).where(ExecucaoBenchmark.usuario_id.in_(usuarios))
     ).rowcount
 
-    removidos = Contagem(otimizacoes=otimizacoes, benchmarks=benchmarks)
+    removidos = Contagem(
+        otimizacoes=otimizacoes,
+        benchmarks=benchmarks,
+        lotes=lotes_removidos,
+        mensagens=mensagens,
+    )
     removidos.treinos = c.execute(
         delete(TreinoModelo).where(TreinoModelo.id.in_(treinos))
     ).rowcount

@@ -113,6 +113,13 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("POST", "/api/benchmarks"): {Perfil.GESTOR, Perfil.ADMINISTRADOR},
     ("GET", "/api/benchmarks"): {Perfil.GESTOR, Perfil.ADMINISTRADOR},
     ("GET", "/api/benchmarks/{execucao_id}"): {Perfil.GESTOR, Perfil.ADMINISTRADOR},
+    # UC10 — Gerar mensagens: Analista e Gestor. O Administrador não: as
+    # mensagens falam de parceiros e de planos, que ele não abre.
+    ("GET", "/api/mensagens/geracao"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("POST", "/api/mensagens/publico"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("POST", "/api/mensagens/lotes"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/mensagens/lotes/{lote_id}"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("POST", "/api/mensagens/lotes/{lote_id}/refazer"): {Perfil.GESTOR, Perfil.ANALISTA},
     # UC14 — Auditar ações: só Administrador
     ("GET", "/api/auditoria"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/auditoria/acoes"): {Perfil.ADMINISTRADOR},
@@ -129,6 +136,7 @@ PARAMETROS = {
     "treino_id": "1",
     "execucao_id": "1",
     "acao_id": "1",
+    "lote_id": "1",
 }
 
 

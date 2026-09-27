@@ -123,6 +123,7 @@ TELAS: dict[str, tuple[str, str]] = {
     "execucoes": ("GET", "/api/otimizacoes"),
     "execucao": ("GET", "/api/otimizacoes/{execucao_id}"),
     "benchmark": ("GET", "/api/benchmark"),
+    "mensagens": ("GET", "/api/mensagens/geracao"),
 }
 
 

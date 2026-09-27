@@ -31,6 +31,7 @@ erDiagram
     USUARIO |o--o| CONFIGURACAO_SEGMENTACAO : ajusta
     USUARIO |o--o{ TREINO_MODELO : dispara
     USUARIO |o--o{ EXECUCAO_BENCHMARK : dispara
+    USUARIO |o--o{ LOTE_MENSAGENS : pede
 
     CATEGORIA ||--o{ PARCEIRO : classifica
 
@@ -53,6 +54,7 @@ erDiagram
     PLANO_CAMPANHA ||--|{ ITEM_PLANO : compoe
     ACAO_COMERCIAL ||--o{ ITEM_PLANO : e_alocada_em
     ITEM_PLANO |o--o{ MENSAGEM : justifica
+    LOTE_MENSAGENS |o--o{ MENSAGEM : gera
 ```
 
 **`TENTATIVA_LOGIN` não aparece no diagrama porque não se relaciona com nada.** É deliberado: ela registra
@@ -138,8 +140,11 @@ item_plano(id, plano_id*, parceiro_id*, acao_id*, uplift_esperado, custo)
 execucao_benchmark(id, situacao, usuario_id*, parceiros, acoes, repeticoes, semente, iniciada_em,
                    concluida_em, progresso, resultados, ambiente, disputada, motivo)
 
-mensagem(id, parceiro_id*, item_plano_id*, texto_gerado, texto_final, estado, decidida_por_id*,
-         motivo_rejeicao, gerada_em, decidida_em)
+lote_mensagens(id, situacao, usuario_id*, publico, alvos, falhas, modelo, iniciado_em,
+               concluido_em, motivo)
+mensagem(id, parceiro_id*, item_plano_id*, lote_id*, segmento, fatos, redator, modelo,
+         motivo_redator, texto_gerado, texto_final, estado, decidida_por_id*, motivo_rejeicao,
+         gerada_em, decidida_em)
 ```
 
 Toda tabela tem chave primária `id` inteira e sequencial. A escolha por chave substituta, e não por chave
@@ -460,6 +465,24 @@ mede a máquina, e não a campanha.
 
 ### 2.5 Comunicação
 
+**lote_mensagens** — Sprint 12 interna (H60, UC10, RF36; ADR-013)
+
+| Coluna | Tipo | Chave | Restrição |
+|---|---|---|---|
+| id | serial | **PK** | |
+| situacao | enum | | o mesmo `situacaoexecucao` do otimizador — **um só em andamento**, por índice único parcial |
+| usuario_id | integer | **FK** → usuario | quem pediu |
+| publico | jsonb | | o pedido, como a pessoa o fez: segmento e categoria, plano ou seleção; e a descrição |
+| alvos | jsonb | | quem entra, **resolvido no pedido**: um por parceiro, com o item do plano quando há |
+| falhas | jsonb | | quem falhou, com o motivo (UC10-A2) |
+| modelo | varchar(60) | | o modelo de linguagem, se algum texto saiu dele |
+| iniciado_em, concluido_em | timestamptz | | |
+| motivo | text | | por que o lote inteiro parou; obrigatório quando falhou |
+
+**O público fica gravado como foi resolvido.** O que a prévia mostrou é o que se gera, mesmo que um
+parceiro mude de segmento no meio; e o parceiro que falha fica em `falhas`, e não some (UC10-A2). O lote
+não aponta para o plano: os itens do plano estão em `alvos`, e cada mensagem aponta para o item dela.
+
 **mensagem**
 
 | Coluna | Tipo | Chave | Restrição |
@@ -467,7 +490,13 @@ mede a máquina, e não a campanha.
 | id | serial | **PK** | |
 | parceiro_id | integer | **FK** → parceiro | |
 | item_plano_id | integer | **FK** → item_plano | nulo: nem toda mensagem vem de um plano |
-| texto_gerado | text | | o que a IA escreveu |
+| lote_id | integer | **FK** → lote_mensagens | a geração que a criou (H60) |
+| segmento | enum | | o do parceiro quando foi gerada: deu o tom, e a fila filtra por ele (H61) |
+| fatos | jsonb | | o que o código calculou e entregou para a redação: os números que o texto pode ter (RN08) |
+| redator | enum | | MODELO ou MODELO_FIXO (ADR-013) |
+| modelo | varchar(60) | | o modelo de linguagem, quando foi ele |
+| motivo_redator | text | | por que saiu do modelo fixo: o modelo fora do ar, ou o texto dele reprovado |
+| texto_gerado | text | | o que foi redigido — pelo modelo ou pelo modelo fixo |
 | texto_final | text | | o que o Gestor deixou |
 | estado | enum | | PENDENTE, APROVADA, REJEITADA |
 | decidida_por_id | integer | **FK** → usuario | |
@@ -478,6 +507,9 @@ mede a máquina, e não a campanha.
 `CHECK` que impede estado diferente de `PENDENTE` sem autor e data de decisão. É **RN06 no banco**: nenhuma
 mensagem sai do estado pendente sem um humano registrado. Guardar `texto_gerado` e `texto_final` separados
 é o que permite responder depois *"o que a IA escreveu, e o que de fato foi enviado?"*.
+
+Outro `CHECK` exige que a mensagem diga quem a redigiu: a do modelo de linguagem diz qual modelo; a do
+modelo fixo, por quê. Com `fatos`, isso responde à auditoria *"de onde veio cada número deste texto?"*.
 
 ---
 
@@ -499,12 +531,14 @@ Cada índice existe por causa de uma consulta concreta, não por precaução (RN
 | `uq_treino_um_em_andamento` | treino_modelo | situacao, só onde é `EM_ANDAMENTO` (único, parcial) | Um treino por vez, travado pelo banco e não pela memória do processo (ADR-010) |
 | `uq_execucao_uma_em_andamento` | execucao_otimizador | situacao, só onde é `EM_ANDAMENTO` (único, parcial) | Um otimizador por vez, pelo mesmo motivo (ADR-011) |
 | `uq_benchmark_um_em_andamento` | execucao_benchmark | situacao, só onde é `EM_ANDAMENTO` (único, parcial) | Um benchmark por vez: dois dividiriam a máquina e mediriam a disputa (H57) |
+| `uq_lote_mensagens_um_em_andamento` | lote_mensagens | situacao, só onde é `EM_ANDAMENTO` (único, parcial) | Uma geração de mensagens por vez (H60) |
+| `ix_mensagem_lote` | mensagem | lote_id | As mensagens de um lote, que a tela consulta enquanto ele gera (UC10-A1) |
 
 ---
 
 ## 4. Tipos enumerados
 
-Nove tipos `ENUM` do PostgreSQL, em vez de texto livre. O banco recusa valor fora da lista, o que é mais
+Dez tipos `ENUM` do PostgreSQL, em vez de texto livre. O banco recusa valor fora da lista, o que é mais
 forte que uma validação de aplicação que alguém pode esquecer de chamar.
 
 | Tipo | Valores |
@@ -518,6 +552,7 @@ forte que uma validação de aplicação que alguém pode esquecer de chamar.
 | `estadomensagem` | PENDENTE, APROVADA, REJEITADA |
 | `situacaotreino` | EM_ANDAMENTO, CONCLUIDO, FALHOU |
 | `situacaoexecucao` | EM_ANDAMENTO, CONCLUIDA, FALHOU |
+| `redatormensagem` | MODELO, MODELO_FIXO |
 
 > **Armadilha registrada:** o `autogenerate` do Alembic **não** remove tipos ENUM no `downgrade` — só
 > derruba as tabelas. Sem acrescentar `DROP TYPE` à mão, reverter e reaplicar falha com *type already
@@ -527,7 +562,7 @@ forte que uma validação de aplicação que alguém pode esquecer de chamar.
 
 ## 5. O que o banco garante sozinho
 
-Dezenove restrições `CHECK` que impedem estado inválido independentemente do código da aplicação. É a diferença
+Vinte e uma restrições `CHECK` que impedem estado inválido independentemente do código da aplicação. É a diferença
 entre uma regra que vale e uma regra que valeria se ninguém esquecesse de chamá-la.
 
 | Restrição | Garante |
@@ -549,6 +584,8 @@ entre uma regra que vale e uma regra que valeria se ninguém esquecesse de cham�
 | `ck_benchmark_parceiros`, `ck_benchmark_acoes`, `ck_benchmark_repeticoes` | O cenário do benchmark fica na faixa do gerador e da tela (UC09) |
 | `ck_benchmark_concluido_tem_resultado` | Benchmark concluído **tem** as medidas |
 | `ck_benchmark_falha_tem_motivo` | Benchmark que falhou **diz** por quê |
+| `ck_lote_mensagens_falha_tem_motivo` | Geração de mensagens que parou **diz** por quê |
+| `ck_mensagem_redator_explicado` | Mensagem diz quem a redigiu: o modelo, com o nome dele, ou o modelo fixo, com o motivo (ADR-013) |
 
 ---
 
@@ -561,7 +598,7 @@ O esquema não está só desenhado: está aplicado e em uso. O ambiente sobe com
 
 ```
 $ docker compose exec api alembic current
-9c1d7e4b2a60 (head)
+3e8a6c1f7b52 (head)
 ```
 
 **Tabelas criadas** (`docker compose exec postgres psql -U gih -d gih -c "\dt"`):
@@ -579,6 +616,7 @@ $ docker compose exec api alembic current
  public | historico_segmento       | table | gih
  public | importacao               | table | gih
  public | item_plano               | table | gih
+ public | lote_mensagens           | table | gih
  public | mensagem                 | table | gih
  public | metrica                  | table | gih
  public | parceiro                 | table | gih
@@ -589,25 +627,29 @@ $ docker compose exec api alembic current
  public | tentativa_login          | table | gih
  public | treino_modelo            | table | gih
  public | usuario                  | table | gih
-(20 rows)
+(21 rows)
 ```
 
-São as 19 tabelas de domínio mais `alembic_version`, que é da própria ferramenta de migração e registra
+São as 20 tabelas de domínio mais `alembic_version`, que é da própria ferramenta de migração e registra
 qual versão do esquema está aplicada.
 
 **Contagem por consulta ao catálogo do PostgreSQL:**
 
 | Objeto | Quantidade |
 |---|---|
-| Tabelas de domínio | 18 |
-| Chaves primárias | 18 |
-| Chaves estrangeiras | 25 |
+| Tabelas de domínio | 20 |
+| Chaves primárias | 20 |
+| Chaves estrangeiras | 28 |
 | Restrições `UNIQUE` | 11 |
-| Restrições `CHECK` declaradas | 18 |
-| Índices | 40 |
-| Tipos `ENUM` | 9 |
+| Restrições `CHECK` declaradas | 25 |
+| Índices | 45 |
+| Tipos `ENUM` | 10 |
 
-Medido em 26/09/2026, contra o banco no ar. **Na Sprint 02 eram 16, 16, 21, 11, 9, 34 e 7.** A diferença é
+Medido em 27/09/2026, contra o banco no ar, sem a tabela do Alembic. Desde a medição de 26/09 (18, 18, 25,
+11, 18, 40 e 9) entraram o benchmark (H57: +1 tabela, +1 chave estrangeira, +5 `CHECK`, +2 índices) e o
+lote de mensagens (H60: +1 tabela, +2 chaves estrangeiras, +2 `CHECK`, +3 índices, +1 enum). A contagem
+de `CHECK` do catálogo inclui as quatro da configuração da segmentação, que a seção 5 não repete.
+**Na Sprint 02 eram 16, 16, 21, 11, 9, 34 e 7**, e a diferença até 26/09 é
 de quatro migrações: o nome normalizado do parceiro com o índice de trigrama (Sprint 6, +1 índice), a
 configuração da segmentação (Sprint 7, +1 tabela, +1 chave estrangeira, +4 `CHECK`, +1 índice), o treino
 do modelo (Sprint 05 da disciplina, +1 tabela, +2 chaves estrangeiras, +2 `CHECK`, +3 índices contando o da
@@ -632,6 +674,9 @@ A da campanha, que cria o enum `situacaoexecucao`, passou em 26/09/2026 — e co
 gravada antes de cada reversão, **sem autor e falha**, que o esquema anterior não representa. O downgrade
 apaga essas execuções antes de exigir de novo autor, resultado e tempo; sem isso, o `resetar_banco.py`, que
 reverte tudo até a base, quebraria no primeiro banco que tivesse uma otimização interrompida.
+
+A do lote de mensagens, que cria o enum `redatormensagem`, passou pelo ciclo duas vezes em 27/09/2026, no
+banco de teste.
 
 ```bash
 alembic upgrade head     # aplica
