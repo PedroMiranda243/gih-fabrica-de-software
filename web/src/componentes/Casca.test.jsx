@@ -60,6 +60,16 @@ describe("menu lateral", () => {
     expect(itens).toEqual(["Painel", "Importação", "Execuções", "Modelo", "Usuários", "Configuração"]);
   });
 
+  it("o Analista vê as mensagens, que o UC10 lhe dá, depois das execuções (H60)", () => {
+    const itens = menu({
+      nome: "Analista",
+      perfil: "ANALISTA",
+      telas: ["painel", "importar", "historico_importacoes", "parceiros", "campanha", "execucoes", "mensagens"],
+    });
+
+    expect(itens).toEqual(["Painel", "Importação", "Parceiros", "Campanha", "Execuções", "Mensagens"]);
+  });
+
   it("sessão de antes da atualização, sem telas, mantém o menu anterior", () => {
     /* Uma aba aberta durante a atualização não pode ficar com o trilho vazio. */
     const itens = menu({ nome: "Antiga", perfil: "GESTOR" });
