@@ -666,6 +666,15 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 > - **A decisão concorrente é recusada pelo banco**, e não por uma consulta feita antes: a mudança só vale
 >   sobre a mensagem pendente, e quem chegou depois recebe a decisão registrada, com o autor (E1).
 > - **Nada é enviado.** Aprovada é "pronta para envio" (ADR-013).
+>
+> **Na interface (Sprint 12 interna, H61 a H63).** A tela **Aprovação** (`/aprovacao`) é a fila, no cartão do
+> protótipo aprovado (H08): o parceiro, o segmento, a categoria, a ação, o texto e, embaixo, Aprovar,
+> Editar e Rejeitar. Decidir tira a mensagem da fila, e o foco vai para a próxima, com a decisão e o nome
+> do próximo parceiro anunciados ao leitor de tela (passo 6). Editar abre o texto no próprio cartão e avisa
+> que salvar não aprova; o número novo aparece apontado. Rejeitar pede o motivo, opcional (A2). A seleção
+> aprova em lote, com uma confirmação que diz quantas (A3). A decisão que chegou tarde mostra quem decidiu,
+> e a fila se atualiza (E1). O Analista vê a mesma fila, sem caixa de seleção e sem botão (A4). A geração
+> leva à fila só das mensagens dela, e a fila vazia leva de volta à geração.
 
 ---
 

@@ -18,11 +18,12 @@
  * execução até aqui, com o público já escolhido.
  */
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { Esqueleto } from "../componentes/Carregando";
 import Campo from "../componentes/Campo";
+import CartaoMensagem from "../componentes/CartaoMensagem";
 import EstadoVazio from "../componentes/EstadoVazio";
 import Segmento from "../componentes/Segmento";
 import { comoDataHora, comoInteiro, comoPeriodo, ROTULO_SEGMENTO } from "../formato";
@@ -607,6 +608,9 @@ function Lote({ lote, assistente, aoTentarDeNovo }) {
               {lote.geradas === 1 ? "1 mensagem gerada." : `${comoInteiro(lote.geradas)} mensagens geradas.`}
             </p>
             <p className="aviso__ajuda">Todas aguardam a aprovação de um gestor antes de qualquer envio.</p>
+            <p className="aviso__acao">
+              <Link to={`/aprovacao?lote=${lote.id}`}>Ver estas mensagens na fila de aprovação</Link>
+            </p>
           </div>
         )}
 
@@ -636,45 +640,10 @@ function Lote({ lote, assistente, aoTentarDeNovo }) {
       {mensagens.length > 0 && (
         <ol className="mensagens__lista" aria-label="Mensagens geradas">
           {mensagens.map((m) => (
-            <Mensagem key={m.id} mensagem={m} />
+            <CartaoMensagem key={m.id} mensagem={m} />
           ))}
         </ol>
       )}
     </section>
   );
 }
-
-function Mensagem({ mensagem: m }) {
-  const doModelo = m.redator === "MODELO";
-  return (
-    <li className="mensagem">
-      <div className="mensagem__cabecalho">
-        {m.segmento && (
-          <span className={`segmento__ponto segmento__ponto--${m.segmento.toLowerCase()}`} aria-hidden="true" />
-        )}
-        <span className="mensagem__parceiro">{m.parceiro}</span>
-        {m.segmento && <span className="mensagem__etiqueta">{ROTULO_SEGMENTO[m.segmento]}</span>}
-        {m.acao && <span className="mensagem__etiqueta">{m.acao}</span>}
-        <span className="mensagem__redator">{doModelo ? "Assistente" : "Modelo fixo"}</span>
-      </div>
-      <p className="mensagem__texto">{m.texto}</p>
-      {!doModelo && m.motivo_redator && (
-        <p className="mensagem__motivo">Redigida pelo modelo fixo: {m.motivo_redator}</p>
-      )}
-      {m.fatos.length > 0 && (
-        <details className="mensagem__fatos">
-          <summary>Os dados desta mensagem</summary>
-          <dl>
-            {m.fatos.map((f) => (
-              <div key={f.fato}>
-                <dt>{f.fato}</dt>
-                <dd>{f.valor}</dd>
-              </div>
-            ))}
-          </dl>
-        </details>
-      )}
-    </li>
-  );
-}
-

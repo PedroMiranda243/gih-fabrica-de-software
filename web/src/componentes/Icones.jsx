@@ -138,6 +138,16 @@ export function IconeMensagens(props) {
   );
 }
 
+/* Um visto num círculo: a fila de aprovação, onde o gestor decide (H61). */
+export function IconeAprovacao(props) {
+  return (
+    <svg {...comuns} {...props}>
+      <circle cx="8" cy="8" r="6" />
+      <path d="m5.5 8.2 1.8 1.8 3.3-3.6" />
+    </svg>
+  );
+}
+
 export function IconeSair(props) {
   return (
     <svg {...comuns} {...props}>

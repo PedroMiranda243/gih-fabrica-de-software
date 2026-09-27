@@ -17,6 +17,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useSessao } from "../api/contextoSessao";
 import { useTema } from "../temas/useTema";
 import {
+  IconeAprovacao,
   IconeBenchmark,
   IconeCampanha,
   IconeConfiguracao,
@@ -48,6 +49,7 @@ const TELAS = [
   /* O histórico (RF34) é também do Administrador, que não tem a Campanha. */
   { para: "/execucoes", rotulo: "Execuções", Icone: IconeExecucoes, exige: ["execucoes"] },
   { para: "/mensagens", rotulo: "Mensagens", Icone: IconeMensagens, exige: ["mensagens"] },
+  { para: "/aprovacao", rotulo: "Aprovação", Icone: IconeAprovacao, exige: ["aprovacao"] },
   { para: "/benchmark", rotulo: "Benchmark", Icone: IconeBenchmark, exige: ["benchmark"] },
   { para: "/modelo", rotulo: "Modelo", Icone: IconeModelo, exige: ["modelo"] },
   { para: "/usuarios", rotulo: "Usuários", Icone: IconeUsuarios, exige: ["usuarios"] },
