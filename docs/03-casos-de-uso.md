@@ -752,6 +752,19 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 
 > **Este perfil não vê ranking nem comparativo, e isso é requisito, não simplificação.** O parceiro enxerga
 > a própria série; posição relativa e desempenho alheio são informação da rede, não dele (RF26).
+>
+> **Na API e na interface (Sprint 12 interna, H39).** A rota `GET /api/meu-desempenho` é só do perfil Parceiro
+> e **não recebe identificador de parceiro**: ele sai do vínculo do usuário da sessão, e não há parâmetro que se
+> possa trocar para pedir o de outro (E1). Qualquer rota da rede — outro parceiro, a série do painel, o
+> ranking, as mensagens — recusa o Parceiro no servidor, e a tentativa entra na auditoria.
+>
+> A tela **Meu desempenho** (`/meu-desempenho`) é a página inicial dele: quem entra pela raiz vai direto a ela,
+> e o menu tem só esse item. Mostra o faturamento, os pedidos e o ticket médio do período mais recente, contra o
+> período anterior **dele**, e a série em gráfico, com a tabela a um clique — a mesma consulta e os mesmos
+> componentes do painel. A série começa na primeira medição do parceiro: antes de ele chegar à rede, não havia
+> o que medir, e mostrar esses períodos como lacuna diria que ele deixou de vender. O período em que ele faltou
+> no meio continua lacuna, e o relatório mais recente sem ele deixa os indicadores vazios, com o aviso. Sem
+> nenhuma medição ainda, a tela diz que os números chegam com a primeira importação que o incluir (A1).
 
 ---
 
