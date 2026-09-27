@@ -600,6 +600,15 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 >   fora do ar, o texto sai do **modelo fixo** da equipe, com os mesmos fatos, e a mensagem guarda o motivo.
 >   A fila funciona em qualquer máquina, com ou sem o modelo (ADR-013).
 > - **Nenhuma mensagem é enviada.** Toda nasce pendente (RF37), e aprovar é do Gestor (UC11, RN06).
+>
+> **Na interface (Sprint 12 interna, H60).** A tela **Mensagens** (`/mensagens`) segue os passos do caso de
+> uso. O público se escolhe entre segmento e categoria, plano de campanha ou parceiros escolhidos pelo nome;
+> "Ver quem entra" traz a prévia, com quem ficou de fora e por quê, e o botão diz quantas mensagens vão ser
+> geradas. Gerando, a tela conta as prontas e as mostra conforme chegam (A1), no cartão do protótipo da
+> aprovação: o parceiro, o segmento, a ação, quem redigiu — o assistente ou o modelo fixo, com o motivo — e,
+> num clique, os dados que o texto usou. Quem falhou aparece com o motivo e "Tentar de novo" (A2). Sem o
+> assistente, a tela diz por quê no topo, e gera igual. Da Campanha e da execução, "Gerar mensagens para este
+> plano" abre a tela com o plano escolhido e a prévia pronta.
 
 ---
 

@@ -218,7 +218,7 @@ Aprovação registrada na issue **#8**. Só depois disso começa o CSS em `web/`
 
 ## 9. Telas e navegação
 
-Doze telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
+Dezessete telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
 passo, um recorte filtrado precisa poder ser mandado por link, e um cadastro precisa poder ser aberto
 direto — tudo isso depende de a tela estar na URL, e não num estado escondido da página.
 
@@ -243,6 +243,7 @@ flowchart TD
     Execucao["Execução<br/>/execucoes/:id"]
     Comparacao["Comparação de dois planos<br/>/execucoes/comparar"]
     Benchmark["Benchmark<br/>/benchmark"]
+    Mensagens["Mensagens<br/>/mensagens"]
 
     Login -- "entrar" --> Menu
     Menu -. "todos" .-> Painel
@@ -254,6 +255,7 @@ flowchart TD
     Menu -. "gestor e analista" .-> Campanha
     Menu -. "gestor, analista<br/>e administrador" .-> Execucoes
     Menu -. "administrador e gestor" .-> Benchmark
+    Menu -. "gestor e analista" .-> Mensagens
     Painel -- "base vazia:<br/>importar um relatório" --> Importacao
     Importacao -- "importação concluída:<br/>ver no painel" --> Painel
     Parceiros -- "nome do parceiro" --> Cadastro
@@ -278,6 +280,9 @@ flowchart TD
     Comparacao -- "parceiro" --> Cadastro
     Benchmark -- "rodar:<br/>acompanha até o resultado" --> Benchmark
     Benchmark -- "benchmark anterior" --> Benchmark
+    Campanha -- "gerar mensagens<br/>para este plano" --> Mensagens
+    Execucao -- "gerar mensagens<br/>para este plano" --> Mensagens
+    Mensagens -- "gerar:<br/>as mensagens chegam uma a uma" --> Mensagens
 ```
 
 **O menu lateral aparece como um nó só**, com setas tracejadas: ele fica visível em todas as telas depois do
@@ -289,7 +294,8 @@ caminhos que **a própria tela** oferece.
 das permissões das próprias rotas —, e a interface só desenha o que ouviu (regras 2.4 e 2.5 do
 `CLAUDE.md`). O Administrador vê Painel, Importação (só o histórico, pelo RF13), Execuções (sem abrir o
 plano, pelo RF34), Benchmark, Modelo, Usuários e Limiares; o Gestor vê Painel, Importação, Parceiros,
-Campanha, Execuções, Benchmark e Modelo; o Analista, Painel, Importação, Parceiros, Campanha e Execuções — ele lê a previsão no
+Campanha, Execuções, Mensagens, Benchmark e Modelo; o Analista, Painel, Importação, Parceiros, Campanha, Execuções e
+Mensagens — ele lê a previsão no
 cadastro do parceiro (RF28) e consulta o plano, mas não treina o modelo (UC07) nem calcula a campanha
 (UC08). Dentro da tela, o botão de calcular e o de editar o catálogo seguem a
 mesma regra: a API diz a quem pergunta se ele pode, lendo a permissão da própria rota. Esconder o item não é controle de acesso: quem abre o
