@@ -1,0 +1,117 @@
+/* A fila de aprovação (UC11): os filtros, a seleção para aprovar em lote, e os
+   cartões com a decisão. O cartão é o da geração (mensagens.css), com os botões
+   do protótipo aprovado embaixo do texto. */
+
+.aprovacao__corpo {
+  padding: var(--esp-16);
+}
+
+.aprovacao__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--esp-16);
+  padding-bottom: 0;
+}
+
+.aprovacao__filtro {
+  min-width: 220px;
+}
+
+.aprovacao__recorte {
+  margin: 0 0 var(--esp-8);
+  font-size: var(--txt-13);
+  color: var(--ink-2);
+}
+
+/* Parece link porque é um: desfaz o recorte. Tem a cor de ação por responder ao clique. */
+.aprovacao__limpar {
+  min-height: 44px;
+  padding: 0 var(--esp-4);
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--acao-ink);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.aprovacao__lote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-12);
+}
+
+.aprovacao__todas {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-8);
+  min-height: 44px;
+  font-size: var(--txt-13);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.aprovacao__todas input,
+.aprovacao__marca {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--acao);
+  cursor: pointer;
+}
+
+/* A caixa do cartão fica antes do ponto do segmento, dentro de um alvo de 44 px
+   dado pela altura do cabeçalho mais o espaçamento. */
+.aprovacao__marca {
+  margin-right: var(--esp-4);
+}
+
+.aprovacao__lista {
+  padding-top: var(--esp-4);
+}
+
+.aprovacao__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--esp-8);
+}
+
+.aprovacao__dica {
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+}
+
+/* `.campo > textarea` põe a fonte de dados, que é a da importação — lá se cola um
+   relatório. Aqui é o texto de uma mensagem: a fonte da interface, no tamanho do
+   quadro que ela tinha antes da edição. A especificidade maior é de propósito. */
+.campo > .aprovacao__edicao {
+  width: 100%;
+  max-width: 80ch;
+  min-height: 7.5em;
+  padding: var(--esp-12);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-controle);
+  background: var(--surface);
+  font-family: var(--fonte-interface);
+  font-size: var(--txt-14);
+  line-height: 1.55;
+  color: var(--ink);
+  resize: vertical;
+}
+
+.aprovacao__rejeicao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-8);
+  max-width: 560px;
+}
+
+/* O número que o gestor escreveu e que não veio dos dados: aviso informativo, e
+   não erro — a pessoa pode escrever "20% de desconto". */
+.aprovacao__numeros {
+  max-width: 80ch;
+}

@@ -283,8 +283,11 @@
   gap: var(--esp-8);
 }
 
-/* O nome é o único elemento em peso alto e tinta cheia (regra 1.2 do docs/09). */
+/* O nome é o único elemento em peso alto e tinta cheia (regra 1.2 do docs/09).
+   É um título, para a fila poder levar o foco até ele depois de cada decisão. */
 .mensagem__parceiro {
+  margin: 0;
+  font-size: var(--txt-14);
   font-weight: var(--peso-nome);
   color: var(--ink);
 }
@@ -351,4 +354,14 @@
   margin: 0;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
+}
+
+/* O texto que o assistente ou o modelo fixo redigiu, quando o gestor o trocou. */
+.mensagem__original {
+  margin: var(--esp-6) 0 0;
+  padding: var(--esp-8) var(--esp-12);
+  max-width: 80ch;
+  border-left: 2px solid var(--border);
+  font-size: var(--txt-13);
+  color: var(--ink-2);
 }
