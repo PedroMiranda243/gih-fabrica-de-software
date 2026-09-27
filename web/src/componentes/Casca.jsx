@@ -22,6 +22,7 @@ import {
   IconeConfiguracao,
   IconeExecucoes,
   IconeImportar,
+  IconeMensagens,
   IconeModelo,
   IconePainel,
   IconeParceiros,
@@ -46,6 +47,7 @@ const TELAS = [
   { para: "/campanha", rotulo: "Campanha", Icone: IconeCampanha, exige: ["campanha"] },
   /* O histórico (RF34) é também do Administrador, que não tem a Campanha. */
   { para: "/execucoes", rotulo: "Execuções", Icone: IconeExecucoes, exige: ["execucoes"] },
+  { para: "/mensagens", rotulo: "Mensagens", Icone: IconeMensagens, exige: ["mensagens"] },
   { para: "/benchmark", rotulo: "Benchmark", Icone: IconeBenchmark, exige: ["benchmark"] },
   { para: "/modelo", rotulo: "Modelo", Icone: IconeModelo, exige: ["modelo"] },
   { para: "/usuarios", rotulo: "Usuários", Icone: IconeUsuarios, exige: ["usuarios"] },

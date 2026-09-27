@@ -128,6 +128,16 @@ export function IconeBenchmark(props) {
   );
 }
 
+/* Um envelope: as mensagens de relacionamento com o parceiro (H60). */
+export function IconeMensagens(props) {
+  return (
+    <svg {...comuns} {...props}>
+      <rect x="2" y="3.5" width="12" height="9" rx="1.5" />
+      <path d="m2.5 4.5 5.5 4.2 5.5-4.2" />
+    </svg>
+  );
+}
+
 export function IconeSair(props) {
   return (
     <svg {...comuns} {...props}>
