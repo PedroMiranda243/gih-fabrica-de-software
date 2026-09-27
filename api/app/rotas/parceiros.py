@@ -9,8 +9,6 @@ esquecer um é silencioso (regra 2.5).
 """
 from __future__ import annotations
 
-import csv
-import io
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
@@ -20,10 +18,9 @@ from sqlalchemy import func, nullslast, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app import auditoria, servico_previsao
+from app import auditoria, planilha, servico_previsao
 from app.auditoria import Acao
 from app.calculos import ticket_medio, variacao_percentual
-from app.db import Sessao
 from app.dependencias import Banco, UsuarioAtual, exigir
 from app.desempenho import ROTULO_SEGMENTO, com_desempenho, recorte
 from app.esquemas import (
@@ -63,11 +60,6 @@ router = APIRouter(
 # O mesmo teto do ranking: página maior que isto é download disfarçado de
 # consulta, e para isso existe a exportação.
 TAMANHO_MAXIMO_PAGINA = 200
-
-# Ponto e vírgula, e não vírgula: é o que o Excel em português espera, e é o
-# mesmo separador que a importação aceita. Vírgula obrigaria o usuário a passar
-# pelo assistente de importação de texto para abrir o próprio arquivo.
-SEPARADOR_CSV = ";"
 
 ROTULO_STATUS = {
     StatusComercial.ATIVO: "Ativo",
@@ -307,87 +299,27 @@ def exportar(
 
     nome = f"parceiros-{alvo.data_fim.isoformat()}.csv" if alvo else "parceiros.csv"
     return StreamingResponse(
-        _linhas_csv(consulta),
+        planilha.gerar(CABECALHO_CSV, consulta, _linha_csv),
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{nome}"'},
     )
 
 
-# O primeiro caractere que faz a planilha ler a célula como fórmula. O nome, a
-# categoria e o contato vêm de quem cadastra ou importa, e um nome como
-# `=HYPERLINK("http://...")` viraria um link — ou coisa pior — na planilha de
-# quem exporta (injeção de CSV, OWASP). A tabulação e o retorno de carro estão
-# aqui porque algumas planilhas os descartam antes de olhar o resto.
-_INICIO_DE_FORMULA = ("=", "+", "-", "@", "\t", "\r")
-
-
-def _texto(valor: str | None) -> str:
-    """Texto do usuário numa célula: com um apóstrofo na frente, se começaria uma
-    fórmula (RNF12). A planilha mostra o texto como foi digitado e não o executa.
-
-    Só nas colunas de texto: nas de número, o sinal de menos da variação é número
-    de verdade, e o apóstrofo o transformaria em texto que não se soma.
-    """
-    if not valor:
-        return ""
-    return f"'{valor}" if valor.startswith(_INICIO_DE_FORMULA) else valor
-
-
-def _numero(valor) -> str:
-    """Número com vírgula decimal e sem separador de milhar.
-
-    É o que a planilha em português lê como número. Com ponto decimal ela trata
-    a coluna inteira como texto, e o usuário exporta para não conseguir somar.
-    """
-    return "" if valor is None else str(valor).replace(".", ",")
-
-
-def _linhas_csv(consulta):
-    """Gera o arquivo linha a linha, sem montar a lista inteira antes.
-
-    **Abre a própria sessão**, em vez de reusar a da requisição. O corpo de uma
-    resposta em fluxo é consumido **depois** que a função da rota retorna, e a
-    essa altura o FastAPI já fechou as dependências: usar a sessão da requisição
-    aqui pendura a resposta. Foi exatamente o que aconteceu — os testes de
-    exportação travaram até o tempo limite, sem erro nenhum.
-
-    O BOM na primeira linha é o que faz a planilha abrir o arquivo como UTF-8.
-    Sem ele, "Praça" vira "PraÃ§a", e o usuário conclui que o sistema gravou o
-    nome errado — não que o programa dele adivinhou a codificação.
-    """
-    buffer = io.StringIO()
-    escritor = csv.writer(buffer, delimiter=SEPARADOR_CSV, lineterminator="\r\n")
-
-    def despejar() -> str:
-        texto = buffer.getvalue()
-        buffer.seek(0)
-        buffer.truncate(0)
-        return texto
-
-    escritor.writerow(CABECALHO_CSV)
-    yield "﻿" + despejar()
-
-    s = Sessao()
-    try:
-        for bruta in s.execute(consulta.execution_options(yield_per=500)):
-            item = _linha(bruta)
-            escritor.writerow(
-                (
-                    _texto(item.nome),
-                    _texto(item.categoria.nome if item.categoria else None),
-                    ROTULO_SEGMENTO.get(item.desempenho.segmento, ""),
-                    ROTULO_STATUS[item.status],
-                    "Ativo" if item.ativo else "Inativo",
-                    _texto(item.contato),
-                    _numero(item.desempenho.faturamento),
-                    "" if item.desempenho.pedidos is None else item.desempenho.pedidos,
-                    _numero(item.desempenho.ticket_medio),
-                    _numero(item.desempenho.variacao_percentual),
-                )
-            )
-            yield despejar()
-    finally:
-        s.close()
+def _linha_csv(bruta) -> tuple:
+    """Uma linha do arquivo, pelos mesmos cálculos da tela (`_linha`)."""
+    item = _linha(bruta)
+    return (
+        planilha.texto(item.nome),
+        planilha.texto(item.categoria.nome if item.categoria else None),
+        ROTULO_SEGMENTO.get(item.desempenho.segmento, ""),
+        ROTULO_STATUS[item.status],
+        "Ativo" if item.ativo else "Inativo",
+        planilha.texto(item.contato),
+        planilha.numero(item.desempenho.faturamento),
+        "" if item.desempenho.pedidos is None else item.desempenho.pedidos,
+        planilha.numero(item.desempenho.ticket_medio),
+        planilha.numero(item.desempenho.variacao_percentual),
+    )
 
 
 @router.get("/{parceiro_id}", response_model=ParceiroComDesempenho)

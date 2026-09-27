@@ -38,7 +38,7 @@ from sqlalchemy import func, select
 from app.db import Sessao
 from app.main import app
 from app.modelos import Categoria, Parceiro, Perfil, Usuario
-from app.rotas.parceiros import _numero, _texto
+from app.planilha import numero, texto
 from tests.conftest import SENHA_PADRAO
 from tests.test_autorizacao import PERMISSOES, PUBLICO, concretizar, rotas_da_aplicacao
 
@@ -297,10 +297,10 @@ def test_a_exportacao_neutraliza_a_formula(clientes, nome):
 
 
 def test_a_exportacao_nao_mexe_no_texto_comum_nem_no_numero(clientes):
-    assert _texto("Padaria D'Ávila") == "Padaria D'Ávila"
-    assert _texto(None) == "" and _texto("") == ""
+    assert texto("Padaria D'Ávila") == "Padaria D'Ávila"
+    assert texto(None) == "" and texto("") == ""
     # A tabulação e o retorno de carro na frente: o cadastro já tira os espaços das
     # pontas, mas o texto pode chegar à exportação por outro caminho.
-    assert _texto("\t=1+1") == "'\t=1+1" and _texto("\r=1+1") == "'\r=1+1"
+    assert texto("\t=1+1") == "'\t=1+1" and texto("\r=1+1") == "'\r=1+1"
     # A variação negativa é número de verdade: com apóstrofo, a planilha não a somaria.
-    assert _numero(Decimal("-12.5")) == "-12,5"
+    assert numero(Decimal("-12.5")) == "-12,5"
