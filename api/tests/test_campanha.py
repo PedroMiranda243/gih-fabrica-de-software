@@ -753,6 +753,144 @@ def test_o_administrador_ve_o_historico_mas_nao_abre_o_plano(
     assert admin.get(f"/api/otimizacoes/{execucao['id']}").status_code == 403
 
 
+# ================================================================ a comparação (RF35, H59)
+def _comparar(cliente, a, b):
+    return cliente.get("/api/otimizacoes/comparacao", params={"a": a["id"], "b": b["id"]})
+
+
+def test_dois_planos_lado_a_lado_com_o_que_mudou(base, gestor):
+    """UC08-A3: um segundo plano com outros parâmetros, comparado ao primeiro — os
+    parâmetros que mudaram, a diferença no resultado e parceiro a parceiro."""
+    base(_seis())
+    menor = _calcular(gestor, maximo_acoes=2)
+    maior = _calcular(gestor, maximo_acoes=3, orcamento="800.00")
+    r = _comparar(gestor, menor, maior)
+    assert r.status_code == 200, r.text
+    c = r.json()
+    assert (c["a"]["id"], c["b"]["id"]) == (menor["id"], maior["id"])
+    assert c["a"]["itens"] is None and c["b"]["itens"] is None  # os itens vêm juntos, uma vez
+    assert c["parametros_diferentes"] == ["orcamento", "maximo_acoes"]
+    assert c["mesmas_previsoes"] is True
+    assert Decimal(c["diferenca_uplift"]) == Decimal(maior["uplift_total"]) - Decimal(
+        menor["uplift_total"]
+    )
+    assert Decimal(c["diferenca_custo"]) == Decimal(maior["custo_total"]) - Decimal(
+        menor["custo_total"]
+    )
+    assert c["diferenca_acoes"] == maior["acoes"] - menor["acoes"]
+
+    # Cada parceiro de cada plano está na comparação, uma vez, com a ação de cada lado.
+    acao_a = {i["parceiro_id"]: i["acao"] for i in menor["itens"]}
+    acao_b = {i["parceiro_id"]: i["acao"] for i in maior["itens"]}
+    itens = c["itens"]
+    assert {i["parceiro_id"] for i in itens} == acao_a.keys() | acao_b.keys()
+    for i in itens:
+        parceiro = i["parceiro_id"]
+        assert (i["acao_a"], i["acao_b"]) == (acao_a.get(parceiro), acao_b.get(parceiro))
+    resumo = c["resumo"]
+    assert resumo["mudaram"] + resumo["so_a"] + resumo["iguais"] == len(acao_a)
+    assert resumo["mudaram"] + resumo["so_b"] + resumo["iguais"] == len(acao_b)
+    # Primeiro o que mudou de ação, depois o que só está num deles, e os iguais no fim.
+    ordem = ["MUDOU", "SO_A", "SO_B", "IGUAL"]
+    posicoes = [ordem.index(i["situacao"]) for i in itens]
+    assert posicoes == sorted(posicoes)
+
+
+def test_o_analista_compara_e_o_administrador_nao(base, gestor, criar_usuario, autenticar):
+    """Comparar é abrir os dois planos: de quem abre um plano (UC08)."""
+    base(_seis())
+    a, b = _calcular(gestor, maximo_acoes=2), _calcular(gestor)
+    criar_usuario(login="analista2", perfil=Perfil.ANALISTA)
+    assert _comparar(autenticar("analista2"), a, b).status_code == 200
+    criar_usuario(login="admin3", perfil=Perfil.ADMINISTRADOR)
+    assert _comparar(autenticar("admin3"), a, b).status_code == 403
+
+
+def test_so_se_comparam_dois_planos_viaveis_e_diferentes(base, gestor):
+    base(_seis())
+    viavel = _calcular(gestor)
+    inviavel = _calcular(gestor, orcamento="10.00", cota_cauda_longa="1")
+    mesmo = _comparar(gestor, viavel, viavel)
+    assert mesmo.status_code == 422
+    assert mesmo.json()["detail"]["erro"] == "Escolha dois planos diferentes."
+    sem_plano = _comparar(gestor, viavel, inviavel)
+    assert sem_plano.status_code == 422
+    assert sem_plano.json()["detail"]["execucao"] == inviavel["id"]
+    assert _comparar(gestor, viavel, {"id": 999}).status_code == 404
+
+
+def test_previsoes_diferentes_sao_ditas(base, gestor):
+    """O modelo treinado de novo entre um plano e outro muda o ganho de cada parceiro:
+    a comparação não recusa, mas diz, para a tela avisar."""
+    base(_seis())
+    a, b = _calcular(gestor, maximo_acoes=2), _calcular(gestor)
+    s = Sessao()
+    try:
+        s.get(ExecucaoOtimizador, b["id"]).modelo_versao = "rede-9"
+        s.commit()
+    finally:
+        s.close()
+    assert _comparar(gestor, a, b).json()["mesmas_previsoes"] is False
+
+
+def test_cada_parceiro_cai_num_dos_quatro_casos_na_ordem_da_tela():
+    """Mudou de ação, só no primeiro, só no segundo, igual — e, dentro de cada um, o de
+    maior diferença (ou maior ganho) primeiro."""
+    from app.esquemas import ItemPlanoResposta
+    from app.servico_comparacao import comparar_itens
+
+    def item(parceiro_id, acao_id, ganho):
+        return ItemPlanoResposta(
+            parceiro_id=parceiro_id,
+            parceiro=f"P{parceiro_id}",
+            segmento=None,
+            categoria=None,
+            cauda_longa=False,
+            acao_id=acao_id,
+            acao=f"Ação {acao_id}",
+            custo=Decimal("100"),
+            ganho=Decimal(ganho),
+        )
+
+    a = [item(1, 1, "50"), item(2, 1, "80"), item(3, 2, "30"), item(4, 1, "10"), item(5, 1, "90")]
+    b = [item(1, 2, "70"), item(2, 2, "81"), item(4, 1, "10"), item(6, 1, "40"), item(5, 1, "90")]
+    comparados = comparar_itens(a, b)
+    assert [(c.parceiro_id, c.situacao) for c in comparados] == [
+        (1, "MUDOU"),  # a diferença de 20 vem antes da de 1
+        (2, "MUDOU"),
+        (3, "SO_A"),
+        (6, "SO_B"),
+        (5, "IGUAL"),  # o de maior ganho primeiro
+        (4, "IGUAL"),
+    ]
+    assert (comparados[0].acao_a, comparados[0].acao_b) == ("Ação 1", "Ação 2")
+    assert comparados[2].acao_b is None and comparados[3].acao_a is None
+
+
+def test_os_parametros_se_comparam_pelo_valor():
+    """12.000 e 12.000,00 são o mesmo orçamento; as cotas, em qualquer ordem, as mesmas."""
+    from app.esquemas import ParametrosCampanha
+    from app.servico_comparacao import parametros_diferentes
+
+    base_ = {
+        "maximo_acoes": 3,
+        "aplicacao_inicio": "2026-07-06",
+        "aplicacao_fim": "2026-07-12",
+        "cotas_categoria": [
+            {"categoria_id": 1, "minimo": "0.1"},
+            {"categoria_id": 2, "maximo": "0.5"},
+        ],
+    }
+    a = ParametrosCampanha(orcamento="12000", **base_)
+    b = ParametrosCampanha(
+        orcamento="12000.00", **{**base_, "cotas_categoria": base_["cotas_categoria"][::-1]}
+    )
+    assert parametros_diferentes(a, b) == []
+    mudancas = {"cota_cauda_longa": "0.3", "modo": "SERIAL"}
+    c = ParametrosCampanha(orcamento="12000", **{**base_, **mudancas})
+    assert parametros_diferentes(a, c) == ["cota_cauda_longa", "modo"]
+
+
 def test_catalogo_cria_edita_e_audita(base, gestor):
     base(_seis())
     nova = {

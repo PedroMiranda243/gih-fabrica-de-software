@@ -1119,6 +1119,24 @@ def item_campanha(r: Relatorio, url: str, criados: dict[str, str]) -> None:
             + f", contra {_segundos(plano)} do serial",
         )
 
+        # Os dois planos têm os mesmos parâmetros, menos o modo pedido: a comparação
+        # precisa dizer só isso, e nenhum parceiro diferente (RF35, ADR-011).
+        comparacao = c.get(
+            "/api/otimizacoes/comparacao",
+            params={"a": plano.get("id"), "b": sem_escolha.get("id")},
+        )
+        dados = comparacao.json() if comparacao.status_code == 200 else {}
+        resumo = dados.get("resumo", {})
+        r.checar(
+            "dois planos lado a lado dizem o que mudou: só o modo, e nenhum parceiro (RF35)",
+            dados.get("parametros_diferentes") == ["modo"]
+            and resumo.get("mudaram") == resumo.get("so_a") == resumo.get("so_b") == 0
+            and resumo.get("iguais") == len(plano.get("itens") or []),
+            f"{resumo.get('iguais')} parceiros iguais nos dois"
+            if dados
+            else f"HTTP {comparacao.status_code}",
+        )
+
         inviavel = c.post(
             "/api/otimizacoes",
             json={**parametros, "orcamento": "100.00", "cota_cauda_longa": "0.5"},
