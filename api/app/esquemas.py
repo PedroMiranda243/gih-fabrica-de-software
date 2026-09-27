@@ -1291,6 +1291,9 @@ class MensagemResposta(BaseModel):
     decidida_por: str | None = None
     decidida_em: datetime | None = None
     motivo_rejeicao: str | None = None
+    contato: str | None = Field(
+        default=None, description="O contato do parceiro: com ele, alguém envia a aprovada."
+    )
 
 
 class PaginaMensagens(BaseModel):
