@@ -1363,6 +1363,64 @@ def item_mensagens(r: Relatorio, url: str, criados: dict[str, str]) -> None:
             or "todas pelo modelo",
         )
 
+        if len(mensagens) < 3:
+            r.nota("menos de três mensagens: a decisão não foi conferida")
+            return
+        primeira, segunda, terceira = (m["id"] for m in mensagens[:3])
+        barrado = c.post(f"/api/mensagens/{primeira}/aprovacao")
+        r.checar(
+            "o analista vê a fila, mas não aprova (RN06, UC11-A4)",
+            c.get("/api/mensagens", params={"lote_id": lote["id"]}).status_code == 200
+            and barrado.status_code == 403,
+            f"HTTP {barrado.status_code} ao aprovar",
+        )
+
+    gestor = criados.get("GESTOR")
+    if not gestor:
+        r.checar("há gestor para decidir", False)
+        return
+    with sessao(url) as c:
+        entrar(c, gestor, SENHA)
+        aprovada = c.post(f"/api/mensagens/{primeira}/aprovacao")
+        editada = c.post(
+            f"/api/mensagens/{segunda}/edicao",
+            json={"texto": "Olá! Preparamos uma ação para vocês nesta campanha."},
+        )
+        editada_e_aprovada = c.post(f"/api/mensagens/{segunda}/aprovacao")
+        rejeitada = c.post(
+            f"/api/mensagens/{terceira}/rejeicao", json={"motivo": "Tom errado para o parceiro."}
+        )
+        r.checar(
+            "o gestor aprova, edita e rejeita, com autor e data em cada decisão (RF38, RF39)",
+            aprovada.status_code == editada.status_code == 200
+            and editada.json()["estado"] == "PENDENTE"
+            and editada_e_aprovada.status_code == rejeitada.status_code == 200
+            and all(
+                d.json()["decidida_por"] and d.json()["decidida_em"]
+                for d in (aprovada, editada_e_aprovada, rejeitada)
+            ),
+            f"HTTP {aprovada.status_code}, {editada.status_code}, "
+            f"{editada_e_aprovada.status_code}, {rejeitada.status_code}",
+        )
+        r.checar(
+            "a edição guarda o texto redigido ao lado do final (UC11-A1)",
+            editada_e_aprovada.status_code == 200
+            and editada_e_aprovada.json()["editada"]
+            and editada_e_aprovada.json()["texto_gerado"] != editada_e_aprovada.json()["texto"],
+        )
+        de_novo = c.post(f"/api/mensagens/{terceira}/aprovacao")
+        r.checar(
+            "a mensagem já decidida não é sobrescrita, e a resposta diz a decisão (UC11-E1)",
+            de_novo.status_code == 409 and de_novo.json()["detail"].get("estado") == "REJEITADA",
+            (de_novo.json().get("detail") or {}).get("ajuda", de_novo.text[:120]),
+        )
+        pendentes = c.get("/api/mensagens", params={"lote_id": lote["id"]}).json()
+        r.checar(
+            "as decididas saem da fila de pendentes (UC11, passo 5)",
+            pendentes.get("total") == len(mensagens) - 3,
+            f"{pendentes.get('total')} pendente(s) do lote",
+        )
+
 
 # --------------------------------------------------------------------- extra
 def item_limpeza(

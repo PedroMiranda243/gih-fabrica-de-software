@@ -1279,6 +1279,61 @@ class MensagemResposta(BaseModel):
     fatos: list[FatoMensagem]
     lote_id: int | None
     gerada_em: datetime
+    categoria: str | None = Field(default=None, description="Só a categoria confirmada (RN05).")
+    editada: bool = Field(
+        default=False, description="O gestor mudou o texto; o redigido fica em `texto_gerado`."
+    )
+    numeros_fora_dos_fatos: list[str] = Field(
+        default_factory=list,
+        description="Números do texto que não vieram dos fatos. Só aparece no texto que o gestor "
+        "editou: o do modelo passou pela guarda (RN08).",
+    )
+    decidida_por: str | None = None
+    decidida_em: datetime | None = None
+    motivo_rejeicao: str | None = None
+
+
+class PaginaMensagens(BaseModel):
+    itens: list[MensagemResposta]
+    total: int
+    pagina: int
+    tamanho: int
+
+
+class EdicaoMensagem(BaseModel):
+    texto: str = Field(min_length=1, max_length=2000, description="O texto que o gestor deixou.")
+
+    @field_validator("texto")
+    @classmethod
+    def sem_so_espacos(cls, texto: str) -> str:
+        if not texto.strip():
+            raise ValueError("Escreva o texto da mensagem.")
+        return texto
+
+
+class RejeicaoMensagem(BaseModel):
+    motivo: str | None = Field(
+        default=None, max_length=240, description="Por que a mensagem não serve (UC11-A2)."
+    )
+
+
+class AprovacaoEmLote(BaseModel):
+    ids: list[int] = Field(min_length=1, max_length=200)
+
+
+class DecisaoJaRegistrada(BaseModel):
+    mensagem_id: int
+    estado: EstadoMensagem
+    decidida_por: str | None
+    decidida_em: datetime | None
+
+
+class ResultadoAprovacaoEmLote(BaseModel):
+    aprovadas: list[int]
+    ja_decididas: list[DecisaoJaRegistrada] = Field(
+        description="Decididas por outra pessoa no meio: ficam como estavam (UC11-E1)."
+    )
+    nao_encontradas: list[int]
 
 
 class FalhaDoLote(BaseModel):

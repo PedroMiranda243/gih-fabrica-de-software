@@ -120,6 +120,13 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("POST", "/api/mensagens/lotes"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/mensagens/lotes/{lote_id}"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("POST", "/api/mensagens/lotes/{lote_id}/refazer"): {Perfil.GESTOR, Perfil.ANALISTA},
+    # UC11 — A fila é de quem gera e de quem aprova; decidir é só do Gestor (RN06,
+    # UC11-A4): o Analista vê a fila, mas não aprova, não edita e não rejeita.
+    ("GET", "/api/mensagens"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("POST", "/api/mensagens/aprovacao-em-lote"): {Perfil.GESTOR},
+    ("POST", "/api/mensagens/{mensagem_id}/aprovacao"): {Perfil.GESTOR},
+    ("POST", "/api/mensagens/{mensagem_id}/edicao"): {Perfil.GESTOR},
+    ("POST", "/api/mensagens/{mensagem_id}/rejeicao"): {Perfil.GESTOR},
     # UC14 — Auditar ações: só Administrador
     ("GET", "/api/auditoria"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/auditoria/acoes"): {Perfil.ADMINISTRADOR},
@@ -137,6 +144,7 @@ PARAMETROS = {
     "execucao_id": "1",
     "acao_id": "1",
     "lote_id": "1",
+    "mensagem_id": "1",
 }
 
 
