@@ -686,7 +686,7 @@ abaixo separa os dois — e o repositório comprova cada linha da coluna ✅.
 | Núcleo | pacote `gih_nucleo`: instância, viabilidade exata, gulosos e o genético serial (H48, H49, H52); o mesmo genético em C++, idêntico ao Python (H53a), com OpenMP (H53b) e inteiro na GPU (H54a a H54c), com o mesmo plano nos quatro | — |
 | Modelo preditivo | pacote `gih_modelo`: variáveis, referências, rede e treino (H41 a H43, H46) | — |
 
-Cobertura de teste da API em 26/09/2026: **624 testes, 97%**. Os pacotes do modelo e do
+Cobertura de teste da API em 27/09/2026: **685 testes, 97%**. Os pacotes do modelo e do
 otimizador têm as próprias suítes, em `modelo/tests` e `nucleo/tests`.
 
 ---
