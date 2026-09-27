@@ -599,7 +599,9 @@ function Historico({ itens, mostradoId }) {
                   )}
                   <td>
                     {e.situacao !== "EM_ANDAMENTO" && e.id !== mostradoId && (
-                      <Link to={`/benchmark?execucao=${e.id}`}>Abrir</Link>
+                      <Link className="nome__link" to={`/benchmark?execucao=${e.id}`}>
+                        Abrir
+                      </Link>
                     )}
                   </td>
                 </tr>

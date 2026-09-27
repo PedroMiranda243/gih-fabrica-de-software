@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  AREA,
+  ALTURA_DA_AREA,
   dominioDoTempo,
   fracaoLog,
-  MARCAS_PARCEIROS,
+  larguraDaArea,
+  marcasDosParceiros,
   MARGEM,
   marcasDoTempo,
   rotuloDoTempo,
@@ -24,13 +25,22 @@ describe("escala logarítmica do benchmark", () => {
     );
   });
 
-  it("o eixo dos parceiros é fixo na faixa do cenário", () => {
-    expect(xDosParceiros(100)).toBe(MARGEM.esquerda);
-    expect(xDosParceiros(10_000)).toBe(MARGEM.esquerda + AREA.largura);
-    // As marcas não se atropelam: "10.000" em Fira Code de 10 px tem 36 px.
-    const xs = MARCAS_PARCEIROS.map(xDosParceiros);
-    const vizinhas = xs.slice(1).map((x, i) => x - xs[i]);
-    expect(Math.min(...vizinhas)).toBeGreaterThan(40);
+  it("o eixo dos parceiros ocupa a largura real do painel, na faixa do cenário", () => {
+    for (const largura of [600, 720, 1600]) {
+      expect(xDosParceiros(100, largura)).toBe(MARGEM.esquerda);
+      expect(xDosParceiros(10_000, largura)).toBe(MARGEM.esquerda + larguraDaArea(largura));
+    }
+  });
+
+  it("as marcas dos parceiros nunca se atropelam: com pouca largura, só as potências de dez", () => {
+    for (const largura of [360, 480, 600, 720, 1600]) {
+      const xs = marcasDosParceiros(largura).map((m) => xDosParceiros(m, largura));
+      const vizinhas = xs.slice(1).map((x, i) => x - xs[i]);
+      // "10.000" em Fira Code de 10 px tem 36 px.
+      expect(Math.min(...vizinhas)).toBeGreaterThan(40);
+    }
+    expect(marcasDosParceiros(1600)).toContain(2000);
+    expect(marcasDosParceiros(360)).toEqual([100, 1000, 10_000]);
   });
 
   it("o tempo vai da potência de dez abaixo do menor à acima do maior", () => {
@@ -59,17 +69,18 @@ describe("escala logarítmica do benchmark", () => {
   it("mais tempo fica mais alto", () => {
     const dominio = [0.001, 100];
     expect(yDoTempo(100, dominio)).toBe(MARGEM.topo);
-    expect(yDoTempo(0.001, dominio)).toBe(MARGEM.topo + AREA.altura);
+    expect(yDoTempo(0.001, dominio)).toBe(MARGEM.topo + ALTURA_DA_AREA);
     expect(yDoTempo(1, dominio)).toBeLessThan(yDoTempo(0.1, dominio));
   });
 
-  it("rótulo que não cabe sai, e não é empurrado para longe da linha", () => {
+  it("rótulos que se encontram saem os dois: o de um cairia ao lado da marca do outro", () => {
+    // A GPU e o OpenMP terminam juntos com 10.000 parceiros (245 ms e 256 ms).
     const rotulos = [
       { coluna: "GPU", y: 100 },
       { coluna: "OPENMP", y: 106 },
       { coluna: "CPP_SERIAL", y: 60 },
       { coluna: "PYTHON", y: 20 },
     ];
-    expect(rotulosQueCabem(rotulos).map((r) => r.coluna)).toEqual(["PYTHON", "CPP_SERIAL", "GPU"]);
+    expect(rotulosQueCabem(rotulos).map((r) => r.coluna)).toEqual(["CPP_SERIAL", "PYTHON"]);
   });
 });

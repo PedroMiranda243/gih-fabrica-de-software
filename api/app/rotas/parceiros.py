@@ -407,6 +407,26 @@ def exportar(
     )
 
 
+# O primeiro caractere que faz a planilha ler a célula como fórmula. O nome, a
+# categoria e o contato vêm de quem cadastra ou importa, e um nome como
+# `=HYPERLINK("http://...")` viraria um link — ou coisa pior — na planilha de
+# quem exporta (injeção de CSV, OWASP). A tabulação e o retorno de carro estão
+# aqui porque algumas planilhas os descartam antes de olhar o resto.
+_INICIO_DE_FORMULA = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _texto(valor: str | None) -> str:
+    """Texto do usuário numa célula: com um apóstrofo na frente, se começaria uma
+    fórmula (RNF12). A planilha mostra o texto como foi digitado e não o executa.
+
+    Só nas colunas de texto: nas de número, o sinal de menos da variação é número
+    de verdade, e o apóstrofo o transformaria em texto que não se soma.
+    """
+    if not valor:
+        return ""
+    return f"'{valor}" if valor.startswith(_INICIO_DE_FORMULA) else valor
+
+
 def _numero(valor) -> str:
     """Número com vírgula decimal e sem separador de milhar.
 
@@ -447,12 +467,12 @@ def _linhas_csv(consulta):
             item = _linha(bruta)
             escritor.writerow(
                 (
-                    item.nome,
-                    item.categoria.nome if item.categoria else "",
+                    _texto(item.nome),
+                    _texto(item.categoria.nome if item.categoria else None),
                     ROTULO_SEGMENTO.get(item.desempenho.segmento, ""),
                     ROTULO_STATUS[item.status],
                     "Ativo" if item.ativo else "Inativo",
-                    item.contato or "",
+                    _texto(item.contato),
                     _numero(item.desempenho.faturamento),
                     "" if item.desempenho.pedidos is None else item.desempenho.pedidos,
                     _numero(item.desempenho.ticket_medio),

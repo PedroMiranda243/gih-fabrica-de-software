@@ -833,4 +833,25 @@ cookie `HttpOnly` com renovação do identificador no login, bloqueio após tent
 verificada no servidor em todos os endpoints, consultas parametrizadas, escape de toda saída, limite de
 tamanho de entrada e mensagens de erro genéricas com o detalhe apenas no log.
 
-Cada um desses pontos tem teste automatizado previsto nas histórias H70 e H17.
+Cada um desses pontos tem teste automatizado, e todos rodam na CI a cada Pull Request (H17, H70):
+
+| Requisito | O vetor | O teste que o fecha |
+|---|---|---|
+| RNF10 | Cookie legível por script; fixação de sessão | `test_cookie_de_sessao_tem_as_marcacoes_do_rnf10`, `test_novo_login_invalida_o_identificador_anterior` |
+| RNF11 | Adivinhar senha; descobrir quais logins existem | `test_bloqueia_apos_cinco_falhas`, `test_usuario_inexistente_e_senha_errada_respondem_igual` |
+| RNF12 | Script do usuário executado no navegador | `test_seguranca.py` (a API só devolve JSON ou CSV, com `nosniff`, e o texto volta como foi gravado); `web/src/seguranca.test.jsx` (nenhum código da tela pula o escape do React; telas renderizadas com carga de script) |
+| RNF12 | Fórmula na planilha exportada (injeção de CSV) | `test_a_exportacao_neutraliza_a_formula` |
+| RNF13 | Injeção SQL | `test_nenhuma_consulta_e_montada_com_texto` (lê o código de `app/`); `test_carga_de_injecao_em_todo_parametro_de_toda_rota_de_leitura`; o login, a busca e o cadastro com carga |
+| RNF14 | Rota sem autorização no servidor | `test_autorizacao.py`: toda rota contra todo perfil; `test_troca_de_perfil_vale_na_requisicao_seguinte`, `test_desativar_derruba_as_sessoes_abertas`, `test_o_cookie_forjado_nao_abre_nada` |
+| RNF15 | Entrada grande demais | `test_entrada_grande_demais_e_recusada`, `test_arquivo_grande_demais_e_recusado` |
+| RNF18, RNF19 | Rastreamento de pilha na resposta | `test_falha_inesperada_responde_generico_com_correlacao` |
+
+**O que reprova o PR que abre um vetor são os testes derivados**, e não os escritos rota a rota. Rota nova
+entra sozinha na matriz de autorização, que reprova se ela não declarar permissão; no fuzz de injeção,
+que manda cada carga em cada parâmetro dela; e na leitura do código, que recusa SQL montado com texto e as
+formas de pular o escape do React. Nenhum deles depende de alguém lembrar de escrever o teste. Cada teste
+derivado foi conferido contra o defeito que procura: com o `nosniff` desligado, a neutralização do CSV
+desfeita ou um `dangerouslySetInnerHTML` plantado, eles reprovam.
+
+O texto do assistente (H65), quando existir, chega à tela pelo mesmo caminho, e a leitura do código da tela
+já o cobre.

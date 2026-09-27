@@ -338,6 +338,11 @@ frente com alguma, a resposta já está aqui.
 - **Sempre que a escolha for entre seguir com dado parcial e recusar explicando, recuse e explique.**
   Corromper em silêncio custa muito mais caro que falhar alto.
 
+- **O CSV exportado vai para a planilha, e a planilha executa fórmula.** Um parceiro cadastrado como
+  `=HYPERLINK(...)` vira link na planilha de quem exporta (injeção de CSV). Toda coluna de texto do usuário
+  passa por `_texto` em `rotas/parceiros.py`, que põe um apóstrofo na frente de `=`, `+`, `-`, `@`; as de
+  número, não — a variação negativa precisa continuar somável. Exportação nova faz o mesmo (H70).
+
 ### Desempenho
 
 - **Nada de N+1 na segmentação.** Recalcular o segmento com uma consulta por parceiro funciona com 100 e
