@@ -645,6 +645,32 @@ class SerieHistorica(BaseModel):
     pontos: list[PontoSerie]
 
 
+class VariacaoDoParceiro(BaseModel):
+    """O período mais recente contra o anterior, do próprio parceiro — sem comparação
+    com a rede (RF26)."""
+
+    faturamento: Decimal | None
+    pedidos: Decimal | None
+    ticket_medio: Decimal | None
+
+
+class MeuDesempenho(BaseModel):
+    """O portal do Parceiro (UC13, H39): o histórico dele, e nada da rede."""
+
+    parceiro: str
+    categoria: str | None = Field(description="Só a categoria confirmada (RN05).")
+    atual: PontoSerie | None = Field(
+        description="O período mais recente, com os valores dele — nulos se ele não entrou "
+        "na última importação."
+    )
+    anterior: PeriodoResposta | None
+    variacao: VariacaoDoParceiro | None
+    pontos: list[PontoSerie] = Field(
+        description="A série desde a primeira medição dele. Vazia: nenhuma importação o "
+        "incluiu ainda (UC13-A1)."
+    )
+
+
 # ------------------------------------------------------------ modelo preditivo
 class VolumeTreino(BaseModel):
     """O volume de dados do treino (RF27)."""
