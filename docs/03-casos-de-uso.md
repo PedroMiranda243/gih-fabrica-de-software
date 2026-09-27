@@ -647,6 +647,26 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 - **E1 — Mensagem já decidida.** Se a mensagem tiver sido decidida por outro usuário nesse intervalo, o
   sistema informa a decisão já registrada e recarrega a fila, evitando sobrescrita.
 
+> **Na API (Sprint 12 interna, H61 a H63).** A fila (`GET /api/mensagens`) é do Gestor e do Analista, com as
+> pendentes da mais antiga para a mais nova, filtráveis por segmento e por geração. Aprovar, editar,
+> rejeitar e aprovar em lote são só do Gestor, verificado no servidor: o Analista recebe 403, e a tentativa
+> entra na auditoria (A4). Cada decisão e cada edição também entram, com a mensagem e o parceiro.
+>
+> **O que o UC11 deixava em aberto, e como ficou:**
+>
+> - **Editar não aprova.** A edição troca o texto e deixa a mensagem pendente; aprovar é outro clique (A1).
+>   O texto redigido fica em `texto_gerado`, e o final em `texto_final`, que a aprovação sempre preenche:
+>   o histórico mostra o conteúdo final sem precisar adivinhar (RF40).
+> - **O número que o Gestor escreve não é recusado, mas é apontado.** A RN08 trata do modelo de linguagem; a
+>   pessoa pode escrever "20% de desconto". A fila diz quais números do texto editado não vieram dos dados,
+>   para quem aprova ver antes.
+> - **A aprovação em lote não exige o mesmo segmento.** O passo A3 descreve o uso comum — filtrar a fila por
+>   segmento e aprovar as selecionadas —; a API aprova as mensagens que a pessoa marcou, até 200, e registra
+>   a decisão de cada uma. A que outra pessoa decidiu no meio fica como estava, e a resposta diz qual.
+> - **A decisão concorrente é recusada pelo banco**, e não por uma consulta feita antes: a mudança só vale
+>   sobre a mensagem pendente, e quem chegou depois recebe a decisão registrada, com o autor (E1).
+> - **Nada é enviado.** Aprovada é "pronta para envio" (ADR-013).
+
 ---
 
 ### UC12 — Consultar assistente analítico

@@ -497,7 +497,7 @@ não aponta para o plano: os itens do plano estão em `alvos`, e cada mensagem a
 | modelo | varchar(60) | | o modelo de linguagem, quando foi ele |
 | motivo_redator | text | | por que saiu do modelo fixo: o modelo fora do ar, ou o texto dele reprovado |
 | texto_gerado | text | | o que foi redigido — pelo modelo ou pelo modelo fixo |
-| texto_final | text | | o que o Gestor deixou |
+| texto_final | text | | o que o Gestor deixou; na aprovação, o texto que vale, editado ou não (RF40) |
 | estado | enum | | PENDENTE, APROVADA, REJEITADA |
 | decidida_por_id | integer | **FK** → usuario | |
 | motivo_rejeicao | varchar(240) | | |

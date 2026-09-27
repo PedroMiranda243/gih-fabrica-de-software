@@ -549,6 +549,14 @@ classDiagram
         +refazer(lote) LoteMensagens
     }
 
+    class ServicoAprovacao {
+        <<implementado>>
+        +aprovar(mensagem, gestor) Mensagem
+        +editar(mensagem, texto) Mensagem
+        +rejeitar(mensagem, gestor, motivo) Mensagem
+        +aprovar_em_lote(ids, gestor) ResultadoEmLote
+    }
+
     class Assistente {
         <<previsto>>
         +responder(pergunta) Resposta
@@ -739,12 +747,12 @@ abaixo separa os dois — e o repositório comprova cada linha da coluna ✅.
 | Camada | Implementado ✅ | Previsto ⏳ |
 |---|---|---|
 | Domínio | **as 20 entidades**, com restrições `CHECK` no banco | — |
-| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `servico_otimizacao`, `servico_comparacao`, `servico_benchmark`, `desempenho`, `redator`, `guarda_numerica`, `servico_mensagens`, `erros` | `assistente` |
-| Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/campanha`, `/api/otimizacoes`, `/api/acoes-comerciais`, `/api/benchmark`, `/api/benchmarks`, `/api/mensagens`, `/api/auditoria`, `/api/health` | a fila das mensagens, assistente |
+| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `servico_otimizacao`, `servico_comparacao`, `servico_benchmark`, `desempenho`, `redator`, `guarda_numerica`, `servico_mensagens`, `servico_aprovacao`, `erros` | `assistente` |
+| Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/campanha`, `/api/otimizacoes`, `/api/acoes-comerciais`, `/api/benchmark`, `/api/benchmarks`, `/api/mensagens`, `/api/auditoria`, `/api/health` | o histórico das mensagens, assistente |
 | Núcleo | pacote `gih_nucleo`: instância, viabilidade exata, gulosos e o genético serial (H48, H49, H52); o mesmo genético em C++, idêntico ao Python (H53a), com OpenMP (H53b) e inteiro na GPU (H54a a H54c), com o mesmo plano nos quatro | — |
 | Modelo preditivo | pacote `gih_modelo`: variáveis, referências, rede e treino (H41 a H43, H46) | — |
 
-Cobertura de teste da API em 27/09/2026: **913 testes, 97%**. Os pacotes do modelo e do
+Cobertura de teste da API em 27/09/2026: **966 testes, 97%**. Os pacotes do modelo e do
 otimizador têm as próprias suítes, em `modelo/tests` e `nucleo/tests`.
 
 ---
