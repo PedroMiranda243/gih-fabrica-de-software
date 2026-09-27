@@ -8,9 +8,13 @@
  * abrem; o Administrador vê o histórico (RF34), mas não o plano parceiro a
  * parceiro. Quem abre o quê vem da API (`usuario.telas`), como o menu — a tela
  * só desenha a linha com ou sem o link.
+ *
+ * **Quem abre o plano também compara dois** (RF35, H59): marca dois planos
+ * calculados e viáveis, e a comparação mostra o mais antigo como A e o mais novo
+ * como B — a diferença é do que veio depois para o que veio antes.
  */
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { useSessao } from "../api/contextoSessao";
@@ -34,6 +38,17 @@ export default function Execucoes() {
   const abrePlano = Boolean(usuario?.telas?.includes("execucao"));
   const [pagina, setPagina] = useState(1);
   const [estado, setEstado] = useState({ pagina: null, dados: null, erro: null });
+  const [escolhidas, setEscolhidas] = useState([]);
+  const navegar = useNavigate();
+
+  function alternar(id) {
+    setEscolhidas((atuais) => (atuais.includes(id) ? atuais.filter((x) => x !== id) : [...atuais, id].slice(-2)));
+  }
+
+  function comparar() {
+    const [a, b] = [...escolhidas].sort((x, y) => x - y);
+    navegar(`/execucoes/comparar?a=${a}&b=${b}`);
+  }
 
   useEffect(() => {
     let vivo = true;
@@ -91,6 +106,18 @@ export default function Execucoes() {
 
       {dados && total > 0 && (
         <>
+          {abrePlano && total > 1 && (
+            <div className="execucoes__escolha" role="group" aria-label="Comparar dois planos">
+              <span>
+                {escolhidas.length === 0 && "Marque dois planos calculados para compará-los lado a lado."}
+                {escolhidas.length === 1 && "Marque mais um plano."}
+                {escolhidas.length === 2 && "Dois planos marcados."}
+              </span>
+              <button type="button" className="botao" disabled={escolhidas.length !== 2} onClick={comparar}>
+                Comparar os dois
+              </button>
+            </div>
+          )}
           <div className="tabela-rolagem">
             <table className="tabela execucoes__tabela">
               <caption className="so-leitor">
@@ -98,6 +125,11 @@ export default function Execucoes() {
               </caption>
               <thead>
                 <tr>
+                  {abrePlano && (
+                    <th scope="col" className="execucoes__marcar">
+                      <span className="so-leitor">Comparar</span>
+                    </th>
+                  )}
                   <th scope="col">Iniciada em</th>
                   <th scope="col">Por</th>
                   <th scope="col">Parâmetros</th>
@@ -110,7 +142,13 @@ export default function Execucoes() {
               </thead>
               <tbody>
                 {dados.itens.map((e) => (
-                  <LinhaExecucao key={e.id} execucao={e} abrePlano={abrePlano} />
+                  <LinhaExecucao
+                    key={e.id}
+                    execucao={e}
+                    abrePlano={abrePlano}
+                    escolhida={escolhidas.includes(e.id)}
+                    aoAlternar={() => alternar(e.id)}
+                  />
                 ))}
               </tbody>
             </table>
@@ -143,10 +181,25 @@ export default function Execucoes() {
   );
 }
 
-function LinhaExecucao({ execucao: e, abrePlano }) {
+function LinhaExecucao({ execucao: e, abrePlano, escolhida, aoAlternar }) {
   const quando = comoDataHora(e.iniciada_em);
+  // Só se compara plano calculado e viável: a inviável e a que falhou não têm plano.
+  const comparavel = e.situacao === "CONCLUIDA" && e.viavel === true;
   return (
     <tr>
+      {abrePlano && (
+        <td className="execucoes__marcar">
+          {comparavel && (
+            <input
+              id={`comparar-${e.id}`}
+              type="checkbox"
+              checked={escolhida}
+              onChange={aoAlternar}
+              aria-label={`Comparar o plano de ${quando}`}
+            />
+          )}
+        </td>
+      )}
       <td className="nome quando">
         {abrePlano ? (
           <Link className="nome__link" to={`/execucoes/${e.id}`}>

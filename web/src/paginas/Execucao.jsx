@@ -13,7 +13,7 @@ import { api } from "../api/cliente";
 import { Esqueleto } from "../componentes/Carregando";
 import EstadoVazio from "../componentes/EstadoVazio";
 import PlanoDeCampanha from "../componentes/PlanoDeCampanha";
-import { comoDataHora, comoDinheiro, comoFracao, comoInteiro, ROTULO_MODO, TRACO } from "../formato";
+import { comoDataHora, comoDinheiro, comoFracao, comoInteiro, cotasDoPedido, ROTULO_MODO, TRACO } from "../formato";
 import "../estilos/execucoes.css";
 
 export default function Execucao() {
@@ -90,14 +90,7 @@ export default function Execucao() {
 /** As restrições e o modo que o gestor pediu — os mesmos campos da tela de campanha. */
 function Pedido({ execucao: e }) {
   const p = e.parametros;
-  const nomes = Object.fromEntries(e.cotas.filter((c) => c.categoria_id !== null).map((c) => [c.categoria_id, c.nome]));
-  const cotas = p.cotas_categoria.map((c) => {
-    const limites = [
-      c.minimo !== null && `mín. ${comoFracao(c.minimo, 0)}`,
-      c.maximo !== null && `máx. ${comoFracao(c.maximo, 0)}`,
-    ].filter(Boolean);
-    return `${nomes[c.categoria_id] ?? `categoria ${c.categoria_id}`}: ${limites.join(", ")}`;
-  });
+  const cotas = cotasDoPedido(e);
 
   return (
     <section className="painel" aria-labelledby="titulo-pedido">
