@@ -70,6 +70,9 @@ class Acao(enum.StrEnum):
     # O benchmark (UC09, passo 8): quem mediu, o cenário e a média de cada modo.
     BENCHMARK_EXECUTADO = "BENCHMARK_EXECUTADO"
     BENCHMARK_FALHOU = "BENCHMARK_FALHOU"
+    # UC10, H60: a geração de mensagens, com quantas e quem redigiu.
+    MENSAGENS_GERADAS = "MENSAGENS_GERADAS"
+    MENSAGENS_FALHARAM = "MENSAGENS_FALHARAM"
 
 
 # Chaves que nunca podem entrar em `detalhes`. A trilha é consultável por

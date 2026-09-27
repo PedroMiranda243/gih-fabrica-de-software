@@ -18,10 +18,12 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from app.config import config
 from app.modelos import (
+    EstadoMensagem,
     ModoExecucao,
     OrigemCategoria,
     OrigemImportacao,
     Perfil,
+    RedatorMensagem,
     Segmento,
     SituacaoExecucao,
     SituacaoTreino,
@@ -1174,3 +1176,140 @@ class EstadoBenchmark(BaseModel):
         description="O Python da última medição, por parceiro e repetição: a base da "
         "estimativa de duração. O genético cresce em linha com os parceiros."
     )
+
+
+# ------------------------------------------------------------ mensagens (UC10, H60)
+# Um lote grande demais com o modelo de linguagem levaria horas: ~3 s por
+# mensagem com o modelo carregado (ADR-013). O teto é proteção de recurso (RNF15).
+MAXIMO_POR_LOTE = 500
+
+
+class TipoPublico(enum.StrEnum):
+    FILTRO = "FILTRO"
+    PLANO = "PLANO"
+    SELECAO = "SELECAO"
+
+
+class PublicoMensagens(BaseModel):
+    """Para quem as mensagens vão (UC10, passo 1).
+
+    - `FILTRO`: um segmento, uma categoria, ou os dois juntos;
+    - `PLANO`: os parceiros de um plano de campanha calculado, cada um com a ação dele;
+    - `SELECAO`: os parceiros escolhidos um a um.
+    """
+
+    tipo: TipoPublico
+    segmento: Segmento | None = None
+    categoria_id: int | None = None
+    execucao_id: int | None = Field(
+        default=None, description="A execução do otimizador cujo plano dá o público."
+    )
+    parceiros: list[int] | None = Field(default=None, max_length=MAXIMO_POR_LOTE)
+
+    @model_validator(mode="after")
+    def criterio_do_tipo(self):
+        filtro = self.segmento is not None or self.categoria_id is not None
+        if self.tipo == TipoPublico.FILTRO:
+            if not filtro:
+                raise ValueError("Escolha um segmento, uma categoria, ou os dois.")
+            if self.execucao_id is not None or self.parceiros is not None:
+                raise ValueError("O público por segmento e categoria não leva plano nem seleção.")
+        elif self.tipo == TipoPublico.PLANO:
+            if self.execucao_id is None:
+                raise ValueError("Escolha o plano de campanha.")
+            if filtro or self.parceiros is not None:
+                raise ValueError("O público do plano são os parceiros dele: sem outro critério.")
+        else:
+            if not self.parceiros:
+                raise ValueError("Escolha ao menos um parceiro.")
+            if filtro or self.execucao_id is not None:
+                raise ValueError("A seleção manual não leva segmento, categoria nem plano.")
+        return self
+
+
+class ParceiroDoPublico(BaseModel):
+    id: int
+    nome: str
+    segmento: Segmento | None
+    categoria: str | None = Field(description="Só a categoria confirmada (RN05).")
+    acao: str | None = Field(description="A ação do plano, quando o público é um plano.")
+
+
+class PreviaPublico(BaseModel):
+    """Quem entra, antes de gerar qualquer coisa (UC10, passo 2)."""
+
+    descricao: str = Field(description="O público em palavras: 'Em risco, em Mercado'.")
+    total: int
+    parceiros: list[ParceiroDoPublico]
+    excluidos: dict[str, int] = Field(
+        description="Quem ficou de fora, por motivo: desativado, não encontrado."
+    )
+    maximo: int = Field(description="O maior lote que se gera de uma vez.")
+    pode_gerar: bool
+    motivo: str | None = Field(description="Por que não dá para gerar: público vazio ou grande.")
+
+
+class EstadoAssistente(BaseModel):
+    """O modelo de linguagem, e por que não está disponível, quando não está (ADR-013)."""
+
+    disponivel: bool
+    modelo: str
+    motivo: str | None
+
+
+class FatoMensagem(BaseModel):
+    fato: str
+    valor: str
+
+
+class MensagemResposta(BaseModel):
+    id: int
+    parceiro_id: int
+    parceiro: str
+    segmento: Segmento | None
+    acao: str | None
+    texto: str = Field(description="O texto como está agora: o final, se já houve edição.")
+    texto_gerado: str
+    estado: EstadoMensagem
+    redator: RedatorMensagem
+    modelo: str | None
+    motivo_redator: str | None = Field(
+        description="Por que saiu do modelo fixo: o modelo fora do ar, ou o texto dele reprovado."
+    )
+    fatos: list[FatoMensagem]
+    lote_id: int | None
+    gerada_em: datetime
+
+
+class FalhaDoLote(BaseModel):
+    parceiro_id: int
+    parceiro: str
+    motivo: str
+
+
+class LoteResposta(BaseModel):
+    id: int
+    situacao: SituacaoExecucao
+    autor: str | None
+    publico: PublicoMensagens
+    descricao: str
+    iniciado_em: datetime
+    concluido_em: datetime | None
+    total: int
+    geradas: int
+    pelo_modelo: int = Field(description="Quantas o modelo de linguagem redigiu.")
+    falhas: list[FalhaDoLote]
+    modelo: str | None
+    motivo: str | None
+    mensagens: list[MensagemResposta] | None = Field(
+        default=None, description="As mensagens do lote, na ordem em que ficaram prontas."
+    )
+
+
+class EstadoGeracao(BaseModel):
+    """O que a tela de mensagens mostra ao abrir."""
+
+    assistente: EstadoAssistente
+    em_andamento: LoteResposta | None
+    ultimo: LoteResposta | None
+    maximo: int

@@ -30,8 +30,9 @@ mostrar o ganho do paralelismo (`docs/07` §4.3).
 - **O plano é conferido**: o ganho de cada modo, em cada repetição, contra o do
   Python. Acima de 2% é divergência, e a tela a destaca como possível defeito
   (RNF02, UC09-A3). Com a mesma semente, a diferença é zero (ADR-011).
-- **Se outro cálculo pesado rodou junto** — uma otimização, um treino —, a
-  execução fica marcada: os tempos podem ter saído maiores.
+- **Se outro cálculo pesado rodou junto** — uma otimização, um treino, o
+  modelo de linguagem redigindo mensagens —, a execução fica marcada: os tempos
+  podem ter saído maiores.
 
 Roda em segundo plano, como o otimizador: `iniciar` grava a execução em
 andamento, `executar` mede e grava o resultado. **Um por vez**, pelo banco.
@@ -64,7 +65,13 @@ from app.esquemas import (
     SerieEscalabilidade,
     SituacaoColuna,
 )
-from app.modelos import ExecucaoBenchmark, ExecucaoOtimizador, SituacaoExecucao, TreinoModelo
+from app.modelos import (
+    ExecucaoBenchmark,
+    ExecucaoOtimizador,
+    LoteMensagens,
+    SituacaoExecucao,
+    TreinoModelo,
+)
 
 log = logging.getLogger("gih")
 
@@ -320,7 +327,11 @@ def _medir(execucao_id: int, parametros: ParametrosBenchmark) -> tuple[list[dict
 
 
 def _disputada(s: Session, execucao: ExecucaoBenchmark) -> bool:
-    """Outra otimização ou um treino rodou em algum momento da medição?"""
+    """Outra otimização, um treino ou o modelo de linguagem rodou durante a medição?
+
+    A geração de mensagens só conta quando o modelo redigiu: ele usa a mesma
+    placa da GPU (ADR-013). O modelo fixo não pesa nada.
+    """
     agora = s.scalar(select(func.clock_timestamp()))
     otimizacoes = s.scalar(
         select(func.count())
@@ -344,7 +355,19 @@ def _disputada(s: Session, execucao: ExecucaoBenchmark) -> bool:
             ),
         )
     )
-    return bool(otimizacoes or treinos)
+    mensagens = s.scalar(
+        select(func.count())
+        .select_from(LoteMensagens)
+        .where(
+            LoteMensagens.modelo.is_not(None),
+            LoteMensagens.iniciado_em <= agora,
+            or_(
+                LoteMensagens.concluido_em.is_(None),
+                LoteMensagens.concluido_em >= execucao.iniciada_em,
+            ),
+        )
+    )
+    return bool(otimizacoes or treinos or mensagens)
 
 
 def executar(execucao_id: int, *, origem: str | None = None) -> None:
