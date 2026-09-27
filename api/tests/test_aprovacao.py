@@ -6,6 +6,9 @@ a recusa da decisão que chegou tarde e a auditoria.
 """
 from __future__ import annotations
 
+import csv
+import io
+from datetime import date, timedelta
 from decimal import Decimal
 
 import pytest
@@ -383,3 +386,100 @@ def test_o_banco_recusa_mensagem_decidida_sem_autor(fila):
         s.get(Mensagem, fila[0]).estado = EstadoMensagem.APROVADA
         with pytest.raises(IntegrityError, match="ck_mensagem_decisao_tem_autor"):
             s.commit()
+
+
+# ================================================== o histórico (RF40, H64)
+def test_o_historico_traz_quem_decidiu_o_final_o_redigido_e_o_motivo(fila, gestor):
+    gestor.post(f"/api/mensagens/{fila[0]}/edicao", json={"texto": "Olá, Beta! Texto do gestor."})
+    gestor.post(f"/api/mensagens/{fila[0]}/aprovacao")
+    gestor.post(f"/api/mensagens/{fila[1]}/rejeicao", json={"motivo": "Tom errado"})
+
+    [aprovada] = gestor.get("/api/mensagens", params={"estado": "APROVADA"}).json()["itens"]
+    assert (aprovada["texto"], aprovada["texto_gerado"], aprovada["editada"]) == (
+        "Olá, Beta! Texto do gestor.",
+        "Olá, Beta!",
+        True,
+    )
+    assert aprovada["decidida_por"] == "Gestora" and aprovada["decidida_em"]
+    [rejeitada] = gestor.get("/api/mensagens", params={"estado": "REJEITADA"}).json()["itens"]
+    assert (rejeitada["motivo_rejeicao"], rejeitada["decidida_por"]) == ("Tom errado", "Gestora")
+
+
+def test_o_historico_filtra_pelo_dia_da_decisao(fila, gestor):
+    for mensagem_id in fila[:2]:
+        gestor.post(f"/api/mensagens/{mensagem_id}/aprovacao")
+    with Sessao() as s:
+        antiga = s.get(Mensagem, fila[0])
+        antiga.decidida_em = antiga.decidida_em - timedelta(days=10)
+        s.commit()
+        dia_antigo = antiga.decidida_em.astimezone().date()
+    hoje = date.today()
+
+    def ids(**filtro):
+        corpo = gestor.get("/api/mensagens", params={"estado": "APROVADA", **filtro}).json()
+        return [m["id"] for m in corpo["itens"]]
+
+    assert ids() == [fila[1], fila[0]]  # a decisão mais recente primeiro
+    assert ids(de=hoje.isoformat()) == [fila[1]]
+    assert ids(ate=dia_antigo.isoformat()) == [fila[0]]
+    assert ids(de=dia_antigo.isoformat(), ate=dia_antigo.isoformat()) == [fila[0]]
+
+
+def _csv(cliente, **filtro):
+    r = cliente.get("/api/mensagens/exportacao.csv", params=filtro)
+    assert r.status_code == 200, r.text
+    assert r.headers["content-type"].startswith("text/csv")
+    assert r.text.startswith("﻿")
+    return list(csv.reader(io.StringIO(r.text.lstrip("﻿")), delimiter=";"))
+
+
+def test_a_exportacao_traz_so_as_aprovadas_prontas_para_envio(fila, gestor):
+    with Sessao() as s:
+        beta = s.get(Mensagem, fila[0]).parceiro_id
+        s.get(Parceiro, beta).contato = "(81) 99999-0000"
+        s.commit()
+    gestor.post(f"/api/mensagens/{fila[0]}/edicao", json={"texto": "Olá, Beta! Até breve."})
+    gestor.post(f"/api/mensagens/{fila[0]}/aprovacao")
+    gestor.post(f"/api/mensagens/{fila[1]}/rejeicao", json={})
+
+    cabecalho, *linhas = _csv(gestor)
+    assert cabecalho == [
+        "Parceiro",
+        "Contato",
+        "Segmento",
+        "Categoria",
+        "Acao",
+        "Mensagem",
+        "Editada",
+        "Aprovada por",
+        "Aprovada em",
+    ]
+    [linha] = linhas
+    assert linha[:8] == [
+        "Beta",
+        "(81) 99999-0000",
+        "Em risco",
+        "Mercado",
+        "Cupom de reativação",
+        "Olá, Beta! Até breve.",
+        "Sim",
+        "Gestora",
+    ]
+    assert len(linha[8]) == len("27/09/2026 14:05")
+
+
+def test_a_exportacao_neutraliza_formula_no_texto_da_mensagem(fila, gestor):
+    """O texto vem do modelo ou do gestor, e vai para a planilha: passa pela mesma
+    proteção dos parceiros (H70)."""
+    gestor.post(f"/api/mensagens/{fila[2]}/edicao", json={"texto": '=HYPERLINK("http://x","clique")'})
+    gestor.post(f"/api/mensagens/{fila[2]}/aprovacao")
+    [_, linha] = _csv(gestor)
+    assert linha[5] == "'=HYPERLINK(\"http://x\",\"clique\")"
+
+
+def test_a_exportacao_segue_os_filtros_do_historico(fila, gestor):
+    for mensagem_id in fila:
+        gestor.post(f"/api/mensagens/{mensagem_id}/aprovacao")
+    assert [linha[0] for linha in _csv(gestor, segmento="TOP")[1:]] == ["Delta"]
+    amanha = (date.today() + timedelta(days=1)).isoformat()
+    assert _csv(gestor, de=amanha)[1:] == []

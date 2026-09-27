@@ -123,6 +123,8 @@ PERMISSOES: dict[tuple[str, str], object] = {
     # UC11 — A fila é de quem gera e de quem aprova; decidir é só do Gestor (RN06,
     # UC11-A4): o Analista vê a fila, mas não aprova, não edita e não rejeita.
     ("GET", "/api/mensagens"): {Perfil.GESTOR, Perfil.ANALISTA},
+    # RF40 — o histórico e a exportação das aprovadas: Gestor e Analista.
+    ("GET", "/api/mensagens/exportacao.csv"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("POST", "/api/mensagens/aprovacao-em-lote"): {Perfil.GESTOR},
     ("POST", "/api/mensagens/{mensagem_id}/aprovacao"): {Perfil.GESTOR},
     ("POST", "/api/mensagens/{mensagem_id}/edicao"): {Perfil.GESTOR},
