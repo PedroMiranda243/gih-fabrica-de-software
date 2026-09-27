@@ -24,6 +24,8 @@ from app.modelos import (
     ExecucaoOtimizador,
     Importacao,
     ItemPlano,
+    LoteMensagens,
+    Mensagem,
     Metrica,
     ModoExecucao,
     OrigemCategoria,
@@ -32,6 +34,7 @@ from app.modelos import (
     Periodo,
     PlanoCampanha,
     Previsao,
+    RedatorMensagem,
     SituacaoExecucao,
     SituacaoTreino,
     TreinoModelo,
@@ -232,6 +235,62 @@ def test_a_otimizacao_da_execucao_sai_e_a_de_fora_fica(execucao):
     assert _contar(ExecucaoOtimizador, ExecucaoOtimizador.id == de_fora) == 1
     assert _contar(PlanoCampanha) == 1
     assert _contar(ItemPlano) == 1
+
+
+def _mensagem(login: str, item_plano_id: int | None) -> int:
+    """Um lote de `login`, com uma mensagem para o primeiro parceiro da base."""
+    s = Sessao()
+    try:
+        autor = s.scalar(select(Usuario.id).where(Usuario.login == login))
+        parceiro = s.scalar(select(Parceiro.id).order_by(Parceiro.id))
+        lote = LoteMensagens(
+            usuario_id=autor,
+            situacao=SituacaoExecucao.CONCLUIDA,
+            publico={"tipo": "SELECAO", "parceiros": [parceiro]},
+            alvos=[{"parceiro_id": parceiro, "item_plano_id": item_plano_id}],
+            falhas=[],
+        )
+        s.add(lote)
+        s.flush()
+        s.add(
+            Mensagem(
+                parceiro_id=parceiro,
+                item_plano_id=item_plano_id,
+                lote_id=lote.id,
+                texto_gerado="Olá!",
+                fatos=[],
+                redator=RedatorMensagem.MODELO_FIXO,
+                motivo_redator="fora do ar",
+            )
+        )
+        s.commit()
+        return lote.id
+    finally:
+        s.close()
+
+
+def test_as_mensagens_da_execucao_saem_com_o_lote_e_as_de_fora_ficam(execucao):
+    """A verificação gera as mensagens do plano que calculou. Elas apontam para o
+    item do plano: saem antes dele, com o lote."""
+    da_execucao = _otimizacao(ANALISTA_DA_EXECUCAO, SEMANA_DA_EXECUCAO[0])
+    s = Sessao()
+    try:
+        item = s.scalar(
+            select(ItemPlano.id)
+            .join(PlanoCampanha, PlanoCampanha.id == ItemPlano.plano_id)
+            .where(PlanoCampanha.execucao_id == da_execucao)
+        )
+    finally:
+        s.close()
+    lote_da_execucao = _mensagem(ANALISTA_DA_EXECUCAO, item)
+    lote_de_fora = _mensagem("analista.real", None)
+
+    removidos = limpar_execucao(MARCA)
+
+    assert (removidos.lotes, removidos.mensagens) == (1, 1)
+    assert _contar(LoteMensagens, LoteMensagens.id == lote_da_execucao) == 0
+    assert _contar(LoteMensagens, LoteMensagens.id == lote_de_fora) == 1
+    assert _contar(Mensagem) == 1
 
 
 def test_o_usuario_da_execucao_fica(execucao):
