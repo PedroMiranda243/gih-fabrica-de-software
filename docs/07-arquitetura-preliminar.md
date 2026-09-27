@@ -941,7 +941,7 @@ Cada um desses pontos tem teste automatizado, e todos rodam na CI a cada Pull Re
 | RNF10 | Cookie legível por script; fixação de sessão | `test_cookie_de_sessao_tem_as_marcacoes_do_rnf10`, `test_novo_login_invalida_o_identificador_anterior` |
 | RNF11 | Adivinhar senha; descobrir quais logins existem | `test_bloqueia_apos_cinco_falhas`, `test_usuario_inexistente_e_senha_errada_respondem_igual` |
 | RNF12 | Script do usuário executado no navegador | `test_seguranca.py` (a API só devolve JSON ou CSV, com `nosniff`, e o texto volta como foi gravado); `web/src/seguranca.test.jsx` (nenhum código da tela pula o escape do React; telas renderizadas com carga de script) |
-| RNF12 | Fórmula na planilha exportada (injeção de CSV) | `test_a_exportacao_neutraliza_a_formula` |
+| RNF12 | Fórmula na planilha exportada (injeção de CSV) | `test_a_exportacao_neutraliza_a_formula` (parceiros), `test_a_exportacao_neutraliza_formula_no_texto_da_mensagem` (mensagens); as duas passam por `app/planilha.py` |
 | RNF13 | Injeção SQL | `test_nenhuma_consulta_e_montada_com_texto` (lê o código de `app/`); `test_carga_de_injecao_em_todo_parametro_de_toda_rota_de_leitura`; o login, a busca e o cadastro com carga |
 | RNF14 | Rota sem autorização no servidor | `test_autorizacao.py`: toda rota contra todo perfil; `test_troca_de_perfil_vale_na_requisicao_seguinte`, `test_desativar_derruba_as_sessoes_abertas`, `test_o_cookie_forjado_nao_abre_nada` |
 | RNF15 | Entrada grande demais | `test_entrada_grande_demais_e_recusada`, `test_arquivo_grande_demais_e_recusado` |

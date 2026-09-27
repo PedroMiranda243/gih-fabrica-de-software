@@ -18,6 +18,35 @@
   min-width: 220px;
 }
 
+.aprovacao__vistas {
+  margin-bottom: var(--esp-12);
+}
+
+.aprovacao__filtro--data {
+  min-width: 0;
+}
+
+.aprovacao__filtro--data input {
+  font-family: var(--fonte-dados);
+  font-variant-numeric: tabular-nums;
+}
+
+.aprovacao__exportar {
+  margin-left: auto;
+  margin-bottom: var(--esp-8);
+}
+
+.aprovacao__decisao {
+  margin: 0;
+  font-size: var(--txt-13);
+  color: var(--ink);
+}
+
+.aprovacao__contato {
+  font-size: var(--txt-13);
+  color: var(--ink-2);
+}
+
 .aprovacao__recorte {
   margin: 0 0 var(--esp-8);
   font-size: var(--txt-13);

@@ -1421,6 +1421,34 @@ def item_mensagens(r: Relatorio, url: str, criados: dict[str, str]) -> None:
             f"{pendentes.get('total')} pendente(s) do lote",
         )
 
+        hoje = date.today().isoformat()
+        aprovadas = c.get(
+            "/api/mensagens", params={"estado": "APROVADA", "lote_id": lote["id"], "de": hoje}
+        ).json()
+        rejeitadas = c.get(
+            "/api/mensagens", params={"estado": "REJEITADA", "lote_id": lote["id"]}
+        ).json()
+        r.checar(
+            "o histórico traz as decididas de hoje, com autor, data, texto final e motivo (RF40)",
+            {m["id"] for m in aprovadas.get("itens", [])} == {primeira, segunda}
+            and all(m["decidida_por"] and m["decidida_em"] for m in aprovadas["itens"])
+            and [m["motivo_rejeicao"] for m in rejeitadas.get("itens", [])]
+            == ["Tom errado para o parceiro."],
+            f"{aprovadas.get('total')} aprovada(s), {rejeitadas.get('total')} rejeitada(s)",
+        )
+        exportacao = c.get("/api/mensagens/exportacao.csv", params={"de": hoje})
+        linhas = list(
+            csv.reader(io.StringIO(exportacao.text.lstrip("\ufeff")), delimiter=";")
+        )
+        textos = {linha[5] for linha in linhas[1:]}
+        r.checar(
+            "a exportação traz as aprovadas prontas para envio, com o texto final (RF40)",
+            exportacao.status_code == 200
+            and linhas[0][:2] == ["Parceiro", "Contato"]
+            and {m["texto"] for m in aprovadas.get("itens", [])} <= textos,
+            f"{len(linhas) - 1} linha(s) no CSV de hoje",
+        )
+
 
 # --------------------------------------------------------------------- extra
 def item_limpeza(

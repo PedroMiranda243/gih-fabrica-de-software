@@ -19,15 +19,18 @@ nasce pendente.
 """
 from __future__ import annotations
 
+from datetime import date, datetime, time, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, aliased
 
-from app import auditoria, redator, servico_aprovacao, servico_mensagens
+from app import auditoria, planilha, redator, servico_aprovacao, servico_mensagens
 from app.auditoria import Acao
 from app.dependencias import Banco, UsuarioAtual, exigir
+from app.desempenho import ROTULO_SEGMENTO
 from app.esquemas import (
     MAXIMO_POR_LOTE,
     AprovacaoEmLote,
@@ -84,6 +87,7 @@ def _consulta():
         select(
             Mensagem,
             Parceiro.nome,
+            Parceiro.contato,
             Categoria.nome,
             Parceiro.origem_categoria,
             AcaoComercial.nome,
@@ -98,7 +102,7 @@ def _consulta():
 
 
 def _para_resposta(linha) -> MensagemResposta:
-    m, nome, categoria, origem, acao, decisor = linha
+    m, nome, contato, categoria, origem, acao, decisor = linha
     texto = m.texto_final or m.texto_gerado
     editada = m.texto_final is not None and m.texto_final != m.texto_gerado
     return MensagemResposta(
@@ -124,6 +128,7 @@ def _para_resposta(linha) -> MensagemResposta:
         decidida_por=decisor,
         decidida_em=m.decidida_em,
         motivo_rejeicao=m.motivo_rejeicao,
+        contato=contato,
     )
 
 
@@ -250,31 +255,61 @@ def refazer(
     return _resposta(s, lote)
 
 
-# --------------------------------------------------------- a fila (UC11, H61)
+# --------------------------------------------- a fila e o histórico (H61, H64)
+def _inicio_do_dia(dia: date) -> datetime:
+    """Meia-noite daquele dia no fuso do servidor — o mesmo critério da auditoria
+    (`rotas/auditoria.py`): quem filtra "hoje" espera o dia do relógio dele."""
+    return datetime.combine(dia, time.min).astimezone()
+
+
+def _filtros(
+    estado: EstadoMensagem,
+    segmento: Segmento | None,
+    lote_id: int | None,
+    de: date | None,
+    ate: date | None,
+) -> list:
+    filtros = [Mensagem.estado == estado]
+    if segmento is not None:
+        filtros.append(Mensagem.segmento == segmento)
+    if lote_id is not None:
+        filtros.append(Mensagem.lote_id == lote_id)
+    # O período é o da decisão: a pendente não tem, e o filtro a deixa de fora.
+    if de is not None:
+        filtros.append(Mensagem.decidida_em >= _inicio_do_dia(de))
+    if ate is not None:
+        filtros.append(Mensagem.decidida_em < _inicio_do_dia(ate + timedelta(days=1)))
+    return filtros
+
+
+SEGMENTO = Annotated[
+    Segmento | None, Query(description="O segmento do parceiro quando a mensagem foi gerada.")
+]
+DE = Annotated[date | None, Query(description="Decididas a partir deste dia, inclusive.")]
+ATE = Annotated[date | None, Query(description="Decididas até este dia, inclusive.")]
+
+
 @router.get("", response_model=PaginaMensagens)
 def listar(
     s: Banco,
     estado: Annotated[EstadoMensagem, Query(description="A fila são as pendentes.")] = (
         EstadoMensagem.PENDENTE
     ),
-    segmento: Annotated[
-        Segmento | None, Query(description="O segmento do parceiro quando a mensagem foi gerada.")
-    ] = None,
+    segmento: SEGMENTO = None,
     lote_id: Annotated[int | None, Query(description="As mensagens de uma geração.")] = None,
+    de: DE = None,
+    ate: ATE = None,
     pagina: Annotated[int, Query(ge=1)] = 1,
     tamanho: Annotated[int, Query(ge=1, le=100)] = 20,
 ) -> PaginaMensagens:
-    """As mensagens de um estado (UC11, passos 1 e 2).
+    """As mensagens de um estado: a fila (UC11, passos 1 e 2) e o histórico (RF40, H64).
 
     As pendentes vêm da mais antiga para a mais nova: é a ordem em que chegaram à
     fila, e a próxima a decidir é a primeira (passo 6). As decididas, da decisão
-    mais recente para a mais antiga.
+    mais recente para a mais antiga, com quem decidiu, quando, o conteúdo final, o
+    texto redigido quando houve edição e o motivo da rejeição.
     """
-    filtros = [Mensagem.estado == estado]
-    if segmento is not None:
-        filtros.append(Mensagem.segmento == segmento)
-    if lote_id is not None:
-        filtros.append(Mensagem.lote_id == lote_id)
+    filtros = _filtros(estado, segmento, lote_id, de, ate)
     total = s.scalar(select(func.count()).select_from(Mensagem).where(*filtros))
     ordem = (
         (Mensagem.id.asc(),)
@@ -289,6 +324,59 @@ def listar(
         total=total,
         pagina=pagina,
         tamanho=tamanho,
+    )
+
+
+CABECALHO_CSV = (
+    "Parceiro",
+    "Contato",
+    "Segmento",
+    "Categoria",
+    "Acao",
+    "Mensagem",
+    "Editada",
+    "Aprovada por",
+    "Aprovada em",
+)
+
+
+def _linha_csv(linha) -> tuple:
+    """Uma mensagem aprovada no arquivo. Todo texto passa pela proteção contra
+    fórmula — o do modelo e o do gestor também (H70)."""
+    m = _para_resposta(linha)
+    return (
+        planilha.texto(m.parceiro),
+        planilha.texto(m.contato),
+        ROTULO_SEGMENTO.get(m.segmento, ""),
+        planilha.texto(m.categoria),
+        planilha.texto(m.acao),
+        planilha.texto(m.texto),
+        "Sim" if m.editada else "Não",
+        planilha.texto(m.decidida_por),
+        m.decidida_em.astimezone().strftime("%d/%m/%Y %H:%M") if m.decidida_em else "",
+    )
+
+
+@router.get("/exportacao.csv", response_class=StreamingResponse)
+def exportar(
+    segmento: SEGMENTO = None,
+    de: DE = None,
+    ate: ATE = None,
+) -> StreamingResponse:
+    """As mensagens aprovadas em CSV, prontas para envio (RF40, H64), com os filtros do
+    histórico. Com o contato do parceiro: é com ele que alguém vai enviar — o sistema
+    não envia nada (ADR-013).
+
+    Só as aprovadas: a rejeitada não vai a lugar nenhum, e a pendente ainda espera
+    a decisão (RN06).
+    """
+    filtros = _filtros(EstadoMensagem.APROVADA, segmento, None, de, ate)
+    consulta = _consulta().where(*filtros).order_by(Mensagem.decidida_em.desc(), Mensagem.id.desc())
+    nome = f"mensagens-aprovadas-{date.today().isoformat()}.csv"
+    return StreamingResponse(
+        planilha.gerar(CABECALHO_CSV, consulta, _linha_csv),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{nome}"'},
     )
 
 

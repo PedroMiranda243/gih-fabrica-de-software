@@ -15,8 +15,14 @@
  * **A decisão que chegou tarde** — outra pessoa decidiu enquanto esta revisava —
  * volta com a decisão registrada, e a fila se atualiza (E1).
  *
- * **O filtro vive no endereço** (`?segmento=`, `?lote=`, `?pagina=`), para o link
- * da geração abrir a fila só das mensagens dela.
+ * **O histórico é a mesma lista, em outro estado** (RF40, H64): as aprovadas e as
+ * rejeitadas, com quem decidiu, quando, o conteúdo final, o texto redigido quando
+ * houve edição e o motivo da rejeição. As aprovadas estão prontas para envio — o
+ * sistema não envia —, com o contato do parceiro, "Copiar texto" e a exportação
+ * em CSV.
+ *
+ * **O filtro vive no endereço** (`?estado=`, `?segmento=`, `?lote=`, `?de=`,
+ * `?ate=`, `?pagina=`), para o link da geração abrir a fila só das mensagens dela.
  */
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -27,17 +33,27 @@ import { Esqueleto } from "../componentes/Carregando";
 import CartaoMensagem from "../componentes/CartaoMensagem";
 import Confirmacao from "../componentes/Confirmacao";
 import EstadoVazio from "../componentes/EstadoVazio";
-import { comoInteiro, ROTULO_SEGMENTO } from "../formato";
+import { comoDataHora, comoInteiro, ROTULO_SEGMENTO } from "../formato";
 import "../estilos/aprovacao.css";
 
 export const TAMANHO = 20;
+
+const VISTAS = [
+  ["PENDENTE", "Pendentes"],
+  ["APROVADA", "Aprovadas"],
+  ["REJEITADA", "Rejeitadas"],
+];
 
 export default function Aprovacao() {
   const { usuario } = useSessao();
   const decide = Boolean(usuario?.telas?.includes("decidir_mensagens"));
   const [parametros, setParametros] = useSearchParams();
+  const estado = parametros.get("estado") ?? "PENDENTE";
+  const pendentes = estado === "PENDENTE";
   const segmento = parametros.get("segmento") ?? "";
   const lote = parametros.get("lote") ?? "";
+  const de = parametros.get("de") ?? "";
+  const ate = parametros.get("ate") ?? "";
   const pagina = Number(parametros.get("pagina") ?? 1) || 1;
 
   const [dados, setDados] = useState(null);
@@ -57,13 +73,13 @@ export default function Aprovacao() {
   useEffect(() => {
     let vivo = true;
     api
-      .get("/api/mensagens", { estado: "PENDENTE", segmento, lote_id: lote, pagina, tamanho: TAMANHO })
+      .get("/api/mensagens", { estado, segmento, lote_id: lote, de, ate, pagina, tamanho: TAMANHO })
       .then((corpo) => vivo && setDados(corpo))
       .catch((e) => vivo && setErroCarga(e));
     return () => {
       vivo = false;
     };
-  }, [segmento, lote, pagina, recarga]);
+  }, [estado, segmento, lote, de, ate, pagina, recarga]);
 
   /* O foco segue para a próxima mensagem depois que ela está na tela. */
   useEffect(() => {
@@ -196,6 +212,21 @@ export default function Aprovacao() {
     }
   }
 
+  async function copiar(m) {
+    try {
+      await navigator.clipboard.writeText(m.texto);
+      setAnuncio(`Texto da mensagem para ${m.parceiro} copiado.`);
+      return true;
+    } catch {
+      setAviso({
+        tipo: "erro",
+        titulo: "Não foi possível copiar o texto.",
+        ajuda: "O navegador não deu acesso à área de transferência: selecione o texto e copie à mão.",
+      });
+      return false;
+    }
+  }
+
   if (erroCarga) {
     return (
       <div className="aviso" role="alert">
@@ -226,7 +257,28 @@ export default function Aprovacao() {
         {anuncio}
       </p>
 
-      {!decide && (
+      <fieldset className="escolha aprovacao__vistas">
+        <legend className="so-leitor">Mensagens</legend>
+        <div className="escolha__opcoes">
+          {VISTAS.map(([valor, rotulo]) => (
+            <label key={valor} className="escolha__opcao">
+              <input
+                type="radio"
+                name="vista"
+                value={valor}
+                checked={estado === valor}
+                onChange={() =>
+                  // O período é o da decisão: na fila de pendentes, ele não existe.
+                  filtrar(valor === "PENDENTE" ? { estado: "", de: "", ate: "" } : { estado: valor })
+                }
+              />
+              <span>{rotulo}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      {pendentes && !decide && (
         <div className="aviso aviso--informativo">
           <p className="aviso__titulo">Só um gestor decide.</p>
           <p className="aviso__ajuda">
@@ -245,12 +297,9 @@ export default function Aprovacao() {
       <section className="painel" aria-labelledby="titulo-fila">
         <div className="painel__cabecalho">
           <h2 className="painel__titulo" id="titulo-fila">
-            Pendentes
+            {VISTAS.find(([valor]) => valor === estado)?.[1] ?? "Pendentes"}
           </h2>
-          <span className="painel__nota">
-            {dados.total === 1 ? "1 mensagem" : `${comoInteiro(dados.total)} mensagens`} esperando a decisão · nenhuma
-            é enviada sem ela
-          </span>
+          <span className="painel__nota">{nota(estado, dados.total)}</span>
         </div>
 
         <div className="aprovacao__corpo aprovacao__filtros">
@@ -265,6 +314,29 @@ export default function Aprovacao() {
               ))}
             </select>
           </div>
+          {!pendentes && (
+            <>
+              <div className="campo aprovacao__filtro aprovacao__filtro--data">
+                <label htmlFor="filtro-de">Decididas de</label>
+                <input id="filtro-de" type="date" value={de} onChange={(e) => filtrar({ de: e.target.value })} />
+              </div>
+              <div className="campo aprovacao__filtro aprovacao__filtro--data">
+                <label htmlFor="filtro-ate">até</label>
+                <input id="filtro-ate" type="date" value={ate} onChange={(e) => filtrar({ ate: e.target.value })} />
+              </div>
+            </>
+          )}
+          {estado === "APROVADA" && (
+            <a
+              className="botao botao--secundario aprovacao__exportar"
+              href={`/api/mensagens/exportacao.csv?${new URLSearchParams(
+                Object.entries({ segmento, de, ate }).filter(([, v]) => v !== ""),
+              )}`}
+              download
+            >
+              Exportar aprovadas (CSV)
+            </a>
+          )}
           {lote && (
             <p className="aprovacao__recorte">
               Só as mensagens de uma geração.{" "}
@@ -275,7 +347,7 @@ export default function Aprovacao() {
           )}
         </div>
 
-        {decide && itens.length > 0 && (
+        {decide && pendentes && itens.length > 0 && (
           <div className="aprovacao__corpo aprovacao__lote">
             <label className="aprovacao__todas">
               <input
@@ -309,37 +381,50 @@ export default function Aprovacao() {
         )}
 
         {itens.length ? (
-          <ol className="mensagens__lista aprovacao__lista" aria-label="Mensagens pendentes">
-            {itens.map((m) => (
-              <Pendente
-                key={m.id}
-                mensagem={m}
-                decide={decide}
-                ocupada={ocupada === m.id}
-                selecionada={selecionadas.has(m.id)}
-                refTitulo={(no) => {
-                  if (no) titulos.current.set(m.id, no);
-                  else titulos.current.delete(m.id);
-                }}
-                aoSelecionar={() =>
-                  setSelecionadas((atual) => {
-                    const nova = new Set(atual);
-                    if (nova.has(m.id)) nova.delete(m.id);
-                    else nova.add(m.id);
-                    return nova;
-                  })
-                }
-                aoAprovar={() => aprovar(m)}
-                aoRejeitar={(motivo) => rejeitar(m, motivo)}
-                aoEditar={(texto) => editar(m, texto)}
-              />
-            ))}
+          <ol
+            className="mensagens__lista aprovacao__lista"
+            aria-label={pendentes ? "Mensagens pendentes" : "Mensagens decididas"}
+          >
+            {itens.map((m) =>
+              !pendentes ? (
+                <Decidida key={m.id} mensagem={m} aoCopiar={() => copiar(m)} />
+              ) : (
+                <Pendente
+                  key={m.id}
+                  mensagem={m}
+                  decide={decide}
+                  ocupada={ocupada === m.id}
+                  selecionada={selecionadas.has(m.id)}
+                  refTitulo={(no) => {
+                    if (no) titulos.current.set(m.id, no);
+                    else titulos.current.delete(m.id);
+                  }}
+                  aoSelecionar={() =>
+                    setSelecionadas((atual) => {
+                      const nova = new Set(atual);
+                      if (nova.has(m.id)) nova.delete(m.id);
+                      else nova.add(m.id);
+                      return nova;
+                    })
+                  }
+                  aoAprovar={() => aprovar(m)}
+                  aoRejeitar={(motivo) => rejeitar(m, motivo)}
+                  aoEditar={(texto) => editar(m, texto)}
+                />
+              ),
+            )}
           </ol>
-        ) : (
+        ) : pendentes ? (
           <EstadoVazio
             titulo={segmento || lote ? "Nenhuma mensagem pendente neste recorte." : "Nenhuma mensagem pendente."}
             texto="As mensagens geradas chegam aqui e esperam a decisão de um gestor."
             acao={{ para: "/mensagens", rotulo: "Gerar mensagens" }}
+          />
+        ) : (
+          <EstadoVazio
+            titulo={`Nenhuma mensagem ${estado === "APROVADA" ? "aprovada" : "rejeitada"} neste recorte.`}
+            texto="As decisões aparecem aqui, da mais recente para a mais antiga, com quem decidiu e quando."
+            acao={{ para: "/aprovacao", rotulo: "Ver as pendentes" }}
           />
         )}
 
@@ -368,6 +453,51 @@ export default function Aprovacao() {
         )}
       </section>
     </>
+  );
+}
+
+function nota(estado, total) {
+  const quantas = total === 1 ? "1 mensagem" : `${comoInteiro(total)} mensagens`;
+  if (estado === "APROVADA") return `${quantas} · prontas para envio: o sistema não envia, quem envia é você`;
+  if (estado === "REJEITADA") return `${quantas} · ficam registradas, com o motivo`;
+  return `${quantas} esperando a decisão · nenhuma é enviada sem ela`;
+}
+
+/* A mensagem decidida (RF40): quem decidiu, quando e — na rejeitada — por quê. A
+   aprovada traz o contato do parceiro e "Copiar texto": é o caminho até o envio,
+   que é de uma pessoa, fora do sistema (ADR-013). */
+function Decidida({ mensagem: m, aoCopiar }) {
+  const [copiado, setCopiado] = useState(false);
+  const aprovada = m.estado === "APROVADA";
+  const decisao = `${aprovada ? "Aprovada" : "Rejeitada"} por ${m.decidida_por ?? "—"} em ${comoDataHora(
+    m.decidida_em,
+  )}`;
+  return (
+    <CartaoMensagem mensagem={m} mostrarQuando>
+      <p className="aprovacao__decisao">
+        {decisao}
+        {!aprovada && (m.motivo_rejeicao ? `. Motivo: ${m.motivo_rejeicao}` : ", sem motivo registrado")}.
+      </p>
+      {aprovada && (
+        <div className="aprovacao__acoes">
+          <button
+            type="button"
+            className="botao botao--secundario"
+            onClick={async () => {
+              if (await aoCopiar()) {
+                setCopiado(true);
+                setTimeout(() => setCopiado(false), 2000);
+              }
+            }}
+          >
+            {copiado ? "Copiado" : "Copiar texto"}
+          </button>
+          <span className="aprovacao__contato">
+            {m.contato ? `Contato: ${m.contato}` : "Parceiro sem contato cadastrado"}
+          </span>
+        </div>
+      )}
+    </CartaoMensagem>
   );
 }
 
