@@ -179,16 +179,20 @@ kernel CUDA compilado e conferido contra a CPU.
 > concreto de *speedup* para apresentar.
 
 ### Sprint 12 — Central de comunicação · 23/11 – 27/11 · 29 pts
-`H60` gerar mensagens (8) · `H61` fila de pendentes (5) · `H62` aprovar, editar ou rejeitar (5) · `H63` impedir aprovação sem humano (5) · `H64` histórico (3) · `H68` abstenção do assistente (3)
+`H60` gerar mensagens (8) · `H61` fila de pendentes (5) · `H62` aprovar, editar ou rejeitar (5) · `H63` impedir aprovação sem humano (5) · `H64` histórico (3) · `H39` portal do parceiro (3)
 
-### Sprint 13 — Assistente e fechamento · 30/11 – 04/12 · 45 pts
-`H65` perguntas livres (8) · `H66` citação da fonte (5) · `H67` sem número inventado (5) · `H72` README reprodutível (5) · `H73` documentação final (5) · **`H74` vídeo horizontal (8)** · **`H75` vídeo vertical (5)** · `H76` acessibilidade (4)
+> **Replanejada em 27/09, e adiantada para 28/09 a 11/10.** A H39, que ficou de fora da Sprint 9, entra no
+> lugar da H68; a H68 vai para a 13, com o assistente cuja abstenção ela testa. Antes das histórias, a
+> ADR-013 decide o modelo de linguagem: local, opcional e com a guarda numérica da RN08.
+
+### Sprint 13 — Assistente e fechamento · 30/11 – 04/12 · 48 pts
+`H65` perguntas livres (8) · `H66` citação da fonte (5) · `H67` sem número inventado (5) · `H68` abstenção do assistente (3) · `H72` README reprodutível (5) · `H73` documentação final (5) · **`H74` vídeo horizontal (8)** · **`H75` vídeo vertical (5)** · `H76` acessibilidade (4)
 
 ---
 
 ## 5. A semana que não fecha
 
-**A Sprint 13 está com 45 pontos contra uma média de 30, e é justamente a semana dos dois vídeos.**
+**A Sprint 13 está com 48 pontos contra uma média de 30, e é justamente a semana dos dois vídeos.**
 
 Isso não é erro de distribuição: é o que sobra quando o escopo completo é dividido por doze semanas. As
 outras onze já estão entre 22 e 32 pontos, e não há para onde empurrar.

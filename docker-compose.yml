@@ -50,6 +50,11 @@ services:
       COOKIE_SEGURO: ${COOKIE_SEGURO:-false}
       ADMIN_LOGIN: ${ADMIN_LOGIN:-admin}
       ADMIN_SENHA: ${ADMIN_SENHA:-}
+      # O modelo de linguagem (ADR-013). Sem o perfil `assistente`, o serviço
+      # abaixo não sobe, o endereço não responde, e o sistema funciona igual:
+      # as mensagens saem do modelo fixo, e o assistente se diz indisponível.
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      LLM_MODEL: ${LLM_MODEL:-qwen2.5:7b}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -68,5 +73,41 @@ services:
     depends_on:
       - api
 
+  # O modelo de linguagem local (ADR-013): opcional, e por isso num perfil. Só
+  # sobe com `docker compose --profile assistente up -d`; sem o perfil, o
+  # Compose nem baixa a imagem, que tem ~8 GB.
+  #
+  # **A porta não é publicada no host, de propósito.** O Ollama não tem
+  # autenticação: publicado, qualquer programa da máquina usaria o modelo. A
+  # API o alcança pela rede do Compose.
+  #
+  # Com placa NVIDIA, o `docker-compose.gpu.yml` reserva a placa também para
+  # ele. Sem placa, o modelo roda na CPU — bem mais devagar, mas roda.
+  ollama:
+    image: ollama/ollama:0.32.5
+    profiles: ["assistente"]
+    restart: unless-stopped
+    volumes:
+      - modelos_ollama:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "ls"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Baixa o modelo na primeira subida (~4,7 GB) e sai; nas seguintes, confere
+  # que ele está lá e sai na hora. O `qwen2.5:7b` é Apache 2.0 (regra 2.8).
+  ollama-modelo:
+    image: ollama/ollama:0.32.5
+    profiles: ["assistente"]
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["ollama", "pull", "${LLM_MODEL:-qwen2.5:7b}"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
 volumes:
   dados_postgres:
+  modelos_ollama:

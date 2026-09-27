@@ -180,6 +180,26 @@ Sem ele, o sistema sobe em qualquer máquina, em CPU paralela, e a tela de campa
 (RNF06). A primeira vez baixa a imagem de compilação da NVIDIA, de alguns GB. No Windows, o Docker Desktop
 com WSL2 já entrega a placa ao contêiner. Para voltar à CPU, suba de novo sem o arquivo, com `--build`.
 
+**O modelo de linguagem é opcional**, e sobe num perfil à parte: o `qwen2.5:7b` (Apache 2.0), local, pelo
+Ollama. É ele que vai redigir as mensagens da central de comunicação (H60) e responder no assistente (H65).
+Os números não saem dele: saem do núcleo, e uma guarda recusa o texto com número que não veio de lá
+(ADR-013).
+
+```bash
+docker compose --profile assistente up -d
+```
+
+Com placa NVIDIA, junte o arquivo da GPU, que reserva a placa também para o modelo:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml --profile assistente up -d --build
+```
+
+A primeira vez baixa a imagem do Ollama (~8 GB) e o modelo (~4,7 GB): o serviço `ollama-modelo` baixa e
+sai. Sem o perfil, o sistema funciona igual — as mensagens saem de textos fixos por segmento, com os mesmos
+números, e o assistente se diz indisponível. Um Ollama já instalado na máquina também serve, com
+`OLLAMA_BASE_URL=http://host.docker.internal:11434` no `.env`.
+
 ### Primeiro acesso
 
 **O jeito mais direto de entrar é criar o seu próprio usuário pelo terminal**, com o ambiente no ar:
@@ -268,6 +288,10 @@ uvicorn app.main:app --reload
 ```
 
 Testes e análise estática, de dentro de `api/`: `pytest` e `ruff check .`
+
+Os testes que falam com o modelo de linguagem de verdade rodam quando o `OLLAMA_BASE_URL` do `api/.env`
+aponta para um Ollama com o modelo (fora do Docker, `http://localhost:11434`); sem ele, pulam. Com
+`GIH_ASSISTENTE_OBRIGATORIO=1`, reprovam em vez de pular.
 
 ### Verificação de ponta a ponta
 

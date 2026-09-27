@@ -105,7 +105,7 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H36** | Como analista, quero filtrar e ordenar a lista de parceiros, para chegar rápido ao recorte que me interessa. | M | 5 | 7 | RF23; filtros por categoria e segmento; ordenação por qualquer coluna |
 | **H37** | Como analista, quero buscar parceiro por nome, para localizar um caso específico. | M | 2 | 6 | RF24; correspondência parcial e sem sensibilidade a acentuação |
 | **H38** | Como analista, quero exportar a visão filtrada em CSV, para trabalhar fora do sistema quando necessário. | S | 3 | 7 | RF25; o arquivo reflete exatamente os filtros aplicados |
-| **H39** | Como parceiro, quero consultar meu próprio desempenho, para acompanhar minha evolução. | C | 3 | 9 | RF26; sem acesso a dados de terceiros nem a ranking comparativo; negação validada no servidor |
+| **H39** | Como parceiro, quero consultar meu próprio desempenho, para acompanhar minha evolução. | C | 3 | 12 | RF26; sem acesso a dados de terceiros nem a ranking comparativo; negação validada no servidor |
 | **H40** | Como gestor, quero que o painel responda rápido mesmo com base grande, para usar o sistema no dia a dia. | M | 3 | 6 | RNF03, RNF05; até 2 s com 5.000 parceiros; consultas com índice |
 
 ## E5 — Núcleo preditivo
@@ -159,7 +159,7 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H65** | Como gestor, quero perguntar sobre os dados em linguagem natural, para consultar sem navegar por telas. | S | 8 | 13 | RF41; responde a um conjunto de perguntas de referência |
 | **H66** | Como gestor, quero que a resposta cite o período usado, para confiar no que leio. | M | 5 | 13 | RF42; toda resposta traz a fonte ou declara insuficiência de dados |
 | **H67** | Como sistema, quero impedir que o modelo produza números próprios, para eliminar erro numérico inventado. | M | 5 | 13 | RF43, RNF16; números vêm do núcleo determinístico; teste com perguntas-armadilha |
-| **H68** | Como gestor, quero que o assistente admita quando não sabe, para não ser induzido ao erro. | M | 3 | 12 | RF42; conjunto de perguntas sem resposta possível resulta em abstenção explícita |
+| **H68** | Como gestor, quero que o assistente admita quando não sabe, para não ser induzido ao erro. | M | 3 | 13 | RF42; conjunto de perguntas sem resposta possível resulta em abstenção explícita |
 
 ## E9 — Qualidade, documentação e entrega
 
@@ -192,15 +192,19 @@ Detalhamento e datas em [05 — Cronograma](05-cronograma.md).
 | **6** | Ingestão completa e painel | H22, H25, H29, H30, H31, H32, H40, H37 | 28 |
 | **7** | Segmentação e mobilidade do Top N | H33, H34, H35, H36, H38, H69 | 32 |
 | **8** | Modelo preditivo | H41, H46, H42, H43, H44 | 29 |
-| **9** | Otimizador: formalização e baseline | H45, H48, H49, H50, H52, H39 | 29 |
+| **9** | Otimizador: formalização e baseline | H45, H48, H49, H50, H52 | 26 |
 | **10** | Otimizador integrado e CPU paralela | H51, H53a, H53b, H55, H56, H58 | 30 |
 | **11** | GPU e benchmark | H54a, H54b, H54c, H57, H70, H59 | 31 |
-| **12** | Central de comunicação | H60, H61, H62, H63, H64, H68 | 29 |
-| **13** | Assistente e fechamento | H65, H66, H67, H72, H73, H74, H75, H76 | 45 |
+| **12** | Central de comunicação | H60, H61, H62, H63, H64, H39 | 29 |
+| **13** | Assistente e fechamento | H65, H66, H67, H68, H72, H73, H74, H75, H76 | 48 |
 | | | **Total** | **389** |
 
 > A média é de **30,2 pontos por semana**, contra uma capacidade nominal de ~40. A folga é pequena, e a
 > Sprint 13 está deliberadamente acima da média — ver a seção *A semana que não fecha* no cronograma.
+
+> **Replanejamento de 27/09/2026.** A H39 não entrou na Sprint 9 e passa para a 12. A H68 vai para a 13,
+> com o assistente cuja confiabilidade ela protege: a abstenção só se testa com o catálogo de perguntas
+> pronto (ADR-013). O total não muda.
 
 ## Primeiro corte, se o prazo apertar
 

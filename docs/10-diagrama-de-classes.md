@@ -507,10 +507,22 @@ classDiagram
         +executar(execucao)
     }
 
+    class Redator {
+        <<implementado>>
+        +estado() Estado
+        +redigir(sistema, pedido) str
+        +extrair(sistema, pergunta, esquema) BaseModel
+    }
+
+    class GuardaNumerica {
+        <<implementado>>
+        +numeros(texto) list
+        +numeros_sem_origem(texto, fatos) list
+    }
+
     class Assistente {
         <<previsto>>
-        +responder(pergunta, fatos) str
-        +redigir_mensagem(parceiro, contexto) str
+        +responder(pergunta) Resposta
     }
 
     ServicoImportacao --> LeitorRelatorio : interpreta o texto
@@ -520,6 +532,8 @@ classDiagram
     ServicoOtimizacao --> Ranking : cauda longa pelo ranking (RN11)
     ServicoOtimizacao --> ServicoPrevisao : previsões da versão em uso (RN10)
     Assistente --> Ranking : consome fatos apurados
+    Assistente --> Redator : identifica a pergunta e redige
+    Assistente --> GuardaNumerica : confere o texto (RN08)
 ```
 
 **`LeitorRelatorio` não toca no banco.** É função pura de texto para resultado, e é isso que permite a
@@ -538,6 +552,12 @@ longa pelo ranking (a leitura da RN02) e a recusa com o nome da categoria e o va
 
 **`Assistente` consome `Ranking`, nunca o banco direto.** Ele recebe fatos já apurados e redige texto em
 volta deles. Se somasse, contasse ou comparasse, o número deixaria de ser reproduzível (RN08).
+
+**O `Redator` não sabe o que é parceiro, e a `GuardaNumerica` não sabe o que é modelo** (ADR-013). O
+`Redator` fala com o Ollama: devolve texto para um pedido, ou os campos de uma pergunta num esquema, e diz
+por que está fora do ar quando está. A `GuardaNumerica` recebe o texto pronto e os fatos, e aponta os números
+do texto que os fatos não sustentam. Quem monta os fatos, e quem troca o texto reprovado pelo modelo fixo, é
+o serviço que usa os dois.
 
 ---
 
@@ -681,12 +701,12 @@ abaixo separa os dois — e o repositório comprova cada linha da coluna ✅.
 | Camada | Implementado ✅ | Previsto ⏳ |
 |---|---|---|
 | Domínio | **as 19 entidades**, com restrições `CHECK` no banco | — |
-| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `servico_otimizacao`, `servico_comparacao`, `servico_benchmark`, `erros` | `assistente` |
+| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `servico_otimizacao`, `servico_comparacao`, `servico_benchmark`, `redator`, `guarda_numerica`, `erros` | `servico_mensagens`, `assistente` |
 | Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/campanha`, `/api/otimizacoes`, `/api/acoes-comerciais`, `/api/benchmark`, `/api/benchmarks`, `/api/auditoria`, `/api/health` | mensagens, assistente |
 | Núcleo | pacote `gih_nucleo`: instância, viabilidade exata, gulosos e o genético serial (H48, H49, H52); o mesmo genético em C++, idêntico ao Python (H53a), com OpenMP (H53b) e inteiro na GPU (H54a a H54c), com o mesmo plano nos quatro | — |
 | Modelo preditivo | pacote `gih_modelo`: variáveis, referências, rede e treino (H41 a H43, H46) | — |
 
-Cobertura de teste da API em 27/09/2026: **685 testes, 97%**. Os pacotes do modelo e do
+Cobertura de teste da API em 27/09/2026: **808 testes, 97%**. Os pacotes do modelo e do
 otimizador têm as próprias suítes, em `modelo/tests` e `nucleo/tests`.
 
 ---
