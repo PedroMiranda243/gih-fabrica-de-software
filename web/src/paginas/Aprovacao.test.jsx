@@ -247,3 +247,77 @@ describe("fila de aprovação", () => {
     expect(screen.getByRole("link", { name: "Gerar mensagens" })).toHaveAttribute("href", "/mensagens");
   });
 });
+
+describe("histórico das mensagens decididas (RF40, H64)", () => {
+  const aprovada = mensagem(1, "Beta", {
+    estado: "APROVADA",
+    texto: "Olá, Beta! Texto final do gestor.",
+    editada: true,
+    decidida_por: "Gestora",
+    decidida_em: "2026-09-27T17:05:00Z",
+    contato: "(81) 99999-0000",
+  });
+  const rejeitada = mensagem(2, "Gama", {
+    estado: "REJEITADA",
+    decidida_por: "Gestora",
+    decidida_em: "2026-09-27T17:06:00Z",
+    motivo_rejeicao: "Tom errado",
+  });
+
+  it("as aprovadas trazem quem decidiu, o contato, o texto redigido e copiar o texto, sem botão de decidir", async () => {
+    simularApi({ "GET /api/mensagens": { corpo: pagina([aprovada]) } });
+    const usuario = userEvent.setup();
+    renderizar({ endereco: "/aprovacao?estado=APROVADA" });
+
+    const beta = (await screen.findByRole("heading", { name: "Beta" })).closest("li");
+    expect(screen.getByRole("heading", { name: "Aprovadas" })).toBeInTheDocument();
+    expect(within(beta).getByText(/^Aprovada por Gestora em 27\/09\/2026/)).toBeInTheDocument();
+    expect(within(beta).getByText("Contato: (81) 99999-0000")).toBeInTheDocument();
+    expect(within(beta).getByText("Editada — ver o texto redigido")).toBeInTheDocument();
+    expect(within(beta).queryByRole("button", { name: "Aprovar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(screen.getByText(/prontas para envio: o sistema não envia/)).toBeInTheDocument();
+
+    await usuario.click(within(beta).getByRole("button", { name: "Copiar texto" }));
+    expect(await within(beta).findByRole("button", { name: "Copiado" })).toBeInTheDocument();
+    expect(await navigator.clipboard.readText()).toBe("Olá, Beta! Texto final do gestor.");
+    expect(screen.getByRole("status")).toHaveTextContent("Texto da mensagem para Beta copiado.");
+  });
+
+  it("as rejeitadas trazem o motivo, e não se copiam", async () => {
+    simularApi({ "GET /api/mensagens": { corpo: pagina([rejeitada]) } });
+    renderizar({ endereco: "/aprovacao?estado=REJEITADA" });
+    const gama = (await screen.findByRole("heading", { name: "Gama" })).closest("li");
+    expect(within(gama).getByText(/^Rejeitada por Gestora em .*\. Motivo: Tom errado\.$/)).toBeInTheDocument();
+    expect(within(gama).queryByRole("button", { name: "Copiar texto" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Exportar aprovadas (CSV)" })).not.toBeInTheDocument();
+  });
+
+  it("a vista, o período e a exportação vivem no endereço, e o período some na fila", async () => {
+    const chamadas = simularApi({ "GET /api/mensagens": { corpo: pagina([aprovada]) } });
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByRole("heading", { name: "Beta" });
+    expect(screen.queryByLabelText("Decididas de")).not.toBeInTheDocument();
+
+    await usuario.click(screen.getByRole("radio", { name: "Aprovadas" }));
+    await waitFor(() => expect(chamadas.mock.calls.at(-1)[0]).toContain("estado=APROVADA"));
+    await usuario.type(screen.getByLabelText("Decididas de"), "2026-09-01");
+    await waitFor(() => expect(chamadas.mock.calls.at(-1)[0]).toContain("de=2026-09-01"));
+    expect(screen.getByRole("link", { name: "Exportar aprovadas (CSV)" })).toHaveAttribute(
+      "href",
+      "/api/mensagens/exportacao.csv?de=2026-09-01",
+    );
+
+    await usuario.click(screen.getByRole("radio", { name: "Pendentes" }));
+    await waitFor(() => expect(chamadas.mock.calls.at(-1)[0]).toContain("estado=PENDENTE"));
+    expect(chamadas.mock.calls.at(-1)[0]).not.toContain("de=");
+  });
+
+  it("histórico vazio leva de volta às pendentes", async () => {
+    simularApi({ "GET /api/mensagens": { corpo: pagina([]) } });
+    renderizar({ endereco: "/aprovacao?estado=REJEITADA" });
+    expect(await screen.findByText("Nenhuma mensagem rejeitada neste recorte.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver as pendentes" })).toHaveAttribute("href", "/aprovacao");
+  });
+});
