@@ -20,6 +20,7 @@ import Execucoes from "./paginas/Execucoes";
 import Importacao from "./paginas/Importacao";
 import Login from "./paginas/Login";
 import Mensagens from "./paginas/Mensagens";
+import MeuDesempenho from "./paginas/MeuDesempenho";
 import Modelo from "./paginas/Modelo";
 import Painel from "./paginas/Painel";
 import Parceiro from "./paginas/Parceiro";
@@ -52,6 +53,19 @@ function Protegido({ children }) {
   return children;
 }
 
+/**
+ * A página inicial de cada um. O Parceiro não tem o painel da rede (RF26): o
+ * endereço raiz o leva ao portal dele, em vez de a um painel que a API recusa.
+ */
+function Inicio() {
+  const { usuario } = useSessao();
+  const telas = usuario?.telas ?? [];
+  if (!telas.includes("painel") && telas.includes("meu_desempenho")) {
+    return <Navigate to="/meu-desempenho" replace />;
+  }
+  return <Painel />;
+}
+
 export default function App() {
   return (
     <Routes>
@@ -64,7 +78,7 @@ export default function App() {
           </Protegido>
         }
       >
-        <Route index element={<Painel />} />
+        <Route index element={<Inicio />} />
       </Route>
 
       <Route
@@ -174,6 +188,16 @@ export default function App() {
         }
       >
         <Route path="/aprovacao" element={<Aprovacao />} />
+      </Route>
+
+      <Route
+        element={
+          <Protegido>
+            <Casca titulo="Meu desempenho" />
+          </Protegido>
+        }
+      >
+        <Route path="/meu-desempenho" element={<MeuDesempenho />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

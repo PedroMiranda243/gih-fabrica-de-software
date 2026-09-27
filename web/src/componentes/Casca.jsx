@@ -38,6 +38,8 @@ import {
    Administrador (RF13). */
 const TELAS = [
   { para: "/", rotulo: "Painel", Icone: IconePainel, fim: true, exige: ["painel"] },
+  /* O Parceiro tem só esta: o histórico dele, e nada da rede (RF26, H39). */
+  { para: "/meu-desempenho", rotulo: "Meu desempenho", Icone: IconePainel, exige: ["meu_desempenho"] },
   {
     para: "/importacao",
     rotulo: "Importação",
