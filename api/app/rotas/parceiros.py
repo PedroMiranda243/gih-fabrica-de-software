@@ -16,15 +16,16 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import StreamingResponse
-from sqlalchemy import func, literal, nullslast, or_, select
+from sqlalchemy import func, nullslast, or_, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from app import auditoria, servico_previsao
 from app.auditoria import Acao
 from app.calculos import ticket_medio, variacao_percentual
 from app.db import Sessao
 from app.dependencias import Banco, UsuarioAtual, exigir
+from app.desempenho import ROTULO_SEGMENTO, com_desempenho, recorte
 from app.esquemas import (
     DesempenhoParceiro,
     EdicaoParceiro,
@@ -46,7 +47,6 @@ from app.modelos import (
     OrigemCategoria,
     Parceiro,
     Perfil,
-    Periodo,
     Previsao,
     Segmento,
     StatusComercial,
@@ -68,19 +68,6 @@ TAMANHO_MAXIMO_PAGINA = 200
 # mesmo separador que a importação aceita. Vírgula obrigaria o usuário a passar
 # pelo assistente de importação de texto para abrir o próprio arquivo.
 SEPARADOR_CSV = ";"
-
-# Os rótulos que vão no arquivo. **Precisam bater com `web/src/formato.js`**:
-# o usuário exporta o que está vendo, e ler "EM_RISCO" numa planilha onde a tela
-# dizia "Em risco" faz parecer que são duas coisas diferentes. Não dá para
-# compartilhar a fonte entre Python e JavaScript; dá para deixar o aviso aqui.
-ROTULO_SEGMENTO = {
-    Segmento.TOP: "Top 15",
-    Segmento.EM_ASCENSAO: "Em ascensão",
-    Segmento.EM_RISCO: "Em risco",
-    Segmento.RECEM_CHEGADO: "Recém-chegado",
-    Segmento.PROSPECCAO: "Prospecção",
-    Segmento.ESTAVEL: "Estável",
-}
 
 ROTULO_STATUS = {
     StatusComercial.ATIVO: "Ativo",
@@ -120,87 +107,6 @@ def _para_busca(termo: str) -> str:
     for caractere in ("\\", "%", "_"):
         normalizado = normalizado.replace(caractere, f"\\{caractere}")
     return normalizado
-
-
-def _recorte(s: Session) -> tuple[Periodo | None, Periodo | None]:
-    """O período mais recente e o anterior a ele.
-
-    O desempenho que a lista mostra é sempre o do período mais recente: é a
-    pergunta que o analista traz para esta tela — "quem está como, agora".
-    Percorrer o histórico é trabalho do painel, que tem a série.
-    """
-    alvo = s.scalar(select(Periodo).order_by(Periodo.data_inicio.desc(), Periodo.id.desc()))
-    if alvo is None:
-        return None, None
-    anterior = s.scalar(
-        select(Periodo)
-        .where(Periodo.data_inicio < alvo.data_inicio)
-        .order_by(Periodo.data_inicio.desc(), Periodo.id.desc())
-    )
-    return alvo, anterior
-
-
-def _com_desempenho(s: Session, alvo: Periodo | None, anterior: Periodo | None):
-    """A consulta da lista, com desempenho e segmento — tudo numa junção só.
-
-    **Junções externas nas três.** Parceiro sem métrica no período continua
-    sendo parceiro: sumir com ele faria a tela esconder justamente quem ainda
-    não vendeu, que é quem mais precisa aparecer.
-
-    Devolve também as colunas pelas quais dá para ordenar. O ticket e a variação
-    entram como expressão SQL **para ordenar**, com `NULLIF` nos dois divisores:
-    pedidos zerados e base anterior zerada tornam a divisão indefinida, e
-    `NULLIF` devolve nulo em vez de estourar. Os valores que a resposta
-    **mostra** vêm de `app.calculos`, a mesma fonte do painel.
-    """
-    nulo = literal(None)
-    consulta = select(Parceiro).options(selectinload(Parceiro.categoria))
-    colunas = {
-        "faturamento": nulo,
-        "pedidos": nulo,
-        "anterior": nulo,
-        "ticket_medio": nulo,
-        "variacao": nulo,
-        "segmento": nulo,
-    }
-
-    if alvo is None:
-        return consulta, colunas
-
-    atual = (
-        select(Metrica.parceiro_id, Metrica.faturamento, Metrica.pedidos)
-        .where(Metrica.periodo_id == alvo.id)
-        .subquery("atual")
-    )
-    segmentado = (
-        select(HistoricoSegmento.parceiro_id, HistoricoSegmento.segmento)
-        .where(HistoricoSegmento.periodo_id == alvo.id)
-        .subquery("segmentado")
-    )
-    consulta = consulta.outerjoin(atual, atual.c.parceiro_id == Parceiro.id).outerjoin(
-        segmentado, segmentado.c.parceiro_id == Parceiro.id
-    )
-    colunas |= {
-        "faturamento": atual.c.faturamento,
-        "pedidos": atual.c.pedidos,
-        "ticket_medio": atual.c.faturamento / func.nullif(atual.c.pedidos, 0),
-        "segmento": segmentado.c.segmento,
-    }
-
-    if anterior is not None:
-        passado = (
-            select(Metrica.parceiro_id, Metrica.faturamento.label("antes"))
-            .where(Metrica.periodo_id == anterior.id)
-            .subquery("passado")
-        )
-        consulta = consulta.outerjoin(passado, passado.c.parceiro_id == Parceiro.id)
-        colunas |= {
-            "anterior": passado.c.antes,
-            "variacao": (atual.c.faturamento - passado.c.antes)
-            / func.nullif(passado.c.antes, 0),
-        }
-
-    return consulta, colunas
 
 
 def _filtrar(
@@ -318,8 +224,8 @@ def listar(
     5.000 parceiros e 295 ms com 10.000, a única consulta do painel que crescia
     com o tamanho da base (ver `docs/medicoes/`).
     """
-    alvo, anterior = _recorte(s)
-    consulta, colunas = _com_desempenho(s, alvo, anterior)
+    alvo, anterior = recorte(s)
+    consulta, colunas = com_desempenho(s, alvo, anterior)
     consulta = _filtrar(
         consulta,
         colunas,
@@ -380,8 +286,8 @@ def exportar(
     montar a lista em memória: as linhas saem em lotes, pelo `yield_per`, e o
     gerador entrega cada uma conforme ela chega do banco.
     """
-    alvo, anterior = _recorte(s)
-    consulta, colunas = _com_desempenho(s, alvo, anterior)
+    alvo, anterior = recorte(s)
+    consulta, colunas = com_desempenho(s, alvo, anterior)
     consulta = _filtrar(
         consulta,
         colunas,
@@ -495,8 +401,8 @@ def obter(parceiro_id: int, s: Banco) -> ParceiroComDesempenho:
     faria as duas telas discordarem sobre o mesmo parceiro.
     """
     _buscar(s, parceiro_id)  # 404 com a mesma mensagem de sempre
-    alvo, anterior = _recorte(s)
-    consulta, colunas = _com_desempenho(s, alvo, anterior)
+    alvo, anterior = recorte(s)
+    consulta, colunas = com_desempenho(s, alvo, anterior)
     linha = s.execute(
         consulta.where(Parceiro.id == parceiro_id).add_columns(
             colunas["faturamento"],
