@@ -429,7 +429,17 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 > ações, cota da cauda longa, cotas por categoria e período de aplicação, confirma, e a tela acompanha o
 > cálculo até o resultado — o plano, com as cotas cumpridas, as folgas e a comparação com o plano guloso; ou
 > a campanha inviável, com a restrição e quanto falta (A1). O Analista consulta o plano e o catálogo. O
-> cálculo roda fora da requisição, um por vez (ADR-011). A comparação de cenários (A3) é da Sprint 11.
+> cálculo roda fora da requisição, um por vez (ADR-011).
+>
+> **A comparação de cenários (A3, RF35, Sprint 11 interna, H59).** No histórico das execuções, quem abre o
+> plano — o Gestor e o Analista — marca dois planos calculados e viáveis e pede a comparação
+> (`/execucoes/comparar`). O mais antigo é o plano A, e o mais novo, o B: a diferença é do que veio depois
+> para o que veio antes. A tela mostra, de cima para baixo, os parâmetros dos dois com os que mudaram
+> marcados, o ganho, o custo e as ações de cada um com a diferença, e os parceiros que mudaram de ação ou
+> que só estão num dos planos — os que ficaram iguais, a um clique. Se os dois partiram de previsões
+> diferentes — o modelo treinado de novo entre um e outro —, a tela avisa: o ganho de um mesmo parceiro
+> pode ter mudado por causa da previsão, e não dos parâmetros. O Administrador, que não abre o plano, não
+> compara.
 >
 > **O modo de execução (passo 4, Sprint 10 interna, H55).** O campo "Modo de execução" oferece o
 > automático, o serial, o CPU paralelo e a GPU. Quais existem nesta instalação quem diz é o executável do
