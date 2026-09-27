@@ -10,6 +10,11 @@
  *   vira uma reta de inclinação 1: a GPU, que cresce menos, fica visivelmente
  *   mais deitada que o resto — que é a história do gráfico.
  *
+ * **Desenhado na largura real do painel**, em pixels, e não num tamanho fixo
+ * esticado: esticado, o texto crescia junto, e num monitor largo os rótulos do
+ * gráfico saíam com o dobro do tamanho do resto da tela. A largura muda; a
+ * altura, as margens e as fontes, não.
+ *
  * O eixo dos parceiros é **fixo na faixa do cenário** (RF16): o mesmo tamanho
  * cai sempre no mesmo lugar, de uma execução para outra. O do tempo vai da
  * potência de dez abaixo do menor tempo à potência acima do maior.
@@ -19,23 +24,30 @@
  */
 import { comoInteiro } from "../formato";
 
-export const LARGURA = 720;
-export const ALTURA = 280;
+/* A largura antes de medir — e a do jsdom, que não mede nada. */
+export const LARGURA_PADRAO = 720;
+export const ALTURA = 300;
 
-/* O maior rótulo do eixo do tempo é "100 ms" (6 caracteres de Fira Code, 10 px):
-   36 px, mais a folga até o eixo. À direita, o nome da série no fim da linha:
+/* O maior rótulo do eixo do tempo é "1.000 s" (7 caracteres de Fira Code, 10 px):
+   42 px, mais a folga até o eixo. À direita, o nome da série no fim da linha:
    "C++ serial", em Fira Sans de 11 px, com folga. */
 export const MARGEM = { topo: 14, direita: 88, baixo: 30, esquerda: 52 };
-export const AREA = {
-  largura: LARGURA - MARGEM.esquerda - MARGEM.direita,
-  altura: ALTURA - MARGEM.topo - MARGEM.baixo,
-};
+
+export function larguraDaArea(largura) {
+  return largura - MARGEM.esquerda - MARGEM.direita;
+}
+
+export const ALTURA_DA_AREA = ALTURA - MARGEM.topo - MARGEM.baixo;
 
 export const PARCEIROS = [100, 10_000];
-export const MARCAS_PARCEIROS = [100, 200, 500, 1000, 2000, 5000, 10_000];
+const TODAS_AS_MARCAS = [100, 200, 500, 1000, 2000, 5000, 10_000];
+
+/* "10.000" em Fira Code de 10 px tem 36 px: marcas mais perto que isto se
+   atropelam, e o eixo fica só com as potências de dez. */
+const DISTANCIA_MINIMA_MARCAS = 44;
 
 /* Dois rótulos no fim das linhas mais perto que isto se sobrepõem, na fonte de
-   11 px: o de baixo sai, e a legenda e a dica dizem de quem é a linha. */
+   11 px. */
 export const DISTANCIA_MINIMA_ROTULOS = 13;
 
 /** A posição de `valor` num eixo logarítmico de `[a, b]`, de 0 a 1. */
@@ -68,26 +80,28 @@ export function rotuloDoTempo(segundos) {
   return `${comoInteiro(Math.round(segundos))} s`;
 }
 
-export function xDosParceiros(parceiros) {
-  return MARGEM.esquerda + AREA.largura * fracaoLog(parceiros, PARCEIROS);
+export function xDosParceiros(parceiros, largura = LARGURA_PADRAO) {
+  return MARGEM.esquerda + larguraDaArea(largura) * fracaoLog(parceiros, PARCEIROS);
 }
 
 export function yDoTempo(segundos, dominio) {
-  return MARGEM.topo + AREA.altura * (1 - fracaoLog(segundos, dominio));
+  return MARGEM.topo + ALTURA_DA_AREA * (1 - fracaoLog(segundos, dominio));
+}
+
+/** As marcas do eixo dos parceiros que cabem nesta largura sem se atropelar. */
+export function marcasDosParceiros(largura = LARGURA_PADRAO) {
+  const menorDistancia = larguraDaArea(largura) * fracaoLog(200, [100, 10_000]);
+  return menorDistancia >= DISTANCIA_MINIMA_MARCAS ? TODAS_AS_MARCAS : [100, 1000, 10_000];
 }
 
 /**
- * Os rótulos do fim das linhas que cabem: de cima para baixo, cada um só entra
- * se ficar a `DISTANCIA_MINIMA_ROTULOS` do anterior. Os que não cabem não são
- * empurrados para longe da linha — rótulo descolado da própria linha lê como
- * ruído (skill de visualização); a legenda e a dica cobrem.
+ * Os rótulos do fim das linhas que ficam: só os que não chegam perto de nenhum
+ * outro. Quando dois se encontram, **saem os dois** — o rótulo de um cairia ao
+ * lado da marca do outro e diria o nome errado; empurrá-los descolaria o nome
+ * da linha (skill de visualização). A legenda e a dica cobrem.
  */
 export function rotulosQueCabem(rotulos) {
-  const ordenados = [...rotulos].sort((a, b) => a.y - b.y);
-  const cabem = [];
-  for (const r of ordenados) {
-    const anterior = cabem[cabem.length - 1];
-    if (!anterior || r.y - anterior.y >= DISTANCIA_MINIMA_ROTULOS) cabem.push(r);
-  }
-  return cabem;
+  return rotulos.filter((r) =>
+    rotulos.every((outro) => outro === r || Math.abs(outro.y - r.y) >= DISTANCIA_MINIMA_ROTULOS),
+  );
 }

@@ -13,17 +13,19 @@
  * cor da série: a identidade vem da marca ao lado.
  *
  * SVG desenhado à mão, como a série histórica, pelo mesmo motivo: são poucos
- * pontos, e a rampa do `docs/09` precisa mandar na cor.
+ * pontos, e a rampa do `docs/09` precisa mandar na cor. **Na largura real do
+ * painel**, medida: num tamanho fixo esticado, o texto crescia junto com o
+ * desenho, e num monitor largo ficava com o dobro do tamanho do resto da tela.
  */
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { COLUNAS_BENCHMARK, COR_COLUNA, comoInteiro, comoTempo, ROTULO_COLUNA, TRACO } from "../formato";
 import {
   ALTURA,
-  AREA,
+  ALTURA_DA_AREA,
   dominioDoTempo,
-  LARGURA,
-  MARCAS_PARCEIROS,
+  LARGURA_PADRAO,
+  marcasDosParceiros,
   MARGEM,
   marcasDoTempo,
   PARCEIROS,
@@ -38,13 +40,36 @@ const ORDEM = COLUNAS_BENCHMARK.map(([coluna]) => coluna);
 export default function Escalabilidade({ series, acoes, destaque }) {
   const [emFoco, setEmFoco] = useState(null);
   const [mostrarTabela, setMostrarTabela] = useState(false);
+  const [largura, setLargura] = useState(LARGURA_PADRAO);
+
+  /* A largura do painel, sem o respiro da moldura: medida ao montar — o layout já
+     existe, mesmo com a aba escondida, quando o `ResizeObserver` não avisa — e de
+     novo a cada vez que ela muda. O jsdom dos testes mede zero: fica a padrão. */
+  const moldura = useCallback((elemento) => {
+    if (!elemento) return undefined;
+    const medir = () => {
+      const estilo = getComputedStyle(elemento);
+      const respiro = parseFloat(estilo.paddingLeft) + parseFloat(estilo.paddingRight);
+      const medida = Math.floor(elemento.clientWidth - respiro);
+      if (medida > 0) setLargura(medida);
+    };
+    medir();
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const observador = new ResizeObserver(medir);
+    observador.observe(elemento);
+    return () => observador.disconnect();
+  }, []);
 
   const desenho = useMemo(() => {
     const ordenadas = [...series].sort((a, b) => ORDEM.indexOf(a.coluna) - ORDEM.indexOf(b.coluna));
     const dominio = dominioDoTempo(ordenadas.flatMap((s) => s.pontos.map((p) => p.media_s)));
     const linhas = ordenadas.map((s) => ({
       coluna: s.coluna,
-      pontos: s.pontos.map((p) => ({ ...p, x: xDosParceiros(p.parceiros), y: yDoTempo(p.media_s, dominio) })),
+      pontos: s.pontos.map((p) => ({
+        ...p,
+        x: xDosParceiros(p.parceiros, largura),
+        y: yDoTempo(p.media_s, dominio),
+      })),
     }));
     const tamanhos = [...new Set(ordenadas.flatMap((s) => s.pontos.map((p) => p.parceiros)))].sort((a, b) => a - b);
     const maiorTamanho = tamanhos[tamanhos.length - 1];
@@ -54,27 +79,26 @@ export default function Escalabilidade({ series, acoes, destaque }) {
       .filter((l) => l.pontos.length && l.pontos[l.pontos.length - 1].parceiros === maiorTamanho)
       .map((l) => ({ coluna: l.coluna, ...l.pontos[l.pontos.length - 1] }));
     return { dominio, linhas, tamanhos, rotulos: rotulosQueCabem(finais) };
-  }, [series]);
+  }, [series, largura]);
 
   const { dominio, linhas, tamanhos, rotulos } = desenho;
   const tempoEm = (coluna, parceiros) =>
     linhas.find((l) => l.coluna === coluna)?.pontos.find((p) => p.parceiros === parceiros)?.media_s ?? null;
 
-  /* O mouse chega em pixels da tela; o desenho vive no `viewBox`. A dica vai para
-     o tamanho medido mais perto do cursor. */
+  /* O desenho tem a largura da tela, então o pixel do mouse já é o do desenho. A
+     dica vai para o tamanho medido mais perto do cursor. */
   function aoMover(evento) {
     const caixa = evento.currentTarget.getBoundingClientRect();
-    const x = ((evento.clientX - caixa.left) / caixa.width) * LARGURA;
-    const maisPerto = tamanhos.reduce((melhor, t) =>
-      Math.abs(xDosParceiros(t) - x) < Math.abs(xDosParceiros(melhor) - x) ? t : melhor,
-    );
-    setEmFoco(maisPerto);
+    const x = ((evento.clientX - caixa.left) / caixa.width) * largura;
+    const perto = (t) => Math.abs(xDosParceiros(t, largura) - x);
+    setEmFoco(tamanhos.reduce((melhor, t) => (perto(t) < perto(melhor) ? t : melhor)));
   }
 
-  const base = MARGEM.topo + AREA.altura;
+  const base = MARGEM.topo + ALTURA_DA_AREA;
+  const xDoFoco = emFoco ? xDosParceiros(emFoco, largura) : 0;
 
   return (
-    <div className="grafico__moldura escalabilidade">
+    <div className="grafico__moldura escalabilidade" ref={moldura}>
       <ul className="escalabilidade__legenda" aria-label="Legenda">
         {linhas.map(({ coluna }) => (
           <li key={coluna}>
@@ -89,8 +113,9 @@ export default function Escalabilidade({ series, acoes, destaque }) {
 
       <svg
         className="grafico"
-        viewBox={`0 0 ${LARGURA} ${ALTURA}`}
-        preserveAspectRatio="xMidYMid meet"
+        width={largura}
+        height={ALTURA}
+        viewBox={`0 0 ${largura} ${ALTURA}`}
         role="img"
         aria-label={`Tempo de cada modo pelo número de parceiros, com ${acoes} ações, em escalas logarítmicas. ${
           tamanhos.length
@@ -105,7 +130,7 @@ export default function Escalabilidade({ series, acoes, destaque }) {
           const y = yDoTempo(marca, dominio);
           return (
             <g key={marca}>
-              <line className="grafico__grade" x1={MARGEM.esquerda} y1={y} x2={LARGURA - MARGEM.direita} y2={y} />
+              <line className="grafico__grade" x1={MARGEM.esquerda} y1={y} x2={largura - MARGEM.direita} y2={y} />
               <text className="grafico__eixo" x={MARGEM.esquerda - 8} y={y + 3} textAnchor="end">
                 {rotuloDoTempo(marca)}
               </text>
@@ -113,11 +138,11 @@ export default function Escalabilidade({ series, acoes, destaque }) {
           );
         })}
 
-        {MARCAS_PARCEIROS.map((marca) => (
+        {marcasDosParceiros(largura).map((marca) => (
           <text
             key={marca}
             className="grafico__eixo"
-            x={xDosParceiros(marca)}
+            x={xDosParceiros(marca, largura)}
             y={ALTURA - 12}
             textAnchor={marca === PARCEIROS[0] ? "start" : marca === PARCEIROS[1] ? "end" : "middle"}
           >
@@ -126,7 +151,7 @@ export default function Escalabilidade({ series, acoes, destaque }) {
         ))}
         {/* O nome do eixo na margem direita, na linha das marcas: embaixo do
             "10.000", ele saía do desenho e cobria a marca. */}
-        <text className="grafico__eixo" x={LARGURA - MARGEM.direita + 8} y={ALTURA - 12}>
+        <text className="grafico__eixo" x={largura - MARGEM.direita + 8} y={ALTURA - 12}>
           parceiros
         </text>
 
@@ -134,15 +159,15 @@ export default function Escalabilidade({ series, acoes, destaque }) {
         {destaque && (
           <line
             className="escalabilidade__destaque"
-            x1={xDosParceiros(destaque)}
+            x1={xDosParceiros(destaque, largura)}
             y1={MARGEM.topo}
-            x2={xDosParceiros(destaque)}
+            x2={xDosParceiros(destaque, largura)}
             y2={base}
           />
         )}
 
         {emFoco && (
-          <line className="grafico__cruz" x1={xDosParceiros(emFoco)} y1={MARGEM.topo} x2={xDosParceiros(emFoco)} y2={base} />
+          <line className="grafico__cruz" x1={xDoFoco} y1={MARGEM.topo} x2={xDoFoco} y2={base} />
         )}
 
         {linhas.map(({ coluna, pontos }) => (
@@ -180,9 +205,9 @@ export default function Escalabilidade({ series, acoes, destaque }) {
         <div
           className="grafico__dica"
           style={{
-            left: `calc(${(xDosParceiros(emFoco) / LARGURA) * 100}% ${
-              xDosParceiros(emFoco) > LARGURA * 0.6 ? "- 190px" : "+ 12px"
-            })`,
+            // A moldura tem 16 px de respiro antes do desenho; à direita do meio,
+            // a dica abre para a esquerda do cursor, para não sair do painel.
+            left: xDoFoco > largura * 0.6 ? xDoFoco + 16 - 190 : xDoFoco + 16 + 12,
             // Abaixo da legenda, que ocupa o topo da moldura.
             top: 48,
           }}
