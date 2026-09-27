@@ -48,5 +48,15 @@ class Config(BaseSettings):
     admin_nome: str = "Administrador"
     admin_senha: str = ""
 
+    # ------------------------------------------- modelo de linguagem (ADR-013)
+    # Vazio, o sistema funciona sem ele: as mensagens saem do modelo fixo e o
+    # assistente se declara indisponível. No Compose, aponta para o serviço
+    # `ollama` do perfil `assistente`.
+    ollama_base_url: str = ""
+    llm_model: str = "qwen2.5:7b"
+    # A primeira chamada depois de um tempo parado carrega o modelo do disco
+    # para a placa: 25 s medidos na RTX 4060, e a redação vem depois disso.
+    llm_tempo_limite_s: float = 120
+
 
 config = Config()
