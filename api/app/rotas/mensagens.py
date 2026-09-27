@@ -1,8 +1,13 @@
-"""A geração de mensagens — UC10, RF36 e RF37, história H60.
+"""As mensagens: a geração (UC10, H60) e a fila de aprovação (UC11, H61 a H63).
 
 **Gestor e Analista**, pela matriz do UC10: quem gera a comunicação é o
 Analista, e o Gestor também. O Administrador não: as mensagens falam de
 parceiros e de planos, que ele não abre.
+
+**Decidir é só do Gestor** (RN06, UC11-A4). As rotas de aprovar, editar e
+rejeitar exigem o perfil no servidor, além do Gestor e Analista do roteador; o
+Analista que tentar recebe 403, e a tentativa entra na auditoria pelo próprio
+`exigir`. Ele vê a fila, mas não decide.
 
 **A geração não roda dentro da requisição**, como a otimização: o `POST` grava
 o lote, devolve `202` e gera depois da resposta. A tela acompanha pelo `GET` do
@@ -14,24 +19,46 @@ nasce pendente.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from typing import Annotated
 
-from app import auditoria, redator, servico_mensagens
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, aliased
+
+from app import auditoria, redator, servico_aprovacao, servico_mensagens
+from app.auditoria import Acao
 from app.dependencias import Banco, UsuarioAtual, exigir
 from app.esquemas import (
     MAXIMO_POR_LOTE,
+    AprovacaoEmLote,
+    DecisaoJaRegistrada,
+    EdicaoMensagem,
     EstadoAssistente,
     EstadoGeracao,
     FalhaDoLote,
     FatoMensagem,
     LoteResposta,
     MensagemResposta,
+    PaginaMensagens,
     PreviaPublico,
     PublicoMensagens,
+    RejeicaoMensagem,
+    ResultadoAprovacaoEmLote,
 )
-from app.modelos import AcaoComercial, ItemPlano, LoteMensagens, Mensagem, Parceiro, Perfil, Usuario
+from app.guarda_numerica import numeros_sem_origem
+from app.modelos import (
+    AcaoComercial,
+    Categoria,
+    EstadoMensagem,
+    ItemPlano,
+    LoteMensagens,
+    Mensagem,
+    OrigemCategoria,
+    Parceiro,
+    Perfil,
+    Segmento,
+    Usuario,
+)
 
 router = APIRouter(
     prefix="/api/mensagens",
@@ -47,34 +74,66 @@ def _recusa(recusa: servico_mensagens.MensagensRecusadas) -> HTTPException:
     )
 
 
-def _mensagens(s: Session, lote_id: int) -> list[MensagemResposta]:
-    linhas = s.execute(
-        select(Mensagem, Parceiro.nome, AcaoComercial.nome)
+_DECISOR = aliased(Usuario)
+
+
+def _consulta():
+    """A mensagem com o que a fila mostra dela (UC11, passo 2): o parceiro, a
+    categoria confirmada, a ação do plano e quem decidiu."""
+    return (
+        select(
+            Mensagem,
+            Parceiro.nome,
+            Categoria.nome,
+            Parceiro.origem_categoria,
+            AcaoComercial.nome,
+            _DECISOR.nome,
+        )
         .join(Parceiro, Parceiro.id == Mensagem.parceiro_id)
+        .outerjoin(Categoria, Categoria.id == Parceiro.categoria_id)
         .outerjoin(ItemPlano, ItemPlano.id == Mensagem.item_plano_id)
         .outerjoin(AcaoComercial, AcaoComercial.id == ItemPlano.acao_id)
-        .where(Mensagem.lote_id == lote_id)
-        .order_by(Mensagem.id)
+        .outerjoin(_DECISOR, _DECISOR.id == Mensagem.decidida_por_id)
     )
-    return [
-        MensagemResposta(
-            id=m.id,
-            parceiro_id=m.parceiro_id,
-            parceiro=nome,
-            segmento=m.segmento,
-            acao=acao,
-            texto=m.texto_final or m.texto_gerado,
-            texto_gerado=m.texto_gerado,
-            estado=m.estado,
-            redator=m.redator,
-            modelo=m.modelo,
-            motivo_redator=m.motivo_redator,
-            fatos=[FatoMensagem(**f) for f in m.fatos],
-            lote_id=m.lote_id,
-            gerada_em=m.gerada_em,
-        )
-        for m, nome, acao in linhas
-    ]
+
+
+def _para_resposta(linha) -> MensagemResposta:
+    m, nome, categoria, origem, acao, decisor = linha
+    texto = m.texto_final or m.texto_gerado
+    editada = m.texto_final is not None and m.texto_final != m.texto_gerado
+    return MensagemResposta(
+        id=m.id,
+        parceiro_id=m.parceiro_id,
+        parceiro=nome,
+        segmento=m.segmento,
+        acao=acao,
+        texto=texto,
+        texto_gerado=m.texto_gerado,
+        estado=m.estado,
+        redator=m.redator,
+        modelo=m.modelo,
+        motivo_redator=m.motivo_redator,
+        fatos=[FatoMensagem(**f) for f in m.fatos],
+        lote_id=m.lote_id,
+        gerada_em=m.gerada_em,
+        categoria=categoria if origem == OrigemCategoria.MANUAL else None,
+        editada=editada,
+        # Só o texto do gestor precisa do aviso: o do modelo passou pela guarda, e o
+        # do modelo fixo só tem os números dos fatos.
+        numeros_fora_dos_fatos=numeros_sem_origem(texto, m.fatos) if editada else [],
+        decidida_por=decisor,
+        decidida_em=m.decidida_em,
+        motivo_rejeicao=m.motivo_rejeicao,
+    )
+
+
+def _uma(s: Session, mensagem_id: int) -> MensagemResposta:
+    return _para_resposta(s.execute(_consulta().where(Mensagem.id == mensagem_id)).one())
+
+
+def _mensagens(s: Session, lote_id: int) -> list[MensagemResposta]:
+    linhas = s.execute(_consulta().where(Mensagem.lote_id == lote_id).order_by(Mensagem.id))
+    return [_para_resposta(linha) for linha in linhas]
 
 
 def _resposta(
@@ -189,3 +248,174 @@ def refazer(
         usuario_id=autor.id,
     )
     return _resposta(s, lote)
+
+
+# --------------------------------------------------------- a fila (UC11, H61)
+@router.get("", response_model=PaginaMensagens)
+def listar(
+    s: Banco,
+    estado: Annotated[EstadoMensagem, Query(description="A fila são as pendentes.")] = (
+        EstadoMensagem.PENDENTE
+    ),
+    segmento: Annotated[
+        Segmento | None, Query(description="O segmento do parceiro quando a mensagem foi gerada.")
+    ] = None,
+    lote_id: Annotated[int | None, Query(description="As mensagens de uma geração.")] = None,
+    pagina: Annotated[int, Query(ge=1)] = 1,
+    tamanho: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> PaginaMensagens:
+    """As mensagens de um estado (UC11, passos 1 e 2).
+
+    As pendentes vêm da mais antiga para a mais nova: é a ordem em que chegaram à
+    fila, e a próxima a decidir é a primeira (passo 6). As decididas, da decisão
+    mais recente para a mais antiga.
+    """
+    filtros = [Mensagem.estado == estado]
+    if segmento is not None:
+        filtros.append(Mensagem.segmento == segmento)
+    if lote_id is not None:
+        filtros.append(Mensagem.lote_id == lote_id)
+    total = s.scalar(select(func.count()).select_from(Mensagem).where(*filtros))
+    ordem = (
+        (Mensagem.id.asc(),)
+        if estado == EstadoMensagem.PENDENTE
+        else (Mensagem.decidida_em.desc(), Mensagem.id.desc())
+    )
+    linhas = s.execute(
+        _consulta().where(*filtros).order_by(*ordem).offset((pagina - 1) * tamanho).limit(tamanho)
+    )
+    return PaginaMensagens(
+        itens=[_para_resposta(linha) for linha in linhas],
+        total=total,
+        pagina=pagina,
+        tamanho=tamanho,
+    )
+
+
+# -------------------------------------------------- a decisão (UC11, H62, H63)
+def _recusa_da_decisao(recusa: servico_aprovacao.DecisaoRecusada) -> HTTPException:
+    return HTTPException(
+        status_code=recusa.status,
+        detail={"erro": recusa.erro, "ajuda": recusa.ajuda, **recusa.extra},
+    )
+
+
+SO_GESTOR = [Depends(exigir(Perfil.GESTOR))]
+
+
+@router.post(
+    "/aprovacao-em-lote", response_model=ResultadoAprovacaoEmLote, dependencies=SO_GESTOR
+)
+def aprovar_em_lote(
+    pedido: AprovacaoEmLote, request: Request, s: Banco, autor: UsuarioAtual
+) -> ResultadoAprovacaoEmLote:
+    """Aprova as pendentes selecionadas (UC11-A3). Cada uma registra a própria decisão,
+    com autor e data, e entra na auditoria uma a uma; a que outra pessoa decidiu no
+    meio fica como estava, e a resposta diz qual."""
+    resultado = servico_aprovacao.aprovar_em_lote(s, pedido.ids, usuario_id=autor.id)
+    s.flush()
+    origem = auditoria.origem_de(request)
+    parceiros = dict(
+        s.execute(
+            select(Mensagem.id, Mensagem.parceiro_id).where(Mensagem.id.in_(resultado.aprovadas))
+        ).all()
+    )
+    for mensagem_id in resultado.aprovadas:
+        auditoria.registrar(
+            Acao.MENSAGEM_APROVADA,
+            usuario_id=autor.id,
+            detalhes={"mensagem": mensagem_id, "parceiro": parceiros[mensagem_id], "em_lote": True},
+            origem=origem,
+        )
+    return ResultadoAprovacaoEmLote(
+        aprovadas=resultado.aprovadas,
+        ja_decididas=[
+            DecisaoJaRegistrada(
+                mensagem_id=d.mensagem_id,
+                estado=d.estado,
+                decidida_por=d.decidida_por,
+                decidida_em=d.decidida_em,
+            )
+            for d in resultado.ja_decididas
+        ],
+        nao_encontradas=resultado.nao_encontradas,
+    )
+
+
+@router.post("/{mensagem_id}/aprovacao", response_model=MensagemResposta, dependencies=SO_GESTOR)
+def aprovar(mensagem_id: int, request: Request, s: Banco, autor: UsuarioAtual) -> MensagemResposta:
+    """Aprova a mensagem (UC11, passos 4 e 5): ela fica pronta para envio, com o texto
+    editado, se houve edição. Recusa com `409` a que outra pessoa já decidiu (E1)."""
+    try:
+        mensagem = servico_aprovacao.aprovar(s, mensagem_id, usuario_id=autor.id)
+    except servico_aprovacao.DecisaoRecusada as recusa:
+        raise _recusa_da_decisao(recusa) from None
+    s.flush()
+    resposta = _uma(s, mensagem_id)
+    auditoria.registrar(
+        Acao.MENSAGEM_APROVADA,
+        usuario_id=autor.id,
+        detalhes={
+            "mensagem": mensagem.id,
+            "parceiro": mensagem.parceiro_id,
+            "editada": resposta.editada,
+        },
+        origem=auditoria.origem_de(request),
+    )
+    return resposta
+
+
+@router.post("/{mensagem_id}/edicao", response_model=MensagemResposta, dependencies=SO_GESTOR)
+def editar(
+    mensagem_id: int, pedido: EdicaoMensagem, request: Request, s: Banco, autor: UsuarioAtual
+) -> MensagemResposta:
+    """Troca o texto de uma mensagem pendente (UC11-A1). Ela continua pendente: a
+    edição não aprova. O texto redigido fica guardado para a auditoria, e a resposta
+    aponta os números do texto novo que não vieram dos dados."""
+    try:
+        servico_aprovacao.editar(s, mensagem_id, pedido.texto)
+    except servico_aprovacao.DecisaoRecusada as recusa:
+        raise _recusa_da_decisao(recusa) from None
+    s.flush()
+    resposta = _uma(s, mensagem_id)
+    auditoria.registrar(
+        Acao.MENSAGEM_EDITADA,
+        usuario_id=autor.id,
+        detalhes={
+            "mensagem": mensagem_id,
+            "parceiro": resposta.parceiro_id,
+            "numeros_fora_dos_fatos": resposta.numeros_fora_dos_fatos,
+        },
+        origem=auditoria.origem_de(request),
+    )
+    return resposta
+
+
+@router.post("/{mensagem_id}/rejeicao", response_model=MensagemResposta, dependencies=SO_GESTOR)
+def rejeitar(
+    mensagem_id: int,
+    pedido: RejeicaoMensagem,
+    request: Request,
+    s: Banco,
+    autor: UsuarioAtual,
+) -> MensagemResposta:
+    """Rejeita a mensagem, com o motivo, se houver (UC11-A2). Recusa com `409` a que
+    outra pessoa já decidiu (E1)."""
+    try:
+        mensagem = servico_aprovacao.rejeitar(
+            s, mensagem_id, usuario_id=autor.id, motivo=pedido.motivo
+        )
+    except servico_aprovacao.DecisaoRecusada as recusa:
+        raise _recusa_da_decisao(recusa) from None
+    s.flush()
+    auditoria.registrar(
+        Acao.MENSAGEM_REJEITADA,
+        usuario_id=autor.id,
+        detalhes={
+            "mensagem": mensagem.id,
+            "parceiro": mensagem.parceiro_id,
+            "motivo": mensagem.motivo_rejeicao,
+        },
+        origem=auditoria.origem_de(request),
+    )
+    return _uma(s, mensagem_id)

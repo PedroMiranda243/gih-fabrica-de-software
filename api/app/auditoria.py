@@ -73,6 +73,11 @@ class Acao(enum.StrEnum):
     # UC10, H60: a geração de mensagens, com quantas e quem redigiu.
     MENSAGENS_GERADAS = "MENSAGENS_GERADAS"
     MENSAGENS_FALHARAM = "MENSAGENS_FALHARAM"
+    # UC11, H62: cada decisão, e cada edição, com a mensagem e o parceiro. A aprovação
+    # em lote registra uma por mensagem (A3).
+    MENSAGEM_APROVADA = "MENSAGEM_APROVADA"
+    MENSAGEM_EDITADA = "MENSAGEM_EDITADA"
+    MENSAGEM_REJEITADA = "MENSAGEM_REJEITADA"
 
 
 # Chaves que nunca podem entrar em `detalhes`. A trilha é consultável por
