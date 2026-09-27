@@ -18,6 +18,7 @@ import Execucao from "./paginas/Execucao";
 import Execucoes from "./paginas/Execucoes";
 import Importacao from "./paginas/Importacao";
 import Login from "./paginas/Login";
+import Mensagens from "./paginas/Mensagens";
 import Modelo from "./paginas/Modelo";
 import Painel from "./paginas/Painel";
 import Parceiro from "./paginas/Parceiro";
@@ -152,6 +153,16 @@ export default function App() {
         }
       >
         <Route path="/benchmark" element={<Benchmark />} />
+      </Route>
+
+      <Route
+        element={
+          <Protegido>
+            <Casca titulo="Mensagens" />
+          </Protegido>
+        }
+      >
+        <Route path="/mensagens" element={<Mensagens />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

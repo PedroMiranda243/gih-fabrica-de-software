@@ -1,0 +1,354 @@
+/* Tela de mensagens (UC10, H60): o público, a prévia de quem entra, e as
+   mensagens aparecendo conforme ficam prontas. O cartão da mensagem segue o
+   protótipo aprovado da aprovação (H08): ponto do segmento, nome em peso alto,
+   etiquetas neutras e o texto num quadro. */
+
+.mensagens__corpo {
+  padding: var(--esp-16);
+}
+
+.mensagens__publico {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-16);
+}
+
+.mensagens__campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--esp-16);
+  align-items: start;
+  max-width: 720px;
+}
+
+.mensagens__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--esp-12);
+}
+
+.mensagens__nota {
+  margin: 0;
+  font-size: var(--txt-13);
+  color: var(--ink-2);
+}
+
+.mensagens__subtitulo {
+  margin: 0 0 var(--esp-8);
+  font-size: var(--txt-13);
+  font-weight: var(--peso-rotulo);
+  color: var(--ink);
+}
+
+.mensagens__fora {
+  margin: 0 0 var(--esp-12);
+  font-size: var(--txt-13);
+  color: var(--ink-2);
+}
+
+/* --------------------------------------------------------- o tipo de público */
+/* Três opções que se excluem: rádio de verdade, com legenda, e não abas — o
+   leitor de tela anuncia "1 de 3", e as setas trocam de opção. */
+.escolha {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.escolha__legenda {
+  margin-bottom: var(--esp-8);
+  padding: 0;
+  font-size: var(--txt-13);
+  font-weight: var(--peso-rotulo);
+  color: var(--ink);
+}
+
+.escolha__opcoes {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--border);
+  border-radius: var(--raio-controle);
+  background: var(--surface-2);
+  padding: 3px;
+  gap: 3px;
+}
+
+.escolha__opcao {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--esp-12);
+  border-radius: 4px;
+  font-size: var(--txt-13);
+  font-weight: var(--peso-rotulo);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background var(--transicao), color var(--transicao);
+}
+
+/* O rádio fica sobre a opção inteira, invisível: o clique em qualquer ponto
+   escolhe, e o foco do teclado continua sendo o do rádio. */
+.escolha__opcao input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.escolha__opcao:has(input:checked) {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.escolha__opcao:has(input:focus-visible) {
+  outline: 2px solid var(--acao);
+  outline-offset: 1px;
+}
+
+/* ---------------------------------------------------------- a seleção manual */
+.selecao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-12);
+  max-width: 560px;
+}
+
+.selecao__resultados,
+.selecao__escolhidos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.selecao__resultados {
+  border: 1px solid var(--border);
+  border-radius: var(--raio-controle);
+}
+
+.selecao__resultados li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-12);
+  padding: var(--esp-4) var(--esp-4) var(--esp-4) var(--esp-12);
+}
+
+.selecao__resultados li + li {
+  border-top: 1px solid var(--border);
+}
+
+.selecao__nome {
+  font-weight: var(--peso-nome);
+  color: var(--ink);
+}
+
+.selecao__nada {
+  margin: 0;
+  font-size: var(--txt-13);
+  color: var(--ink-2);
+}
+
+.selecao__escolhidos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-6);
+}
+
+.selecao__escolhidos li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-4);
+  padding-left: var(--esp-12);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-controle);
+  background: var(--surface-2);
+  font-size: var(--txt-13);
+  color: var(--ink);
+}
+
+.selecao__remover {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 44 px: o alvo de toque mínimo, mesmo num botão de um caractere (docs/09). */
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  font-size: var(--txt-19);
+  line-height: 1;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.selecao__remover:hover {
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------------- o lote */
+.mensagens__andamento {
+  margin-bottom: var(--esp-12);
+}
+
+/* Uma frase, e não uma coluna: fica na fonte da interface, com os dígitos de
+   largura fixa para a contagem não tremer a cada mensagem que chega. */
+.mensagens__contagem {
+  margin: 0;
+  font-size: var(--txt-13);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.mensagens__barra {
+  display: block;
+  width: 100%;
+  height: 4px;
+  margin: var(--esp-8) 0;
+  border: 0;
+  border-radius: 2px;
+  background: var(--surface-2);
+  appearance: none;
+}
+
+.mensagens__barra::-webkit-progress-bar {
+  border-radius: 2px;
+  background: var(--surface-2);
+}
+
+.mensagens__barra::-webkit-progress-value {
+  border-radius: 2px;
+  background: var(--ink-3);
+}
+
+.mensagens__barra::-moz-progress-bar {
+  border-radius: 2px;
+  background: var(--ink-3);
+}
+
+.mensagens__falhas {
+  margin: var(--esp-8) 0;
+  padding-left: var(--esp-20);
+  font-size: var(--txt-13);
+  color: var(--ink-2);
+}
+
+.mensagens__falha-nome {
+  font-weight: var(--peso-nome);
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------- a mensagem */
+.mensagens__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-12);
+  margin: 0;
+  padding: 0 var(--esp-16) var(--esp-16);
+  list-style: none;
+}
+
+.mensagem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-8);
+  padding: var(--esp-12) var(--esp-16);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-painel);
+  background: var(--surface);
+  /* A mensagem que chega entra devagar: é a revelação progressiva (UC10-A1). */
+  animation: mensagem-chega var(--transicao) both;
+}
+
+@keyframes mensagem-chega {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mensagem {
+    animation: none;
+  }
+}
+
+.mensagem__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--esp-8);
+}
+
+/* O nome é o único elemento em peso alto e tinta cheia (regra 1.2 do docs/09). */
+.mensagem__parceiro {
+  font-weight: var(--peso-nome);
+  color: var(--ink);
+}
+
+.mensagem__etiqueta {
+  padding: 2px var(--esp-8);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+}
+
+/* Quem redigiu: texto, e não cor — as duas origens são corretas (ADR-013). */
+.mensagem__redator {
+  margin-left: auto;
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+}
+
+.mensagem__texto {
+  margin: 0;
+  padding: var(--esp-12);
+  max-width: 80ch;
+  border: 1px solid var(--border);
+  border-radius: var(--raio-controle);
+  background: var(--surface-2);
+  font-size: var(--txt-14);
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.mensagem__motivo {
+  margin: 0;
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+}
+
+.mensagem__fatos summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.mensagem__fatos dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--esp-4) var(--esp-16);
+  margin: var(--esp-6) 0 0;
+  font-size: var(--txt-12);
+}
+
+.mensagem__fatos dl > div {
+  display: contents;
+}
+
+.mensagem__fatos dt {
+  color: var(--ink-2);
+}
+
+.mensagem__fatos dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}

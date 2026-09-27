@@ -6,7 +6,10 @@
  * Mora em `componentes/` porque duas telas o mostram do mesmo jeito: a Campanha,
  * com o último plano, e a execução aberta pelo histórico (H58).
  */
+import { useContext } from "react";
 import { Link } from "react-router-dom";
+
+import { ContextoSessao } from "../api/contextoSessao";
 
 import {
   comoDataHora,
@@ -23,6 +26,10 @@ import Segmento from "./Segmento";
 import "../estilos/campanha.css";
 
 export default function PlanoDeCampanha({ execucao }) {
+  /* Quem gera mensagens vem da API (`usuario.telas`), como o menu. Lido direto do
+     contexto, e não por `useSessao`: o plano também aparece fora da casca. */
+  const sessao = useContext(ContextoSessao);
+  const geraMensagens = Boolean(sessao?.usuario?.telas?.includes("mensagens"));
   if (execucao.situacao === "FALHOU") {
     return (
       <div className="aviso" role="alert">
@@ -107,6 +114,13 @@ export default function PlanoDeCampanha({ execucao }) {
           </dd>
         </dl>
         <Cotas cotas={execucao.cotas} />
+        {geraMensagens && execucao.itens?.length > 0 && (
+          <div>
+            <Link className="botao botao--secundario" to={`/mensagens?plano=${execucao.id}`}>
+              Gerar mensagens para este plano
+            </Link>
+          </div>
+        )}
       </div>
 
       {execucao.itens?.length ? (
