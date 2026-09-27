@@ -675,6 +675,14 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 > aprova em lote, com uma confirmação que diz quantas (A3). A decisão que chegou tarde mostra quem decidiu,
 > e a fila se atualiza (E1). O Analista vê a mesma fila, sem caixa de seleção e sem botão (A4). A geração
 > leva à fila só das mensagens dela, e a fila vazia leva de volta à geração.
+>
+> **O histórico (RF40, Sprint 12 interna, H64)** é a mesma tela, nas vistas **Aprovadas** e **Rejeitadas**:
+> quem decidiu, quando, o conteúdo final, o texto redigido quando houve edição e o motivo da rejeição, da
+> decisão mais recente para a mais antiga, filtráveis por segmento e pelo dia da decisão. É do Gestor e do
+> Analista, como a matriz do RF40 pede. As aprovadas estão **prontas para envio, e quem envia é uma pessoa**
+> (ADR-013): cada uma traz o contato do parceiro e "Copiar texto", e a exportação em CSV leva as aprovadas do
+> recorte, com o contato, o texto final, quem aprovou e quando. Todo texto do arquivo passa pela proteção
+> contra fórmula (H70) — o do modelo e o do gestor também.
 
 ---
 

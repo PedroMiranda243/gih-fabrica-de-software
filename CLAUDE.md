@@ -340,8 +340,10 @@ frente com alguma, a resposta já está aqui.
 
 - **O CSV exportado vai para a planilha, e a planilha executa fórmula.** Um parceiro cadastrado como
   `=HYPERLINK(...)` vira link na planilha de quem exporta (injeção de CSV). Toda coluna de texto do usuário
-  passa por `_texto` em `rotas/parceiros.py`, que põe um apóstrofo na frente de `=`, `+`, `-`, `@`; as de
-  número, não — a variação negativa precisa continuar somável. Exportação nova faz o mesmo (H70).
+  passa por `planilha.texto` (`app/planilha.py`), que põe um apóstrofo na frente de `=`, `+`, `-`, `@`; as
+  de número, não — a variação negativa precisa continuar somável. O texto das mensagens também passa: vem do
+  modelo ou do gestor. Exportação nova usa `planilha.gerar`, que já traz o separador, o BOM e a sessão própria
+  (H70, H64).
 
 ### Desempenho
 

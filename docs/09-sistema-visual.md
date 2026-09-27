@@ -263,6 +263,7 @@ flowchart TD
     Parceiros -- "nome do parceiro" --> Cadastro
     Parceiros -- "novo parceiro" --> Novo
     Parceiros -- "exportar" --> CSV
+    Aprovacao -- "aprovadas: exportar" --> CSV
     Novo -- "cadastrar" --> Cadastro
     Cadastro -- "nome em uso:<br/>abrir o existente" --> Cadastro
     Cadastro -- "voltar, com o<br/>mesmo filtro" --> Parceiros
