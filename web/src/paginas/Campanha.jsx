@@ -237,7 +237,7 @@ export default function Campanha() {
       {estado.ultima && (
         <p className="campanha__historico">
           <Link to="/execucoes">Ver as execuções anteriores</Link>, com quem calculou, os parâmetros e o
-          resultado de cada uma.
+          resultado de cada uma — e comparar dois planos lado a lado.
         </p>
       )}
 

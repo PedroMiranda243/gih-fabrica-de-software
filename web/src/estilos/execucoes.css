@@ -25,3 +25,67 @@
   color: var(--ink-2);
   font-size: var(--txt-12);
 }
+
+/* ------------------------------------------------------ a comparação (H59) */
+/* A escolha de dois planos no histórico: a barra fica acima da tabela, e diz
+   quantos faltam antes de o botão valer. */
+.execucoes__escolha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--esp-12);
+  padding: var(--esp-12) var(--esp-16);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--txt-13);
+  color: var(--ink-2);
+}
+
+.execucoes__marcar {
+  width: 1px;
+  white-space: nowrap;
+}
+
+.execucoes__marcar input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--acao);
+}
+
+.comparacao__tabela th[scope="row"] {
+  color: var(--ink-2);
+  font-weight: var(--peso-corpo);
+  white-space: nowrap;
+}
+
+.comparacao__quando {
+  display: block;
+  font-weight: var(--peso-corpo);
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink-2);
+}
+
+/* O parâmetro que mudou: a linha em tinta cheia e peso de nome, e a palavra
+   "mudou" ao lado — a diferença não depende de cor nenhuma. */
+.comparacao__mudou th[scope="row"],
+.comparacao__mudou td {
+  color: var(--ink);
+  font-weight: var(--peso-nome);
+}
+
+.comparacao__marca {
+  display: inline-block;
+  margin-left: var(--esp-8);
+  padding: 0 var(--esp-6);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-controle);
+  font-size: var(--txt-11);
+  font-weight: var(--peso-rotulo);
+  color: var(--ink);
+}
+
+.comparacao__diferenca {
+  color: var(--ink);
+  font-weight: var(--peso-nome);
+}

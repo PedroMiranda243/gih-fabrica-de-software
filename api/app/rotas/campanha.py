@@ -18,7 +18,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app import auditoria, servico_otimizacao, servico_previsao
+from app import auditoria, servico_comparacao, servico_otimizacao, servico_previsao
 from app.auditoria import Acao
 from app.dependencias import Banco, UsuarioAtual, exigir
 from app.esquemas import (
@@ -26,6 +26,7 @@ from app.esquemas import (
     AcaoComercialEntrada,
     AcaoComercialResposta,
     CategoriaCampanha,
+    ComparacaoPlanos,
     CotaEmContagem,
     EstadoCampanha,
     ExcluidosCampanha,
@@ -48,6 +49,7 @@ from app.modelos import (
     Perfil,
     Periodo,
     PlanoCampanha,
+    SituacaoExecucao,
     Usuario,
 )
 from app.servico_segmentacao import limiares_vigentes
@@ -277,6 +279,54 @@ def listar(
     )
     return PaginaExecucoes(
         itens=[_resposta(s, e) for e in execucoes], total=total, pagina=pagina, tamanho=tamanho
+    )
+
+
+def _plano_para_comparar(s: Session, execucao_id: int) -> ExecucaoOtimizador:
+    execucao = s.get(ExecucaoOtimizador, execucao_id)
+    if execucao is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Otimização não encontrada.")
+    if execucao.situacao != SituacaoExecucao.CONCLUIDA or not execucao.viavel:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "erro": "Esta execução não tem plano para comparar.",
+                "ajuda": "Só se comparam planos calculados e viáveis: escolha outra no histórico.",
+                "execucao": execucao_id,
+            },
+        )
+    return execucao
+
+
+@router.get("/otimizacoes/comparacao", response_model=ComparacaoPlanos)
+def comparar(
+    s: Banco,
+    a: int = Query(description="O primeiro plano: a base da comparação."),
+    b: int = Query(description="O segundo plano: as diferenças são dele para o primeiro."),
+) -> ComparacaoPlanos:
+    """Dois planos lado a lado, com o que difere (RF35, UC08-A3, H59).
+
+    **Declarada antes de `/otimizacoes/{execucao_id}`**, pelo mesmo motivo da
+    exportação de parceiros: o FastAPI casa as rotas na ordem, e "comparacao"
+    entraria como número de execução, devolvendo 422.
+
+    Do Gestor e do Analista, como abrir um plano: a comparação mostra os dois
+    planos inteiros. Só planos concluídos e viáveis se comparam.
+    """
+    if a == b:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "erro": "Escolha dois planos diferentes.",
+                "ajuda": "A comparação é de um plano com outro, calculado com outros parâmetros.",
+            },
+        )
+    ea, eb = _plano_para_comparar(s, a), _plano_para_comparar(s, b)
+    return servico_comparacao.comparar(
+        _resposta(s, ea, com_itens=True),
+        _resposta(s, eb, com_itens=True),
+        mesmas_previsoes=(ea.modelo_versao, ea.periodo_base_id)
+        == (eb.modelo_versao, eb.periodo_base_id),
     )
 
 

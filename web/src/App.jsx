@@ -12,6 +12,7 @@ import Casca from "./componentes/Casca";
 import Carregando from "./componentes/Carregando";
 import Benchmark from "./paginas/Benchmark";
 import Campanha from "./paginas/Campanha";
+import Comparacao from "./paginas/Comparacao";
 import Configuracao from "./paginas/Configuracao";
 import Execucao from "./paginas/Execucao";
 import Execucoes from "./paginas/Execucoes";
@@ -139,6 +140,7 @@ export default function App() {
         }
       >
         <Route path="/execucoes" element={<Execucoes />} />
+        <Route path="/execucoes/comparar" element={<Comparacao />} />
         <Route path="/execucoes/:id" element={<Execucao />} />
       </Route>
 

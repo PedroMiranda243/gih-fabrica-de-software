@@ -243,6 +243,24 @@ export const ROTULO_MODO = Object.fromEntries(MODOS_DE_EXECUCAO.map(([modo, rotu
 export const NOME_MODO = Object.fromEntries(MODOS_DE_EXECUCAO.map(([modo, , nome]) => [modo, nome]));
 
 /**
+ * As cotas por categoria que o gestor pediu, em texto: "Pizzaria: mín. 10%, máx. 40%".
+ * O nome da categoria vem das cotas da execução; a categoria removida depois fica
+ * pelo número.
+ */
+export function cotasDoPedido(execucao) {
+  const nomes = Object.fromEntries(
+    (execucao.cotas ?? []).filter((c) => c.categoria_id !== null).map((c) => [c.categoria_id, c.nome]),
+  );
+  return execucao.parametros.cotas_categoria.map((c) => {
+    const limites = [
+      c.minimo !== null && c.minimo !== undefined && `mín. ${comoFracao(c.minimo, 0)}`,
+      c.maximo !== null && c.maximo !== undefined && `máx. ${comoFracao(c.maximo, 0)}`,
+    ].filter(Boolean);
+    return `${nomes[c.categoria_id] ?? `categoria ${c.categoria_id}`}: ${limites.join(", ")}`;
+  });
+}
+
+/**
  * A restrição que tornou a campanha inviável (RN07), pelo código da API — em
  * poucas palavras, para caber numa linha do histórico. A frase inteira, com o
  * quanto falta, vem da API no `motivo`.
