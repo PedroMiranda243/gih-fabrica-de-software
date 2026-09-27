@@ -76,7 +76,7 @@ Duas consequências práticas dessa divisão:
 | Migrações | **Alembic** | Esquema versionado e reproduzível |
 | Interface | **React + Vite** | Recomendado pela disciplina; separação clara de responsabilidade no time |
 | Gráficos | **Recharts** | Integra com React sem dependência pesada |
-| Assistente | **LLM local via Ollama** | Executa na máquina; papel restrito à redação |
+| Assistente | **LLM local via Ollama** (`qwen2.5:7b`, Apache 2.0) | Executa na máquina; papel restrito à redação, e opcional (ADR-013) |
 | Testes | **pytest** e **Vitest** | Cobertura do núcleo e da interface |
 | Empacotamento | **Docker Compose** | Ambiente reproduzível com um comando |
 | Versionamento | **Git + GitHub** | Issues, Projects, Pull Requests e Actions |
@@ -784,6 +784,88 @@ spike da issue #123 mediu se o mesmo código compila em Linux e roda **dentro da
   quatro modos: com 2.000 parceiros, o Python levou 25,5 s, o C++ serial 314 ms, o OpenMP 53 ms e a GPU
   228 ms — 112x o Python; com 10.000, a GPU (245 ms) passou o OpenMP (256 ms), como o adendo H54c previa.
 
+### ADR-013 — O modelo de linguagem é local, opcional e não escreve número sem origem
+
+**Status:** Decidido
+**Data:** 27/09/2026
+
+**Situação:** a central de comunicação (H60 a H64) redige mensagens, e o assistente (H65 a H68) responde a
+perguntas. Os dois precisam de um modelo de linguagem, e a regra 2.8 o quer local, pelo Ollama. Três
+perguntas precisavam de resposta antes da primeira tela:
+
+- onde o modelo roda;
+- o que o sistema faz sem ele;
+- como se garante que ele não inventa número (RN08). Instrução no texto do pedido não garante.
+
+Uma sonda contra o `qwen2.5:7b`, na RTX 4060, mediu o que segue (issue #154).
+
+**Alternativas — o modelo:**
+
+| Opção | Avaliação |
+|---|---|
+| **`qwen2.5:7b`** | **Escolhido.** Apache 2.0. Ocupa 4,4 GiB da placa de 8 GB, e o otimizador cabe junto. Com o modelo carregado, de 2 a 4 s por mensagem. A saída por esquema JSON funciona |
+| `qwen2.5:14b` | 9 GB: não cabe na placa, e uma parte rodaria na CPU |
+| `llama3` (8B) | A licença da Meta restringe o uso: não é MIT, Apache nem BSD (regra 2.8) |
+
+**Alternativas — onde roda:**
+
+| Opção | Avaliação |
+|---|---|
+| **No Compose, num perfil (`assistente`)** | **Escolhida.** Opcional como a GPU: sem o perfil, a imagem nem é baixada. Com o `docker-compose.gpu.yml`, a placa é reservada também para ele |
+| Num arquivo à parte, como o da GPU | Era o plano. A reserva da placa não pode ser condicional num arquivo só: o arquivo do assistente ou exigiria placa NVIDIA, ou nunca a usaria. Com o perfil, o arquivo da GPU cobre os dois |
+| Só o Ollama instalado na máquina | Sai do "sobe com um comando" (RNF07). Continua possível no desenvolvimento, por `OLLAMA_BASE_URL` |
+
+**Decisão:**
+
+- **O modelo é opcional, e o sistema não depende dele** (RNF06, H72). O endereço vem de `OLLAMA_BASE_URL`.
+  Sem resposta ou sem o modelo baixado, o redator diz por quê (`estado()`), e quem chama segue sem ele:
+  - as mensagens saem do **modelo fixo**: textos por segmento, escritos pela equipe, com os mesmos fatos. A
+    mensagem registra que saiu sem o assistente;
+  - o assistente se declara indisponível (UC12-E1), e o painel segue.
+- **O modelo faz duas coisas, e só elas** (`app/redator.py`):
+  - `redigir`: texto em volta de fatos já apurados pelo código;
+  - `extrair`: os campos de uma pergunta, num JSON com esquema que o código valida. Quem responde é o código.
+- **A guarda numérica é a RN08 como código** (`app/guarda_numerica.py`). Ela lê o texto pronto e aponta todo
+  número que os fatos não sustentam:
+  - algarismos, reais, percentuais, datas e ordinais;
+  - número por extenso;
+  - comparações ("dobro", "metade"), que são conta.
+
+  A comparação é exata: `13%` não é `12,8%`. Texto com número sem origem não chega à tela: sai o modelo
+  fixo, com o motivo registrado.
+- **Temperatura zero e semente fixa**, para o texto variar o mínimo. Não é garantia: no contêiner, duas
+  chamadas seguidas com os mesmos fatos deram frases diferentes. Nada depende de o texto se repetir; o que se
+  repete são os números, e quem garante é a guarda.
+- **Nenhum envio.** Aprovada, a mensagem fica "pronta para envio", e a tela oferece copiar e exportar. Enviar
+  por e-mail ou WhatsApp é serviço externo: fora do escopo e da regra 2.8.
+- **A porta do Ollama não é publicada no host.** Ele não tem autenticação; a API o alcança pela rede do
+  Compose.
+- **O modelo fica carregado pelo tempo padrão do Ollama, 5 min.** O plano era descarregá-lo logo, para não
+  disputar a memória da placa com o otimizador. A medição desfez o motivo: o modelo ocupa 4,4 GiB, e o
+  otimizador, poucos MB. A disputa que importa é de processamento, durante o benchmark. Por isso a geração de
+  mensagens em curso vai marcar a medição como disputada, como a otimização já marca (H57, H60).
+
+**Consequências:**
+
+- **A primeira chamada paga o carregamento.** Ela levou 47 s no Ollama do Windows e 42 s no contêiner, com
+  a placa reservada; 25 s são para levar o modelo do disco à placa. Carregado, o modelo leva de 2 a 4 s por
+  mensagem. O limite de tempo do redator é de 120 s, e a tela precisa dizer que o modelo está sendo carregado.
+- **O modelo não se contém sozinho — medido, e não suposto.** Na sonda:
+  - **A mensagem contou ao parceiro o segmento interno** ("no segmento Em Risco"). A classificação é da
+    rede, e não do parceiro (RF26): o segmento escolhe o tom, mas não entra nos fatos da mensagem.
+  - **"Qual a capital da França?" saiu classificada como pergunta de segmento**, com o parceiro
+    "catálogo_geográfico". Quem decide se a pergunta está no catálogo é o código: o parceiro precisa existir,
+    pela busca normalizada (RF24), e, se não existe, a resposta é a abstenção (H68).
+  - **A mensagem de um parceiro sem a variação nos fatos disse "foi um bom desempenho"**: um juízo que os
+    fatos não sustentam, e que a guarda não pega, porque não é número. É para isso que nenhuma mensagem sai
+    sem a aprovação de um gestor (RN06): a guarda protege o número, e a pessoa protege o sentido.
+- Sem placa, o modelo roda na CPU, bem mais devagar. Na máquina de avaliação sem GPU, as mensagens saem do
+  modelo fixo, e o sistema faz o que o backlog pede.
+- **Custo assumido:** a imagem do Ollama (MIT, fixada na 0.32.5) tem ~8 GB, e o modelo ~4,7 GB, baixados só
+  com o perfil.
+- A CI não tem o modelo. Os testes usam um Ollama de mentira, e os que falam com o de verdade pulam — exceto
+  com `GIH_ASSISTENTE_OBRIGATORIO=1`, como a GPU.
+
 ---
 
 ## 6. Ambiente de desenvolvimento
@@ -853,5 +935,6 @@ formas de pular o escape do React. Nenhum deles depende de alguém lembrar de es
 derivado foi conferido contra o defeito que procura: com o `nosniff` desligado, a neutralização do CSV
 desfeita ou um `dangerouslySetInnerHTML` plantado, eles reprovam.
 
-O texto do assistente (H65), quando existir, chega à tela pelo mesmo caminho, e a leitura do código da tela
-já o cobre.
+O texto do modelo de linguagem (H60, H65) chega à tela pelo mesmo caminho, e a leitura do código da tela já
+o cobre. O serviço do Ollama não tem autenticação, e por isso a porta dele não é publicada no host: só a API o
+alcança, pela rede do Compose (ADR-013).

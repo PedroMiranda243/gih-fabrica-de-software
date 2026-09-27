@@ -390,6 +390,26 @@ frente com alguma, a resposta já está aqui.
   contêiner disputa a CPU com o próprio Windows. Use o número de núcleos físicos, não o padrão do OpenMP.
   Ver `docs/medicoes/nucleo.md` e o adendo da ADR-011.
 
+### Modelo de linguagem
+
+- **O modelo não se contém sozinho — e isso foi medido.** Mandado usar só os fatos, o `qwen2.5:7b` contou
+  ao parceiro o segmento interno dele ("no segmento Em Risco"), e classificou "Qual a capital da França?"
+  como pergunta de segmento, com o parceiro "catálogo_geográfico". O texto do pedido orienta; quem garante é
+  o código. A guarda numérica (`app/guarda_numerica.py`) reprova o texto com número que não veio dos fatos,
+  e o parceiro de uma pergunta precisa existir na base. Ver a ADR-013.
+
+- **A primeira chamada ao modelo leva ~45 s.** Carregar o modelo do disco para a placa custa 25 s, antes de
+  qualquer palavra; carregado, uma mensagem sai em 2 a 4 s. Não é travamento, e abaixar o limite do
+  redator (120 s) faz a primeira mensagem de todo lote falhar.
+
+- **Temperatura zero não faz o texto se repetir.** Com semente fixa, duas chamadas seguidas na GPU deram
+  frases diferentes para os mesmos fatos. Não escreva teste que compare o texto do modelo; compare os números
+  dele contra os fatos, que é o que a guarda faz.
+
+- **Sem o modelo, o sistema funciona igual.** O `docker compose up` sozinho não sobe o Ollama: ele está no
+  perfil `assistente`. Nunca faça uma tela ou um teste depender dele: as mensagens saem do modelo fixo, e o
+  assistente se diz indisponível. Os testes usam um Ollama de mentira (`tests/test_redator.py`).
+
 ### Como testar de verdade
 
 - **Teste o que o usuário vê, não o que o código diz.** Num projeto anterior, a tela de login "não fazia
@@ -452,6 +472,9 @@ frente com alguma, a resposta já está aqui.
   isso. Suba o Docker Desktop de novo antes de procurar bug.
 
 ### Processo
+
+- **O projeto não usa `ruff format`.** Rodá-lo reformata dezenas de arquivos que ninguém tocou, e o PR vira
+  um diff que ninguém revisa. A análise é o `ruff check`; o formato segue o do arquivo vizinho.
 
 - **Uma migração por Pull Request.** Duas em paralelo conflitam no número sequencial e quebram o histórico
   do banco para todo mundo.
