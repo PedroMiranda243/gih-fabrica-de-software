@@ -70,6 +70,16 @@ describe("menu lateral", () => {
     expect(itens).toEqual(["Painel", "Importação", "Parceiros", "Campanha", "Execuções", "Mensagens"]);
   });
 
+  it("a fila de aprovação aparece depois das mensagens, para quem a abre (H61)", () => {
+    const itens = menu({
+      nome: "Gestora",
+      perfil: "GESTOR",
+      telas: ["painel", "importar", "historico_importacoes", "parceiros", "mensagens", "aprovacao", "decidir_mensagens"],
+    });
+
+    expect(itens).toEqual(["Painel", "Importação", "Parceiros", "Mensagens", "Aprovação"]);
+  });
+
   it("sessão de antes da atualização, sem telas, mantém o menu anterior", () => {
     /* Uma aba aberta durante a atualização não pode ficar com o trilho vazio. */
     const itens = menu({ nome: "Antiga", perfil: "GESTOR" });

@@ -265,6 +265,10 @@ describe("tela de mensagens", () => {
       timeout: INTERVALO_MS * 2 + 2000,
     });
     expect(screen.getByText("2 mensagens geradas.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver estas mensagens na fila de aprovação" })).toHaveAttribute(
+      "href",
+      "/aprovacao?lote=9",
+    );
     expect(within(screen.getByRole("list", { name: "Mensagens geradas" })).getAllByRole("listitem")).toHaveLength(2);
   }, 15000);
 
