@@ -1,11 +1,12 @@
-# 07 — Arquitetura Preliminar
+# 07 — Arquitetura
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 1.0 — 03/09/2026
+**Versão:** 2.0 — 28/09/2026, o sistema construído (1.0 — 03/09/2026, a arquitetura preliminar da Sprint 1)
 
-> Documento preliminar. A arquitetura definitiva é fechada na Sprint 3, após o *spike* de GPU (H47) e a
-> validação em orientação. As decisões registradas aqui são as que orientam o início da construção.
+> **O sistema como está, e as decisões que o trouxeram até aqui.** Este documento começou como a arquitetura
+> preliminar da Sprint 1. Cada decisão tomada na construção entrou como uma ADR, na seção 5, com a data e o
+> que foi medido para tomá-la; as seções 1 a 4 e 6 a 8 descrevem o que foi construído. O arquivo guarda o
+> nome antigo porque os links do repositório e das entregas apontam para ele.
 
 ---
 
@@ -17,7 +18,7 @@ flowchart TB
     U["Usuário<br/>(navegador)"]
 
     subgraph FE["Interface"]
-        R["React + Vite<br/>painel · importação · campanha · aprovação"]
+        R["React + Vite<br/>painel · parceiros · campanha<br/>mensagens · assistente"]
     end
 
     subgraph API["API — Python 3.11 + FastAPI"]
@@ -25,14 +26,15 @@ flowchart TB
         ING["Ingestão<br/>e validação"]
         BI["Segmentação<br/>e ranking"]
         ORQ["Orquestração<br/>do núcleo"]
+        COM["Mensagens<br/>e assistente"]
     end
 
     subgraph NUC["Núcleo computacional"]
         PRED["Modelo preditivo<br/>PyTorch"]
-        OPT["Otimizador<br/>C++ · OpenMP · CUDA"]
+        OPT["Otimizador<br/>Python · C++ · OpenMP · CUDA"]
     end
 
-    ASSIST["Assistente<br/>LLM local"]
+    ASSIST["Modelo de linguagem<br/>Ollama · qwen2.5:7b<br/>opcional"]
     DB[("PostgreSQL 16")]
 
     U --> R
@@ -41,11 +43,19 @@ flowchart TB
     ING --> DB
     BI --> DB
     ORQ --> DB
+    COM --> DB
     ORQ --> PRED
     ORQ --> OPT
-    ORQ --> ASSIST
+    COM -->|redige| ASSIST
     PRED --> DB
 ```
+
+**Onde cada parte roda.** A interface, a API e o banco são os três contêineres do `docker-compose.yml`. O
+núcleo não é um serviço à parte: o modelo preditivo roda no processo da API, em segundo plano (ADR-010), e o
+otimizador em C++ é um executável dentro da imagem dela, chamado por processo (ADR-012). A GPU entra pelo
+`docker-compose.gpu.yml`, e o modelo de linguagem pelo perfil `assistente`, que sobe o Ollama num contêiner
+sem porta publicada no host (ADR-013). Sem um e sem o outro, o sistema sobe igual: o otimizador roda na CPU, e
+as mensagens saem do modelo fixo.
 
 ### Divisão de responsabilidades
 
@@ -71,7 +81,7 @@ Duas consequências práticas dessa divisão:
 |---|---|---|
 | Núcleo computacional | **C++17 + OpenMP + CUDA** | Linguagem prioritária da disciplina; controle de memória e paralelismo necessário para o otimizador |
 | Modelo preditivo | **Python + PyTorch + NumPy** | Modelo treinado pela equipe; PyTorch está na lista recomendada e usa a mesma GPU |
-| API | **Python 3.11 + FastAPI** | Linguagem prioritária; integra nativamente com PyTorch e com o núcleo em C++ via extensão; documentação de API gerada automaticamente |
+| API | **Python 3.11 + FastAPI** | Linguagem prioritária; integra nativamente com PyTorch, e chama o núcleo em C++ como executável (ADR-012); documentação de API gerada automaticamente |
 | Banco | **PostgreSQL 16** | Relacional, recomendado pela disciplina, adequado a séries por período |
 | Migrações | **Alembic** | Esquema versionado e reproduzível |
 | Interface | **React + Vite** | Recomendado pela disciplina; separação clara de responsabilidade no time |
@@ -99,7 +109,7 @@ Duplicata de diagrama sempre diverge, e a que ninguém está olhando é a que fi
 **O modelo de dados vive em [`08-modelo-de-dados.md`](08-modelo-de-dados.md)**, em uma versão só: modelo
 conceitual, modelo relacional com tipos e chaves, índices, restrições e a evidência do banco criado.
 
-As dezoito entidades, em resumo:
+As vinte entidades, em resumo:
 
 | Entidade | Papel |
 |---|---|
@@ -118,8 +128,10 @@ As dezoito entidades, em resumo:
 | `TREINO_MODELO` | Uma execução do treino do modelo, com métricas, versão em uso e pesos (RF27) |
 | `ACAO_COMERCIAL` | Tipo de ação disponível, com custo e efeito esperado |
 | `EXECUCAO_OTIMIZADOR` | Parâmetros, modo, tempo e resultado de uma execução |
+| `EXECUCAO_BENCHMARK` | Uma medição dos modos do otimizador lado a lado, com o mesmo plano (H57) |
 | `PLANO_CAMPANHA` | Solução retornada pelo otimizador |
 | `ITEM_PLANO` | Par parceiro-ação selecionado |
+| `LOTE_MENSAGENS` | Uma geração de mensagens em segundo plano: o público, o andamento e as falhas (H60) |
 | `MENSAGEM` | Texto gerado, com estado e decisão humana |
 
 Diagrama de classes, incluindo a camada de serviços e o núcleo computacional:
@@ -170,12 +182,13 @@ de paralelização em CPU e GPU.
 | Versão | Tecnologia | Papel |
 |---|---|---|
 | **Baseline** | Python puro | Referência de corretude e de tempo. Validado contra instância pequena com ótimo conhecido |
+| **Serial em C++** | C++17 | O mesmo algoritmo, linha a linha: a referência contra a qual o paralelismo é medido, para o ganho não medir o compilador junto (H53a) |
 | **CPU paralela** | C++17 + OpenMP | Os filhos de cada geração, de todas as partidas de uma vez, distribuídos entre os núcleos da CPU (H53b) |
 | **GPU** | CUDA | Avaliação da população em paralelo massivo na GPU |
 
-As três versões resolvem o **mesmo problema com a mesma semente**, e é isso que dá sentido à comparação: o
+As quatro versões resolvem o **mesmo problema com a mesma semente**, e é isso que dá sentido à comparação: o
 *speedup* só é honesto se a qualidade da solução for equivalente (RNF02, tolerância de 2%). O algoritmo, o
-tratamento das restrições e o que torna as três versões idênticas estão na ADR-011.
+tratamento das restrições e o que torna as quatro versões idênticas estão na ADR-011.
 
 ### 4.3 Cenário de referência do benchmark
 
@@ -192,6 +205,11 @@ O gerador de dados sintéticos (H28) produz as instâncias. Escala real de opera
 é pequena demais para evidenciar ganho de paralelismo: o custo de transferência para a GPU dominaria o
 tempo total. O cenário ampliado é o que torna a medição significativa, e essa limitação está documentada
 como parte do resultado.
+
+**Medido (26/09/2026, `docs/medicoes/nucleo.md`):** no cenário de referência, a GPU responde em 248 ms de
+ponta a ponta, com o processo inteiro, contra 26,29 s da busca em Python — **106x**, com o mesmo plano, sem
+diferença no uplift. As duas metas atendem. Contra o C++ serial, que é a comparação justa do paralelismo, o
+OpenMP com 8 threads ganha perto de 6x.
 
 ### 4.4 Modelo preditivo
 
@@ -981,26 +999,32 @@ restante do sistema não pode ficar bloqueado pelo hardware de um integrante.
 
 ---
 
-## 7. Estrutura de diretórios prevista
+## 7. Estrutura de diretórios
 
 ```
 growth-intelligence-hub/
-├── api/                    # FastAPI: rotas, regras de negócio, autenticação
-│   ├── app/
-│   ├── migrations/         # Alembic
+├── api/                    # FastAPI
+│   ├── app/                # regras de negócio, serviços e segurança
+│   │   ├── rotas/          # uma rota por recurso
+│   │   └── assistente/     # catálogo, resolução, respostas, fonte e redação
+│   ├── migrations/         # Alembic, uma migração por PR
+│   ├── tests/              # pytest, contra um banco de teste
+│   └── e2e/                # a verificação de ponta a ponta, contra o sistema no ar
+├── nucleo/                 # o otimizador
+│   ├── gih_nucleo/         # o baseline em Python, e a chamada ao executável (nativo.py)
+│   ├── cpp/                # serial, OpenMP e CUDA; um executável só
+│   ├── spike/              # o spike de GPU da Sprint 3 (H47), guardado como evidência
 │   └── tests/
-├── nucleo/                 # C++ / CUDA
-│   ├── src/                # otimizador: serial, OpenMP, CUDA
-│   ├── bindings/           # ponte para o Python
-│   └── tests/
-├── modelo/                 # PyTorch: variáveis, treino, avaliação
-├── web/                    # React + Vite
-├── scripts/                # gerador de dados sintéticos, benchmark
-├── docs/                   # esta documentação
-└── docker-compose.yml
+├── modelo/                 # o modelo preditivo em PyTorch: variáveis, rede, treino, avaliação
+├── web/src/                # React + Vite: páginas, componentes, estilos e temas
+├── scripts/                # gerador de dados sintéticos e as medições de docs/medicoes/
+├── docs/                   # esta documentação, as medições e o gerador das entregas
+├── docker-compose.yml      # postgres, api e web; o Ollama no perfil assistente
+└── docker-compose.gpu.yml  # a GPU, por cima do primeiro
 ```
 
-Estrutura criada na Sprint 3, junto com o ambiente (H09).
+A estrutura prevista na Sprint 1 tinha um `nucleo/bindings/`, a ponte do C++ para o Python por extensão. Ela
+não existe: a ADR-012 trocou a extensão por um executável chamado por processo.
 
 ---
 

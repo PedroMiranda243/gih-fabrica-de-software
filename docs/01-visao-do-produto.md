@@ -261,4 +261,4 @@ O público-alvo condiciona decisões técnicas que aparecem nos requisitos não 
 - [03 — Casos de uso](03-casos-de-uso.md)
 - [04 — Product Backlog](04-product-backlog.md)
 - [05 — Cronograma](05-cronograma.md)
-- [07 — Arquitetura preliminar](07-arquitetura-preliminar.md)
+- [07 — Arquitetura](07-arquitetura-preliminar.md)

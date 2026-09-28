@@ -2,11 +2,13 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Entrega:** Sprint 02 acadêmica — itens 3 (MER), 4 (modelo relacional) e 6 (banco criado)
-**Versão:** 2.0 — 16/09/2026
+**Versão:** 3.0 — 28/09/2026, o banco construído
 
-> **O que mudou da versão 1.0.** Eram 14 tabelas; são **16**. A implementação da autenticação acrescentou
-> `sessao_acesso` e `tentativa_login`, e este documento estava desatualizado em relação ao banco que já
-> está no ar. A contagem agora vem de consulta ao banco, não de memória — a evidência está na seção 6.
+> **Como o esquema cresceu.** A versão 1.0 tinha 14 tabelas; a 2.0, da entrega da Sprint 02, **16**: a
+> autenticação acrescentou `sessao_acesso` e `tentativa_login`. A construção trouxe mais quatro, cada uma
+> com a história que a pediu: `configuracao_segmentacao` (H34), `treino_modelo` (H42),
+> `execucao_benchmark` (H57) e `lote_mensagens` (H60). São **20**. A contagem vem de consulta ao banco, e
+> não de memória — a evidência está na seção 6.
 
 Este documento apresenta **dois modelos**, na ordem em que a modelagem acontece:
 
