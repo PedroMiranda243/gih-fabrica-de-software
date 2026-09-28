@@ -10,8 +10,10 @@ A rede é a da campanha (`tests/rede.py`): cinco semanas, de 01/06/2026 a
 """
 from __future__ import annotations
 
+import json
 from datetime import date
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -19,7 +21,22 @@ from sqlalchemy import select
 
 from app import redator
 from app.assistente import resolucao
-from app.assistente.catalogo import CATALOGO, DATA_ISO, Extracao, instrucao
+from app.assistente.catalogo import (
+    CATALOGO,
+    CAUSA,
+    COMPARACAO,
+    CONTA,
+    DATA_ISO,
+    Extracao,
+    abstencao_pelo_codigo,
+    instrucao,
+)
+from app.assistente.redacao import (
+    LONGO,
+    NUMEROS_SEM_ORIGEM,
+    SENTIDO_TROCADO,
+    UNIDADE_SEM_ORIGEM,
+)
 from app.assistente.servico import (
     FORA_DO_CATALOGO,
     NAO_ENTENDI,
@@ -31,8 +48,16 @@ from app.db import Sessao
 from app.esquemas import TipoPergunta
 from app.formato import probabilidade
 from app.guarda_numerica import numeros_sem_origem
-from app.modelos import Metrica, Parceiro, Perfil, Periodo, Segmento
-from app.redator import DEMOROU, ILEGIVEL, SEM_ENDERECO, Estado, FalhaDoRedator
+from app.modelos import (
+    Importacao,
+    Metrica,
+    OrigemImportacao,
+    Parceiro,
+    Perfil,
+    Periodo,
+    Segmento,
+)
+from app.redator import DEMOROU, FORA_DO_AR, ILEGIVEL, SEM_ENDERECO, Estado, FalhaDoRedator
 from tests.rede import parceiro as _parceiro
 from tests.test_campanha import _calcular
 
@@ -42,16 +67,38 @@ PERGUNTAS = "/api/assistente/perguntas"
 VAZIA = dict.fromkeys(Extracao.model_fields)
 
 
-class ModeloFalso:
-    """Um modelo que devolve a extração que o teste mandar, e guarda o que recebeu."""
+def _repete(pedido: str) -> str:
+    """A redação que só repete a resposta do sistema: o texto sai igual, pelo modelo."""
+    return next(
+        linha.removeprefix("Resposta do sistema: ")
+        for linha in pedido.splitlines()
+        if linha.startswith("Resposta do sistema: ")
+    )
 
-    def __init__(self, extracao=None, *, disponivel=True, motivo=None, falha=None):
+
+class ModeloFalso:
+    """Um modelo que devolve a extração e a redação que o teste mandar, e guarda o que
+    recebeu. Sem redação dada, ele repete a resposta do sistema."""
+
+    def __init__(
+        self, extracao=None, *, disponivel=True, motivo=None, falha=None, redacao=_repete,
+        falha_na_redacao=None,
+    ):
         self.modelo = MODELO
         self.extracao = extracao or {"tipo": "fora_do_catalogo"}
         self.disponivel = disponivel
         self.motivo = motivo
         self.falha = falha
+        self.redacao = redacao
+        self.falha_na_redacao = falha_na_redacao
         self.pedidos: list[tuple[str, str]] = []
+        self.redacoes: list[tuple[str, str]] = []
+
+    def redigir(self, sistema, pedido):
+        self.redacoes.append((sistema, pedido))
+        if self.falha_na_redacao:
+            raise FalhaDoRedator(self.falha_na_redacao)
+        return self.redacao(pedido)
 
     def estado(self):
         return Estado(self.disponivel, MODELO, self.motivo)
@@ -265,8 +312,8 @@ def test_a_resposta_ilegivel_do_modelo_pede_outra_pergunta(rede, analista, model
     modelo(ModeloFalso(falha=ILEGIVEL))
     corpo = _perguntar(analista, "asdf qwer")
     assert corpo == {
-        "situacao": "ABSTENCAO", "tipo": None, "texto": NAO_ENTENDI, "fatos": [],
-        "candidatos": [],
+        "situacao": "ABSTENCAO", "tipo": None, "texto": NAO_ENTENDI, "fonte": None,
+        "redator": "MODELO_FIXO", "motivo": None, "fatos": [], "candidatos": [],
     }
 
 
@@ -522,8 +569,8 @@ def test_a_previsao_e_a_do_modelo_em_uso(rede, analista, modelo):
     texto = _respondida(_perguntar(analista, "A Esquina da Serra vai cair?"))
     assert texto == (
         "Pelo modelo rede-1, treinado com os dados até 29/06/2026 a 05/07/2026, a probabilidade "
-        "de Esquina da Serra estar em risco no período seguinte é de 13%, e o faturamento "
-        "previsto é de R$ 9.500,00."
+        "de Esquina da Serra estar em risco no período seguinte, de 06/07/2026 a 12/07/2026, é "
+        "de 13%, e o faturamento previsto para ele é de R$ 9.500,00."
     )
 
 
@@ -676,6 +723,403 @@ def test_o_assistente_nao_grava_nada(rede, analista, modelo):
     _perguntar(analista, "Como foi a rede?")
     with Sessao() as s:
         assert (s.query(Parceiro).count(), s.query(Metrica).count()) == antes
+
+
+
+# ============================================================ a fonte (H66)
+@pytest.mark.parametrize("tipo", list(EXTRACOES))
+def test_toda_resposta_com_numeros_traz_a_fonte(rede, gestor, modelo, tipo):
+    """RF42: o período e a origem, montados pelo código."""
+    if tipo is TipoPergunta.ULTIMO_PLANO:
+        _calcular(gestor)
+    modelo(ModeloFalso({"tipo": tipo, **EXTRACOES[tipo]}))
+    corpo = _perguntar(gestor, "Pergunta sobre a Esquina da Serra")
+    assert corpo["situacao"] == "RESPONDIDA"
+    fonte = corpo["fonte"]
+    assert fonte["texto"] and fonte["relatorios"]
+    for relatorio in fonte["relatorios"]:
+        assert relatorio["importado_por"] == "Semeador"
+        assert relatorio["origem"] == "TEXTO" and relatorio["importado_em"]
+
+
+def test_a_fonte_do_desempenho_sao_os_dois_relatorios(rede, analista, modelo):
+    modelo(ModeloFalso({"tipo": "desempenho_do_parceiro", "parceiro": "Esquina da Serra"}))
+    fonte = _perguntar(analista, "Quanto a Esquina da Serra faturou?")["fonte"]
+    assert fonte["texto"] == "Relatórios de 22/06/2026 a 28/06/2026 e de 29/06/2026 a 05/07/2026."
+    assert [r["periodo"]["data_inicio"] for r in fonte["relatorios"]] == [
+        "2026-06-22", "2026-06-29"
+    ]
+    assert fonte["modelo_versao"] is None and fonte["execucao_id"] is None
+
+
+def test_a_fonte_da_evolucao_conta_os_relatorios(rede, analista, modelo):
+    modelo(ModeloFalso({"tipo": "evolucao_do_parceiro", "parceiro": "Esquina da Serra"}))
+    fonte = _perguntar(analista, "Como evoluiu a Esquina da Serra?")["fonte"]
+    assert fonte["texto"] == "5 relatórios semanais, de 01/06/2026 a 05/07/2026."
+
+
+def test_a_fonte_da_previsao_traz_a_versao_do_modelo(rede, analista, modelo):
+    modelo(ModeloFalso({"tipo": "previsao_do_parceiro", "parceiro": "Esquina da Serra"}))
+    fonte = _perguntar(analista, "A Esquina da Serra vai cair?")["fonte"]
+    assert fonte["texto"] == "Relatório de 29/06/2026 a 05/07/2026. Modelo preditivo rede-1."
+    assert fonte["modelo_versao"] == "rede-1"
+
+
+def test_a_fonte_do_plano_traz_o_calculo(rede, gestor, modelo):
+    plano = _calcular(gestor)
+    modelo(ModeloFalso({"tipo": "ultimo_plano"}))
+    fonte = _perguntar(gestor, "Qual o ganho do último plano?")["fonte"]
+    assert fonte["execucao_id"] == plano["id"]
+    assert fonte["texto"].endswith(f"Cálculo de plano nº {plano['id']}.")
+
+
+def test_a_fonte_e_a_importacao_mais_recente_do_periodo(rede, analista, modelo, criar_usuario):
+    """Depois de uma substituição (H25), os dados são da importação nova."""
+    outro = criar_usuario(login="substituta", perfil=Perfil.ANALISTA, nome="Substituta")
+    with Sessao() as s:
+        s.add(Importacao(periodo_id=rede.base_id, usuario_id=outro, origem=OrigemImportacao.CSV))
+        s.commit()
+    modelo(ModeloFalso({"tipo": "resumo_do_periodo"}))
+    relatorios = _perguntar(analista, "Como foi a rede?")["fonte"]["relatorios"]
+    assert (relatorios[-1]["importado_por"], relatorios[-1]["origem"]) == ("Substituta", "CSV")
+
+
+def test_a_abstencao_por_falta_no_periodo_cita_o_periodo(rede, analista, modelo):
+    modelo(ModeloFalso({"tipo": "desempenho_do_parceiro", "parceiro": "Ponto Real"}))
+    corpo = _perguntar(analista, "Quanto o Ponto Real faturou?")
+    assert corpo["situacao"] == "ABSTENCAO"
+    assert corpo["fonte"]["texto"] == "Relatório de 29/06/2026 a 05/07/2026."
+
+
+def test_o_modelo_nao_ve_a_fonte(rede, analista, modelo):
+    falso = modelo(ModeloFalso({"tipo": "desempenho_do_parceiro", "parceiro": "Esquina da Serra"}))
+    _perguntar(analista, "Quanto a Esquina da Serra faturou?")
+    _, pedido = falso.redacoes[0]
+    assert "Semeador" not in pedido and "Relatório" not in pedido
+
+
+# ======================================================== a redação (H67)
+def test_o_modelo_redige_e_a_guarda_aprova(rede, analista, modelo):
+    texto = "Não: em 29/06/2026 a 05/07/2026, a Esquina da Serra está no segmento Top 15."
+    modelo(
+        ModeloFalso(
+            {"tipo": "segmento_do_parceiro", "parceiro": "Esquina da Serra"},
+            redacao=lambda _: texto,
+        )
+    )
+    corpo = _perguntar(analista, "A Esquina da Serra está em risco?")
+    assert (corpo["texto"], corpo["redator"], corpo["motivo"]) == (texto, "MODELO", None)
+
+
+def test_o_modelo_recebe_a_pergunta_a_resposta_e_os_fatos(rede, analista, modelo):
+    falso = modelo(ModeloFalso({"tipo": "resumo_do_periodo"}))
+    corpo = _perguntar(analista, "Como foi a rede?")
+    sistema, pedido = falso.redacoes[0]
+    assert "exatamente como está nos fatos" in sistema
+    assert pedido.startswith("Pergunta: Como foi a rede?\n\nResposta do sistema: Em 29/06/2026")
+    assert "- Faturamento: R$ 24.000,00" in pedido
+    assert corpo["redator"] == "MODELO"
+
+
+def test_numero_inventado_nunca_chega_a_tela(rede, analista, modelo):
+    """RF43: o texto com número que não veio dos fatos volta a ser o do código."""
+    modelo(
+        ModeloFalso(
+            {"tipo": "resumo_do_periodo"},
+            redacao=lambda _: "A rede faturou R$ 25.000,00, cerca de 5% a mais.",
+        )
+    )
+    corpo = _perguntar(analista, "Como foi a rede?")
+    assert corpo["redator"] == "MODELO_FIXO"
+    assert corpo["texto"].startswith("Em 29/06/2026 a 05/07/2026, a rede faturou R$ 24.000,00")
+    assert corpo["motivo"] == NUMEROS_SEM_ORIGEM.format(numeros="R$ 25.000,00, 5%")
+
+
+def test_a_variacao_no_sentido_contrario_nunca_chega_a_tela(rede, analista, modelo):
+    """O número certo com a notícia invertida: -7,69% dito como alta."""
+    modelo(
+        ModeloFalso(
+            {"tipo": "resumo_do_periodo"},
+            redacao=lambda _: "Em 29/06/2026 a 05/07/2026, o faturamento cresceu 7,69%.",
+        )
+    )
+    corpo = _perguntar(analista, "Como foi a rede?")
+    assert corpo["redator"] == "MODELO_FIXO"
+    assert corpo["motivo"] == SENTIDO_TROCADO.format(numeros="7,69%")
+
+
+def test_o_texto_longo_demais_volta_ao_do_codigo(rede, analista, modelo):
+    modelo(ModeloFalso({"tipo": "resumo_do_periodo"}, redacao=lambda _: "A rede vai bem. " * 60))
+    corpo = _perguntar(analista, "Como foi a rede?")
+    assert (corpo["redator"], corpo["motivo"]) == ("MODELO_FIXO", LONGO)
+
+
+def test_o_modelo_que_cai_na_redacao_deixa_a_resposta_do_codigo(rede, analista, modelo):
+    modelo(ModeloFalso({"tipo": "resumo_do_periodo"}, falha_na_redacao=FORA_DO_AR))
+    corpo = _perguntar(analista, "Como foi a rede?")
+    assert corpo["situacao"] == "RESPONDIDA"
+    assert (corpo["redator"], corpo["motivo"]) == ("MODELO_FIXO", FORA_DO_AR)
+
+
+@pytest.mark.parametrize(
+    "tipo",
+    [
+        TipoPergunta.EVOLUCAO_DO_PARCEIRO,
+        TipoPergunta.RANKING,
+        TipoPergunta.PARCEIROS_DO_SEGMENTO,
+        TipoPergunta.MOBILIDADE_DO_TOP,
+        TipoPergunta.DISTRIBUICAO_DOS_SEGMENTOS,
+    ],
+)
+def test_as_listas_nao_passam_pelo_modelo(rede, analista, modelo, tipo):
+    """Uma lista reescrita pode perder um item sem que número nenhum fique errado."""
+    falso = modelo(ModeloFalso({"tipo": tipo, **EXTRACOES[tipo]}))
+    corpo = _perguntar(analista, "Pergunta sobre a Esquina da Serra")
+    assert falso.redacoes == []
+    assert (corpo["redator"], corpo["motivo"]) == ("MODELO_FIXO", None)
+
+
+def test_a_abstencao_e_a_precisao_nao_passam_pelo_modelo(rede, analista, modelo):
+    falso = modelo(ModeloFalso({"tipo": "desempenho_do_parceiro", "parceiro": "Cantina"}))
+    assert _perguntar(analista, "Quanto a Cantina faturou?")["situacao"] == "PRECISAO"
+    assert falso.redacoes == []
+
+
+# ======================================================= a abstenção (H68)
+@pytest.mark.parametrize(
+    "pergunta",
+    [
+        "Qual a média de faturamento das pizzarias em agosto?",
+        "Qual o faturamento médio da rede?",
+        "Quanto a rede faturou em média na semana passada?",
+        "Some o faturamento da Esquina da Serra e da Cantina Central",
+        "Qual a soma dos pedidos de junho?",
+        "Qual a diferença entre a Esquina da Serra e a Cantina Central?",
+        "Qual o faturamento acumulado da Esquina da Serra?",
+        "Qual a participação da Esquina da Serra no faturamento da rede?",
+    ],
+)
+def test_a_pergunta_que_pede_conta_e_abstencao_sem_o_modelo(rede, analista, modelo, pergunta):
+    """A instrução não bastou (ADR-013, adendo H65): o código reconhece a conta."""
+    falso = modelo(ModeloFalso({"tipo": "desempenho_do_parceiro"}))
+    corpo = _perguntar(analista, pergunta)
+    assert (corpo["situacao"], corpo["tipo"], corpo["texto"]) == (
+        "ABSTENCAO", "fora_do_catalogo", CONTA
+    )
+    assert falso.pedidos == []
+
+
+@pytest.mark.parametrize(
+    "pergunta", ["Por que a Esquina da Serra caiu?", "Qual foi o motivo da queda da rede?"]
+)
+def test_a_pergunta_pela_causa_e_abstencao(rede, analista, modelo, pergunta):
+    falso = modelo(ModeloFalso())
+    corpo = _perguntar(analista, pergunta)
+    assert (corpo["situacao"], corpo["texto"]) == ("ABSTENCAO", CAUSA)
+    assert falso.pedidos == []
+
+
+def test_o_ticket_medio_nao_e_conta(rede, analista, modelo):
+    """O ticket médio é indicador que o sistema calcula, e não uma média pedida."""
+    modelo(ModeloFalso({"tipo": "desempenho_do_parceiro", "parceiro": "Esquina da Serra"}))
+    _respondida(_perguntar(analista, "Qual o ticket médio da Esquina da Serra?"))
+
+
+def test_dois_parceiros_na_pergunta_e_comparacao(rede, analista, modelo):
+    extracao = {
+        "tipo": "desempenho_do_parceiro", "parceiro": "Esquina da Serra",
+        "outro_parceiro": "Cantina Central",
+    }
+    modelo(ModeloFalso(extracao))
+    corpo = _perguntar(analista, "A Esquina da Serra faturou mais que a Cantina Central?")
+    assert (corpo["situacao"], corpo["tipo"], corpo["texto"]) == (
+        "ABSTENCAO", "fora_do_catalogo", COMPARACAO
+    )
+
+
+def test_o_segundo_parceiro_inventado_ou_repetido_nao_e_comparacao(rede, analista, modelo):
+    for outro in ("Cantina Central", "Esquina da Serra"):
+        extracao = {
+            "tipo": "desempenho_do_parceiro", "parceiro": "Esquina da Serra",
+            "outro_parceiro": outro,
+        }
+        modelo(ModeloFalso(extracao))
+        _respondida(_perguntar(analista, "A Esquina da Serra faturou mais que na semana anterior?"))
+
+
+def test_o_total_de_um_mes_e_abstencao_e_nao_precisao(rede, analista, modelo):
+    extracao = {"tipo": "resumo_do_periodo", "inicio": "2026-06-01", "fim": "2026-06-30"}
+    modelo(ModeloFalso(extracao))
+    corpo = _perguntar(analista, "Qual o faturamento total da rede em junho?")
+    assert (corpo["situacao"], corpo["texto"]) == ("ABSTENCAO", CONTA)
+
+
+def test_a_previsao_de_outro_periodo_e_abstencao(rede, analista, modelo):
+    """"Quanto vai faturar em dezembro?": a previsão existe, mas é de outra semana."""
+    extracao = {
+        "tipo": "previsao_do_parceiro", "parceiro": "Esquina da Serra", "inicio": "2026-12-01",
+        "fim": "2026-12-31",
+    }
+    modelo(ModeloFalso(extracao))
+    corpo = _perguntar(analista, "Quanto a Esquina da Serra vai faturar em dezembro?")
+    assert corpo["situacao"] == "ABSTENCAO"
+    assert corpo["texto"] == (
+        "O modelo prevê só o período seguinte aos dados do treino, de 06/07/2026 a 12/07/2026: "
+        "para 01/12/2026 a 31/12/2026, não há previsão."
+    )
+    assert numeros_sem_origem(corpo["texto"], _fatos(corpo)) == []
+
+
+def test_a_previsao_do_periodo_previsto_e_respondida(rede, analista, modelo):
+    extracao = {
+        "tipo": "previsao_do_parceiro", "parceiro": "Esquina da Serra", "inicio": "2026-07-08",
+        "fim": "2026-07-08",
+    }
+    modelo(ModeloFalso(extracao))
+    _respondida(_perguntar(analista, "Quanto a Esquina da Serra vai faturar em 8 de julho?"))
+
+
+
+# ============================================= o que o código acerta sobre o modelo
+@pytest.mark.parametrize(
+    ("pergunta", "futuro", "intervalo"),
+    [
+        ("Quanto faturou em 2019?", False, ("2019-01-01", "2019-12-31")),
+        ("Como foi em agosto?", False, ("2026-08-01", "2026-08-31")),
+        ("Como foi em dezembro?", False, ("2025-12-01", "2025-12-31")),
+        ("Quanto vai faturar em dezembro?", True, ("2026-12-01", "2026-12-31")),
+        ("E em março de 2025?", False, ("2025-03-01", "2025-03-31")),
+        ("Entre junho e julho", False, ("2026-06-01", "2026-07-31")),
+        ("Como foi no mês passado?", False, ("2026-08-01", "2026-08-31")),
+        ("E no mês que vem?", True, ("2026-10-01", "2026-10-31")),
+        ("E no ano que vem?", True, ("2027-01-01", "2027-12-31")),
+        ("Como foi em 14/09/2026?", False, None),
+        ("Como foi a rede?", False, None),
+    ],
+)
+def test_o_codigo_le_o_mes_e_o_ano_da_pergunta(pergunta, futuro, intervalo):
+    """Só quando o modelo não trouxe a data: "em 2019" e "em dezembro" chegaram sem."""
+    lido = resolucao.datas_da_pergunta(pergunta, date(2026, 9, 20), futuro=futuro)
+    esperado = tuple(date.fromisoformat(d) for d in intervalo) if intervalo else None
+    assert lido == esperado
+
+
+def test_o_ano_sem_dados_que_o_modelo_nao_leu_e_abstencao(rede, analista, modelo):
+    """Na medição, "em 2019" foi respondido com a semana mais recente."""
+    modelo(ModeloFalso({"tipo": "desempenho_do_parceiro", "parceiro": "Esquina da Serra"}))
+    corpo = _perguntar(analista, "Quanto a Esquina da Serra faturou em 2019?")
+    assert corpo["situacao"] == "ABSTENCAO"
+    assert corpo["texto"].startswith("Não há dados de 01/01/2019 a 31/12/2019.")
+
+
+def test_a_previsao_de_um_mes_que_o_modelo_nao_leu_e_abstencao(rede, analista, modelo):
+    modelo(ModeloFalso({"tipo": "previsao_do_parceiro", "parceiro": "Esquina da Serra"}))
+    corpo = _perguntar(analista, "Quanto a Esquina da Serra vai faturar em dezembro?")
+    assert corpo["situacao"] == "ABSTENCAO"
+    assert "não há previsão" in corpo["texto"]
+
+
+def test_o_resumo_da_rede_com_um_parceiro_e_o_desempenho_dele(rede, analista, modelo):
+    """ "Como foi o Quintal do Norte nesta semana?" saiu como o resumo da rede."""
+    modelo(ModeloFalso({"tipo": "resumo_do_periodo", "parceiro": "Esquina da Serra"}))
+    corpo = _perguntar(analista, "Como foi a Esquina da Serra nesta semana?")
+    assert corpo["tipo"] == "desempenho_do_parceiro"
+    assert _respondida(corpo).startswith("Esquina da Serra faturou R$ 9.000,00")
+
+
+def test_o_desempenho_de_varias_semanas_e_a_evolucao(rede, analista, modelo):
+    """Os números do intervalo pedido, semana a semana — sem somar e sem escolher."""
+    extracao = {
+        "tipo": "desempenho_do_parceiro", "parceiro": "Esquina da Serra",
+        "inicio": "2026-06-22", "fim": "2026-07-05",
+    }
+    modelo(ModeloFalso(extracao))
+    corpo = _perguntar(analista, "Quanto a Esquina da Serra faturou no fim de junho?")
+    assert corpo["tipo"] == "evolucao_do_parceiro"
+    assert _respondida(corpo) == (
+        "O faturamento de Esquina da Serra, período a período:\n"
+        "- 22/06/2026 a 28/06/2026: R$ 9.000,00 em 10 pedidos\n"
+        "- 29/06/2026 a 05/07/2026: R$ 9.000,00 em 10 pedidos"
+    )
+
+
+def test_o_total_de_varias_semanas_de_um_parceiro_e_abstencao(rede, analista, modelo):
+    extracao = {
+        "tipo": "desempenho_do_parceiro", "parceiro": "Esquina da Serra",
+        "inicio": "2026-06-01", "fim": "2026-06-30",
+    }
+    modelo(ModeloFalso(extracao))
+    corpo = _perguntar(analista, "Qual o faturamento total da Esquina da Serra em junho?")
+    assert (corpo["situacao"], corpo["texto"]) == ("ABSTENCAO", CONTA)
+
+
+@pytest.mark.parametrize(
+    ("redacao", "unidades"),
+    [
+        ("O faturamento previsto para o mês é de R$ 9.500,00.", "mês"),
+        ("A chance é de 13%, e o faturamento previsto é de US$ 9.500,00.", "US$"),
+        ("Por dia, são R$ 9.500,00 previstos.", "dia"),
+    ],
+)
+def test_a_unidade_que_os_fatos_nao_tem_volta_ao_texto_do_codigo(
+    rede, analista, modelo, redacao, unidades
+):
+    """O número é o dos fatos; a unidade, não. A previsão é de uma semana."""
+    modelo(
+        ModeloFalso(
+            {"tipo": "previsao_do_parceiro", "parceiro": "Esquina da Serra"},
+            redacao=lambda _: redacao,
+        )
+    )
+    corpo = _perguntar(analista, "Quanto a Esquina da Serra deve faturar?")
+    assert corpo["redator"] == "MODELO_FIXO"
+    assert corpo["motivo"] == UNIDADE_SEM_ORIGEM.format(unidades=unidades)
+
+
+def test_a_semana_dos_fatos_nao_e_unidade_sem_origem(rede, analista, modelo):
+    texto = "Para o período de 06/07/2026 a 12/07/2026, o previsto é de R$ 9.500,00."
+    modelo(
+        ModeloFalso(
+            {"tipo": "previsao_do_parceiro", "parceiro": "Esquina da Serra"},
+            redacao=lambda _: texto,
+        )
+    )
+    corpo = _perguntar(analista, "Quanto a Esquina da Serra deve faturar?")
+    assert (corpo["redator"], corpo["texto"]) == ("MODELO", texto)
+
+
+# ================================================= os conjuntos da medição
+# Os três conjuntos de `tests/assistente/` são medidos contra o modelo de verdade
+# por `scripts/medir_assistente.py`. Aqui, sem o modelo, confere-se que eles
+# dizem o que precisam dizer.
+CONJUNTOS = Path(__file__).parent / "assistente"
+
+
+def _conjunto(nome):
+    return json.loads((CONJUNTOS / nome).read_text(encoding="utf-8"))
+
+
+def test_a_referencia_cobre_o_catalogo_com_campos_que_existem():
+    perguntas = _conjunto("referencia.json")["perguntas"]
+    textos = [p["pergunta"] for p in perguntas]
+    assert len(textos) == len(set(textos))
+    for p in perguntas:
+        assert TipoPergunta(p["tipo"])
+        assert set(p["campos"]) <= set(Extracao.model_fields) - {"tipo"}, p
+    por_tipo = {t: sum(p["tipo"] == t for p in perguntas) for t in TipoPergunta}
+    assert min(por_tipo.values()) >= 3, por_tipo
+
+
+def test_as_armadilhas_sao_perguntas_distintas():
+    perguntas = _conjunto("armadilhas.json")["perguntas"]
+    assert len(perguntas) >= 15 and len(perguntas) == len(set(perguntas))
+
+
+def test_o_que_o_conjunto_diz_que_o_codigo_pega_o_codigo_pega():
+    """E o contrário: a pergunta marcada para o modelo não é pega antes dele, senão a
+    medição mediria o código achando que mede o modelo."""
+    for p in _conjunto("sem_resposta.json")["perguntas"]:
+        assert (abstencao_pelo_codigo(p["pergunta"]) is not None) is p["pelo_codigo"], p
 
 
 # ======================================================== o modelo de verdade

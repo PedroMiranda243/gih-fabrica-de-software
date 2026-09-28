@@ -1,0 +1,73 @@
+{
+  "descricao": "RF41, H65: cada pergunta com o tipo e os campos que o modelo precisa extrair. A extração é medida com o calendário e as categorias daqui, e não com os do banco: o resultado não muda com a massa. As datas se comparam pelas semanas que tocam; sem data esperada, vale nenhuma data ou a semana mais recente.",
+  "contexto": {
+    "categorias": [
+      "Açaí e sorvetes", "Bebidas", "Farmácia", "Gás e água", "Lanchonete", "Mercado",
+      "Padaria", "Petshop", "Pizzaria", "Restaurante"
+    ],
+    "primeira_semana": "2026-06-29",
+    "semanas": 12
+  },
+  "perguntas": [
+    {"pergunta": "Quanto a Esquina da Serra faturou na semana passada?", "tipo": "desempenho_do_parceiro", "campos": {"parceiro": "Esquina da Serra", "inicio": "2026-09-07", "fim": "2026-09-13"}},
+    {"pergunta": "Qual o ticket médio da Cantina Central?", "tipo": "desempenho_do_parceiro", "campos": {"parceiro": "Cantina Central"}},
+    {"pergunta": "quantos pedidos o forno do vale teve na semana de 10 de agosto?", "tipo": "desempenho_do_parceiro", "campos": {"parceiro": "forno do vale", "inicio": "2026-08-10", "fim": "2026-08-10"}},
+    {"pergunta": "Como foi o Quintal do Norte nesta semana?", "tipo": "desempenho_do_parceiro", "campos": {"parceiro": "Quintal do Norte"}},
+    {"pergunta": "Faturamento da Parada Express", "tipo": "desempenho_do_parceiro", "campos": {"parceiro": "Parada Express"}},
+
+    {"pergunta": "Como evoluiu o faturamento da Esquina da Serra em agosto?", "tipo": "evolucao_do_parceiro", "campos": {"parceiro": "Esquina da Serra", "inicio": "2026-08-01", "fim": "2026-08-31"}},
+    {"pergunta": "Mostre o histórico da Parada Express", "tipo": "evolucao_do_parceiro", "campos": {"parceiro": "Parada Express"}},
+    {"pergunta": "Qual a tendência de vendas da Casa Real nas últimas semanas?", "tipo": "evolucao_do_parceiro", "campos": {"parceiro": "Casa Real"}},
+    {"pergunta": "Semana a semana, como foi o Forno Dourado em julho?", "tipo": "evolucao_do_parceiro", "campos": {"parceiro": "Forno Dourado", "inicio": "2026-07-01", "fim": "2026-07-31"}},
+
+    {"pergunta": "Em que posição do ranking está a Casa Real?", "tipo": "posicao_do_parceiro", "campos": {"parceiro": "Casa Real"}},
+    {"pergunta": "Qual a colocação da Cantina Verde na semana passada?", "tipo": "posicao_do_parceiro", "campos": {"parceiro": "Cantina Verde", "inicio": "2026-09-07", "fim": "2026-09-13"}},
+    {"pergunta": "A Esquina da Serra está em que lugar?", "tipo": "posicao_do_parceiro", "campos": {"parceiro": "Esquina da Serra"}},
+    {"pergunta": "Qual a posição do Ponto Mineiro no ranking de faturamento?", "tipo": "posicao_do_parceiro", "campos": {"parceiro": "Ponto Mineiro"}},
+
+    {"pergunta": "A Esquina da Serra está em risco?", "tipo": "segmento_do_parceiro", "campos": {"parceiro": "Esquina da Serra"}},
+    {"pergunta": "Qual o segmento do Quintal do Norte?", "tipo": "segmento_do_parceiro", "campos": {"parceiro": "Quintal do Norte"}},
+    {"pergunta": "Em que segmento a Parada Central estava na semana passada?", "tipo": "segmento_do_parceiro", "campos": {"parceiro": "Parada Central", "inicio": "2026-09-07", "fim": "2026-09-13"}},
+    {"pergunta": "A Casa Verde é Top?", "tipo": "segmento_do_parceiro", "campos": {"parceiro": "Casa Verde"}},
+
+    {"pergunta": "Qual a chance de a Esquina da Serra cair no próximo período?", "tipo": "previsao_do_parceiro", "campos": {"parceiro": "Esquina da Serra"}},
+    {"pergunta": "Quanto a Cantina Verde deve faturar na próxima semana?", "tipo": "previsao_do_parceiro", "campos": {"parceiro": "Cantina Verde"}},
+    {"pergunta": "Qual a previsão para o Recanto Real?", "tipo": "previsao_do_parceiro", "campos": {"parceiro": "Recanto Real"}},
+    {"pergunta": "O modelo acha que o Espaço Azul vai entrar em risco?", "tipo": "previsao_do_parceiro", "campos": {"parceiro": "Espaço Azul"}},
+
+    {"pergunta": "Quais pizzarias mais faturaram na semana passada?", "tipo": "ranking", "campos": {"categoria": "Pizzaria", "inicio": "2026-09-07", "fim": "2026-09-13"}},
+    {"pergunta": "Quem são os 5 maiores parceiros?", "tipo": "ranking", "campos": {"quantos": 5}},
+    {"pergunta": "Top 3 farmácias", "tipo": "ranking", "campos": {"categoria": "Farmácia", "quantos": 3}},
+    {"pergunta": "Quais os 10 maiores faturamentos da rede nesta semana?", "tipo": "ranking", "campos": {"quantos": 10}},
+    {"pergunta": "Ranking dos mercados", "tipo": "ranking", "campos": {"categoria": "Mercado"}},
+
+    {"pergunta": "Quais farmácias estão em risco?", "tipo": "parceiros_do_segmento", "campos": {"segmento": "EM_RISCO", "categoria": "Farmácia"}},
+    {"pergunta": "Quantos parceiros estão em ascensão?", "tipo": "parceiros_do_segmento", "campos": {"segmento": "EM_ASCENSAO"}},
+    {"pergunta": "Quais são os recém-chegados?", "tipo": "parceiros_do_segmento", "campos": {"segmento": "RECEM_CHEGADO"}},
+    {"pergunta": "Quem estava em risco na semana passada?", "tipo": "parceiros_do_segmento", "campos": {"segmento": "EM_RISCO", "inicio": "2026-09-07", "fim": "2026-09-13"}},
+    {"pergunta": "Quais padarias são estáveis?", "tipo": "parceiros_do_segmento", "campos": {"segmento": "ESTAVEL", "categoria": "Padaria"}},
+
+    {"pergunta": "Quem saiu do Top nesta semana?", "tipo": "mobilidade_do_top", "campos": {}},
+    {"pergunta": "Quem entrou no top 15 na semana de 7 de setembro?", "tipo": "mobilidade_do_top", "campos": {"inicio": "2026-09-07", "fim": "2026-09-07"}},
+    {"pergunta": "Houve mudança no Top da rede?", "tipo": "mobilidade_do_top", "campos": {}},
+    {"pergunta": "Quais parceiros entraram no Top na semana passada?", "tipo": "mobilidade_do_top", "campos": {"inicio": "2026-09-07", "fim": "2026-09-13"}},
+
+    {"pergunta": "Como foi a rede na semana passada?", "tipo": "resumo_do_periodo", "campos": {"inicio": "2026-09-07", "fim": "2026-09-13"}},
+    {"pergunta": "Qual o faturamento total da rede nesta semana?", "tipo": "resumo_do_periodo", "campos": {}},
+    {"pergunta": "Resumo da rede", "tipo": "resumo_do_periodo", "campos": {}},
+    {"pergunta": "Quantos pedidos a rede teve na semana de 10 de agosto?", "tipo": "resumo_do_periodo", "campos": {"inicio": "2026-08-10", "fim": "2026-08-10"}},
+
+    {"pergunta": "Como os parceiros se dividem entre os segmentos?", "tipo": "distribuicao_dos_segmentos", "campos": {}},
+    {"pergunta": "Quantos parceiros há em cada segmento?", "tipo": "distribuicao_dos_segmentos", "campos": {}},
+    {"pergunta": "Distribuição dos segmentos na semana passada", "tipo": "distribuicao_dos_segmentos", "campos": {"inicio": "2026-09-07", "fim": "2026-09-13"}},
+
+    {"pergunta": "Qual é o ganho esperado do último plano?", "tipo": "ultimo_plano", "campos": {}},
+    {"pergunta": "Quanto custou o último plano de campanha?", "tipo": "ultimo_plano", "campos": {}},
+    {"pergunta": "Quantas ações tem o plano mais recente?", "tipo": "ultimo_plano", "campos": {}},
+
+    {"pergunta": "Qual a capital da França?", "tipo": "fora_do_catalogo", "campos": {}},
+    {"pergunta": "Escreva um poema sobre delivery", "tipo": "fora_do_catalogo", "campos": {}},
+    {"pergunta": "Quem descobriu o Brasil?", "tipo": "fora_do_catalogo", "campos": {}},
+    {"pergunta": "Me conte uma piada", "tipo": "fora_do_catalogo", "campos": {}}
+  ]
+}

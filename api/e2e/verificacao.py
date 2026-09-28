@@ -46,7 +46,7 @@ import httpx
 # A matriz de permissões vem do módulo de teste, e não é copiada para cá: duas
 # cópias divergiriam, e a daqui é a que ninguém olharia.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from app.guarda_numerica import numeros_sem_origem  # noqa: E402
+from app.guarda_numerica import numeros_sem_origem, sentido_trocado  # noqa: E402
 from app.servico_mensagens import termos_internos  # noqa: E402
 from e2e.limpeza import LimpezaRecusada, desativar_usuarios, limpar_execucao  # noqa: E402
 from tests.test_autorizacao import PERMISSOES, PUBLICO, concretizar  # noqa: E402
@@ -1521,13 +1521,15 @@ def item_portal(
 
 
 def item_assistente(r: Relatorio, url: str, criados: dict[str, str]) -> None:
-    """O assistente (UC12, RF41, RN08), pelo Analista.
+    """O assistente (UC12, RF41 a RF43, RN08), pelo Analista.
 
-    Com o modelo no ar: uma pergunta sobre o parceiro de maior faturamento, que
-    precisa trazer o faturamento que a lista de parceiros mostra, e só números
-    dos fatos; uma sobre a rede; e uma fora do catálogo, que é abstenção. Sem o
-    modelo, o assistente se diz indisponível e o painel segue (E1). Nada é
-    gravado: não há o que limpar.
+    Com ou sem o modelo, a pergunta que pede uma média recebe a abstenção do
+    código (H68). Com o modelo no ar: uma pergunta sobre o parceiro de maior
+    faturamento, que precisa trazer o faturamento que a lista de parceiros
+    mostra, só com números dos fatos e no sentido deles (H67); uma sobre a rede,
+    com a fonte (H66); e uma fora do catálogo, que é abstenção. Sem o modelo, o
+    assistente se diz indisponível e o painel segue (E1). Nada é gravado: não há
+    o que limpar.
     """
     r.secao("Assistente — o catálogo, com os números das telas, ou a abstenção")
 
@@ -1561,6 +1563,15 @@ def item_assistente(r: Relatorio, url: str, criados: dict[str, str]) -> None:
             "a pergunta acima do limite é recusada com o limite (UC12-E2, RNF15)",
             longa.status_code == 422 and "1000" in longa.text,
         )
+        media = c.post(
+            "/api/assistente/perguntas",
+            json={"texto": "Qual a média de faturamento das pizzarias?"},
+        ).json()
+        r.checar(
+            "a pergunta que pede conta recebe a abstenção do código, com ou sem o modelo (H68)",
+            media.get("situacao") == "ABSTENCAO" and media.get("tipo") == "fora_do_catalogo",
+            media.get("texto", "")[:90],
+        )
 
         if not assistente.get("disponivel"):
             corpo = c.post("/api/assistente/perguntas", json={"texto": "Como foi a rede?"}).json()
@@ -1593,19 +1604,24 @@ def item_assistente(r: Relatorio, url: str, criados: dict[str, str]) -> None:
                 "(RF41, RN08)",
                 corpo.get("situacao") == "RESPONDIDA"
                 and _reais(faturamento) in texto
-                and numeros_sem_origem(texto, corpo.get("fatos", [])) == [],
-                f"{corpo.get('tipo')} em {time.monotonic() - inicio:.1f} s: {texto[:90]}",
+                and numeros_sem_origem(texto, corpo.get("fatos", [])) == []
+                and sentido_trocado(texto, corpo.get("fatos", [])) == [],
+                f"{corpo.get('tipo')} em {time.monotonic() - inicio:.1f} s, redigida pelo "
+                f"{corpo.get('redator')}: {texto[:80]}",
             )
 
         corpo = c.post(
             "/api/assistente/perguntas", json={"texto": "Como foi a rede na semana passada?"}
         ).json()
+        fonte = corpo.get("fonte") or {}
         r.checar(
-            "a pergunta sobre a rede é respondida com o período citado (RF42)",
+            "a pergunta sobre a rede traz a fonte, montada pelo código (RF42, H66)",
             corpo.get("tipo") == "resumo_do_periodo"
             and corpo.get("situacao") == "RESPONDIDA"
-            and numeros_sem_origem(corpo.get("texto", ""), corpo.get("fatos", [])) == [],
-            corpo.get("texto", "")[:90],
+            and numeros_sem_origem(corpo.get("texto", ""), corpo.get("fatos", [])) == []
+            and bool(fonte.get("relatorios"))
+            and all(rel.get("importado_em") for rel in fonte["relatorios"]),
+            fonte.get("texto", ""),
         )
         corpo = c.post(
             "/api/assistente/perguntas", json={"texto": "Qual a capital da França?"}

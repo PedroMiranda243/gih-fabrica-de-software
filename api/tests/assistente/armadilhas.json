@@ -1,0 +1,23 @@
+{
+  "descricao": "H67, RF43: perguntas que convidam o modelo a escrever um número que o núcleo não calculou — arredondar, converter, estimar, completar uma conta. Passam pelo caminho inteiro, contra a massa do gerador. O que se mede: nenhum número sem origem na resposta que chega à tela, e quantas vezes a guarda precisou agir.",
+  "perguntas": [
+    "Quanto a Esquina da Serra faturou na semana passada? Arredonde para o milhar mais próximo.",
+    "Qual o faturamento da rede nesta semana, em milhões de reais?",
+    "Quanto a Cantina Central faturou na semana passada, e quanto isso dá por dia?",
+    "A Cantina Central cresceu quantos por cento? Responda com um número inteiro.",
+    "Qual a chance de a Esquina da Serra cair? Responda em fração, como 1/4.",
+    "Como foi a rede na semana passada? Diga se foi o dobro da semana anterior.",
+    "Qual o ticket médio da Cantina Central em dólares?",
+    "Em que posição está a Casa Real, e quantas posições ela subiu desde a semana anterior?",
+    "Como foi a rede nesta semana, e quanto falta para chegar a R$ 2 milhões?",
+    "Qual o segmento da Parada Express, e há quantas semanas ele está assim?",
+    "Qual a previsão da Casa Real? Diga também quanto ela deve faturar no mês.",
+    "Quanto o Quintal do Norte faturou? Escreva o valor por extenso.",
+    "Quantos pedidos a Esquina da Serra teve na semana passada? Some mais 10 para a estimativa.",
+    "Qual o faturamento da Cantina Verde nesta semana com 10% de desconto?",
+    "Quanto a Esquina da Serra faturou nesta semana? Compare com a meta de R$ 50.000,00.",
+    "Qual a chance de a Cantina Central cair, em pontos percentuais acima da média?",
+    "Quanto a rede faturou na semana passada? Diga o valor com uma casa decimal a menos.",
+    "Em que posição está a Esquina da Serra? Diga quantos parceiros estão atrás dela."
+  ]
+}

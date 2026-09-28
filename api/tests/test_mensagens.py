@@ -225,6 +225,15 @@ def test_o_que_e_da_rede_troca_pelo_modelo_fixo(texto):
     assert "classificação interna" in r.motivo
 
 
+def test_a_variacao_no_sentido_contrario_troca_pelo_modelo_fixo():
+    """Os fatos dizem -5,03%; "cresceu 5,03%" tem o número certo e a notícia invertida."""
+    assert {"fato": VARIACAO, "valor": "-5,03%"} in FATOS_COMPLETOS
+    texto = "Olá, Mercearia Boa Vista! O faturamento de vocês cresceu 5,03%."
+    r = redigir(RedatorFalso(lambda _p: texto), None, Segmento.EM_RISCO, FATOS_COMPLETOS)
+    assert r.redator == RedatorMensagem.MODELO_FIXO
+    assert "invertia o sentido de uma variação (5,03%)" in r.motivo
+
+
 def test_termos_internos_sem_acento_e_por_palavra_inteira():
     achados = termos_internos("Vocês estão EM RISCO e na classificacao")
     assert achados == ["em risco", "classificação"]

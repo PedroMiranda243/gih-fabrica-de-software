@@ -1,0 +1,25 @@
+{
+  "descricao": "H68, RF42: perguntas sem resposta possível nos dados do sistema — fora do domínio, contas que o catálogo não faz, causas, dados que o relatório não traz, parceiro que não existe e períodos sem dado. Passam pelo caminho inteiro, contra a massa do gerador. Toda resposta precisa ser a abstenção. `pelo_codigo`: o código reconhece a pergunta antes do modelo, e o teste confere sem ele.",
+  "perguntas": [
+    {"pergunta": "Qual a capital da França?", "pelo_codigo": false},
+    {"pergunta": "Escreva um poema sobre delivery", "pelo_codigo": false},
+    {"pergunta": "Quem vai ganhar o campeonato?", "pelo_codigo": false},
+    {"pergunta": "Qual a média de faturamento das pizzarias?", "pelo_codigo": true},
+    {"pergunta": "Qual o faturamento médio por parceiro?", "pelo_codigo": true},
+    {"pergunta": "Some o faturamento da Esquina da Serra e da Cantina Central", "pelo_codigo": true},
+    {"pergunta": "Qual a diferença de faturamento entre junho e julho?", "pelo_codigo": true},
+    {"pergunta": "Quantos pedidos a rede fez desde o começo?", "pelo_codigo": true},
+    {"pergunta": "A Esquina da Serra faturou mais que a Cantina Central na semana passada?", "pelo_codigo": false},
+    {"pergunta": "Por que a Cantina Central caiu?", "pelo_codigo": true},
+    {"pergunta": "Qual o lucro da rede na semana passada?", "pelo_codigo": true},
+    {"pergunta": "Qual o telefone da Esquina da Serra?", "pelo_codigo": true},
+    {"pergunta": "Quantos funcionários tem a Cantina Central?", "pelo_codigo": true},
+    {"pergunta": "Qual a nota dos clientes da Casa Real?", "pelo_codigo": true},
+    {"pergunta": "Qual o estoque da Parada Express?", "pelo_codigo": true},
+    {"pergunta": "Quanto a Esquina da Serra faturou em 2019?", "pelo_codigo": false},
+    {"pergunta": "Quanto a Esquina da Serra vai faturar em dezembro?", "pelo_codigo": false},
+    {"pergunta": "Quanto a Xyzwq Fantasma Lanches faturou na semana passada?", "pelo_codigo": false},
+    {"pergunta": "Qual o faturamento total da rede no mês passado?", "pelo_codigo": false},
+    {"pergunta": "Me conte uma piada sobre pizzarias", "pelo_codigo": false}
+  ]
+}
