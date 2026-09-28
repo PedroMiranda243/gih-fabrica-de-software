@@ -310,3 +310,90 @@ def test_configurar_segmentacao_avisa_que_o_historico_fica_velho(capsys):
     cli.configurar_segmentacao(["--periodos-novato", "5"])
 
     assert "mantêm a classificação antiga" in capsys.readouterr().out
+
+
+# ============================================= popular-demonstracao (H72)
+def _contagens() -> dict[str, int]:
+    from app.modelos import HistoricoSegmento, Parceiro, Periodo
+
+    s = Sessao()
+    try:
+        return {
+            nome: len(s.scalars(select(modelo.id)).all())
+            for nome, modelo in (
+                ("parceiros", Parceiro),
+                ("periodos", Periodo),
+                ("segmentos", HistoricoSegmento),
+                ("usuarios", Usuario),
+            )
+        }
+    finally:
+        s.close()
+
+
+@pytest.fixture
+def treinos(monkeypatch):
+    """O treino de verdade é testado em `test_previsao`; aqui basta saber que foi chamado."""
+    chamados = []
+    monkeypatch.setattr(cli, "treinar_modelo", lambda argumentos: chamados.append(argumentos) or 0)
+    return chamados
+
+
+def test_popular_demonstracao_gera_segmenta_e_treina(treinos, capsys):
+    """Quem avalia povoa a base de dentro do contêiner, sem Python na máquina."""
+    assert cli.popular_demonstracao(["--parceiros", "100", "--periodos", "8"]) == 0
+
+    contagens = _contagens()
+    assert (contagens["parceiros"], contagens["periodos"]) == (100, 8)
+    assert contagens["segmentos"] > 0
+    assert treinos == [[]]
+
+
+def test_popular_demonstracao_sobre_a_base_vazia_nao_apaga_os_usuarios(
+    criar_usuario, treinos, capsys
+):
+    """No ensaio da H72, o TRUNCATE do gerador levava o administrador junto: aqui a
+    base está vazia, e nada é apagado."""
+    criar_usuario(login="avaliador", perfil=Perfil.GESTOR)
+
+    assert cli.popular_demonstracao(["--parceiros", "100", "--periodos", "8"]) == 0
+
+    s = Sessao()
+    try:
+        assert s.scalar(select(Usuario).where(Usuario.login == "avaliador")) is not None
+    finally:
+        s.close()
+
+
+def test_popular_demonstracao_recusa_a_base_com_dados(criar_usuario, treinos, capsys):
+    """Com dados de negócio, só com --substituir — e a recusa diz o que há na base."""
+    _semear_uma_semana(criar_usuario)
+
+    assert cli.popular_demonstracao([]) == 1
+    erro = capsys.readouterr().err
+    assert "1 períodos, 1 parceiros" in erro and "--substituir" in erro
+    assert _contagens()["parceiros"] == 1
+    assert treinos == []
+
+
+def test_popular_demonstracao_substitui_e_recria_o_administrador(
+    criar_usuario, treinos, monkeypatch, capsys
+):
+    """Substituir apaga os usuários — o CASCADE a partir de `parceiro` —, e o comando
+    devolve o acesso, como o reset."""
+    monkeypatch.setattr(config, "admin_senha", "")
+    _semear_uma_semana(criar_usuario)
+
+    argumentos = ["--parceiros", "100", "--periodos", "8", "--substituir"]
+    assert cli.popular_demonstracao(argumentos) == 0
+
+    assert _contagens()["parceiros"] == 100
+    assert [u.login for u in _administradores() if u.ativo] == [config.admin_login]
+    saida = capsys.readouterr().out
+    assert "Os usuários foram apagados junto com os dados" in saida
+    assert "Senha sorteada" in saida
+
+
+def test_popular_demonstracao_recusa_historico_curto_para_o_treino(treinos):
+    with pytest.raises(SystemExit):
+        cli.popular_demonstracao(["--periodos", "4"])
