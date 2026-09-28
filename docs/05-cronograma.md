@@ -1,7 +1,7 @@
 # 05 — Cronograma
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Versão:** 2.1 — 16/09/2026 · sprints semanais
+**Versão:** 3.0 — 28/09/2026 · o calendário real (2.1 — 16/09/2026, o plano em sprints semanais)
 **Datas oficiais da disciplina:** entrega da Sprint 1 em **05/09/2026** · entrega final em **05/12/2026**
 
 ---
@@ -19,15 +19,16 @@ desenvolvimento da equipe, não a terceira entrega avaliada.
 | **Sprint 03** — estrutura inicial funcionando | 19/09/2026 | 6 | Login, cadastro de usuários, perfis, CRUD de parceiros, importação, painel, interface web, deploy local |
 | **Sprint 04** — primeiro módulo completo | 26/09/2026 | 7 | Ingestão + BI: segmentação, mobilidade do Top N, limiares configuráveis, filtros, exportação, cadastro de parceiro na tela |
 | **Sprint 05** — segundo módulo funcionando | 03/10/2026 | 8, e a H45 da 9 | Previsão: variáveis, referências, rede com risco calibrado, treino pela tela com versão em uso, previsão e risco no cadastro do parceiro |
-| Sprint 06 em diante | a definir | 9 em diante | — |
+| Sprint 06 em diante | conforme os enunciados | 9 a 13 | O otimizador em CPU e GPU, o benchmark, a comunicação e o assistente — já construídos |
 
 A numeração semanal é a que aparece nas *issues*, nos *milestones* e nos commits do GitHub, e por isso não
 foi renumerada: mudá-la desalinharia o histórico do repositório, que é justamente onde a disciplina pede
 que a evolução do projeto seja demonstrada.
 
-**A equipe segue à frente do calendário interno.** A Sprint 7 — segmentação e mobilidade do Top N — estava
-prevista para 19/10 a 23/10 e foi concluída em 21/09. A folga não muda o plano das sprints seguintes: ela
-vira margem para o núcleo em GPU (Sprints 9 a 11), que é onde o risco técnico do projeto se concentra.
+**A construção terminou antes do calendário.** As Sprints 2 a 13, planejadas para 14/09 a 04/12, tiveram
+as histórias de código fechadas entre 15/09 e 28/09 (seção 3). O que resta até 05/12 não é código: a
+validação do README por quem não o escreveu (H72), os dois vídeos (H74, H75), a preparação da banca e as
+entregas da disciplina, na ordem em que os enunciados saírem.
 
 **A H45 — retreino pela tela — foi antecipada da Sprint 9 para a 8**, e entregue na Sprint 05 da
 disciplina. Sem ela, o módulo de previsão não teria fluxo de uso: o usuário só leria números prontos, e o
@@ -69,57 +70,71 @@ Não é só um recorte do calendário. Três consequências práticas:
 
 ---
 
-## 3. Visão geral
+## 3. O plano e o realizado
 
-| Sprint | Período | Tema | Pts | Entregável demonstrável |
-|:--:|---|---|--:|---|
-| **1** | até 05/09 | Planejamento e descoberta | 27 | ✅ Documentação e repositório |
-| **2** | 14/09 – 18/09 | Modelagem e fundação | 22 | Banco criado por migração; `docker compose up` sobe o sistema |
-| **3** | 21/09 – 25/09 | Dados, protótipo e **spike de GPU** | 27 | Base populada por um comando; protótipo aprovado; kernel de GPU rodando |
-| **4** | 28/09 – 02/10 | Autenticação e usuários | 31 | Login com sessão; CRUD de usuários e perfis |
-| **5** | 05/10 – 09/10 | Autorização e ingestão por texto | 29 | Perfis barrados no servidor; relatório importado com prévia |
-| **6** | 12/10 – 16/10 | Ingestão completa e painel | 28 | CSV, histórico e painel com indicadores e ranking |
-| **7** | 19/10 – 23/10 | Segmentação e mobilidade do Top N | 32 | Cada parceiro segmentado; quem entrou e saiu do Top N |
-| **8** | 26/10 – 30/10 | Modelo preditivo | 29 | Modelo treinado, MAPE melhor que o baseline, previsão na tela |
-| **9** | 02/11 – 06/11 | Otimizador: formalização e baseline | 29 | Otimizador serial devolvendo plano válido |
-| **10** | 09/11 – 13/11 | Otimizador integrado e CPU paralela | 30 | Plano na interface; versão C++ com OpenMP e ganho medido |
-| **11** | 16/11 – 20/11 | **GPU e benchmark** | 31 | *Speedup* medido e exibido na tela |
-| **12** | 23/11 – 27/11 | Central de comunicação | 29 | Mensagens geradas e fila de aprovação funcionando |
-| **13** | 30/11 – 04/12 | Assistente e fechamento | 45 | Sistema completo, documentado e os dois vídeos |
+A coluna **Realizado** é a data em que as issues da sprint fecharam no GitHub, no milestone dela — o
+primeiro e o último fechamento. O plano é o da versão 2.1, de 16/09.
+
+| Sprint | Previsto | Realizado | Tema | Pts | Entregável demonstrável |
+|:--:|---|---|---|--:|---|
+| **1** | até 05/09 | 03/09 | Planejamento e descoberta | 27 | ✅ Documentação e repositório |
+| **2** | 14/09 – 18/09 | 15/09 | Modelagem e fundação | 22 | ✅ Banco criado por migração; `docker compose up` sobe o sistema |
+| **3** | 21/09 – 25/09 | 15/09 – 24/09 | Dados, protótipo e **spike de GPU** | 27 | ✅ Base populada por um comando; protótipo aprovado; kernel de GPU rodando |
+| **4** | 28/09 – 02/10 | 16/09 | Autenticação e usuários | 31 | ✅ Login com sessão; CRUD de usuários e perfis |
+| **5** | 05/10 – 09/10 | 16/09 – 17/09 | Autorização e ingestão por texto | 29 | ✅ Perfis barrados no servidor; relatório importado com prévia |
+| **6** | 12/10 – 16/10 | 17/09 – 20/09 | Ingestão completa e painel | 28 | ✅ CSV, histórico e painel com indicadores e ranking |
+| **7** | 19/10 – 23/10 | 20/09 | Segmentação e mobilidade do Top N | 32 | ✅ Cada parceiro segmentado; quem entrou e saiu do Top N |
+| **8** | 26/10 – 30/10 | 25/09 | Modelo preditivo | 29 | ✅ Modelo treinado, MAPE melhor que o baseline, previsão na tela |
+| **9** | 02/11 – 06/11 | 25/09 – 26/09 | Otimizador: formalização e baseline | 29 | ✅ Otimizador serial devolvendo plano válido |
+| **10** | 09/11 – 13/11 | 26/09 | Otimizador integrado e CPU paralela | 30 | ✅ Plano na interface; versão C++ com OpenMP e ganho medido |
+| **11** | 16/11 – 20/11 | 26/09 – 27/09 | **GPU e benchmark** | 31 | ✅ *Speedup* medido e exibido na tela |
+| **12** | 23/11 – 27/11 | 27/09 | Central de comunicação | 29 | ✅ Mensagens geradas e fila de aprovação funcionando |
+| **13** | 30/11 – 04/12 | 28/09 — o código | Assistente e fechamento | 48 | Sistema completo e documentado ✅; os dois vídeos, em novembro |
+
+Duas pendências ficam de fora das datas: a **#59**, o limiar de Recém-chegado da RN01, que espera a decisão
+do PO, na Sprint 7; e a **H72**, que tem o ensaio feito em 28/09 (`docs/validacao-do-readme.md`) e espera a
+validação numa máquina limpa, por outro integrante.
+
+### O que resta até 05/12
+
+| O que | Quem | Quando |
+|---|---|---|
+| **H72** — subir o sistema do zero numa máquina limpa, só com o README, e registrar o que travar | Thiago ou João Pedro | até 25/10 |
+| **Congelamento de funcionalidades** — a partir dele, só correção, documentação e vídeo | equipe | 25/10 |
+| Roteiros dos vídeos; a base de demonstração final (a rede, o modelo treinado, um plano, mensagens na fila e o benchmark com a GPU) | equipe | 26/10 – 08/11 |
+| **Transferência do núcleo** (R4): o otimizador, a GPU e o benchmark apresentados à equipe; as perguntas prováveis da banca em `docs/banca.md` | Pedro e equipe | 26/10 – 08/11 |
+| **H74** e **H75** — a gravação dos dois vídeos | equipe | 09/11 – 04/12 |
+| As entregas da disciplina, pelo `docs/entrega` | equipe | quando cada enunciado sair |
+| **Entrega final** | equipe | 05/12 |
+
+**As entregas da disciplina passam na frente quando o enunciado sai.** Cada uma custa um ou dois dias, e
+o resto do calendário anda.
 
 ```mermaid
 gantt
-    title Cronograma GIH — sprints semanais até 05/12/2026
+    title Cronograma GIH — o realizado e o que resta até 05/12/2026
     dateFormat YYYY-MM-DD
     axisFormat %d/%m
 
-    section Fundação
-    S1 Planejamento            :done, 2026-08-27, 2026-09-05
-    S2 Modelagem e fundação    :2026-09-14, 5d
-    S3 Dados e protótipo       :2026-09-21, 5d
-
-    section Acesso e dados
-    S4 Autenticação            :2026-09-28, 5d
-    S5 Autorização e ingestão  :2026-10-05, 5d
-    S6 Painel                  :2026-10-12, 5d
-    S7 Segmentação             :2026-10-19, 5d
-
-    section Núcleo avançado
-    Spike de GPU               :crit, 2026-09-21, 5d
-    S8 Modelo preditivo        :2026-10-26, 5d
-    S9 Otimizador baseline     :2026-11-02, 5d
-    S10 Paralelismo em CPU     :crit, 2026-11-09, 5d
-    S11 GPU e benchmark        :crit, 2026-11-16, 5d
+    section Construção
+    S1 Planejamento                 :done, 2026-08-27, 2026-09-05
+    S2 a S7 Fundação, acesso e BI   :done, 2026-09-14, 2026-09-21
+    S8 a S11 Modelo, otimizador, GPU :done, 2026-09-22, 2026-09-28
+    S12 e S13 Comunicação e assistente :done, 2026-09-27, 2026-09-29
 
     section Fechamento
-    S12 Comunicação            :2026-11-23, 5d
-    S13 Assistente e entrega   :2026-11-30, 5d
-    Entrega final              :milestone, 2026-12-05, 0d
+    H72 validação do README         :2026-09-29, 2026-10-25
+    Congelamento                    :milestone, 2026-10-25, 0d
+    Roteiros, demonstração e banca  :2026-10-26, 2026-11-09
+    Gravação dos vídeos             :crit, 2026-11-09, 2026-12-05
+    Entrega final                   :milestone, 2026-12-05, 0d
 ```
 
 ---
 
 ## 4. Detalhamento
+
+As datas dos títulos são as do plano; as realizadas estão na seção 3.
 
 ### Sprint 2 — Modelagem e fundação · 14/09 – 18/09 · 22 pts
 `H07` modelo ER (8) · `H20` migrações (5) · `H09` ambiente com um comando (5) · `H10` CI (2) · `H71` proteção da `main` (2)
@@ -181,12 +196,17 @@ kernel CUDA compilado e conferido contra a CPU.
 ### Sprint 12 — Central de comunicação · 23/11 – 27/11 · 29 pts
 `H60` gerar mensagens (8) · `H61` fila de pendentes (5) · `H62` aprovar, editar ou rejeitar (5) · `H63` impedir aprovação sem humano (5) · `H64` histórico (3) · `H39` portal do parceiro (3)
 
-> **Replanejada em 27/09, e adiantada para 28/09 a 11/10.** A H39, que ficou de fora da Sprint 9, entra no
-> lugar da H68; a H68 vai para a 13, com o assistente cuja abstenção ela testa. Antes das histórias, a
-> ADR-013 decide o modelo de linguagem: local, opcional e com a guarda numérica da RN08.
+> **Replanejada em 27/09, para 28/09 a 11/10, e fechada em 27/09.** A H39, que ficou de fora da Sprint 9,
+> entra no lugar da H68; a H68 vai para a 13, com o assistente cuja abstenção ela testa. Antes das
+> histórias, a ADR-013 decide o modelo de linguagem: local, opcional e com a guarda numérica da RN08.
 
 ### Sprint 13 — Assistente e fechamento · 30/11 – 04/12 · 48 pts
 `H65` perguntas livres (8) · `H66` citação da fonte (5) · `H67` sem número inventado (5) · `H68` abstenção do assistente (3) · `H72` README reprodutível (5) · `H73` documentação final (5) · **`H74` vídeo horizontal (8)** · **`H75` vídeo vertical (5)** · `H76` acessibilidade (4)
+
+> **O código fechou em 28/09:** o assistente (H65 a H68), medido em `docs/medicoes/assistente.md`, e a
+> acessibilidade (H76), em `docs/medicoes/acessibilidade.md`. No mesmo dia, o ensaio do README (H72) e a
+> documentação técnica consolidada (H73), gerada por `node docs/entrega/gerar_documentacao.js`. Ficam a
+> validação da H72 e os vídeos, no calendário da seção 3.
 
 ---
 
@@ -208,37 +228,50 @@ conversacional não conta como componente de IA.
 **O que não pode sair, em nenhuma hipótese:** os vídeos (H74, H75), a documentação final (H73) e a
 reprodutibilidade (H72). Sem eles não há entrega.
 
+**Como terminou (28/09).** A válvula não foi usada. Com a construção à frente do calendário (seção 3), o
+assistente foi construído inteiro — catálogo fechado, fonte citada, guarda numérica e abstenção — e medido
+contra o modelo de verdade: o tipo e os campos certos em 47 de 49 perguntas de referência, nenhum número
+sem origem na tela em 18 armadilhas, e abstenção em 20 de 20 perguntas sem resposta. A Sprint 13 que resta
+tem só o que não podia sair, com mais de dois meses até 05/12.
+
 ---
 
 ## 6. Marcos
 
-| Data | Marco | Critério de verificação |
-|---|---|---|
-| **05/09** | Planejamento entregue | ✅ Documento no Teams e formulário preenchido |
-| **25/09** | **Risco de GPU retirado** | Kernel CUDA compilado e conferido contra a CPU |
-| **02/10** | Acesso controlado | Login com 4 perfis, negação validada no servidor |
-| **16/10** | Dados entrando e painel no ar | Importação completa e ranking com variação |
-| **23/10** | Inteligência de negócio pronta | Segmentação determinística e mobilidade do Top N |
-| **30/10** | Modelo batendo o baseline | MAPE registrado e inferior ao baseline ingênuo |
-| **13/11** | Otimizador paralelo em CPU | Plano válido e ganho medido sobre o serial |
-| **20/11** | **Componente avançado demonstrável** | *Speedup* medido e exibido na interface |
-| **27/11** | Produto completo | Fluxo inteiro, do dado bruto à mensagem aprovada |
-| **30/11** | **Congelamento de escopo** | Nenhuma funcionalidade nova a partir desta data |
-| **05/12** | **Entrega final** | Sistema, código, documentação, banco e os dois vídeos |
+| Previsto | Marco | Critério de verificação | Realizado |
+|---|---|---|---|
+| **05/09** | Planejamento entregue | Documento no Teams e formulário preenchido | ✅ 05/09 |
+| **25/09** | **Risco de GPU retirado** | Kernel CUDA compilado e conferido contra a CPU | ✅ 15/09 (H47) |
+| **02/10** | Acesso controlado | Login com 4 perfis, negação validada no servidor | ✅ 16/09 |
+| **16/10** | Dados entrando e painel no ar | Importação completa e ranking com variação | ✅ 20/09 |
+| **23/10** | Inteligência de negócio pronta | Segmentação determinística e mobilidade do Top N | ✅ 20/09 |
+| **30/10** | Modelo batendo o baseline | MAPE registrado e inferior ao baseline ingênuo | ✅ 25/09 — MAPE de 9,8%, contra 10,2% da melhor referência e 11,5% do ingênuo |
+| **13/11** | Otimizador paralelo em CPU | Plano válido e ganho medido sobre o serial | ✅ 26/09 — OpenMP 5,9x sobre o C++ serial, com 8 threads e o mesmo plano |
+| **20/11** | **Componente avançado demonstrável** | *Speedup* medido e exibido na interface | ✅ 27/09 — a GPU 106x sobre o Python no cenário de referência; o benchmark na tela (H57) |
+| **27/11** | Produto completo | Fluxo inteiro, do dado bruto à mensagem aprovada | ✅ 27/09 |
+| **30/11** | **Congelamento de escopo** | Nenhuma funcionalidade nova a partir desta data | Antecipado para **25/10** |
+| **05/12** | **Entrega final** | Sistema, código, documentação, banco e os dois vídeos | — |
 
 ---
 
 ## 7. Riscos
 
-| # | Risco | Prob. | Impacto | Mitigação |
-|:--:|---|:--:|:--:|---|
-| ~~**R1**~~ | ~~A cadeia de compilação de GPU não funcionar~~ | — | — | **RETIRADO em 15/09/2026 (H47).** Kernel CUDA compila e roda nesta máquina pelos dois caminhos — NVRTC e `nvcc` 13.4 com MSVC 19.44 — conferindo contra a CPU. OpenMP também validado. Evidência em `nucleo/spike/RESULTADO.md`. |
-| **R2** | Escopo completo sem folga no calendário | **Alta** | **Alto** | A média de 30 pontos por semana não deixa margem. Válvula de escape definida na seção 4: o assistente sai primeiro. A velocidade real medida nas Sprints 2 e 3 recalibra o plano antes da Sprint 8. |
-| **R3** | *Speedup* em GPU abaixo da meta de 5x | Baixa | **Alto** | **Reduzido em 15/09/2026:** o spike mediu 11,2x sobre o baseline serial, com folga sobre a meta do RNF02. O que **sobra** do risco é outro: contra **OpenMP** a margem cai para 1,1x–1,3x se a população transitar a cada geração, e abaixo de ~4.000 planos a GPU perde. Mitigação virou requisito da H54c — população residente na GPU. Não atingindo, o resultado medido é reportado com a análise do porquê. |
-| **R4** | **Trilha do núcleo concentrada em uma pessoa** | **Alta** | **Alto** | E5 e E6 somam 116 pontos sob o mesmo responsável, e a máquina com GPU é uma só. Como não há par, a mitigação passa a ser **transferência de conhecimento**: decisões registradas em ADR, e apresentação do código do núcleo na revisão das Sprints 10 e 11, para que mais alguém consiga explicá-lo na banca. |
-| **R5** | Modelo preditivo não superar o baseline | Média | Médio | Baselines implementados antes do modelo (H46). Se o ganho não vier do aprendizado, o otimizador segue com a melhor estimativa disponível e a análise vira conteúdo da documentação. |
-| **R6** | Ausência ou queda de participação | Média | **Alto** | Ciclo semanal expõe o problema em sete dias. Acompanhamento por commits e board em cada orientação. |
-| **R7** | Vídeos deixados para o fim | **Alta** | **Alto** | A Sprint 13 já nasce sobrecarregada. Roteiros escritos na Sprint 12; congelamento em 30/11; gravação distribuída entre 01/12 e 04/12. |
+**A seção fechada em 28/09, com a construção terminada.** Cada risco tem a situação final e o que a
+decidiu; os que seguem abertos são os que dependem do que resta — a validação, os vídeos e a banca. As
+probabilidades e os impactos do planejamento estão na versão 2.1 deste documento, no histórico do
+repositório.
+
+| # | Risco | Situação | Como terminou |
+|:--:|---|---|---|
+| **R1** | A cadeia de compilação de GPU não funcionar | **Encerrado em 15/09** | O spike (H47) compilou e rodou o kernel pelos dois caminhos — NVRTC e `nvcc` 13.4 com MSVC 19.44 —, conferindo contra a CPU. Depois, a ADR-012 levou a compilação para dentro do contêiner da API. Evidência em `nucleo/spike/RESULTADO.md` |
+| **R2** | Escopo completo sem folga no calendário | **Encerrado em 28/09** | As Sprints 2 a 13 fecharam o código até 28/09, com mais de dois meses até a entrega. A válvula de escape — o assistente — não foi usada: ele foi construído e medido |
+| **R3** | *Speedup* em GPU abaixo da meta de 5x | **Encerrado em 26/09** | No cenário de referência, a GPU responde em 248 ms de ponta a ponta, contra 26,29 s do Python: **106x**, com o mesmo plano (RNF02). O que sobrava do risco — a GPU contra o OpenMP — ficou medido e explicado: o laço na GPU ganha 7,4x do OpenMP com 2.000 parceiros, e o custo fixo de criar o contexto da placa, perto de 190 ms, faz a busca inteira perder com 500 e 2.000 parceiros e ganhar com 10.000 (`docs/medicoes/nucleo.md`) |
+| **R4** | **Trilha do núcleo concentrada em uma pessoa** | **Aberto** | O registro está feito: as ADRs 005, 006, 011 e 012, o diagrama do núcleo em `docs/10` e as medições. Falta a transferência: o núcleo apresentado à equipe, e as perguntas prováveis da banca em `docs/banca.md`, antes da gravação (seção 3) |
+| **R5** | Modelo preditivo não superar o baseline | **Encerrado em 25/09** | A rede superou as referências nas duas saídas: MAPE de 9,8% contra 10,2%, e Brier de 0,105 contra 0,122, com 500 parceiros. O risco dela é menos calibrado que o da referência, e isso está medido e escrito (`docs/medicoes/modelo.md`). Uma versão só entra em uso se superar as duas (ADR-010) |
+| **R6** | Ausência ou queda de participação | **Aberto até a entrega** | O que resta — a validação do README, os vídeos e a banca — não é código, e depende dos cinco integrantes |
+| **R7** | Vídeos deixados para o fim | **Mitigado** | O congelamento foi antecipado de 30/11 para 25/10. Os roteiros e a base de demonstração ficam para 26/10 a 08/11, e a gravação, de 09/11 a 04/12 — quase quatro semanas, contra os quatro dias do plano |
+| **R8** | O modelo de linguagem escrever número que não veio do sistema (RN08), surgido na Sprint 12 | **Encerrado em 28/09** | O código calcula todo número, e a guarda recusa o texto com número sem origem, sentido trocado ou unidade sem origem (ADR-013). Medido contra o modelo de verdade: nenhum número sem origem na tela, em 18 armadilhas (`docs/medicoes/assistente.md`) |
+| **R9** | A máquina da avaliação sem GPU, ou sem o modelo de linguagem | **Mitigado** | O sistema sobe e funciona sem os dois: o otimizador cai para a CPU (ADR-004), e as mensagens saem do modelo fixo (ADR-013). O ensaio do README, em 28/09, subiu o sistema do zero. Fecha com a validação da H72 numa máquina limpa |
 
 ---
 
@@ -254,6 +287,10 @@ reprodutibilidade (H72). Sem eles não há entrega.
 Com ciclo de uma semana, o planejamento encurta e a revisão ganha peso: é nela que a velocidade real é
 medida e o plano é recalibrado. A partir da Sprint 3 haverá duas semanas medidas — o suficiente para saber
 se os 30 pontos por semana se sustentam.
+
+**O que a medição mostrou:** a velocidade real ficou muito acima dos 30 pontos por semana — as Sprints 2 a
+12 fecharam em duas semanas (seção 3). O escopo continuou o do backlog: a folga virou margem para a
+validação, os vídeos e as entregas da disciplina.
 
 O roteiro de cada orientação continua o mesmo: repositório atualizado, funcionalidade **rodando**,
 dificuldades encontradas, e o planejamento da semana seguinte.
