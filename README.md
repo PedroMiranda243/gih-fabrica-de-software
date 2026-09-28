@@ -111,7 +111,7 @@ caminho é abrir o `.docx` no Word e usar **Arquivo › Exportar › Criar PDF**
 
 A arquitetura e as ADRs, o modelo de dados, as classes e os serviços, e os resultados medidos — do núcleo
 em CPU e GPU, do otimizador, do modelo preditivo, do assistente e da acessibilidade —, num documento só
-(H73): [`GRUPO-18-GIH-DOCUMENTACAO-TECNICA.docx`](docs/entregas/GRUPO-18-GIH-DOCUMENTACAO-TECNICA.docx).
+(H73): [`GRUPO-18-GIH-DOCUMENTACAO-TECNICA.pdf`](docs/entregas/GRUPO-18-GIH-DOCUMENTACAO-TECNICA.pdf).
 
 Ele não é escrito à parte: cada parte é o arquivo do repositório, convertido como está (`docs/07`,
 `docs/08`, `docs/10` e `docs/medicoes/`). Ao contrário das entregas, que são o retrato de uma data, ele
@@ -123,7 +123,8 @@ node docs/entrega/gerar_documentacao.js
 ```
 
 Sem nomes, o `renderizar_diagramas.js` refaz todos — e o Mermaid não sai idêntico de uma execução para a
-outra, então o diff ganha arquivos que não mudaram de conteúdo.
+outra, então o diff ganha arquivos que não mudaram de conteúdo. O PDF sai do `.docx` pelo Word, como o das
+entregas.
 
 As evidências de execução vêm de execuções reais, e não são transcritas à mão. Cada entrega grava na
 sua própria pasta, e **a pasta de uma sprint já entregue não se regera** — é o retrato daquela data:
