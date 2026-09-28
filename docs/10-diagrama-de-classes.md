@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Entrega:** Sprint 02 acadêmica — arquitetura e modelagem
-**Versão:** 1.0 — 16/09/2026
+**Versão:** 2.0 — 28/09/2026, o sistema construído (1.0 — 16/09/2026, a entrega da Sprint 02)
 
 > **Por que nove diagramas e não um.** O sistema tem três camadas com naturezas diferentes: entidades de
 > domínio (dados), serviços (regra de negócio) e núcleo computacional (C++/CUDA). Espremer as três num
@@ -411,8 +411,7 @@ O domínio das seções 2 a 4 é **anêmico de propósito**: as entidades carreg
 de negócio vive nos serviços. A razão é testabilidade — a regra fica exercitável sem instanciar entidade,
 e o interpretador do relatório, por exemplo, é função pura de texto para resultado.
 
-Módulos marcados **implementado** já existem em `api/app/` e estão cobertos por teste; **previsto** são os
-das próximas sprints.
+Todos os módulos estão marcados **implementado**: existem em `api/app/` e estão cobertos por teste.
 
 <!-- diagrama: servicos-acesso -->
 ```mermaid
