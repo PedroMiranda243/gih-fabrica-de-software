@@ -1,10 +1,19 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
-import { afterEach, vi } from "vitest";
+import { afterEach, expect, vi } from "vitest";
 
-afterEach(() => {
+import { violacoes } from "./acessibilidade";
+
+/* **Todo teste termina com a tela conferida pelo axe** (H76): rótulos, papéis e
+   nomes acessíveis, no estado em que o teste a deixou — vazio, carregando, com
+   erro, com dados. Um teste por página conferiria um estado só; aqui, cada
+   estado que a suíte monta é também um estado verificado. A conferência vem
+   antes do `cleanup`, que esvazia a tela. */
+afterEach(async () => {
+  const achadas = document.body.childElementCount ? await violacoes(document.body) : [];
   cleanup();
   vi.restoreAllMocks();
+  expect(achadas, "violações de acessibilidade na tela do teste").toEqual([]);
 });
 
 /* O jsdom não implementa `matchMedia`. Sem isto o hook de tema quebraria em
