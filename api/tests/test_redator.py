@@ -7,7 +7,6 @@ modelo de verdade roda só onde ele existe, e reprova sem ele quando
 """
 
 import json
-import os
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -15,7 +14,6 @@ import pytest
 from pydantic import BaseModel
 
 from app import redator
-from app.config import Config
 from app.guarda_numerica import numeros_sem_origem
 from app.redator import (
     DEMOROU,
@@ -245,24 +243,6 @@ def test_atual_segue_a_configuracao(monkeypatch):
 
 
 # ------------------------------------------------------- o modelo de verdade
-@pytest.fixture
-def modelo_real():
-    """O modelo de verdade, pelo `OLLAMA_BASE_URL`. Sem ele o teste pula — exceto com
-    `GIH_ASSISTENTE_OBRIGATORIO=1`.
-
-    A configuração é lida de novo, do ambiente: a da aplicação, nos testes, fica
-    sem endereço (`conftest.py::sem_modelo_de_linguagem`).
-    """
-    do_ambiente = Config()
-    r = Redator(do_ambiente.ollama_base_url, do_ambiente.llm_model, do_ambiente.llm_tempo_limite_s)
-    estado = r.estado()
-    if not estado.disponivel:
-        if os.environ.get("GIH_ASSISTENTE_OBRIGATORIO") == "1":
-            pytest.fail(f"O modelo de linguagem é obrigatório aqui: {estado.motivo}")
-        pytest.skip(f"Modelo de linguagem fora do ar: {estado.motivo}")
-    return r
-
-
 def test_o_modelo_de_verdade_redige_so_com_os_fatos(modelo_real):
     fatos = {"parceiro": "Mercearia Boa Vista", "periodo": "08/2026", "pedidos": "412"}
     texto = modelo_real.redigir(
