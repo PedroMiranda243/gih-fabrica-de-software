@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import date, timedelta
 from decimal import Decimal
 
 from sqlalchemy import func, select
@@ -48,20 +49,38 @@ PERIODOS_NA_EVOLUCAO = 8
 
 
 @dataclass
+class Fonte:
+    """De onde vêm os números (RF42, H66): os períodos consultados e, na previsão e no
+    plano, a versão do modelo e o cálculo. Quem a monta é quem consultou — o modelo
+    de linguagem não a vê, e não tem como citar outra."""
+
+    periodos: list  # Periodo ou PeriodoResposta: basta o id e as datas
+    modelo_versao: str | None = None
+    execucao_id: int | None = None
+
+
+def _fonte(*periodos, **extra) -> Fonte:
+    return Fonte([p for p in periodos if p is not None], **extra)
+
+
+@dataclass
 class Resposta:
     situacao: SituacaoResposta
     texto: str
     fatos: list[dict] = field(default_factory=list)
     candidatos: list[str] = field(default_factory=list)
+    fonte: Fonte | None = None
 
 
-def respondida(texto: str, fatos: list[dict]) -> Resposta:
-    return Resposta(SituacaoResposta.RESPONDIDA, texto, fatos)
+def respondida(texto: str, fatos: list[dict], fonte: Fonte) -> Resposta:
+    """A resposta com números — e, por isso, sempre com a fonte (RF42)."""
+    return Resposta(SituacaoResposta.RESPONDIDA, texto, fatos, fonte=fonte)
 
 
-def abstencao(texto: str, fatos: list[dict] | None = None) -> Resposta:
-    """Não há base para responder (UC12-A1): dizer isso é a resposta certa."""
-    return Resposta(SituacaoResposta.ABSTENCAO, texto, fatos or [])
+def abstencao(texto: str, fatos: list[dict] | None = None, fonte: Fonte | None = None) -> Resposta:
+    """Não há base para responder (UC12-A1): dizer isso é a resposta certa. A fonte vem
+    quando a falta foi constatada num período: "o relatório de tal semana não o trouxe"."""
+    return Resposta(SituacaoResposta.ABSTENCAO, texto, fatos or [], fonte=fonte)
 
 
 def precisao(texto: str, candidatos: list[str] | None = None, fatos=None) -> Resposta:
@@ -85,6 +104,9 @@ class Contexto:
     # Do mais antigo ao mais recente. Nos tipos de um período só, é um.
     periodos: list[Periodo] = field(default_factory=list)
     quantos: int = QUANTOS_PADRAO
+    # As datas que a pergunta trouxe, nos tipos que não escolhem período por elas:
+    # a previsão confere se o período previsto é o perguntado.
+    pedido: tuple[date, date] | None = None
 
     @property
     def periodo(self) -> Periodo:
@@ -151,10 +173,19 @@ def _segmentado(s: Session, periodo_id: int) -> bool:
     )
 
 
+def _periodo_previsto(base: Periodo) -> tuple[date, date]:
+    """O período que a previsão prevê: o seguinte ao da base, com a mesma duração (RN09)."""
+    duracao = base.data_fim - base.data_inicio
+    inicio = base.data_fim + timedelta(days=1)
+    return inicio, inicio + duracao
+
+
 def _sem_segmentacao(periodo: Periodo, fatos: list[dict]) -> Resposta:
     # "Ninguém" afirmaria uma distribuição que ninguém calculou.
     return abstencao(
-        f"O período de {_intervalo(periodo)} ainda não tem segmentação calculada.", fatos
+        f"O período de {_intervalo(periodo)} ainda não tem segmentação calculada.",
+        fatos,
+        _fonte(periodo),
     )
 
 
@@ -168,6 +199,7 @@ def desempenho_do_parceiro(c: Contexto) -> Resposta:
             f"O relatório de {_intervalo(periodo)} não trouxe {p.nome}: não há faturamento "
             "dele nesse período.",
             fatos,
+            _fonte(periodo),
         )
 
     fatos += [
@@ -187,12 +219,12 @@ def desempenho_do_parceiro(c: Contexto) -> Resposta:
     anterior = periodo_anterior(c.s, periodo)
     if anterior is None:
         texto += " É o primeiro período importado: não há com o que comparar."
-        return respondida(texto, fatos)
+        return respondida(texto, fatos, _fonte(periodo))
     fatos.append(fato(PERIODO_ANTERIOR, _intervalo(anterior)))
     antes = _metrica(c.s, p.id, anterior.id)
     if antes is None:
         texto += f" No período anterior, de {_intervalo(anterior)}, não há dados dele."
-        return respondida(texto, fatos)
+        return respondida(texto, fatos, _fonte(anterior, periodo))
     fatos.append(fato(FATURAMENTO_ANTERIOR, formato.reais(antes.faturamento)))
     texto += (
         f" No período anterior, de {_intervalo(anterior)}, tinha faturado "
@@ -202,7 +234,7 @@ def desempenho_do_parceiro(c: Contexto) -> Resposta:
     if variacao is not None:
         fatos.append(fato(VARIACAO, formato.percentual(variacao)))
         texto += f": uma variação de {formato.percentual(variacao)}"
-    return respondida(texto + ".", fatos)
+    return respondida(texto + ".", fatos, _fonte(anterior, periodo))
 
 
 def evolucao_do_parceiro(c: Contexto) -> Resposta:
@@ -216,7 +248,9 @@ def evolucao_do_parceiro(c: Contexto) -> Resposta:
     if primeiro is None:
         fatos.append(fato(PERIODO, formato.intervalo(inicio, fim)))
         return abstencao(
-            f"Não há dados de {p.nome} de {formato.data(inicio)} a {formato.data(fim)}.", fatos
+            f"Não há dados de {p.nome} de {formato.data(inicio)} a {formato.data(fim)}.",
+            fatos,
+            _fonte(*c.periodos),
         )
 
     linhas = []
@@ -231,7 +265,8 @@ def evolucao_do_parceiro(c: Contexto) -> Resposta:
             )
         fatos.append(fato(quando, valor))
         linhas.append(f"- {quando}: {valor}")
-    return respondida(f"O faturamento de {p.nome}, período a período:\n" + "\n".join(linhas), fatos)
+    texto = f"O faturamento de {p.nome}, período a período:\n" + "\n".join(linhas)
+    return respondida(texto, fatos, _fonte(*(ponto.periodo for ponto in pontos[primeiro:])))
 
 
 def posicao_do_parceiro(c: Contexto) -> Resposta:
@@ -243,6 +278,7 @@ def posicao_do_parceiro(c: Contexto) -> Resposta:
             f"{p.nome} não teve faturamento em {_intervalo(periodo)}, e fica fora do ranking "
             "desse período.",
             fatos,
+            _fonte(periodo),
         )
 
     fatos += [
@@ -266,7 +302,7 @@ def posicao_do_parceiro(c: Contexto) -> Resposta:
                 f" No período anterior, de {_intervalo(anterior)}, estava em "
                 f"{formato.ordinal(antes)}."
             )
-    return respondida(texto, fatos)
+    return respondida(texto, fatos, _fonte(anterior, periodo))
 
 
 def segmento_do_parceiro(c: Contexto) -> Resposta:
@@ -275,7 +311,9 @@ def segmento_do_parceiro(c: Contexto) -> Resposta:
     segmento = _segmento(c.s, p.id, periodo.id)
     if segmento is None:
         return abstencao(
-            f"Não há segmento calculado para {p.nome} em {_intervalo(periodo)}.", fatos
+            f"Não há segmento calculado para {p.nome} em {_intervalo(periodo)}.",
+            fatos,
+            _fonte(periodo),
         )
 
     rotulo = ROTULO_SEGMENTO[segmento]
@@ -293,7 +331,7 @@ def segmento_do_parceiro(c: Contexto) -> Resposta:
                 f" No período anterior, de {_intervalo(anterior)}, estava em "
                 f"{ROTULO_SEGMENTO[antes]}."
             )
-    return respondida(texto, fatos)
+    return respondida(texto, fatos, _fonte(anterior if antes is not None else None, periodo))
 
 
 def previsao_do_parceiro(c: Contexto) -> Resposta:
@@ -303,28 +341,50 @@ def previsao_do_parceiro(c: Contexto) -> Resposta:
     if lida.previsao is None:
         motivo = " ".join(t for t in (lida.motivo, lida.ajuda) if t)
         fatos.append(fato(MOTIVO, motivo))
-        return abstencao(f"Não há previsão para {p.nome}. {motivo}", fatos)
+        fonte = _fonte(lida.periodo_base, modelo_versao=lida.versao) if lida.versao else None
+        return abstencao(f"Não há previsão para {p.nome}. {motivo}", fatos, fonte)
+
+    fonte = _fonte(lida.periodo_base, modelo_versao=lida.versao)
+    previsto_de, previsto_ate = _periodo_previsto(lida.periodo_base)
+    if c.pedido is not None and (c.pedido[1] < previsto_de or c.pedido[0] > previsto_ate):
+        # "Quanto vai faturar em dezembro?": a previsão existe, mas é de outra
+        # semana. Responder com ela seria responder outra pergunta.
+        pedido = formato.intervalo(*c.pedido) if c.pedido[0] != c.pedido[1] else formato.data(
+            c.pedido[0]
+        )
+        previsto = formato.intervalo(previsto_de, previsto_ate)
+        fatos += [fato("Pedido", pedido), fato("Período previsto", previsto)]
+        return abstencao(
+            f"O modelo prevê só o período seguinte aos dados do treino, de {previsto}: para "
+            f"{pedido}, não há previsão.",
+            fatos,
+            fonte,
+        )
 
     previsao = lida.previsao
     chance = formato.probabilidade(previsao.probabilidade_queda)
     previsto = formato.reais(previsao.faturamento_previsto)
+    # O período previsto vai nos fatos: sem ele, o modelo redigiu "o faturamento
+    # previsto para o mês" — o valor certo, dito de outro período (adendo H66 a H68).
+    semana = formato.intervalo(previsto_de, previsto_ate)
     fatos += [
         fato("Versão do modelo", lida.versao),
         fato("Dados do treino até", _intervalo(lida.periodo_base)),
+        fato("Período previsto", semana),
         fato("Probabilidade de entrar em risco", chance),
-        fato("Faturamento previsto", previsto),
+        fato("Faturamento previsto para o período", previsto),
     ]
     texto = (
         f"Pelo modelo {lida.versao}, treinado com os dados até {_intervalo(lida.periodo_base)}, "
-        f"a probabilidade de {p.nome} estar em risco no período seguinte é de {chance}, e o "
-        f"faturamento previsto é de {previsto}."
+        f"a probabilidade de {p.nome} estar em risco no período seguinte, de {semana}, é de "
+        f"{chance}, e o faturamento previsto para ele é de {previsto}."
     )
     if lida.desatualizada:
         texto += (
             " Já há dados mais recentes que os do treino: a previsão só os considera depois "
             "de um novo treino."
         )
-    return respondida(texto, fatos)
+    return respondida(texto, fatos, fonte)
 
 
 # -------------------------------------------------------------- da rede
@@ -356,7 +416,9 @@ def ranking(c: Contexto) -> Resposta:
 
     if not itens:
         return abstencao(
-            f"Nenhum parceiro{onde} teve faturamento em {_intervalo(periodo)}.", fatos
+            f"Nenhum parceiro{onde} teve faturamento em {_intervalo(periodo)}.",
+            fatos,
+            _fonte(periodo),
         )
 
     linhas_do_texto = []
@@ -375,7 +437,7 @@ def ranking(c: Contexto) -> Resposta:
             f"\nSão {_contagem(total, 'parceiro', 'parceiros')} com faturamento{onde}; o "
             "ranking inteiro está no painel."
         )
-    return respondida(texto, fatos)
+    return respondida(texto, fatos, _fonte(periodo))
 
 
 def parceiros_do_segmento(c: Contexto) -> Resposta:
@@ -404,7 +466,9 @@ def parceiros_do_segmento(c: Contexto) -> Resposta:
     fatos.append(fato(TOTAL, formato.inteiro(total)))
     if not total:
         return respondida(
-            f"Em {_intervalo(periodo)}, nenhum parceiro{onde} está no segmento {rotulo}.", fatos
+            f"Em {_intervalo(periodo)}, nenhum parceiro{onde} está no segmento {rotulo}.",
+            fatos,
+            _fonte(periodo),
         )
 
     linhas = c.s.execute(
@@ -422,7 +486,7 @@ def parceiros_do_segmento(c: Contexto) -> Resposta:
         texto += f"\n- {nome}: {valor}"
     if total > len(linhas):
         texto += "\nA lista inteira está na tela Parceiros, com o filtro do segmento."
-    return respondida(texto, fatos)
+    return respondida(texto, fatos, _fonte(periodo))
 
 
 def mobilidade_do_top(c: Contexto) -> Resposta:
@@ -436,6 +500,7 @@ def mobilidade_do_top(c: Contexto) -> Resposta:
             f"{_intervalo(periodo)} é o primeiro período importado: não há período anterior de "
             f"onde entrar ou sair do {top}.",
             fatos,
+            _fonte(periodo),
         )
 
     anterior = _intervalo(mobilidade.periodo_anterior)
@@ -460,7 +525,7 @@ def mobilidade_do_top(c: Contexto) -> Resposta:
         texto = f"De {anterior} para {_intervalo(periodo)}, ninguém entrou nem saiu do {top}."
     else:
         texto = f"De {anterior} para {_intervalo(periodo)}, " + "; e ".join(partes) + "."
-    return respondida(texto, fatos)
+    return respondida(texto, fatos, _fonte(mobilidade.periodo_anterior, periodo))
 
 
 def resumo_do_periodo(c: Contexto) -> Resposta:
@@ -484,6 +549,7 @@ def resumo_do_periodo(c: Contexto) -> Resposta:
         "movimento."
     )
 
+    fonte = _fonte(periodo)
     if indicadores.variacao is not None and indicadores.periodo_anterior is not None:
         anterior = _intervalo(indicadores.periodo_anterior)
         comparacoes = []
@@ -498,12 +564,13 @@ def resumo_do_periodo(c: Contexto) -> Resposta:
         if comparacoes:
             fatos.append(fato(PERIODO_ANTERIOR, anterior))
             texto += f" Contra o período anterior, de {anterior}: {', '.join(comparacoes)}."
+            fonte = _fonte(indicadores.periodo_anterior, periodo)
 
     if indicadores.em_risco is not None:
         risco = indicadores.em_risco.total
         fatos.append(fato("Em risco", formato.inteiro(risco)))
         texto += f" {_contagem(risco, 'parceiro está', 'parceiros estão')} em risco."
-    return respondida(texto, fatos)
+    return respondida(texto, fatos, fonte)
 
 
 def distribuicao_dos_segmentos(c: Contexto) -> Resposta:
@@ -522,7 +589,7 @@ def distribuicao_dos_segmentos(c: Contexto) -> Resposta:
         rotulo = ROTULO_SEGMENTO[fatia.segmento]
         fatos.append(fato(rotulo, formato.inteiro(fatia.total)))
         texto += f"\n- {rotulo}: {formato.inteiro(fatia.total)}"
-    return respondida(texto, fatos)
+    return respondida(texto, fatos, _fonte(periodo))
 
 
 def ultimo_plano(c: Contexto) -> Resposta:
@@ -532,6 +599,7 @@ def ultimo_plano(c: Contexto) -> Resposta:
 
     base = c.s.get(Periodo, execucao.periodo_base_id)
     fatos = [fato("Dados de", _intervalo(base))]
+    fonte = _fonte(base, modelo_versao=execucao.modelo_versao, execucao_id=execucao.id)
     if not execucao.viavel:
         motivo = execucao.motivo or execucao.restricao_violada or "sem motivo registrado"
         fatos.append(fato(MOTIVO, motivo))
@@ -539,6 +607,7 @@ def ultimo_plano(c: Contexto) -> Resposta:
             f"O último cálculo, com os dados de {_intervalo(base)}, não encontrou plano viável: "
             f"{motivo}",
             fatos,
+            fonte,
         )
 
     parametros = ParametrosCampanha.model_validate(execucao.parametros)
@@ -567,7 +636,7 @@ def ultimo_plano(c: Contexto) -> Resposta:
         f"de {formato.reais(parametros.orcamento)} e ganho esperado de {formato.reais(ganho)}. "
         f"Ele partiu dos dados de {_intervalo(base)}."
     )
-    return respondida(texto, fatos)
+    return respondida(texto, fatos, fonte)
 
 
 RESPONDER: dict[TipoPergunta, Callable[[Contexto], Resposta]] = {

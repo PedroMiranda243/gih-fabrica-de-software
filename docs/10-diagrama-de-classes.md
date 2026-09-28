@@ -537,6 +537,7 @@ classDiagram
         <<implementado>>
         +numeros(texto) list
         +numeros_sem_origem(texto, fatos) list
+        +sentido_trocado(texto, fatos) list
     }
 
     class ServicoMensagens {
@@ -560,9 +561,12 @@ classDiagram
     class Assistente {
         <<implementado>>
         +instrucao(categorias, periodos) str
-        +perguntar(pergunta, redator) Resposta
+        +abstencao_pelo_codigo(pergunta) str
+        +perguntar(pergunta, redator) Resultado
         +resolver(extracao) Contexto
         +responder(contexto) Resposta
+        +redigir(redator, pergunta, resposta) Redacao
+        +fonte(resposta) FonteResposta
     }
 
     ServicoImportacao --> LeitorRelatorio : interpreta o texto
@@ -576,7 +580,7 @@ classDiagram
     ServicoMensagens --> GuardaNumerica : confere o texto (RN08)
     Assistente --> Ranking : posições, pelas funções do painel
     Assistente --> ServicoPrevisao : a previsão do parceiro
-    Assistente --> Redator : identifica a pergunta e os campos
+    Assistente --> Redator : lê a pergunta e redige a resposta
     Assistente --> GuardaNumerica : confere o texto (RN08, H67)
 ```
 
@@ -597,9 +601,11 @@ longa pelo ranking (a leitura da RN02) e a recusa com o nome da categoria e o va
 **O `Assistente` responde com as funções das telas, e o modelo só lê a pergunta** (ADR-013, H65). O
 `Redator` devolve o tipo da pergunta, de um catálogo fechado, e os campos dela; a resolução confere os campos
 contra a base — o parceiro pela busca da lista de parceiros —, e cada tipo responde com a função que a tela
-usa: o ranking, a mobilidade, os indicadores e a previsão. Cada resposta traz os fatos que a sustentam. Se o
-modelo somasse, contasse ou comparasse, o número deixaria de ser reproduzível (RN08); a redação pelo modelo,
-com a `GuardaNumerica` conferindo o texto, é a H67.
+usa: o ranking, a mobilidade, os indicadores e a previsão. Cada resposta traz os fatos que a sustentam e a fonte, que o
+código monta e o modelo não vê (H66). O modelo reescreve a resposta em prosa, e a `GuardaNumerica` confere o
+texto dele: número fora dos fatos ou variação no sentido contrário, e fica a resposta do código (H67). A
+pergunta que pede conta, causa ou dado que o relatório não traz recebe a abstenção antes de chegar ao modelo
+(H68). Se o modelo somasse, contasse ou comparasse, o número deixaria de ser reproduzível (RN08).
 
 **O `Redator` não sabe o que é parceiro, e a `GuardaNumerica` não sabe o que é modelo** (ADR-013). O
 `Redator` fala com o Ollama: devolve texto para um pedido, ou os campos de uma pergunta num esquema, e diz
@@ -760,7 +766,7 @@ abaixo separa os dois — e o repositório comprova cada linha da coluna ✅.
 | Núcleo | pacote `gih_nucleo`: instância, viabilidade exata, gulosos e o genético serial (H48, H49, H52); o mesmo genético em C++, idêntico ao Python (H53a), com OpenMP (H53b) e inteiro na GPU (H54a a H54c), com o mesmo plano nos quatro | — |
 | Modelo preditivo | pacote `gih_modelo`: variáveis, referências, rede e treino (H41 a H43, H46) | — |
 
-Cobertura de teste da API em 27/09/2026: **1.093 testes, 97%**. Os pacotes do modelo e do
+Cobertura de teste da API em 27/09/2026: **1.179 testes, 97%**. Os pacotes do modelo e do
 otimizador têm as próprias suítes, em `modelo/tests` e `nucleo/tests`.
 
 ---

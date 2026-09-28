@@ -12,6 +12,7 @@ exemplos para a pessoa clicar: o que o assistente sabe responder é um só.
 from __future__ import annotations
 
 import enum
+import re
 from dataclasses import dataclass
 from datetime import date, timedelta
 
@@ -20,6 +21,7 @@ from pydantic import BaseModel, Field
 from app import formato
 from app.esquemas import TipoPergunta
 from app.modelos import Segmento
+from app.texto import normalizar
 
 
 class UsoDoPeriodo(enum.Enum):
@@ -136,6 +138,8 @@ class Extracao(BaseModel):
 
     tipo: TipoPergunta
     parceiro: str | None
+    # Para reconhecer a comparação entre dois parceiros, que o catálogo não faz.
+    outro_parceiro: str | None
     categoria: str | None
     segmento: Segmento | None
     # O padrão entra na gramática da saída: sem ele, uma data saiu "log(2026-09-07)".
@@ -213,6 +217,8 @@ def instrucao(categorias: list[str], periodos: list[tuple[date, date]]) -> str:
     campos = [
         "- parceiro: o nome do parceiro exatamente como está escrito na pergunta. Nulo se a "
         "pergunta não cita um parceiro.",
+        "- outro_parceiro: se a pergunta cita um segundo parceiro, o nome dele, como está "
+        "escrito. Nulo se não cita.",
         "- categoria: se a pergunta cita uma categoria, qual destas: "
         + ", ".join(categorias)
         + ". Nula se não cita.",
@@ -242,3 +248,67 @@ def instrucao(categorias: list[str], periodos: list[tuple[date, date]]) -> str:
             *REGRAS,
         ]
     )
+
+
+# ------------------------------------------------------ o que o catálogo não faz
+# A instrução pede ao modelo que mande a conta para fora do catálogo, e ele não
+# obedece: na sonda do H65, a média, a comparação e o total de um mês saíram
+# classificados como o desempenho de um parceiro. A palavra que pede a conta está
+# na pergunta, e o código a reconhece antes do modelo (H68). Comparadas sem acento.
+_CONTA = re.compile(
+    r"\b(?:media|medias|mediana|soma|somas|somar|some|somem|somando|somad[oa]s?|"
+    r"somatori[oa]|acumulad[oa]s?|diferenca|proporcao|participacao|desde o (?:comeco|inicio))\b"
+)
+# "Faturamento médio" é conta; "ticket médio" é indicador que o sistema calcula,
+# e sai do texto antes da busca.
+_MEDIO = re.compile(r"\bmedios?\b")
+_CAUSA = re.compile(
+    r"\b(?:por que|porque|por qual motivo|qual (?:o|foi o) motivo|o que (?:causou|explica)|"
+    r"culpa)\b"
+)
+# Numa pergunta de uma semana só, o intervalo de várias semanas com uma destas
+# palavras pede a soma delas, e não a precisão de qual semana.
+_TOTAL = re.compile(r"\b(?:total|totais|inteir[oa]|acumulad[oa]|mensal|no mes|ao todo)\b")
+# O que o relatório não traz: ele tem o faturamento e os pedidos, e nada disto. O
+# modelo leria "o lucro da rede" como o resumo do período, e a resposta viria com
+# o faturamento no lugar do lucro.
+_SEM_O_DADO = re.compile(
+    r"\b(?:lucros?|margem|margens|despesas?|funcionarios?|empregados?|telefones?|"
+    r"enderecos?|e-?mail|avaliac(?:ao|oes)|notas? d[oe]s? clientes?|estoques?|salarios?|"
+    r"impostos?)\b"
+)
+
+CONTA = (
+    "Essa pergunta pede uma conta — soma, média, diferença ou total de várias semanas —, e o "
+    "assistente não faz contas: ele responde com os números que o sistema já calculou. "
+    "Pergunte por um parceiro ou pela rede numa semana, ou veja o painel."
+)
+COMPARACAO = (
+    "Comparar dois parceiros é conta, e o assistente não faz contas. Pergunte por um de cada "
+    "vez, ou veja os dois no ranking do painel."
+)
+CAUSA = (
+    "O assistente responde com os números, e não com as causas: os dados dizem o que "
+    "aconteceu, e não por quê."
+)
+SEM_O_DADO = (
+    "O sistema não tem esse dado. Os relatórios trazem o faturamento e os pedidos de cada "
+    "parceiro, e o assistente responde sobre eles e sobre o que o sistema calcula a partir deles."
+)
+
+
+def abstencao_pelo_codigo(pergunta: str) -> str | None:
+    """A abstenção para a pergunta que pede conta, causa ou dado que o sistema não tem —
+    reconhecida pelo código, sem o modelo. None: a pergunta segue para ele."""
+    texto = normalizar(pergunta)
+    if _CONTA.search(texto) or _MEDIO.search(texto.replace("ticket medio", "")):
+        return CONTA
+    if _CAUSA.search(texto):
+        return CAUSA
+    if _SEM_O_DADO.search(texto):
+        return SEM_O_DADO
+    return None
+
+
+def pede_total(pergunta: str) -> bool:
+    return bool(_TOTAL.search(normalizar(pergunta)))

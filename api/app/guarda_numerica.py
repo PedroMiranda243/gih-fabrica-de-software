@@ -22,7 +22,9 @@ fixo, que só tem os números dos fatos.
   porque comparar é conta, e conta é do código (regra 2.3).
 
 **A comparação é exata**, sem tolerância: `13%` não é `12,8%`. O sinal não
-conta — "caiu 12,8%" diz a variação de `-12,8%` com palavras.
+conta no valor — "caiu 12,8%" diz a variação de `-12,8%` com palavras —, e o
+sentido é conferido à parte (`sentido_trocado`): "caiu 12,8%" onde o fato é
+`+12,8%` é número trocado.
 
 **O que fica de fora, de propósito:** "um" e "uma" sozinhos (são artigo, e não
 quantidade), "primeiro" e "segundo" (são "antes de tudo" e "de acordo com"), e
@@ -39,7 +41,7 @@ import datetime as dt
 import re
 import unicodedata
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from decimal import Decimal, InvalidOperation
 from enum import Enum
 
@@ -62,6 +64,8 @@ class Numero:
     # NUMERO e PERCENTUAL: o valor absoluto. DATA: (dia, mês, ano), com None no
     # que o texto não disse. COMPARACAO: None.
     valor: Decimal | tuple[int | None, int | None, int | None] | None
+    # Onde o trecho começa no texto, para ler as palavras em volta (`sentido_trocado`).
+    inicio: int = field(default=0, compare=False)
 
 
 # ------------------------------------------------------------------ vocabulário
@@ -209,7 +213,7 @@ def numeros(texto: str) -> list[Numero]:
 
     achados += _por_extenso(texto, ocupado)
     achados.sort(key=lambda par: par[0])
-    return [numero for _, numero in achados]
+    return [replace(numero, inicio=posicao) for posicao, numero in achados]
 
 
 def _por_extenso(texto: str, ocupado: list[bool]) -> list[tuple[int, Numero]]:
@@ -365,3 +369,85 @@ def numeros_sem_origem(texto: str, fatos) -> list[str]:
     """
     p = permitidos(fatos)
     return [n.trecho for n in numeros(texto) if not p.sustenta(n)]
+
+
+# ------------------------------------------------------------------ o sentido
+# A variação dita com palavras: "caiu 12,8%" é -12,8%. Comparadas sem acento.
+SOBE = {
+    "sobe", "subiu", "subiram", "subir", "subindo", "alta", "cresce", "cresceu", "cresceram",
+    "crescer", "crescendo", "crescimento", "aumento", "aumentou", "aumentaram", "aumentar",
+    "avanco", "avancou", "melhora", "melhorou", "expansao",
+}
+DESCE = {
+    "cai", "caiu", "cairam", "caem", "cair", "caindo", "queda", "recuo", "recuou", "recuaram",
+    "recuar", "reducao", "reduziu", "reduzir", "baixa", "diminuiu", "diminuiram", "diminuicao",
+    "diminuir", "perda", "perdeu", "piora", "piorou", "retracao", "encolheu",
+}
+# Até onde a palavra pode estar do percentual: "caiu 12,8%", "uma queda de
+# 12,8%", "12,8% de queda". A mais próxima vale: numa frase com duas variações,
+# cada uma tem o seu verbo.
+ANTES = 40
+DEPOIS = 15
+
+
+def _sinal(numero: Numero) -> int:
+    """O sinal escrito no trecho: 1, -1, ou 0 quando não há."""
+    if numero.trecho[:1] in "-−":
+        return -1
+    return 1 if numero.trecho[:1] == "+" else 0
+
+
+def _sentido_da_palavra(texto: str, numero: Numero) -> int:
+    antes = texto[max(0, numero.inicio - ANTES) : numero.inicio]
+    for palavra in reversed(_PALAVRA.findall(antes)):
+        chave = normalizar(palavra)
+        if chave in SOBE or chave in DESCE:
+            return 1 if chave in SOBE else -1
+    fim = numero.inicio + len(numero.trecho)
+    for palavra in _PALAVRA.findall(texto[fim : fim + DEPOIS]):
+        chave = normalizar(palavra)
+        if chave in SOBE or chave in DESCE:
+            return 1 if chave in SOBE else -1
+    return 0
+
+
+def _textos(valor) -> Iterable[str]:
+    if isinstance(valor, str):
+        yield valor
+    elif isinstance(valor, Mapping):
+        for v in valor.values():
+            yield from _textos(v)
+    elif isinstance(valor, Iterable):
+        for v in valor:
+            yield from _textos(v)
+
+
+def sentido_trocado(texto: str, fatos) -> list[str]:
+    """Os percentuais do texto ditos no sentido contrário ao dos fatos.
+
+    A guarda compara o valor sem o sinal, porque "caiu 12,8%" é o jeito certo de
+    escrever -12,8%. O preço é que "caiu 12,8%" também passaria onde o fato é
+    +12,8% — o número certo, e a notícia invertida. Isto confere o sentido: o
+    sinal escrito no texto, ou, sem ele, a palavra mais próxima do número.
+
+    Só vale para o percentual que tem sinal nos fatos. A probabilidade de 13%
+    não sobe nem desce; a variação de +12,8%, sim.
+    """
+    sinais: dict[Decimal, set[int]] = {}
+    for valor in _textos(fatos):
+        for n in numeros(valor):
+            if n.tipo is Tipo.PERCENTUAL and _sinal(n):
+                sinais.setdefault(n.valor, set()).add(_sinal(n))
+
+    texto = unicodedata.normalize("NFC", texto)
+    trocados = []
+    for n in numeros(texto):
+        esperado = sinais.get(n.valor) if n.tipo is Tipo.PERCENTUAL else None
+        # Com os dois sinais nos fatos para o mesmo valor, não há como saber qual o
+        # texto quis dizer — e a dúvida não reprova.
+        if not esperado or len(esperado) > 1:
+            continue
+        escrito = _sinal(n) or _sentido_da_palavra(texto, n)
+        if escrito and escrito not in esperado:
+            trocados.append(n.trecho)
+    return trocados

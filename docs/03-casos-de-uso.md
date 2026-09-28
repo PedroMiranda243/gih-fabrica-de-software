@@ -744,8 +744,20 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 >   segue;
 > - **E2:** a pergunta acima de 1.000 caracteres é recusada com o limite.
 >
-> A fonte completa, a redação pelo modelo com a guarda numérica e a abstenção pelas contas que o catálogo
-> não faz são as H66 a H68.
+> **O passo 3 e o passo 4 (Sprint 13 interna, H66 a H68).**
+>
+> - **A fonte é do código** (H66). Toda resposta com números traz os relatórios de que os dados vieram —
+>   o período, quando e por quem foi importado — e, na previsão e no plano, a versão do modelo e o
+>   cálculo. O modelo de linguagem não a vê, e não tem como citar outra.
+> - **O modelo redige, e a guarda confere** (H67). A resposta em prosa passa pelo modelo, que a reescreve
+>   para responder direto ao que foi perguntado. Com número que não veio dos fatos, ou com a variação no
+>   sentido contrário — "caiu 12,50%" onde o fato é +12,50% —, a resposta volta a ser a do código, e diz
+>   por quê. As listas não passam pelo modelo: uma lista reescrita pode perder um item sem que número
+>   nenhum fique errado.
+> - **A abstenção também é do código** (H68). A pergunta que pede conta — soma, média, diferença, total de
+>   várias semanas —, a causa ("por que caiu?") ou um dado que o relatório não traz (lucro, telefone) é
+>   reconhecida antes do modelo. A pergunta com dois parceiros é comparação, e a previsão de outro
+>   período que não o seguinte ao treino também recebe a abstenção.
 
 ---
 

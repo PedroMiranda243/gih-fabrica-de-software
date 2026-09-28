@@ -9,7 +9,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.guarda_numerica import Tipo, numeros, numeros_sem_origem, permitidos
+from app.guarda_numerica import Tipo, numeros, numeros_sem_origem, permitidos, sentido_trocado
 
 FATOS = {
     "parceiro": "Mercearia Boa Vista",
@@ -221,3 +221,59 @@ def test_outro_dia_nao_passa(texto, sem_origem):
 def test_sem_fatos_nenhum_numero_passa():
     assert numeros_sem_origem("São 3 pedidos.", {}) == ["3"]
     assert numeros_sem_origem("Obrigado pela parceria.", {}) == []
+
+
+# ------------------------------------------------------------------ o sentido
+VARIACOES = [
+    {"fato": "Variação do faturamento", "valor": "+12,50%"},
+    {"fato": "Variação dos pedidos", "valor": "-7,69%"},
+    {"fato": "Probabilidade de entrar em risco", "valor": "13%"},
+]
+
+
+@pytest.mark.parametrize(
+    "texto",
+    [
+        "O faturamento cresceu 12,50%, e os pedidos caíram 7,69%.",
+        "Uma alta de 12,50% no faturamento.",
+        "Os pedidos tiveram 7,69% de queda.",
+        "A variação foi de +12,50%.",
+        "Os pedidos variaram -7,69%.",
+        "Os pedidos caíram -7,69%.",
+        "O faturamento variou 12,50%.",
+        "A chance de queda é de 13%.",
+    ],
+)
+def test_a_variacao_no_sentido_certo_passa(texto):
+    assert sentido_trocado(texto, VARIACOES) == []
+
+
+@pytest.mark.parametrize(
+    ("texto", "trocados"),
+    [
+        ("O faturamento caiu 12,50%.", ["12,50%"]),
+        ("Uma queda de 12,50% no faturamento.", ["12,50%"]),
+        ("O faturamento teve 12,50% de queda.", ["12,50%"]),
+        ("A variação foi de -12,50%.", ["-12,50%"]),
+        ("Os pedidos cresceram 7,69%.", ["7,69%"]),
+        ("O faturamento caiu 12,50% e os pedidos subiram 7,69%.", ["12,50%", "7,69%"]),
+    ],
+)
+def test_a_variacao_no_sentido_contrario_e_apontada(texto, trocados):
+    """O valor certo com a notícia invertida: a guarda do valor não pega, esta pega."""
+    assert numeros_sem_origem(texto, VARIACOES) == []
+    assert sentido_trocado(texto, VARIACOES) == trocados
+
+
+def test_o_valor_com_os_dois_sinais_nos_fatos_nao_reprova():
+    fatos = ["+5,00%", "-5,00%"]
+    assert sentido_trocado("Caiu 5,00%.", fatos) == []
+    assert sentido_trocado("Subiu 5,00%.", fatos) == []
+
+
+def test_cada_numero_sabe_onde_esta_no_texto():
+    texto = "Em 14/09/2026, caiu 12,50%."
+    assert [(n.trecho, texto[n.inicio : n.inicio + len(n.trecho)]) for n in numeros(texto)] == [
+        ("14/09/2026", "14/09/2026"),
+        ("12,50%", "12,50%"),
+    ]

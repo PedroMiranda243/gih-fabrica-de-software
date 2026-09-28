@@ -1439,12 +1439,50 @@ class PerguntaAssistente(BaseModel):
         return texto
 
 
+class RelatorioDaFonte(BaseModel):
+    """O relatório de um período: a importação que trouxe os dados dele."""
+
+    periodo: PeriodoResposta
+    importado_em: datetime | None
+    importado_por: str | None
+    origem: OrigemImportacao | None
+
+
+class FonteResposta(BaseModel):
+    """De onde vêm os números da resposta — montada pelo código, e não pelo modelo
+    (RF42, H66). O modelo nem a vê: ele não tem como citar outra."""
+
+    texto: str = Field(description="A fonte numa frase, para a tela.")
+    relatorios: list[RelatorioDaFonte] = Field(
+        description="Do período mais antigo ao mais recente."
+    )
+    modelo_versao: str | None = Field(
+        default=None, description="A versão do modelo preditivo, na previsão e no plano."
+    )
+    execucao_id: int | None = Field(
+        default=None, description="O cálculo do plano, no último plano."
+    )
+
+
 class RespostaAssistente(BaseModel):
     situacao: SituacaoResposta
     tipo: TipoPergunta | None = Field(
-        description="O tipo do catálogo que o modelo identificou. Nulo sem o modelo."
+        description="O tipo do catálogo, ou fora_do_catalogo — que o código também reconhece, "
+        "na pergunta que pede conta. Nulo quando ninguém leu a pergunta: sem dados ou sem o "
+        "modelo."
     )
     texto: str
+    fonte: FonteResposta | None = Field(
+        description="Sempre presente na resposta com números; na abstenção, quando ela veio de "
+        "um período consultado."
+    )
+    redator: RedatorMensagem = Field(
+        description="MODELO: o modelo de linguagem redigiu, e a guarda aprovou. MODELO_FIXO: o "
+        "texto é o que o código montou."
+    )
+    motivo: str | None = Field(
+        description="Por que o texto é o do código, quando o modelo tentou redigir e não passou."
+    )
     fatos: list[FatoMensagem] = Field(
         description="Os valores que o código recuperou, já formatados: todo número do texto "
         "sai daqui (RN08)."

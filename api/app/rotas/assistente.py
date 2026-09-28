@@ -15,7 +15,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 
 from app import redator
-from app.assistente import servico
+from app.assistente import fonte, servico
 from app.assistente.catalogo import CATALOGO
 from app.config import config
 from app.dependencias import Banco, exigir
@@ -56,14 +56,19 @@ def estado() -> EstadoDoAssistente:
 def perguntar(pedido: PerguntaAssistente, s: Banco) -> RespostaAssistente:
     """A resposta a uma pergunta em linguagem natural (UC12, passos 1 a 4).
 
-    Com o modelo carregado, leva poucos segundos; a primeira pergunta depois de
-    ele ficar parado paga o carregamento, perto de 45 s (ADR-013).
+    O modelo lê a pergunta e redige a resposta: com ele carregado, leva de 5 a 10 s;
+    a primeira pergunta depois de ele ficar parado paga o carregamento, perto de
+    45 s (ADR-013). A fonte é do código, e o modelo não a vê (H66).
     """
-    tipo, resposta = servico.perguntar(s, pedido.texto, redator.atual())
+    resultado = servico.perguntar(s, pedido.texto, redator.atual())
+    resposta = resultado.resposta
     return RespostaAssistente(
         situacao=resposta.situacao,
-        tipo=tipo,
-        texto=resposta.texto,
+        tipo=resultado.tipo,
+        texto=resultado.redacao.texto,
+        fonte=fonte.montar(s, resposta.fonte) if resposta.fonte else None,
+        redator=resultado.redacao.redator,
+        motivo=resultado.redacao.motivo,
         fatos=[FatoMensagem(**f) for f in resposta.fatos],
         candidatos=resposta.candidatos,
     )
