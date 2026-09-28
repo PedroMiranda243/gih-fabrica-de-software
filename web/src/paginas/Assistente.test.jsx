@@ -298,7 +298,14 @@ describe("assistente", () => {
   });
 
   it("a espera longa diz por quê, e a tela não parece travada", async () => {
-    simular(() => new Promise(() => {}));
+    /* A pergunta fica sem resposta de verdade: o `fetch` não resolve. Pela
+       tabela do `simularApi`, uma promessa pendente virava 200 com corpo vazio —
+       e a tela recebia uma resposta nula que nunca existiria. */
+    vi.spyOn(globalThis, "fetch").mockImplementation((url, opcoes = {}) =>
+      (opcoes.method ?? "GET") === "GET"
+        ? Promise.resolve(new Response(JSON.stringify(estado())))
+        : new Promise(() => {}),
+    );
     renderizar();
     const campo = await screen.findByLabelText("Sua pergunta");
 

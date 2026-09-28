@@ -25,6 +25,11 @@
   --surface: #ffffff;
   --surface-2: #f0f2f6;
   --border: #e3e7ed;
+  /* A borda do que se preenche — campo, lista de escolha. A `--border` mede
+     1,24:1 e serve para separar painel de fundo, que é decoração; a borda de um
+     campo é o que diz onde ele está, e o AA pede 3:1 (WCAG 1.4.11, RNF22).
+     Medido: 3,19:1 no pior fundo, a `--surface-2`. */
+  --borda-controle: #7f8898;
   --ink: #101826;
   --ink-2: #5a6474;
   --ink-3: #8a93a3;
@@ -123,6 +128,7 @@
     --surface: #12161c;
     --surface-2: #171c24;
     --border: #262d38;
+    --borda-controle: #646e7d;
     --ink: #eef1f6;
     --ink-2: #a8b1bf;
     --ink-3: #6f7987;
@@ -154,6 +160,7 @@
   --surface: #12161c;
   --surface-2: #171c24;
   --border: #262d38;
+  --borda-controle: #646e7d;
   --ink: #eef1f6;
   --ink-2: #a8b1bf;
   --ink-3: #6f7987;

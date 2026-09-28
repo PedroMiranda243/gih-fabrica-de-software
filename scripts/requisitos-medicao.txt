@@ -1,0 +1,7 @@
+# Só para as medições que abrem um navegador (scripts/medir_telas.py).
+# Fora do requirements-dev da API de propósito: a CI não mede as telas, e não
+# precisa baixar isto.
+#
+# Playwright: Apache 2.0. Usa o Microsoft Edge já instalado na máquina
+# (channel="msedge"): nenhum navegador é baixado.
+playwright==1.63.0
