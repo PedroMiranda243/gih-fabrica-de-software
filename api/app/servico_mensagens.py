@@ -12,9 +12,9 @@ Do público à fila de aprovação, em três passos:
    dizer ao parceiro que ele está "em risco" foi justamente o que a sonda da
    ADR-013 pegou o modelo fazendo.
 3. **A redação** (`redigir`): o modelo de linguagem escreve com os fatos, e a
-   guarda numérica confere (RN08). Número sem origem, termo interno ou o modelo
-   fora do ar: o texto sai do **modelo fixo** da equipe, com os mesmos fatos, e
-   a mensagem guarda por quê.
+   guarda numérica confere (RN08). Número sem origem, variação no sentido
+   contrário, termo interno ou o modelo fora do ar: o texto sai do **modelo
+   fixo** da equipe, com os mesmos fatos, e a mensagem guarda por quê.
 
 **Em segundo plano, um lote por vez**, no molde do otimizador: `iniciar` grava
 o lote com o público resolvido — o que a prévia mostrou é o que se gera —, e
@@ -44,7 +44,7 @@ from app.calculos import ticket_medio, variacao_percentual
 from app.db import sessao
 from app.desempenho import ROTULO_SEGMENTO, com_desempenho, recorte
 from app.esquemas import MAXIMO_POR_LOTE, ParceiroDoPublico, PublicoMensagens, TipoPublico
-from app.guarda_numerica import numeros_sem_origem
+from app.guarda_numerica import numeros_sem_origem, sentido_trocado
 from app.modelos import (
     AcaoComercial,
     Categoria,
@@ -176,6 +176,10 @@ NUMEROS_SEM_ORIGEM = (
     "O texto do assistente trazia números que não vieram dos dados ({numeros}), e foi trocado "
     "pelo modelo fixo."
 )
+SENTIDO_TROCADO = (
+    "O texto do assistente invertia o sentido de uma variação ({numeros}), e foi trocado pelo "
+    "modelo fixo."
+)
 TERMO_INTERNO = (
     "O texto do assistente mencionava a classificação interna do parceiro ({termos}), e foi "
     "trocado pelo modelo fixo."
@@ -265,6 +269,10 @@ def redigir(
     sem_origem = numeros_sem_origem(texto, fatos)
     if sem_origem:
         motivo = NUMEROS_SEM_ORIGEM.format(numeros=", ".join(dict.fromkeys(sem_origem)))
+        return Redacao(fixo, RedatorMensagem.MODELO_FIXO, None, motivo)
+    trocados = sentido_trocado(texto, fatos)
+    if trocados:
+        motivo = SENTIDO_TROCADO.format(numeros=", ".join(dict.fromkeys(trocados)))
         return Redacao(fixo, RedatorMensagem.MODELO_FIXO, None, motivo)
     internos = termos_internos(texto)
     if internos:
