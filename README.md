@@ -163,7 +163,7 @@ rode com a aplicação livre. Nenhum dos scripts deixa resíduo no banco.
 | [07 — Arquitetura](docs/07-arquitetura-preliminar.md) | As camadas e onde cada uma roda, o núcleo, as decisões (ADR-001 a ADR-013), o ambiente |
 | [08 — Modelo de dados](docs/08-modelo-de-dados.md) | Diagrama ER, entidades, restrições e índices |
 | [09 — Sistema visual](docs/09-sistema-visual.md) | Paleta validada, tipografia, espaçamento e estados vazios |
-| [10 — Diagrama de classes](docs/10-diagrama-de-classes.md) | O domínio, os serviços e o núcleo computacional, em oito diagramas |
+| [10 — Diagrama de classes](docs/10-diagrama-de-classes.md) | O domínio, os serviços e o núcleo computacional, em nove diagramas |
 | [Medições](docs/medicoes/) | O núcleo em CPU e GPU, o otimizador, o modelo preditivo, o assistente e a acessibilidade — gerados por script |
 | [Documentação técnica final](#documentação-técnica-final) | 07, 08, 10 e as medições, num documento só |
 | [Como contribuir](CONTRIBUTING.md) | Branches, commits, Pull Requests |

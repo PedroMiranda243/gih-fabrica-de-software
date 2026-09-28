@@ -64,6 +64,10 @@ tentativas de autenticação inclusive contra logins que não existem, e por iss
 estrangeira para `USUARIO`. Ligá-la quebraria justamente o caso que ela existe para cobrir — o ataque por
 dicionário usa login desconhecido (RNF11).
 
+**Impresso, o MER inteiro fica pequeno demais para ler.** No repositório, o GitHub o mostra em tamanho real;
+no papel, cada parte da seção 2 abre com o recorte dela — o acesso, os parceiros e o desempenho, a campanha
+e a comunicação —, e o treino e as previsões têm o seu na 2.4.
+
 Os atributos de cada entidade estão na tabela abaixo, e não dentro das caixas do desenho: com dezenove
 entidades e mais de cem atributos, a figura ficaria ilegível impressa, que é critério de aceite da entrega.
 
@@ -155,6 +159,17 @@ nome de parceiro sem reescrever as métricas dele.
 
 ### 2.1 Acesso e auditoria
 
+O recorte do acesso: o usuário, a sessão, a trilha, o parceiro que ele representa e os limiares que ajusta.
+
+<!-- diagrama: mer-acesso -->
+```mermaid
+erDiagram
+    USUARIO ||--o{ SESSAO_ACESSO : abre
+    USUARIO ||--o{ AUDITORIA : gera
+    USUARIO }o--o| PARCEIRO : representa
+    USUARIO |o--o| CONFIGURACAO_SEGMENTACAO : ajusta
+```
+
 **usuario**
 
 | Coluna | Tipo | Chave | Restrição |
@@ -207,6 +222,21 @@ mesma condição, nos dois sentidos.
 | ocorrido_em | timestamptz | | padrão `now()` |
 
 ### 2.2 Parceiros
+
+O recorte dos parceiros e dos dados de desempenho, que as seções 2.2 e 2.3 detalham:
+
+<!-- diagrama: mer-desempenho -->
+```mermaid
+erDiagram
+    USUARIO ||--o{ IMPORTACAO : realiza
+    PERIODO ||--o{ IMPORTACAO : cobre
+    IMPORTACAO ||--o{ METRICA : origina
+    PERIODO ||--o{ METRICA : delimita
+    PARCEIRO ||--o{ METRICA : possui
+    PERIODO ||--o{ HISTORICO_SEGMENTO : delimita
+    PARCEIRO ||--o{ HISTORICO_SEGMENTO : recebe
+    CATEGORIA ||--o{ PARCEIRO : classifica
+```
 
 **categoria**
 
@@ -382,6 +412,20 @@ A ligação entre treino e previsão é **tracejada** porque não é chave estra
 uso não fica em configuração à parte**: é o que o último treino concluído registra. Duas fontes para a
 mesma resposta acabariam discordando.
 
+O recorte da campanha: a execução do otimizador, o plano, os itens, as ações e o benchmark.
+
+<!-- diagrama: mer-campanha -->
+```mermaid
+erDiagram
+    USUARIO |o--o{ EXECUCAO_OTIMIZADOR : dispara
+    PERIODO ||--o{ EXECUCAO_OTIMIZADOR : baseia
+    EXECUCAO_OTIMIZADOR ||--o| PLANO_CAMPANHA : produz
+    PLANO_CAMPANHA ||--|{ ITEM_PLANO : compoe
+    ACAO_COMERCIAL ||--o{ ITEM_PLANO : e_alocada_em
+    PARCEIRO ||--o{ ITEM_PLANO : e_alvo_de
+    USUARIO |o--o{ EXECUCAO_BENCHMARK : dispara
+```
+
 **acao_comercial** — os efeitos entraram na Sprint 9 interna (RN10, issue #117)
 
 | Coluna | Tipo | Chave | Restrição |
@@ -466,6 +510,18 @@ sintético (`gih_nucleo.cenario`), e por isso a tabela não aponta para parceiro
 mede a máquina, e não a campanha.
 
 ### 2.5 Comunicação
+
+O recorte da comunicação: o lote, a mensagem, quem a decide e o item do plano que a justifica.
+
+<!-- diagrama: mer-comunicacao -->
+```mermaid
+erDiagram
+    USUARIO |o--o{ LOTE_MENSAGENS : pede
+    LOTE_MENSAGENS |o--o{ MENSAGEM : gera
+    USUARIO ||--o{ MENSAGEM : decide
+    PARCEIRO ||--o{ MENSAGEM : recebe
+    ITEM_PLANO |o--o{ MENSAGEM : justifica
+```
 
 **lote_mensagens** — Sprint 12 interna (H60, UC10, RF36; ADR-013)
 

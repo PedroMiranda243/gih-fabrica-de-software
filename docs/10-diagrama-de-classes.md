@@ -4,7 +4,7 @@
 **Entrega:** Sprint 02 acadêmica — arquitetura e modelagem
 **Versão:** 1.0 — 16/09/2026
 
-> **Por que oito diagramas e não um.** O sistema tem três camadas com naturezas diferentes: entidades de
+> **Por que nove diagramas e não um.** O sistema tem três camadas com naturezas diferentes: entidades de
 > domínio (dados), serviços (regra de negócio) e núcleo computacional (C++/CUDA). Espremer as três num
 > desenho só produziria uma figura de oitenta caixas, ilegível impressa — que é exatamente o critério de
 > aceite da entrega. Cada diagrama abaixo se lê sozinho, e o **primeiro** mostra como eles se ligam.
@@ -474,7 +474,7 @@ Duas decisões desta camada que valem registro:
 
 ---
 
-## 6. Camada de serviços — ingestão e análise
+## 6. Camada de serviços — ingestão, análise e comunicação
 
 <!-- diagrama: servicos-negocio -->
 ```mermaid
@@ -526,62 +526,12 @@ classDiagram
         +executar(execucao)
     }
 
-    class Redator {
-        <<implementado>>
-        +estado() Estado
-        +redigir(sistema, pedido) str
-        +extrair(sistema, pergunta, esquema) BaseModel
-    }
-
-    class GuardaNumerica {
-        <<implementado>>
-        +numeros(texto) list
-        +numeros_sem_origem(texto, fatos) list
-        +sentido_trocado(texto, fatos) list
-    }
-
-    class ServicoMensagens {
-        <<implementado>>
-        +resolver(publico) Previa
-        +fatos_do_parceiro(...) list
-        +redigir(redator, segmento, fatos) Redacao
-        +iniciar(publico, usuario) LoteMensagens
-        +executar(lote)
-        +refazer(lote) LoteMensagens
-    }
-
-    class ServicoAprovacao {
-        <<implementado>>
-        +aprovar(mensagem, gestor) Mensagem
-        +editar(mensagem, texto) Mensagem
-        +rejeitar(mensagem, gestor, motivo) Mensagem
-        +aprovar_em_lote(ids, gestor) ResultadoEmLote
-    }
-
-    class Assistente {
-        <<implementado>>
-        +instrucao(categorias, periodos) str
-        +abstencao_pelo_codigo(pergunta) str
-        +perguntar(pergunta, redator) Resultado
-        +resolver(extracao) Contexto
-        +responder(contexto) Resposta
-        +redigir(redator, pergunta, resposta) Redacao
-        +fonte(resposta) FonteResposta
-    }
-
     ServicoImportacao --> LeitorRelatorio : interpreta o texto
     ServicoImportacao --> Segmentador : dispara o recálculo
     Segmentador --> Ranking : usa a ordenação
     ServicoPrevisao --> Segmentador : rotula o risco pelo mesmo critério (RN09)
     ServicoOtimizacao --> Ranking : cauda longa pelo ranking (RN11)
     ServicoOtimizacao --> ServicoPrevisao : previsões da versão em uso (RN10)
-    ServicoMensagens --> Ranking : desempenho do período, pela consulta da lista
-    ServicoMensagens --> Redator : redige com os fatos
-    ServicoMensagens --> GuardaNumerica : confere o texto (RN08)
-    Assistente --> Ranking : posições, pelas funções do painel
-    Assistente --> ServicoPrevisao : a previsão do parceiro
-    Assistente --> Redator : lê a pergunta e redige a resposta
-    Assistente --> GuardaNumerica : confere o texto (RN08, H67)
 ```
 
 **`LeitorRelatorio` não toca no banco.** É função pura de texto para resultado, e é isso que permite a
@@ -597,6 +547,72 @@ séries e devolve números, e quem decide se uma versão entra em uso é este se
 a regra de negócio e o texto: o ganho da RN10 em centavos, quem é elegível, as cotas em contagem, a cauda
 longa pelo ranking (a leitura da RN02) e a recusa com o nome da categoria e o valor em reais. O pacote
 `gih_nucleo` recebe inteiros e devolve o plano (ADR-011).
+
+### A comunicação e o assistente
+
+Os serviços que falam com o modelo de linguagem, e a aprovação das mensagens. O `Ranking` e o
+`ServicoPrevisao` entram só com o nome: estão no diagrama anterior.
+
+<!-- diagrama: servicos-comunicacao -->
+```mermaid
+classDiagram
+    direction LR
+
+    class ServicoMensagens {
+        <<implementado>>
+        +resolver(publico) Previa
+        +fatos_do_parceiro(...) list
+        +redigir(redator, segmento, fatos) Redacao
+        +iniciar(publico, usuario) LoteMensagens
+        +executar(lote)
+        +refazer(lote) LoteMensagens
+    }
+
+    class Assistente {
+        <<implementado>>
+        +instrucao(categorias, periodos) str
+        +abstencao_pelo_codigo(pergunta) str
+        +perguntar(pergunta, redator) Resultado
+        +resolver(extracao) Contexto
+        +responder(contexto) Resposta
+        +redigir(redator, pergunta, resposta) Redacao
+        +fonte(resposta) FonteResposta
+    }
+
+    class Redator {
+        <<implementado>>
+        +estado() Estado
+        +redigir(sistema, pedido) str
+        +extrair(sistema, pergunta, esquema) BaseModel
+    }
+
+    class GuardaNumerica {
+        <<implementado>>
+        +numeros(texto) list
+        +numeros_sem_origem(texto, fatos) list
+        +sentido_trocado(texto, fatos) list
+    }
+
+    class ServicoAprovacao {
+        <<implementado>>
+        +aprovar(mensagem, gestor) Mensagem
+        +editar(mensagem, texto) Mensagem
+        +rejeitar(mensagem, gestor, motivo) Mensagem
+        +aprovar_em_lote(ids, gestor) ResultadoEmLote
+    }
+
+    class Ranking
+
+    class ServicoPrevisao
+
+    ServicoMensagens --> Ranking : desempenho do período, pela consulta da lista
+    ServicoMensagens --> Redator : redige com os fatos
+    ServicoMensagens --> GuardaNumerica : confere o texto (RN08)
+    Assistente --> Ranking : posições, pelas funções do painel
+    Assistente --> ServicoPrevisao : a previsão do parceiro
+    Assistente --> Redator : lê a pergunta e redige a resposta
+    Assistente --> GuardaNumerica : confere o texto (RN08, H67)
+```
 
 **O `Assistente` responde com as funções das telas, e o modelo só lê a pergunta** (ADR-013, H65). O
 `Redator` devolve o tipo da pergunta, de um catálogo fechado, e os campos dela; a resolução confere os campos
