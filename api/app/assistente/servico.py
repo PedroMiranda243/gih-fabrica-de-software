@@ -1,23 +1,39 @@
 """A pergunta ao assistente, de ponta a ponta (UC12).
 
-1. **Sem dados, sem pergunta ao modelo**: não há o que responder, e carregar o
+1. **A conta, a causa e o dado que não existe, antes de tudo**: a pergunta que
+   pede soma, média, o porquê ou o lucro recebe a abstenção pelo código, sem o
+   modelo (H68).
+2. **Sem dados, sem pergunta ao modelo**: não há o que responder, e carregar o
    modelo custaria dezenas de segundos para dizer isso.
-2. **Sem o modelo, a indisponibilidade** (E1): o motivo vem do redator, e o resto
+3. **Sem o modelo, a indisponibilidade** (E1): o motivo vem do redator, e o resto
    do sistema segue.
-3. **O modelo identifica o tipo e os campos** (`redator.extrair`); fora do
-   catálogo, a abstenção.
-4. **A resolução confere os campos contra a base**, e o que falta vira pedido de
+4. **O modelo identifica o tipo e os campos** (`redator.extrair`); fora do
+   catálogo, ou comparando dois parceiros, a abstenção.
+5. **A resolução confere os campos contra a base**, e o que falta vira pedido de
    precisão (A2).
-5. **O código responde**, com as funções das telas.
+6. **O código responde**, com as funções das telas e a fonte (H66).
+7. **O modelo redige a resposta**, e a guarda confere (H67); reprovada, fica a
+   do código.
 """
 from __future__ import annotations
 
-from sqlalchemy import select
+from dataclasses import dataclass
+
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import redator as modelo_de_linguagem
 from app.assistente import resolucao
-from app.assistente.catalogo import CATALOGO, Extracao, instrucao
+from app.assistente.catalogo import (
+    CATALOGO,
+    COMPARACAO,
+    Extracao,
+    UsoDoPeriodo,
+    abstencao_pelo_codigo,
+    instrucao,
+    pede_total,
+)
+from app.assistente.redacao import Redacao, redigir
 from app.assistente.respostas import (
     RESPONDER,
     Contexto,
@@ -27,8 +43,9 @@ from app.assistente.respostas import (
 )
 from app.desempenho import ROTULO_SEGMENTO
 from app.esquemas import SituacaoResposta, TipoPergunta
-from app.modelos import Categoria, Periodo
+from app.modelos import Categoria, Periodo, RedatorMensagem
 from app.redator import FalhaDoRedator, Redator
+from app.texto import normalizar
 
 SEM_DADOS = (
     "Ainda não há relatório importado. O assistente responde sobre os dados da rede, e eles "
@@ -44,6 +61,19 @@ SEM_PARCEIRO = "De qual parceiro? Escreva o nome dele na pergunta."
 SEM_SEGMENTO = "De qual segmento?"
 
 
+@dataclass(frozen=True)
+class Resultado:
+    # O tipo do catálogo, ou fora dele. Nulo quando ninguém chegou a ler a
+    # pergunta: sem dados, ou sem o modelo.
+    tipo: TipoPergunta | None
+    resposta: Resposta
+    redacao: Redacao
+
+
+def _do_codigo(tipo: TipoPergunta | None, resposta: Resposta) -> Resultado:
+    return Resultado(tipo, resposta, Redacao(resposta.texto, RedatorMensagem.MODELO_FIXO))
+
+
 def indisponivel(motivo: str) -> Resposta:
     return Resposta(
         SituacaoResposta.INDISPONIVEL,
@@ -52,16 +82,18 @@ def indisponivel(motivo: str) -> Resposta:
     )
 
 
-def perguntar(s: Session, pergunta: str, r: Redator) -> tuple[TipoPergunta | None, Resposta]:
-    """O tipo que o modelo identificou, e a resposta. O tipo é nulo quando o modelo nem chegou
-    a ler a pergunta."""
+def perguntar(s: Session, pergunta: str, r: Redator) -> Resultado:
+    fora = abstencao_pelo_codigo(pergunta)
+    if fora is not None:
+        return _do_codigo(TipoPergunta.FORA_DO_CATALOGO, abstencao(fora))
+
     periodos = s.scalars(select(Periodo).order_by(Periodo.data_inicio, Periodo.id)).all()
     if not periodos:
-        return None, abstencao(SEM_DADOS)
+        return _do_codigo(None, abstencao(SEM_DADOS))
 
     estado = r.estado()
     if not estado.disponivel:
-        return None, indisponivel(estado.motivo)
+        return _do_codigo(None, indisponivel(estado.motivo))
 
     categorias = s.scalars(
         select(Categoria.nome).where(Categoria.ativa.is_(True)).order_by(Categoria.nome)
@@ -71,16 +103,64 @@ def perguntar(s: Session, pergunta: str, r: Redator) -> tuple[TipoPergunta | Non
         extracao = r.extrair(sistema, pergunta, Extracao)
     except FalhaDoRedator as falha:
         if str(falha) == modelo_de_linguagem.ILEGIVEL:
-            return None, abstencao(NAO_ENTENDI)
-        return None, indisponivel(str(falha))
+            return _do_codigo(None, abstencao(NAO_ENTENDI))
+        return _do_codigo(None, indisponivel(str(falha)))
 
-    return _responder(s, pergunta, extracao)
+    tipo, resposta = _responder(s, pergunta, extracao)
+    return Resultado(tipo, resposta, redigir(r, pergunta, tipo, resposta))
+
+
+def _dois_parceiros(pergunta: str, extracao: Extracao) -> bool:
+    """A pergunta cita dois parceiros diferentes: é comparação, ou soma, dos dois."""
+    outro = (extracao.outro_parceiro or "").strip()
+    if not outro or not resolucao.citado(outro, pergunta):
+        return False
+    return normalizar(outro) != normalizar(extracao.parceiro or "")
+
+
+def _corrigir(
+    s: Session, pergunta: str, tipo: TipoPergunta, extracao: Extracao
+) -> tuple[TipoPergunta, Extracao]:
+    """O que o código acerta sobre a leitura do modelo — cada regra, um erro medido.
+
+    - **O resumo da rede com um parceiro citado é o desempenho dele.** "Como foi o
+      Quintal do Norte nesta semana?" saiu como o resumo da rede.
+    - **A data que o modelo não trouxe, o código lê**: o mês, o ano, "o mês que
+      vem". "Em 2019" e "em dezembro" chegaram sem data.
+    - **O desempenho de várias semanas é a evolução**, semana a semana, em vez da
+      precisão de qual semana: são os números do intervalo pedido, sem somar. Se a
+      pergunta pede o total, é a abstenção, na resolução do período.
+    """
+    if (
+        tipo is TipoPergunta.RESUMO_DO_PERIODO
+        and (extracao.parceiro or "").strip()
+        and resolucao.citado(extracao.parceiro, pergunta)
+    ):
+        tipo = TipoPergunta.DESEMPENHO_DO_PARCEIRO
+    if extracao.inicio is None and extracao.fim is None:
+        fim_dos_dados = s.scalar(select(func.max(Periodo.data_fim)))
+        futuro = CATALOGO[tipo].periodo is UsoDoPeriodo.NENHUM
+        citadas = resolucao.datas_da_pergunta(pergunta, fim_dos_dados, futuro=futuro)
+        if citadas is not None:
+            extracao = extracao.model_copy(
+                update={"inicio": citadas[0].isoformat(), "fim": citadas[1].isoformat()}
+            )
+    if (
+        tipo is TipoPergunta.DESEMPENHO_DO_PARCEIRO
+        and not pede_total(pergunta)
+        and resolucao.semanas(s, extracao.inicio, extracao.fim) > 1
+    ):
+        tipo = TipoPergunta.EVOLUCAO_DO_PARCEIRO
+    return tipo, extracao
 
 
 def _responder(s: Session, pergunta: str, extracao: Extracao) -> tuple[TipoPergunta, Resposta]:
     tipo = extracao.tipo
     if tipo is TipoPergunta.FORA_DO_CATALOGO:
         return tipo, abstencao(FORA_DO_CATALOGO)
+    if _dois_parceiros(pergunta, extracao):
+        return TipoPergunta.FORA_DO_CATALOGO, abstencao(COMPARACAO)
+    tipo, extracao = _corrigir(s, pergunta, tipo, extracao)
     entrada = CATALOGO[tipo]
     contexto = Contexto(s)
 
@@ -108,9 +188,13 @@ def _responder(s: Session, pergunta: str, extracao: Extracao) -> tuple[TipoPergu
             return tipo, achada
         contexto.categoria = achada
 
-    periodos = resolucao.periodos(s, extracao.inicio, extracao.fim, entrada.periodo)
+    periodos = resolucao.periodos(
+        s, extracao.inicio, extracao.fim, entrada.periodo, total=pede_total(pergunta)
+    )
     if isinstance(periodos, Resposta):
         return tipo, periodos
     contexto.periodos = periodos
+    if entrada.periodo is UsoDoPeriodo.NENHUM:
+        contexto.pedido = resolucao.pedido(extracao.inicio, extracao.fim)
     contexto.quantos = resolucao.quantos(extracao.quantos)
     return tipo, RESPONDER[tipo](contexto)

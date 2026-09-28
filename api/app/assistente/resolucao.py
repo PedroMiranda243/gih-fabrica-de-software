@@ -11,6 +11,7 @@ ou declara que não há base para responder (A1).
 """
 from __future__ import annotations
 
+import calendar
 import re
 from datetime import date
 
@@ -18,7 +19,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import formato
-from app.assistente.catalogo import UsoDoPeriodo
+from app.assistente.catalogo import CONTA, UsoDoPeriodo
 from app.assistente.respostas import (
     MAXIMO_NA_LISTA,
     PERIODOS_NA_EVOLUCAO,
@@ -50,7 +51,7 @@ def citado(termo: str, pergunta: str) -> bool:
     return bool(palavras) and all(p in texto for p in palavras)
 
 
-def _sem_artigo(termo: str) -> str:
+def sem_artigo(termo: str) -> str:
     palavras = termo.split()
     if len(palavras) > 1 and normalizar(palavras[0]) in ARTIGOS:
         return " ".join(palavras[1:])
@@ -67,13 +68,13 @@ def parceiro(s: Session, termo: str) -> Parceiro | Resposta:
     busca parcial não acha nada. O nome com o artigo ainda vale, para o parceiro
     que se chama assim.
     """
-    for candidato in dict.fromkeys((termo, _sem_artigo(termo))):
+    for candidato in dict.fromkeys((termo, sem_artigo(termo))):
         exato = s.scalar(
             select(Parceiro).where(Parceiro.nome_normalizado == normalizar(candidato)).limit(1)
         )
         if exato is not None:
             return exato
-    termo = _sem_artigo(termo)
+    termo = sem_artigo(termo)
     normalizado = normalizar(termo)
 
     contem = Parceiro.nome_normalizado.like(f"%{para_busca(termo)}%", escape="\\")
@@ -127,8 +128,18 @@ def _data(texto: str | None) -> date | None:
         return None
 
 
+def pedido(inicio: str | None, fim: str | None) -> tuple[date, date] | None:
+    """O intervalo que a pergunta trouxe, quando as datas se leem — para o tipo que não
+    escolhe período por elas, mas precisa conferi-las (a previsão)."""
+    de, ate = _data(inicio), _data(fim)
+    if de is None and ate is None:
+        return None
+    de, ate = de or ate, ate or de
+    return (de, ate) if de <= ate else (ate, de)
+
+
 def periodos(
-    s: Session, inicio: str | None, fim: str | None, uso: UsoDoPeriodo
+    s: Session, inicio: str | None, fim: str | None, uso: UsoDoPeriodo, *, total: bool = False
 ) -> list[Periodo] | Resposta:
     """Os períodos de que a pergunta fala, do mais antigo ao mais recente.
 
@@ -136,7 +147,7 @@ def periodos(
     períodos que tocam o intervalo: **os dados são semanais**, e "agosto" são
     cinco semanas. Num tipo de um período só, somá-las seria conta que o
     catálogo não faz; escolher uma seria responder outra pergunta. A pessoa
-    escolhe.
+    escolhe — a menos que a pergunta peça o `total`, e aí é a abstenção.
     """
     if uso is UsoDoPeriodo.NENHUM:
         return []
@@ -170,6 +181,8 @@ def periodos(
             f"a {formato.data(ultimo)}.",
             [fato("Pedido", pedido), fato("Dados de", formato.intervalo(primeiro, ultimo))],
         )
+    if uso is UsoDoPeriodo.UM and len(achados) > 1 and total:
+        return abstencao(CONTA, [fato("Pedido", pedido)])
     if uso is UsoDoPeriodo.UM and len(achados) > 1:
         return precisao(
             f"Os dados são semanais, e de {pedido} há {len(achados)} períodos. De qual deles?",
@@ -177,6 +190,77 @@ def periodos(
             [fato("Pedido", pedido), fato("Períodos", str(len(achados)))],
         )
     return achados
+
+
+def semanas(s: Session, inicio: str | None, fim: str | None) -> int:
+    """Quantos períodos o intervalo toca; zero sem data."""
+    intervalo = pedido(inicio, fim)
+    if intervalo is None:
+        return 0
+    return s.scalar(
+        select(func.count())
+        .select_from(Periodo)
+        .where(Periodo.data_inicio <= intervalo[1], Periodo.data_fim >= intervalo[0])
+    ) or 0
+
+
+# ------------------------------------------------ as datas escritas na pergunta
+MESES = {
+    "janeiro": 1, "fevereiro": 2, "marco": 3, "abril": 4, "maio": 5, "junho": 6, "julho": 7,
+    "agosto": 8, "setembro": 9, "outubro": 10, "novembro": 11, "dezembro": 12,
+}
+_MES = re.compile(rf"\b({'|'.join(MESES)})\b(?:\s+de\s+((?:19|20)\d{{2}}))?")
+_ANO = re.compile(r"\b((?:19|20)\d{2})\b")
+_DATA_ESCRITA = re.compile(r"\d{1,2}/\d{1,2}(?:/\d{2,4})?")
+RELATIVOS = {
+    "mes que vem": ("mes", 1),
+    "proximo mes": ("mes", 1),
+    "mes passado": ("mes", -1),
+    "ano que vem": ("ano", 1),
+    "proximo ano": ("ano", 1),
+    "ano passado": ("ano", -1),
+}
+
+
+def _o_mes(ano: int, mes: int) -> tuple[date, date]:
+    return date(ano, mes, 1), date(ano, mes, calendar.monthrange(ano, mes)[1])
+
+
+def datas_da_pergunta(
+    pergunta: str, referencia: date, *, futuro: bool = False
+) -> tuple[date, date] | None:
+    """O intervalo que a pergunta cita por mês ou por ano, lido pelo código.
+
+    Só vale quando o modelo não trouxe data nenhuma. Na medição, "em 2019" e "em
+    dezembro" chegaram sem data, e a resposta saiu da semana mais recente — a de
+    outra pergunta. Aqui "2019" é o ano, e "dezembro" é o mês.
+
+    `referencia` é o fim dos dados. O mês sem o ano é o mais recente até ela;
+    na previsão (`futuro`), o próximo a partir dela.
+    """
+    texto = _DATA_ESCRITA.sub(" ", normalizar(pergunta))
+    for expressao, (unidade, passo) in RELATIVOS.items():
+        if expressao in texto:
+            if unidade == "ano":
+                ano = referencia.year + passo
+                return date(ano, 1, 1), date(ano, 12, 31)
+            indice = referencia.year * 12 + referencia.month - 1 + passo
+            return _o_mes(indice // 12, indice % 12 + 1)
+
+    intervalos = []
+    for m in _MES.finditer(texto):
+        mes = MESES[m.group(1)]
+        ano = int(m.group(2)) if m.group(2) else referencia.year
+        if not m.group(2) and futuro and mes < referencia.month:
+            ano += 1
+        if not m.group(2) and not futuro and mes > referencia.month:
+            ano -= 1
+        intervalos.append(_o_mes(ano, mes))
+    if not intervalos:
+        intervalos = [(date(int(a), 1, 1), date(int(a), 12, 31)) for a in _ANO.findall(texto)]
+    if not intervalos:
+        return None
+    return min(i[0] for i in intervalos), max(i[1] for i in intervalos)
 
 
 def _recentes(s: Session, quantos: int) -> list[Periodo]:
