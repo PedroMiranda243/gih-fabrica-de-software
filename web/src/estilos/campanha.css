@@ -34,8 +34,11 @@
   align-items: start;
 }
 
+/* 20ch com o preenchimento dentro da caixa: cabem "1.000.000,00" e o exemplo
+   "ex.: 12.000,00". Com 16ch, o exemplo saía cortado — visto na captura da
+   medição das telas (H76), nas duas larguras. */
 .campanha__campos input:not([type="date"]) {
-  max-width: 16ch;
+  max-width: 20ch;
   font-family: var(--fonte-dados);
   font-variant-numeric: tabular-nums;
 }
@@ -97,7 +100,7 @@
 .campanha__cota input {
   min-height: 36px;
   padding: var(--esp-6) var(--esp-8);
-  border: 1px solid var(--border);
+  border: 1px solid var(--borda-controle);
   border-radius: var(--raio-controle);
   background: var(--surface);
   color: var(--ink);
@@ -227,7 +230,7 @@
   min-width: 8ch;
   min-height: 32px;
   padding: var(--esp-4) var(--esp-6);
-  border: 1px solid var(--border);
+  border: 1px solid var(--borda-controle);
   border-radius: var(--raio-controle);
   background: var(--surface);
   color: var(--ink);

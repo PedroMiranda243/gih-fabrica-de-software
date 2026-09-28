@@ -48,11 +48,14 @@ h3 {
   text-wrap: balance;
 }
 
-/* Foco visível em **todo** controle: contorno de 2 px na cor de ação. Remover
+/* Foco visível em **todo** controle: contorno de 2 px na tinta da ação. Remover
    anel de foco é a falha de acessibilidade mais comum, e a mais fácil de
-   evitar. */
+   evitar. A tinta, e não o `--acao`: no claro, o âmbar mediu 2,84:1 sobre a
+   `--surface-2` e 2,998:1 sobre o `--ground`, abaixo dos 3:1 que o contorno
+   precisa (WCAG 1.4.11). A tinta mede 4,87:1 no pior fundo; no escuro, as duas
+   são a mesma cor. */
 :focus-visible {
-  outline: 2px solid var(--acao);
+  outline: 2px solid var(--acao-ink);
   outline-offset: 2px;
   border-radius: var(--raio-controle);
 }
@@ -120,7 +123,7 @@ h3 {
 .campo > textarea {
   min-height: 44px;
   padding: var(--esp-8) var(--esp-12);
-  border: 1px solid var(--border);
+  border: 1px solid var(--borda-controle);
   border-radius: var(--raio-controle);
   background: var(--surface);
   color: var(--ink);
@@ -136,9 +139,11 @@ h3 {
   resize: vertical;
 }
 
+/* Mais escuro que a borda no claro, e mais claro no escuro: nos dois, o campo
+   ganha contraste ao receber o ponteiro, e não perde. */
 .campo > input:hover,
 .campo > textarea:hover {
-  border-color: var(--ink-3);
+  border-color: var(--ink-2);
 }
 
 /* ---------------------------------------------------------------- painéis */
