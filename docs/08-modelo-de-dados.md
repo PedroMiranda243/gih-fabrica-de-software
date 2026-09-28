@@ -2,11 +2,13 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Entrega:** Sprint 02 acadêmica — itens 3 (MER), 4 (modelo relacional) e 6 (banco criado)
-**Versão:** 2.0 — 16/09/2026
+**Versão:** 3.0 — 28/09/2026, o banco construído
 
-> **O que mudou da versão 1.0.** Eram 14 tabelas; são **16**. A implementação da autenticação acrescentou
-> `sessao_acesso` e `tentativa_login`, e este documento estava desatualizado em relação ao banco que já
-> está no ar. A contagem agora vem de consulta ao banco, não de memória — a evidência está na seção 6.
+> **Como o esquema cresceu.** A versão 1.0 tinha 14 tabelas; a 2.0, da entrega da Sprint 02, **16**: a
+> autenticação acrescentou `sessao_acesso` e `tentativa_login`. A construção trouxe mais quatro, cada uma
+> com a história que a pediu: `configuracao_segmentacao` (H34), `treino_modelo` (H42),
+> `execucao_benchmark` (H57) e `lote_mensagens` (H60). São **20**. A contagem vem de consulta ao banco, e
+> não de memória — a evidência está na seção 6.
 
 Este documento apresenta **dois modelos**, na ordem em que a modelagem acontece:
 
@@ -61,6 +63,10 @@ erDiagram
 tentativas de autenticação inclusive contra logins que não existem, e por isso **não** pode ter chave
 estrangeira para `USUARIO`. Ligá-la quebraria justamente o caso que ela existe para cobrir — o ataque por
 dicionário usa login desconhecido (RNF11).
+
+**Impresso, o MER inteiro fica pequeno demais para ler.** No repositório, o GitHub o mostra em tamanho real;
+no papel, cada parte da seção 2 abre com o recorte dela — o acesso, os parceiros e o desempenho, a campanha
+e a comunicação —, e o treino e as previsões têm o seu na 2.4.
 
 Os atributos de cada entidade estão na tabela abaixo, e não dentro das caixas do desenho: com dezenove
 entidades e mais de cem atributos, a figura ficaria ilegível impressa, que é critério de aceite da entrega.
@@ -153,6 +159,17 @@ nome de parceiro sem reescrever as métricas dele.
 
 ### 2.1 Acesso e auditoria
 
+O recorte do acesso: o usuário, a sessão, a trilha, o parceiro que ele representa e os limiares que ajusta.
+
+<!-- diagrama: mer-acesso -->
+```mermaid
+erDiagram
+    USUARIO ||--o{ SESSAO_ACESSO : abre
+    USUARIO ||--o{ AUDITORIA : gera
+    USUARIO }o--o| PARCEIRO : representa
+    USUARIO |o--o| CONFIGURACAO_SEGMENTACAO : ajusta
+```
+
 **usuario**
 
 | Coluna | Tipo | Chave | Restrição |
@@ -205,6 +222,21 @@ mesma condição, nos dois sentidos.
 | ocorrido_em | timestamptz | | padrão `now()` |
 
 ### 2.2 Parceiros
+
+O recorte dos parceiros e dos dados de desempenho, que as seções 2.2 e 2.3 detalham:
+
+<!-- diagrama: mer-desempenho -->
+```mermaid
+erDiagram
+    USUARIO ||--o{ IMPORTACAO : realiza
+    PERIODO ||--o{ IMPORTACAO : cobre
+    IMPORTACAO ||--o{ METRICA : origina
+    PERIODO ||--o{ METRICA : delimita
+    PARCEIRO ||--o{ METRICA : possui
+    PERIODO ||--o{ HISTORICO_SEGMENTO : delimita
+    PARCEIRO ||--o{ HISTORICO_SEGMENTO : recebe
+    CATEGORIA ||--o{ PARCEIRO : classifica
+```
 
 **categoria**
 
@@ -380,6 +412,20 @@ A ligação entre treino e previsão é **tracejada** porque não é chave estra
 uso não fica em configuração à parte**: é o que o último treino concluído registra. Duas fontes para a
 mesma resposta acabariam discordando.
 
+O recorte da campanha: a execução do otimizador, o plano, os itens, as ações e o benchmark.
+
+<!-- diagrama: mer-campanha -->
+```mermaid
+erDiagram
+    USUARIO |o--o{ EXECUCAO_OTIMIZADOR : dispara
+    PERIODO ||--o{ EXECUCAO_OTIMIZADOR : baseia
+    EXECUCAO_OTIMIZADOR ||--o| PLANO_CAMPANHA : produz
+    PLANO_CAMPANHA ||--|{ ITEM_PLANO : compoe
+    ACAO_COMERCIAL ||--o{ ITEM_PLANO : e_alocada_em
+    PARCEIRO ||--o{ ITEM_PLANO : e_alvo_de
+    USUARIO |o--o{ EXECUCAO_BENCHMARK : dispara
+```
+
 **acao_comercial** — os efeitos entraram na Sprint 9 interna (RN10, issue #117)
 
 | Coluna | Tipo | Chave | Restrição |
@@ -464,6 +510,18 @@ sintético (`gih_nucleo.cenario`), e por isso a tabela não aponta para parceiro
 mede a máquina, e não a campanha.
 
 ### 2.5 Comunicação
+
+O recorte da comunicação: o lote, a mensagem, quem a decide e o item do plano que a justifica.
+
+<!-- diagrama: mer-comunicacao -->
+```mermaid
+erDiagram
+    USUARIO |o--o{ LOTE_MENSAGENS : pede
+    LOTE_MENSAGENS |o--o{ MENSAGEM : gera
+    USUARIO ||--o{ MENSAGEM : decide
+    PARCEIRO ||--o{ MENSAGEM : recebe
+    ITEM_PLANO |o--o{ MENSAGEM : justifica
+```
 
 **lote_mensagens** — Sprint 12 interna (H60, UC10, RF36; ADR-013)
 
@@ -698,5 +756,5 @@ implantar.
 | As entidades em código | [`api/app/modelos.py`](../api/app/modelos.py) |
 | A migração que cria o esquema | [`api/migrations/versions/`](../api/migrations/versions/) |
 | Diagrama de classes, incluindo serviços e núcleo | [`10-diagrama-de-classes.md`](10-diagrama-de-classes.md) |
-| Decisões de arquitetura (ADR-001 a ADR-012) | [`07-arquitetura-preliminar.md`](07-arquitetura-preliminar.md) |
+| Decisões de arquitetura (ADR-001 a ADR-013) | [`07-arquitetura-preliminar.md`](07-arquitetura-preliminar.md) |
 | Massa de demonstração sintética | [`scripts/gerar_dados_sinteticos.py`](../scripts/gerar_dados_sinteticos.py) |

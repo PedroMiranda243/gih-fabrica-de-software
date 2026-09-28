@@ -19,7 +19,11 @@
  * Saída: SVG (o que o Word exibe, vetorial e legível em qualquer zoom) e PNG
  * (fallback exigido pela biblioteca `docx` para visualizadores antigos).
  *
- * Uso:  node docs/entrega/renderizar_diagramas.js
+ * Uso:  node docs/entrega/renderizar_diagramas.js [nome ...]
+ *
+ * Com nomes, renderiza só esses. O Mermaid não sai idêntico de uma execução para
+ * a outra — as curvas das linhas mudam na última casa —, e renderizar tudo por
+ * causa de um diagrama deixa no diff arquivos que não mudaram de conteúdo.
  */
 const { execFileSync } = require('child_process');
 const fs = require('fs');
@@ -131,13 +135,21 @@ function main() {
     vistos.set(d.nome, d.fonte);
   }
 
-  for (const d of diagramas) {
+  const pedidos = process.argv.slice(2);
+  const desconhecidos = pedidos.filter((nome) => !vistos.has(nome));
+  if (desconhecidos.length) {
+    console.error(`Diagrama sem marcador: ${desconhecidos.join(', ')}.`);
+    process.exit(1);
+  }
+  const escolhidos = pedidos.length ? diagramas.filter((d) => pedidos.includes(d.nome)) : diagramas;
+
+  for (const d of escolhidos) {
     process.stdout.write(`${d.nome}  (${d.fonte})\n`);
     renderizar(d, configuracao);
   }
 
   fs.unlinkSync(configuracao);
-  console.log(`\n${diagramas.length} diagramas renderizados.`);
+  console.log(`\n${escolhidos.length} diagramas renderizados.`);
   console.log(`  SVG: docs/diagramas/`);
   console.log(`  PNG: docs/entrega/diagramas/`);
 }

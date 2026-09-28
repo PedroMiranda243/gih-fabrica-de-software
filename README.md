@@ -77,10 +77,11 @@ Navegador ──▶ Frontend (React + Vite)
         ┌──────────┴───────────┬────────────────┐
         ▼                      ▼                ▼
   Núcleo Preditivo      Núcleo de Otimização   Assistente
-  (PyTorch)             (C++ / OpenMP / CUDA)  (LLM local)
+  (PyTorch)             (C++ / OpenMP / CUDA)  (Ollama, opcional)
 ```
 
-Detalhamento em [`docs/07-arquitetura-preliminar.md`](docs/07-arquitetura-preliminar.md).
+Detalhamento em [`docs/07-arquitetura-preliminar.md`](docs/07-arquitetura-preliminar.md), e tudo num volume só
+na [documentação técnica final](#documentação-técnica-final).
 
 ---
 
@@ -105,6 +106,25 @@ powershell -ExecutionPolicy Bypass -File docs/entrega/converter_pdf.ps1 -Nome GR
 
 A conversão pelo Word trava nesta máquina com frequência, sem erro e sem janela. Quando acontecer, o
 caminho é abrir o `.docx` no Word e usar **Arquivo › Exportar › Criar PDF** — o resultado é o mesmo.
+
+### Documentação técnica final
+
+A arquitetura e as ADRs, o modelo de dados, as classes e os serviços, e os resultados medidos — do núcleo
+em CPU e GPU, do otimizador, do modelo preditivo, do assistente e da acessibilidade —, num documento só
+(H73): [`GRUPO-18-GIH-DOCUMENTACAO-TECNICA.pdf`](docs/entregas/GRUPO-18-GIH-DOCUMENTACAO-TECNICA.pdf).
+
+Ele não é escrito à parte: cada parte é o arquivo do repositório, convertido como está (`docs/07`,
+`docs/08`, `docs/10` e `docs/medicoes/`). Ao contrário das entregas, que são o retrato de uma data, ele
+**se regera a cada mudança** da documentação:
+
+```bash
+node docs/entrega/renderizar_diagramas.js arquitetura-geral   # só os diagramas que mudaram, pelo nome
+node docs/entrega/gerar_documentacao.js
+```
+
+Sem nomes, o `renderizar_diagramas.js` refaz todos — e o Mermaid não sai idêntico de uma execução para a
+outra, então o diff ganha arquivos que não mudaram de conteúdo. O PDF sai do `.docx` pelo Word, como o das
+entregas.
 
 As evidências de execução vêm de execuções reais, e não são transcritas à mão. Cada entrega grava na
 sua própria pasta, e **a pasta de uma sprint já entregue não se regera** — é o retrato daquela data:
@@ -138,11 +158,14 @@ rode com a aplicação livre. Nenhum dos scripts deixa resíduo no banco.
 | [02 — Requisitos](docs/02-requisitos.md) | 43 requisitos funcionais e 29 não funcionais, com rastreabilidade |
 | [03 — Casos de uso](docs/03-casos-de-uso.md) | 14 casos de uso, diagrama e especificação detalhada |
 | [04 — Product Backlog](docs/04-product-backlog.md) | 9 épicos e 81 histórias priorizadas |
-| [05 — Cronograma](docs/05-cronograma.md) | 13 sprints semanais até 05/12/2026, marcos e riscos |
+| [05 — Cronograma](docs/05-cronograma.md) | O plano e o realizado das 13 sprints semanais, o que resta até 05/12/2026, marcos e riscos |
 | [06 — Equipe e processo](docs/06-equipe-e-processo.md) | Papéis, cerimônias, Definition of Done, fluxo Git |
-| [07 — Arquitetura preliminar](docs/07-arquitetura-preliminar.md) | Visão de contêineres, decisões (ADRs), ambiente |
+| [07 — Arquitetura](docs/07-arquitetura-preliminar.md) | As camadas e onde cada uma roda, o núcleo, as decisões (ADR-001 a ADR-013), o ambiente |
 | [08 — Modelo de dados](docs/08-modelo-de-dados.md) | Diagrama ER, entidades, restrições e índices |
 | [09 — Sistema visual](docs/09-sistema-visual.md) | Paleta validada, tipografia, espaçamento e estados vazios |
+| [10 — Diagrama de classes](docs/10-diagrama-de-classes.md) | O domínio, os serviços e o núcleo computacional, em nove diagramas |
+| [Medições](docs/medicoes/) | O núcleo em CPU e GPU, o otimizador, o modelo preditivo, o assistente e a acessibilidade — gerados por script |
+| [Documentação técnica final](#documentação-técnica-final) | 07, 08, 10 e as medições, num documento só |
 | [Como contribuir](CONTRIBUTING.md) | Branches, commits, Pull Requests |
 
 ---
