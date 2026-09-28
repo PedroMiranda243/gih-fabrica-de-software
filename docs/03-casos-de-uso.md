@@ -721,6 +721,31 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 > **A fronteira que define este caso de uso:** o modelo de linguagem **redige**; ele não conta, não soma,
 > não compara e não classifica por valor. Isso é código determinístico, e reprocessar a mesma base precisa
 > produzir o mesmo resultado (RNF16).
+>
+> **Na API (Sprint 13 interna, H65).** O assistente responde a um **catálogo fechado** de onze tipos de
+> pergunta (ADR-013): o desempenho, a evolução, a posição, o segmento e a previsão de um parceiro; o ranking
+> da rede ou de uma categoria; os parceiros de um segmento; quem entrou e quem saiu do Top; o resumo da
+> rede; a distribuição dos segmentos; e o último plano de campanha. A rota é `POST /api/assistente/perguntas`,
+> do Gestor e do Analista.
+>
+> O passo 2 se divide em dois. O modelo **só identifica** o tipo da pergunta e copia os campos dela — o
+> parceiro, a categoria, o segmento, as datas. O código confere os campos contra a base e busca os valores
+> com as **mesmas funções das telas**: a resposta traz o número que o painel mostra. O parceiro é achado pela
+> busca da lista de parceiros (RF24), e o que não está escrito na pergunta não é aceito, mesmo que exista.
+>
+> Os fluxos alternativos e as exceções viram situações da resposta, e não erros:
+>
+> - **A1:** fora do catálogo, sem dados no período ou com o parceiro que não existe, a resposta é a
+>   **abstenção**;
+> - **A2:** com vários parceiros no nome, sem o segmento ou com um mês numa pergunta de uma semana só, a
+>   resposta **pede a precisão** e oferece as opções. Os dados são semanais: somar as semanas de agosto
+>   seria conta que o catálogo não faz, e escolher uma delas seria responder outra pergunta;
+> - **E1:** sem o modelo no ar, o assistente se diz **indisponível**, com o motivo, e o resto do sistema
+>   segue;
+> - **E2:** a pergunta acima de 1.000 caracteres é recusada com o limite.
+>
+> A fonte completa, a redação pelo modelo com a guarda numérica e a abstenção pelas contas que o catálogo
+> não faz são as H66 a H68.
 
 ---
 

@@ -37,7 +37,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from app import auditoria
+from app import auditoria, formato
 from app import redator as modelo_de_linguagem
 from app.auditoria import Acao
 from app.calculos import ticket_medio, variacao_percentual
@@ -82,25 +82,6 @@ NAO_ENCONTRADO = "não encontrado"
 CATEGORIA_NAO_CONFIRMADA = "categoria não confirmada"
 
 
-def _data(d: date) -> str:
-    return d.strftime("%d/%m/%Y")
-
-
-def _reais(valor: Decimal) -> str:
-    texto = f"{valor:,.2f}"
-    return "R$ " + texto.replace(",", "_").replace(".", ",").replace("_", ".")
-
-
-def _inteiro(n: int) -> str:
-    return f"{n:,}".replace(",", ".")
-
-
-def _percentual(valor: Decimal) -> str:
-    """Como a tela mostra: duas casas, e o sinal sempre (`web/src/formato.js`)."""
-    sinal = "+" if valor > 0 else ""
-    return f"{sinal}{valor:.2f}".replace(".", ",") + "%"
-
-
 def fatos_do_parceiro(
     nome: str,
     *,
@@ -120,23 +101,23 @@ def fatos_do_parceiro(
     fatos = [{"fato": PARCEIRO, "valor": nome}]
     if periodo is not None and faturamento is not None and pedidos is not None:
         fatos += [
-            {"fato": PERIODO, "valor": f"{_data(periodo[0])} a {_data(periodo[1])}"},
-            {"fato": FATURAMENTO, "valor": _reais(faturamento)},
-            {"fato": PEDIDOS, "valor": _inteiro(pedidos)},
+            {"fato": PERIODO, "valor": formato.intervalo(*periodo)},
+            {"fato": FATURAMENTO, "valor": formato.reais(faturamento)},
+            {"fato": PEDIDOS, "valor": formato.inteiro(pedidos)},
         ]
         ticket = ticket_medio(faturamento, pedidos)
         if ticket is not None:
-            fatos.append({"fato": TICKET, "valor": _reais(ticket)})
+            fatos.append({"fato": TICKET, "valor": formato.reais(ticket)})
         variacao = variacao_percentual(faturamento, anterior)
         if variacao is not None:
-            fatos.append({"fato": VARIACAO, "valor": _percentual(variacao)})
+            fatos.append({"fato": VARIACAO, "valor": formato.percentual(variacao)})
     if acao is not None:
         fatos.append({"fato": ACAO, "valor": acao})
         if periodo_da_acao is not None:
             fatos.append(
                 {
                     "fato": PERIODO_DA_ACAO,
-                    "valor": f"{_data(periodo_da_acao[0])} a {_data(periodo_da_acao[1])}",
+                    "valor": formato.intervalo(*periodo_da_acao),
                 }
             )
     return fatos
@@ -423,7 +404,7 @@ def _por_plano(s: Session, publico: PublicoMensagens) -> Previa:
         )
         alvos.append({"parceiro_id": parceiro.id, "item_plano_id": item_id})
     descricao = (
-        f"Plano de campanha de {_data(plano.aplicacao_inicio)} a {_data(plano.aplicacao_fim)}"
+        f"Plano de campanha de {formato.intervalo(plano.aplicacao_inicio, plano.aplicacao_fim)}"
     )
     return Previa(descricao, parceiros, alvos, excluidos)
 
@@ -475,9 +456,9 @@ def impedimento(previa: Previa) -> str | None:
         return "Nenhum parceiro ativo neste público: nada a gerar."
     if len(previa.alvos) > MAXIMO_POR_LOTE:
         return (
-            f"São {_inteiro(len(previa.alvos))} parceiros, e um lote gera até "
-            f"{_inteiro(MAXIMO_POR_LOTE)}: escolha um público menor, como um segmento de uma "
-            "categoria."
+            f"São {formato.inteiro(len(previa.alvos))} parceiros, e um lote gera até "
+            f"{formato.inteiro(MAXIMO_POR_LOTE)}: escolha um público menor, como um segmento "
+            "de uma categoria."
         )
     return None
 

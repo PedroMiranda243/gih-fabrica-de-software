@@ -1397,3 +1397,72 @@ class EstadoGeracao(BaseModel):
     em_andamento: LoteResposta | None
     ultimo: LoteResposta | None
     maximo: int
+
+
+# --------------------------------------------------------- assistente (UC12, H65)
+class TipoPergunta(enum.StrEnum):
+    """O catálogo fechado de perguntas (ADR-013). Fora dele, o assistente se abstém."""
+
+    DESEMPENHO_DO_PARCEIRO = "desempenho_do_parceiro"
+    EVOLUCAO_DO_PARCEIRO = "evolucao_do_parceiro"
+    POSICAO_DO_PARCEIRO = "posicao_do_parceiro"
+    SEGMENTO_DO_PARCEIRO = "segmento_do_parceiro"
+    PREVISAO_DO_PARCEIRO = "previsao_do_parceiro"
+    RANKING = "ranking"
+    PARCEIROS_DO_SEGMENTO = "parceiros_do_segmento"
+    MOBILIDADE_DO_TOP = "mobilidade_do_top"
+    RESUMO_DO_PERIODO = "resumo_do_periodo"
+    DISTRIBUICAO_DOS_SEGMENTOS = "distribuicao_dos_segmentos"
+    ULTIMO_PLANO = "ultimo_plano"
+    FORA_DO_CATALOGO = "fora_do_catalogo"
+
+
+class SituacaoResposta(enum.StrEnum):
+    """Como a pergunta terminou. Só a primeira traz números; as outras três são
+    respostas legítimas, e não erros (UC12, A1, A2 e E1)."""
+
+    RESPONDIDA = "RESPONDIDA"
+    PRECISAO = "PRECISAO"
+    ABSTENCAO = "ABSTENCAO"
+    INDISPONIVEL = "INDISPONIVEL"
+
+
+class PerguntaAssistente(BaseModel):
+    texto: str = Field(min_length=1, max_length=config.tamanho_maximo_pergunta)
+
+    @field_validator("texto")
+    @classmethod
+    def sem_so_espacos(cls, texto: str) -> str:
+        texto = texto.strip()
+        if not texto:
+            raise ValueError("Escreva a pergunta.")
+        return texto
+
+
+class RespostaAssistente(BaseModel):
+    situacao: SituacaoResposta
+    tipo: TipoPergunta | None = Field(
+        description="O tipo do catálogo que o modelo identificou. Nulo sem o modelo."
+    )
+    texto: str
+    fatos: list[FatoMensagem] = Field(
+        description="Os valores que o código recuperou, já formatados: todo número do texto "
+        "sai daqui (RN08)."
+    )
+    candidatos: list[str] = Field(
+        description="Na precisão (A2), as opções: os parceiros, os períodos ou os segmentos."
+    )
+
+
+class ExemploPergunta(BaseModel):
+    tipo: TipoPergunta
+    descricao: str
+    exemplo: str
+
+
+class EstadoDoAssistente(BaseModel):
+    """O que a tela do assistente mostra ao abrir: se o modelo está no ar, e o catálogo."""
+
+    assistente: EstadoAssistente
+    exemplos: list[ExemploPergunta]
+    tamanho_maximo: int

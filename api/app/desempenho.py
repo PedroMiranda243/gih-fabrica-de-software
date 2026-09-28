@@ -41,12 +41,19 @@ def recorte(s: Session) -> tuple[Periodo | None, Periodo | None]:
     alvo = s.scalar(select(Periodo).order_by(Periodo.data_inicio.desc(), Periodo.id.desc()))
     if alvo is None:
         return None, None
-    anterior = s.scalar(
+    return alvo, periodo_anterior(s, alvo)
+
+
+def periodo_anterior(s: Session, alvo: Periodo) -> Periodo | None:
+    """O período imediatamente anterior, pela data de início, e não pelo id: o id
+    segue a ordem da importação, e um período antigo importado depois de um
+    recente ficaria "depois" dele."""
+    return s.scalar(
         select(Periodo)
         .where(Periodo.data_inicio < alvo.data_inicio)
         .order_by(Periodo.data_inicio.desc(), Periodo.id.desc())
+        .limit(1)
     )
-    return alvo, anterior
 
 
 def com_desempenho(s: Session, alvo: Periodo | None, anterior: Periodo | None):

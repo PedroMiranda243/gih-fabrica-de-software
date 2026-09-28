@@ -129,6 +129,10 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("POST", "/api/mensagens/{mensagem_id}/aprovacao"): {Perfil.GESTOR},
     ("POST", "/api/mensagens/{mensagem_id}/edicao"): {Perfil.GESTOR},
     ("POST", "/api/mensagens/{mensagem_id}/rejeicao"): {Perfil.GESTOR},
+    # UC12 — Assistente: Gestor e Analista. O Administrador não: as respostas falam
+    # de parceiros e de planos, que ele não abre.
+    ("GET", "/api/assistente"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("POST", "/api/assistente/perguntas"): {Perfil.GESTOR, Perfil.ANALISTA},
     # UC13 — Consultar meu desempenho: só o Parceiro, e só o próprio (RF26, RNF14).
     ("GET", "/api/meu-desempenho"): {Perfil.PARCEIRO},
     # UC14 — Auditar ações: só Administrador

@@ -49,7 +49,7 @@ from app.modelos import (
     StatusComercial,
     Usuario,
 )
-from app.texto import normalizar
+from app.texto import para_busca
 
 router = APIRouter(
     prefix="/api/parceiros",
@@ -81,26 +81,6 @@ CABECALHO_CSV = (
 )
 
 
-def _para_busca(termo: str) -> str:
-    """Termo digitado vira padrão de comparação seguro (RF24).
-
-    Duas coisas acontecem aqui, e as duas importam:
-
-    **Normaliza pela mesma regra da coluna.** `nome_normalizado` é gravado por
-    `app.texto.normalizar`; comparar contra um termo cru não encontraria nada
-    com acento, que é justamente o defeito que esta história corrige.
-
-    **Escapa os curingas do LIKE.** Sem isso, quem digitasse `%` faria uma busca
-    que casa com tudo, e `_` casaria com qualquer caractere — o usuário não pede
-    curinga, ele digita um nome. A barra invertida é escapada primeiro, senão
-    escaparia os escapes acrescentados depois.
-    """
-    normalizado = normalizar(termo)
-    for caractere in ("\\", "%", "_"):
-        normalizado = normalizado.replace(caractere, f"\\{caractere}")
-    return normalizado
-
-
 def _filtrar(
     consulta,
     colunas,
@@ -120,7 +100,7 @@ def _filtrar(
     """
     if busca:
         consulta = consulta.where(
-            Parceiro.nome_normalizado.like(f"%{_para_busca(busca)}%", escape="\\")
+            Parceiro.nome_normalizado.like(f"%{para_busca(busca)}%", escape="\\")
         )
     if categoria_id is not None:
         consulta = consulta.where(Parceiro.categoria_id == categoria_id)

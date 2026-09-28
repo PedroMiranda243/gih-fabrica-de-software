@@ -1520,6 +1520,103 @@ def item_portal(
         )
 
 
+def item_assistente(r: Relatorio, url: str, criados: dict[str, str]) -> None:
+    """O assistente (UC12, RF41, RN08), pelo Analista.
+
+    Com o modelo no ar: uma pergunta sobre o parceiro de maior faturamento, que
+    precisa trazer o faturamento que a lista de parceiros mostra, e só números
+    dos fatos; uma sobre a rede; e uma fora do catálogo, que é abstenção. Sem o
+    modelo, o assistente se diz indisponível e o painel segue (E1). Nada é
+    gravado: não há o que limpar.
+    """
+    r.secao("Assistente — o catálogo, com os números das telas, ou a abstenção")
+
+    admin = criados.get("ADMINISTRADOR")
+    if admin:
+        with sessao(url) as c:
+            entrar(c, admin, SENHA)
+            r.checar(
+                "o administrador não pergunta ao assistente (UC12)",
+                c.post("/api/assistente/perguntas", json={"texto": "Como foi a rede?"})
+                .status_code == 403,
+            )
+
+    analista = criados.get("ANALISTA")
+    if not analista:
+        r.checar("há analista para perguntar", False)
+        return
+    # A primeira pergunta depois de o modelo ficar parado paga o carregamento,
+    # perto de 45 s (ADR-013): o limite da sessão comum, 30 s, a derrubaria.
+    with httpx.Client(base_url=url, timeout=180, follow_redirects=False) as c:
+        entrar(c, analista, SENHA)
+        estado = c.get("/api/assistente").json()
+        assistente = estado.get("assistente") or {}
+        r.checar(
+            "o assistente diz se está no ar e mostra os exemplos do catálogo",
+            "disponivel" in assistente and len(estado.get("exemplos", [])) >= 10,
+            f"{len(estado.get('exemplos', []))} tipos de pergunta",
+        )
+        longa = c.post("/api/assistente/perguntas", json={"texto": "a" * 1001})
+        r.checar(
+            "a pergunta acima do limite é recusada com o limite (UC12-E2, RNF15)",
+            longa.status_code == 422 and "1000" in longa.text,
+        )
+
+        if not assistente.get("disponivel"):
+            corpo = c.post("/api/assistente/perguntas", json={"texto": "Como foi a rede?"}).json()
+            r.checar(
+                "sem o modelo, o assistente se diz indisponível, e o painel segue (UC12-E1)",
+                corpo.get("situacao") == "INDISPONIVEL"
+                and c.get("/api/painel/indicadores").status_code == 200,
+                assistente.get("motivo") or "",
+            )
+            return
+
+        r.nota(f"assistente no ar: {assistente.get('modelo')}")
+        lista = c.get(
+            "/api/parceiros",
+            params={"ordenar_por": "faturamento", "descendente": "true", "tamanho": 1},
+        ).json()
+        maior = (lista.get("itens") or [{}])[0]
+        faturamento = (maior.get("desempenho") or {}).get("faturamento")
+        if faturamento is None:
+            r.nota("a base não tem parceiro com faturamento: a pergunta dele não foi feita")
+        else:
+            inicio = time.monotonic()
+            corpo = c.post(
+                "/api/assistente/perguntas",
+                json={"texto": f"Quanto {maior['nome']} faturou na última semana?"},
+            ).json()
+            texto = corpo.get("texto", "")
+            r.checar(
+                "a pergunta do parceiro traz o faturamento da lista, e só números dos fatos "
+                "(RF41, RN08)",
+                corpo.get("situacao") == "RESPONDIDA"
+                and _reais(faturamento) in texto
+                and numeros_sem_origem(texto, corpo.get("fatos", [])) == [],
+                f"{corpo.get('tipo')} em {time.monotonic() - inicio:.1f} s: {texto[:90]}",
+            )
+
+        corpo = c.post(
+            "/api/assistente/perguntas", json={"texto": "Como foi a rede na semana passada?"}
+        ).json()
+        r.checar(
+            "a pergunta sobre a rede é respondida com o período citado (RF42)",
+            corpo.get("tipo") == "resumo_do_periodo"
+            and corpo.get("situacao") == "RESPONDIDA"
+            and numeros_sem_origem(corpo.get("texto", ""), corpo.get("fatos", [])) == [],
+            corpo.get("texto", "")[:90],
+        )
+        corpo = c.post(
+            "/api/assistente/perguntas", json={"texto": "Qual a capital da França?"}
+        ).json()
+        r.checar(
+            "a pergunta fora do catálogo recebe a abstenção, e não um palpite (UC12-A1)",
+            corpo.get("situacao") == "ABSTENCAO" and not corpo.get("fatos"),
+            corpo.get("tipo") or "",
+        )
+
+
 # --------------------------------------------------------------------- extra
 def item_limpeza(
     r: Relatorio,
@@ -1626,6 +1723,7 @@ def main() -> int:
             item_benchmark(r, a.url, criados)
             item_mensagens(r, a.url, criados)
             item_portal(r, a.url, admin, criados, marca)
+            item_assistente(r, a.url, criados)
             item_crud(r, a.url, criados, marca)
             periodo_id = item_ingestao(r, a.url, criados, marca)
             item_painel(r, a.url, criados, periodo_id)

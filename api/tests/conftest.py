@@ -112,12 +112,33 @@ def sem_modelo_de_linguagem(monkeypatch):
     O `api/.env` de quem desenvolve aponta para o Ollama da máquina, e sem isto a
     tela de mensagens, nos testes, perguntaria a ele se está no ar — e o
     resultado dependeria do modelo estar carregado. Quem quer o modelo de verdade
-    pede (`test_redator.py::modelo_real`); quem quer um de mentira troca
+    pede (`modelo_real`, abaixo); quem quer um de mentira troca
     `app.redator.atual`.
     """
     from app.config import config
 
     monkeypatch.setattr(config, "ollama_base_url", "")
+
+
+@pytest.fixture
+def modelo_real():
+    """O modelo de verdade, pelo `OLLAMA_BASE_URL`. Sem ele o teste pula — exceto com
+    `GIH_ASSISTENTE_OBRIGATORIO=1`.
+
+    A configuração é lida de novo, do ambiente: a da aplicação, nos testes, fica
+    sem endereço (`sem_modelo_de_linguagem`, acima).
+    """
+    from app.config import Config
+    from app.redator import Redator
+
+    do_ambiente = Config()
+    r = Redator(do_ambiente.ollama_base_url, do_ambiente.llm_model, do_ambiente.llm_tempo_limite_s)
+    estado = r.estado()
+    if not estado.disponivel:
+        if os.environ.get("GIH_ASSISTENTE_OBRIGATORIO") == "1":
+            pytest.fail(f"O modelo de linguagem é obrigatório aqui: {estado.motivo}")
+        pytest.skip(f"Modelo de linguagem fora do ar: {estado.motivo}")
+    return r
 
 
 @pytest.fixture(autouse=True)
