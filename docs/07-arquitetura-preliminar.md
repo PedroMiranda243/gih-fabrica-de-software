@@ -885,6 +885,32 @@ Uma sonda contra o `qwen2.5:7b`, na RTX 4060, mediu o que segue (issue #154).
   mensagens de um plano em 60 s, todas redigidas pelo modelo, e nenhuma com número fora dos fatos. Sem o
   modelo, as mesmas 23 saem do modelo fixo na hora.
 
+**Adendo (27/09/2026, H65) — o catálogo do assistente, contra o modelo de verdade:**
+
+- **O modelo só lê a pergunta.** Ele devolve o tipo, um dos onze do catálogo ou `fora_do_catalogo`, e os
+  campos: o parceiro, a categoria, o segmento, as datas e o tamanho da lista (`app/assistente/catalogo.py`).
+  Quem busca os valores é o código, com as funções das telas; quem escreve a resposta, nesta história,
+  também. Cada resposta traz os fatos que a sustentam, e um teste confere, tipo a tipo, que todo número do
+  texto está neles.
+- **O parceiro precisa estar escrito na pergunta**, palavra a palavra, e existir na base. É a resposta ao
+  "catálogo_geográfico" da sonda.
+- **Uma sonda de 30 perguntas** mediu a extração. A primeira instrução acertou 19; os erros tinham causa:
+  - **Nenhuma data chegava.** Com os campos opcionais no esquema, o modelo fechava o JSON logo depois do
+    tipo. Todo campo passou a ser obrigatório, ainda que nulo, e a instrução ganhou as expressões de tempo
+    com as datas da base: "semana passada" depende de qual é a semana mais recente.
+  - **Uma data saiu `log(2026-09-07)`.** O padrão `AAAA-MM-DD` foi para o esquema, e a gramática da saída
+    passou a impedir outra forma.
+  - **O modelo copiou o artigo** ("A Esquina da Serra"), e a busca não achava o nome. A resolução tira o
+    artigo do começo.
+  - **"Top 3 farmácias" virou o segmento Top**, e "o faturamento da rede", pergunta de um parceiro. Viraram
+    regras na instrução.
+
+  Com os ajustes, 26 de 30, e uma das quatro que faltam, a do artigo, o código resolve. As três restantes
+  são a média das pizzarias, a comparação entre dois parceiros e o total de um mês. Nenhuma recebe número
+  inventado: viram pedido de precisão, ou o desempenho de um parceiro só. Mas também não recebem a abstenção
+  que merecem, e a instrução não bastou. É a H68, e a solução vai ser por código.
+- **Com o modelo carregado, a extração leva cerca de 4 s por pergunta**, no Ollama do Windows.
+
 ---
 
 ## 6. Ambiente de desenvolvimento

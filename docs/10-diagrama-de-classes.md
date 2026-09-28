@@ -558,8 +558,11 @@ classDiagram
     }
 
     class Assistente {
-        <<previsto>>
-        +responder(pergunta) Resposta
+        <<implementado>>
+        +instrucao(categorias, periodos) str
+        +perguntar(pergunta, redator) Resposta
+        +resolver(extracao) Contexto
+        +responder(contexto) Resposta
     }
 
     ServicoImportacao --> LeitorRelatorio : interpreta o texto
@@ -571,9 +574,10 @@ classDiagram
     ServicoMensagens --> Ranking : desempenho do período, pela consulta da lista
     ServicoMensagens --> Redator : redige com os fatos
     ServicoMensagens --> GuardaNumerica : confere o texto (RN08)
-    Assistente --> Ranking : consome fatos apurados
-    Assistente --> Redator : identifica a pergunta e redige
-    Assistente --> GuardaNumerica : confere o texto (RN08)
+    Assistente --> Ranking : posições, pelas funções do painel
+    Assistente --> ServicoPrevisao : a previsão do parceiro
+    Assistente --> Redator : identifica a pergunta e os campos
+    Assistente --> GuardaNumerica : confere o texto (RN08, H67)
 ```
 
 **`LeitorRelatorio` não toca no banco.** É função pura de texto para resultado, e é isso que permite a
@@ -590,8 +594,12 @@ a regra de negócio e o texto: o ganho da RN10 em centavos, quem é elegível, a
 longa pelo ranking (a leitura da RN02) e a recusa com o nome da categoria e o valor em reais. O pacote
 `gih_nucleo` recebe inteiros e devolve o plano (ADR-011).
 
-**`Assistente` consome `Ranking`, nunca o banco direto.** Ele recebe fatos já apurados e redige texto em
-volta deles. Se somasse, contasse ou comparasse, o número deixaria de ser reproduzível (RN08).
+**O `Assistente` responde com as funções das telas, e o modelo só lê a pergunta** (ADR-013, H65). O
+`Redator` devolve o tipo da pergunta, de um catálogo fechado, e os campos dela; a resolução confere os campos
+contra a base — o parceiro pela busca da lista de parceiros —, e cada tipo responde com a função que a tela
+usa: o ranking, a mobilidade, os indicadores e a previsão. Cada resposta traz os fatos que a sustentam. Se o
+modelo somasse, contasse ou comparasse, o número deixaria de ser reproduzível (RN08); a redação pelo modelo,
+com a `GuardaNumerica` conferindo o texto, é a H67.
 
 **O `Redator` não sabe o que é parceiro, e a `GuardaNumerica` não sabe o que é modelo** (ADR-013). O
 `Redator` fala com o Ollama: devolve texto para um pedido, ou os campos de uma pergunta num esquema, e diz
@@ -747,12 +755,12 @@ abaixo separa os dois — e o repositório comprova cada linha da coluna ✅.
 | Camada | Implementado ✅ | Previsto ⏳ |
 |---|---|---|
 | Domínio | **as 20 entidades**, com restrições `CHECK` no banco | — |
-| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `servico_otimizacao`, `servico_comparacao`, `servico_benchmark`, `desempenho`, `redator`, `guarda_numerica`, `servico_mensagens`, `servico_aprovacao`, `planilha`, `erros` | `assistente` |
-| Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/campanha`, `/api/otimizacoes`, `/api/acoes-comerciais`, `/api/benchmark`, `/api/benchmarks`, `/api/mensagens`, `/api/meu-desempenho`, `/api/auditoria`, `/api/health` | assistente |
+| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `servico_otimizacao`, `servico_comparacao`, `servico_benchmark`, `desempenho`, `redator`, `guarda_numerica`, `servico_mensagens`, `servico_aprovacao`, `assistente`, `formato`, `planilha`, `erros` | — |
+| Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/campanha`, `/api/otimizacoes`, `/api/acoes-comerciais`, `/api/benchmark`, `/api/benchmarks`, `/api/mensagens`, `/api/meu-desempenho`, `/api/assistente`, `/api/auditoria`, `/api/health` | — |
 | Núcleo | pacote `gih_nucleo`: instância, viabilidade exata, gulosos e o genético serial (H48, H49, H52); o mesmo genético em C++, idêntico ao Python (H53a), com OpenMP (H53b) e inteiro na GPU (H54a a H54c), com o mesmo plano nos quatro | — |
 | Modelo preditivo | pacote `gih_modelo`: variáveis, referências, rede e treino (H41 a H43, H46) | — |
 
-Cobertura de teste da API em 27/09/2026: **996 testes, 97%**. Os pacotes do modelo e do
+Cobertura de teste da API em 27/09/2026: **1.093 testes, 97%**. Os pacotes do modelo e do
 otimizador têm as próprias suítes, em `modelo/tests` e `nucleo/tests`.
 
 ---

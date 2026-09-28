@@ -408,6 +408,12 @@ frente com alguma, a resposta já está aqui.
   frases diferentes para os mesmos fatos. Não escreva teste que compare o texto do modelo; compare os números
   dele contra os fatos, que é o que a guarda faz.
 
+- **Campo opcional no esquema do `extrair` volta vazio.** Com os campos da pergunta opcionais, o modelo
+  fechava o JSON logo depois do tipo, e nenhuma data chegava. Todo campo do esquema é obrigatório, ainda que
+  nulo, e o que tem formato leva `pattern`: a gramática da saída obedece a ele, e a instrução, não. Mudou a
+  instrução ou o esquema do assistente? Meça contra o modelo de verdade antes de confiar (ADR-013, adendo
+  H65).
+
 - **Guarda que reprova demais some em silêncio.** O texto reprovado vira modelo fixo, e a mensagem continua
   certa — só que sem o modelo. Foi assim que o "05/10", data sem o ano, derrubou 2 das 23 mensagens de um
   plano: a guarda lia o dia e o mês como números soltos. A verificação de ponta a ponta diz quantas saíram de
