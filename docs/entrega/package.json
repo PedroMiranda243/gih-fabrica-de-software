@@ -10,8 +10,9 @@
     "tudo": "npm run diagramas && npm run documento"
   },
   "dependencies": {
+    "@mermaid-js/mermaid-cli": "^11.4.2",
     "docx": "^9.7.1",
-    "@mermaid-js/mermaid-cli": "^11.4.2"
+    "marked": "^18.0.14"
   },
   "license": "UNLICENSED"
 }
