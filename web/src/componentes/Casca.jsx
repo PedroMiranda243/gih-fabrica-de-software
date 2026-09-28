@@ -18,6 +18,7 @@ import { useSessao } from "../api/contextoSessao";
 import { useTema } from "../temas/useTema";
 import {
   IconeAprovacao,
+  IconeAssistente,
   IconeBenchmark,
   IconeCampanha,
   IconeConfiguracao,
@@ -47,6 +48,8 @@ const TELAS = [
     exige: ["importar", "historico_importacoes"],
   },
   { para: "/parceiros", rotulo: "Parceiros", Icone: IconeParceiros, exige: ["parceiros"] },
+  /* Consulta, como o painel e a lista de parceiros: por isso junto deles (UC12). */
+  { para: "/assistente", rotulo: "Assistente", Icone: IconeAssistente, exige: ["assistente"] },
   { para: "/campanha", rotulo: "Campanha", Icone: IconeCampanha, exige: ["campanha"] },
   /* O histórico (RF34) é também do Administrador, que não tem a Campanha. */
   { para: "/execucoes", rotulo: "Execuções", Icone: IconeExecucoes, exige: ["execucoes"] },

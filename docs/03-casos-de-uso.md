@@ -758,6 +758,19 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 >   várias semanas —, a causa ("por que caiu?") ou um dado que o relatório não traz (lucro, telefone) é
 >   reconhecida antes do modelo. A pergunta com dois parceiros é comparação, e a previsão de outro
 >   período que não o seguinte ao treino também recebe a abstenção.
+>
+> **Na interface (Sprint 13 interna, H65 a H68).** A tela **Assistente** (`/assistente`), do Gestor e do
+> Analista:
+>
+> - **A pergunta e os exemplos.** O campo tem o limite à vista (E2), e os exemplos do catálogo, que vêm da
+>   API, perguntam com um clique.
+> - **As respostas da visita, a mais recente em cima.** Cada uma traz a pergunta, o texto — as listas como
+>   listas — e, embaixo, **a fonte, sempre à vista** (H66). Diz também quem redigiu: o modelo, ou o sistema e
+>   por quê (H67). Os números da resposta ficam a um clique.
+> - **A abstenção, a precisão e a indisponibilidade são respostas, e não erros** (A1, A2, E1): o mesmo cartão,
+>   com uma barra neutra. A precisão traz as opções, e a escolhida vai junto da pergunta.
+> - **A espera longa é explicada.** A tela conta os segundos e, passado o normal, diz que o modelo deve estar
+>   sendo carregado — a primeira pergunta depois de uma pausa leva perto de 45 s.
 
 ---
 

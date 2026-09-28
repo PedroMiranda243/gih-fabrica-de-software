@@ -138,6 +138,17 @@ export function IconeMensagens(props) {
   );
 }
 
+/* Um balão com um ponto de interrogação: o assistente, onde se pergunta (H65). */
+export function IconeAssistente(props) {
+  return (
+    <svg {...comuns} {...props}>
+      <path d="M3 3h10a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H7.5L4.5 14v-2.5H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
+      <path d="M6.6 5.9a1.5 1.5 0 1 1 2.1 1.4c-.4.2-.7.5-.7.9v.2" />
+      <path d="M8 9.8h.01" />
+    </svg>
+  );
+}
+
 /* Um visto num círculo: a fila de aprovação, onde o gestor decide (H61). */
 export function IconeAprovacao(props) {
   return (
