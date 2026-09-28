@@ -40,6 +40,8 @@ services:
       additional_contexts:
         modelo: ./modelo
         nucleo: ./nucleo
+        # Só o gerador de dados entra, para o `popular-demonstracao` (H72).
+        scripts: ./scripts
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-gih}:${POSTGRES_PASSWORD:-gih}@postgres:5432/${POSTGRES_DB:-gih}

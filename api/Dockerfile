@@ -74,6 +74,11 @@ RUN pip install --no-cache-dir --no-deps /nucleo
 # O executável, no PATH: é onde `gih_nucleo.nativo` o procura (H55, ADR-012).
 COPY --from=nucleo-escolhido /nucleo/gih-nucleo /usr/local/bin/gih-nucleo
 
+# O gerador da massa sintética, para o `popular-demonstracao` (H72): quem avalia
+# povoa a base de dentro do contêiner, sem Python na máquina. Só o gerador — o
+# resto de `scripts/` é da equipe e roda do host.
+COPY --from=scripts gerar_dados_sinteticos.py /scripts/gerar_dados_sinteticos.py
+
 COPY alembic.ini .
 COPY app ./app
 COPY migrations ./migrations

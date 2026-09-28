@@ -149,17 +149,25 @@ rode com a aplicação livre. Nenhum dos scripts deixa resíduo no banco.
 
 ## Como executar
 
-**Pré-requisitos:** Docker Desktop · Python 3.11 · Node.js 22 · (opcional) placa NVIDIA, para o modo GPU
+**Para subir e avaliar, basta o Docker Desktop.** Python 3.11 e Node.js 22 só entram para desenvolver, rodar
+os testes e a verificação de ponta a ponta, mais abaixo. Com placa NVIDIA, o otimizador também roda na GPU —
+opcional.
+
+> **No Windows, clone numa pasta de caminho curto**, como `C:\gih`. Alguns arquivos das migrações têm nome
+> longo, e numa pasta funda — dentro de `Documentos` ou do OneDrive — o caminho passa do limite de 260
+> caracteres do Windows: o `git clone` falha com `Filename too long`. A alternativa é rodar
+> `git config --global core.longpaths true` antes de clonar.
 
 ```bash
 git clone https://github.com/PedroMiranda243/gih-fabrica-de-software.git
 cd gih-fabrica-de-software
 cp .env.example .env
-docker compose up
+docker compose up -d
 ```
 
 É só isso. O compose sobe o PostgreSQL, espera ele ficar saudável, **aplica as migrações**, cria o
-administrador inicial se não houver nenhum, serve a API e sobe a interface.
+administrador inicial se não houver nenhum, serve a API e sobe a interface. Sem o `-d`, ele fica preso ao
+terminal, mostrando o log; com ele, o log está em `docker compose logs -f`.
 
 **A aplicação fica em `http://localhost:5173`.** A interface e a API dividem a mesma origem — o `/api`
 é repassado pelo servidor da interface — e é isso que deixa o cookie de sessão funcionar sem abrir CORS
@@ -199,6 +207,23 @@ A primeira vez baixa a imagem do Ollama (~8 GB) e o modelo (~4,7 GB): o serviço
 sai. Sem o perfil, o sistema funciona igual — as mensagens saem de textos fixos por segmento, com os mesmos
 números, e o assistente se diz indisponível. Um Ollama já instalado na máquina também serve, com
 `OLLAMA_BASE_URL=http://host.docker.internal:11434` no `.env`.
+
+### Avaliar: a base de demonstração e o seu usuário
+
+**A base nasce vazia**, e um sistema sem dados não mostra o que faz. Com o ambiente no ar, dois comandos:
+
+```bash
+docker compose exec api python -m app.cli popular-demonstracao
+docker compose exec api python -m app.cli criar-usuario --login avaliador --nome "Avaliador"
+```
+
+O primeiro roda **dentro do contêiner**, sem nada instalado na máquina. Ele gera 500 parceiros com 12 semanas
+de histórico — dados inteiramente sintéticos —, calcula a segmentação e treina o modelo preditivo, em cerca de
+10 s. O segundo pede a senha duas vezes; o perfil é Gestor, que abre tudo o que a avaliação precisa. Aí é
+entrar em `http://localhost:5173`.
+
+Numa base que já tem dados, o `popular-demonstracao` se recusa e diz o que há nela. Com `--substituir`, ele
+troca tudo pela massa — e **os usuários vão junto**; o administrador é recriado, com a senha nova na saída.
 
 ### Primeiro acesso
 
@@ -266,6 +291,8 @@ imprime **uma única vez** no log:
 docker compose logs api | grep "Senha sorteada"
 ```
 
+No PowerShell, que não tem `grep`: `docker compose logs api | Select-String "Senha sorteada"`.
+
 Anote: ela não é gravada em lugar nenhum e não pode ser recuperada. Troque no primeiro acesso, em
 `POST /api/sessao/senha`. Para definir a senha de antemão, preencha `ADMIN_SENHA` no `.env` antes de subir.
 Depois de um `resetar_banco.py`, a senha sorteada sai na saída do reset, e não no log.
@@ -305,6 +332,10 @@ cd api
 GIH_ADMIN_SENHA=... python e2e/verificacao.py
 ```
 
+**Ela roda do Python da máquina, com as dependências da API**: o `.venv` da seção acima, *Desenvolvendo a
+API fora do container*. Sem ele, para no primeiro `import`. No PowerShell, a senha vai numa variável antes:
+`$env:GIH_ADMIN_SENHA = "..."`, e depois `python e2e/verificacao.py`.
+
 A senha do administrador sai no log da primeira subida:
 `docker compose logs api | grep "Senha sorteada"`. O comando **sai com código diferente de zero** se
 qualquer verificação falhar — senão não é verificação, é impressão.
@@ -334,6 +365,9 @@ A interface (`web/`) sobe junto: `docker compose up` entrega banco, API e aplica
 ### Dados de demonstração
 
 O repositório **não contém dados reais**. Toda a massa de demonstração é gerada por script.
+
+Para avaliar, o caminho é o `popular-demonstracao`, de dentro do contêiner, como acima. Os scripts abaixo são
+os da equipe, e rodam do Python da máquina, com o `.venv` da API:
 
 ```bash
 python scripts/gerar_dados_sinteticos.py --parceiros 2000 --periodos 12

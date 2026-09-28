@@ -5,6 +5,7 @@ Uso:
     python -m app.cli criar-usuario --login pedro --nome "Pedro" --perfil GESTOR
     python -m app.cli redefinir-senha --login admin
     python -m app.cli treinar-modelo
+    python -m app.cli popular-demonstracao                 # a base de demonstração, numa base vazia
 
 Em `criar-usuario` e `redefinir-senha` a senha é **digitada no terminal**, nunca
 passada como argumento. Com o ambiente no ar:
@@ -18,9 +19,11 @@ from __future__ import annotations
 
 import argparse
 import getpass
+import importlib.util
 import os
 import secrets
 import sys
+from pathlib import Path
 
 from sqlalchemy import func, select
 
@@ -30,7 +33,10 @@ from app.config import config
 from app.db import Sessao
 from app.esquemas import LimiaresSegmentacao, NovoUsuario
 from app.modelos import (
+    AcaoComercial,
+    Categoria,
     ConfiguracaoSegmentacao,
+    Parceiro,
     Perfil,
     Periodo,
     SituacaoTreino,
@@ -427,6 +433,105 @@ def treinar_modelo(argumentos: list[str]) -> int:
         s.close()
 
 
+# O gerador da massa sintética: dentro da imagem da API, copiado pelo Dockerfile;
+# fora dela, na raiz do repositório. Ele mora em `scripts/` porque o núcleo e as
+# medições o usam de lá — o teste do cenário do otimizador lê o catálogo de ações
+# direto do arquivo.
+GERADOR = (
+    Path("/scripts/gerar_dados_sinteticos.py"),
+    Path(__file__).resolve().parents[2] / "scripts" / "gerar_dados_sinteticos.py",
+)
+
+
+def _gerador():
+    caminho = next((c for c in GERADOR if c.exists()), None)
+    if caminho is None:
+        return None
+    especificacao = importlib.util.spec_from_file_location("gerar_dados_sinteticos", caminho)
+    modulo = importlib.util.module_from_spec(especificacao)
+    especificacao.loader.exec_module(modulo)
+    return modulo
+
+
+def popular_demonstracao(argumentos: list[str]) -> int:
+    """A base de demonstração inteira, de dentro do contêiner (H72, RNF27).
+
+    **Para quem avalia, sem Python na máquina.** O `scripts/resetar_banco.py` faz
+    o mesmo pelo host, e pede as dependências da API instaladas nele — no ensaio
+    da H72, quem seguia o README chegava à tela vazia e parava num
+    `ModuleNotFoundError`. Aqui é um comando só, na imagem que já tem tudo: gera
+    a massa sintética, segmenta e treina o modelo preditivo, e a aplicação abre
+    com painel, previsão e campanha.
+
+    **Sobre uma base vazia, não apaga nada**: grava a massa ao lado dos usuários
+    que já existem. Com dados de negócio na base, só roda com `--substituir`, e aí
+    o gerador esvazia as tabelas — **e os usuários vão junto**: `usuario.parceiro_id`
+    aponta para `parceiro`, e o `TRUNCATE ... CASCADE` esvazia quem aponta. O
+    comando recria o administrador e avisa, como o `resetar_banco.py`.
+    """
+    from gih_modelo import PERIODOS_MINIMOS
+
+    p = argparse.ArgumentParser(prog="python -m app.cli popular-demonstracao")
+    p.add_argument("--parceiros", type=int, default=500, help="100 a 10.000 (padrão: 500)")
+    p.add_argument("--periodos", type=int, default=12, help="semanas de histórico (padrão: 12)")
+    p.add_argument("--semente", type=int, default=42, help="a mesma semente, a mesma rede")
+    p.add_argument(
+        "--substituir", action="store_true", help="apaga os dados de negócio que já existem"
+    )
+    a = p.parse_args(argumentos)
+    if not 100 <= a.parceiros <= 10_000:
+        p.error("--parceiros deve estar entre 100 e 10.000 (RF16)")
+    if a.periodos < PERIODOS_MINIMOS:
+        p.error(f"--periodos deve ser no mínimo {PERIODOS_MINIMOS}: com menos, o modelo não treina")
+
+    s = Sessao()
+    try:
+        ocupada = {
+            nome: s.scalar(select(func.count()).select_from(modelo))
+            for nome, modelo in (
+                ("períodos", Periodo),
+                ("parceiros", Parceiro),
+                ("categorias", Categoria),
+                ("ações comerciais", AcaoComercial),
+            )
+        }
+    finally:
+        s.close()
+    ocupada = {nome: n for nome, n in ocupada.items() if n}
+    if ocupada and not a.substituir:
+        print(
+            "A base já tem dados: "
+            + ", ".join(f"{n} {nome}" for nome, n in ocupada.items())
+            + ". Para trocá-los pela massa de demonstração, passe --substituir: isso apaga os "
+            "dados de negócio e os usuários, e recria o administrador.",
+            file=sys.stderr,
+        )
+        return 1
+
+    gerador = _gerador()
+    if gerador is None:
+        print(
+            "O gerador de dados não está nesta instalação: reconstrua a imagem da API "
+            "(docker compose up -d --build).",
+            file=sys.stderr,
+        )
+        return 1
+
+    gerador.gerar(a.parceiros, a.periodos, a.semente, a.substituir)
+    if a.substituir:
+        print()
+        print("Os usuários foram apagados junto com os dados. O administrador volta:")
+        if criar_admin():
+            return 1
+        print("Os logins pessoais se recriam com criar-usuario.")
+    print()
+    codigo = reprocessar_segmentos([])
+    if codigo:
+        return codigo
+    print()
+    return treinar_modelo([])
+
+
 # Cada comando recebe o resto da linha de comando. `criar-admin` não tem
 # argumentos e é chamado pelo entrypoint a cada subida.
 COMANDOS = {
@@ -436,6 +541,7 @@ COMANDOS = {
     "reprocessar-segmentos": reprocessar_segmentos,
     "configurar-segmentacao": configurar_segmentacao,
     "treinar-modelo": treinar_modelo,
+    "popular-demonstracao": popular_demonstracao,
 }
 
 
