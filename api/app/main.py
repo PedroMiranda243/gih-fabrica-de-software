@@ -17,6 +17,7 @@ from app import servico_benchmark, servico_mensagens, servico_otimizacao, servic
 from app.db import sessao
 from app.erros import erro_de_validacao
 from app.rotas import (
+    assistente,
     auditoria,
     autenticacao,
     benchmark,
@@ -124,6 +125,7 @@ app.include_router(campanha.historico)
 app.include_router(benchmark.router)
 app.include_router(mensagens.router)
 app.include_router(meu_desempenho.router)
+app.include_router(assistente.router)
 app.include_router(auditoria.router)
 
 
