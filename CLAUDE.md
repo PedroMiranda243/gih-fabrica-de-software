@@ -441,6 +441,13 @@ frente com alguma, a resposta já está aqui.
   tela visível na frente do usuário.** Verifique visibilidade por `getComputedStyle().display`, nunca pelo
   atributo — e mantenha um reset `[hidden] { display: none !important }` no CSS.
 
+- **Todo teste da interface passa pelo axe, e toda cor de texto, pelo contraste.** O
+  `web/src/testes/preparar.js` roda o axe-core no fim de cada teste: uma tela nova sem rótulo ou sem nome
+  acessível reprova o teste que a monta. E o `web/src/estilos/contraste.test.js` reprova a cor de texto que
+  não está na tabela dele — um `color: var(--ink-3)` novo, a 2,76:1, não passa. Precisa de uma tinta ou de
+  um fundo novo? Ponha o par na tabela e deixe o teste medir. Campo novo leva a `--borda-controle`, e não a
+  `--border`.
+
 - **Desconfie do instrumento antes do resultado.** Uma auditoria de contraste lia as cores com regex
   esperando `rgb()`; como as cores eram `oklch()`, o regex lia zeros e acusava falha catastrófica que não
   existia. O mesmo padrão deu falso positivo em testes de XSS feitos com regex sobre HTML. Meça contraste

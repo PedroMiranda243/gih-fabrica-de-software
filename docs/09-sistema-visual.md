@@ -190,15 +190,40 @@ Tela vazia sem explicação é defeito. Os três previstos:
 ## 7. Acessibilidade
 
 - Contraste mínimo **AA (4,5:1)** para texto (RNF22) — medido com ferramenta, não presumido
-- Foco visível em todo controle: contorno de 2 px na cor de ação
+- Foco visível em todo controle: contorno de 2 px na **tinta** da ação (`--acao-ink`)
+- A borda de todo campo em `--borda-controle`, a 3:1 do fundo; a `--border` é decoração
 - Alvo de toque mínimo de 44 × 44 px
 - Ícones em SVG, nunca emoji
 - Transições de 150–300 ms; `prefers-reduced-motion` respeitado
 - Nenhuma informação transmitida apenas por cor
 
+**Medido, e não presumido (H76).** Três verificações, em três lugares:
+
+| O quê | Onde | Quando |
+|---|---|---|
+| O contraste de cada par de tinta e fundo, nos dois temas, lido do `tokens.css`; e toda cor de texto, anel de foco e borda de campo da CSS conferidos contra esses pares | `web/src/estilos/contraste.test.js` | A cada PR |
+| Rótulos, papéis e nomes acessíveis, pelo axe-core, no fim de **todo** teste da interface — cada estado que a suíte monta é um estado verificado | `web/src/testes/preparar.js` | A cada PR |
+| Cada uma das vinte telas a 768 e a 1440 px: sem rolagem horizontal da página, sem conteúdo cortado, o axe com o contraste do que está desenhado, e a captura | `scripts/medir_telas.py` → [`docs/medicoes/acessibilidade.md`](medicoes/acessibilidade.md) | Ao mudar a interface |
+
+A medição corrigiu duas coisas que a validação da paleta não pegava, porque não são texto — e o AA pede 3:1
+também para o que identifica um controle (WCAG 1.4.11):
+
+- **O anel de foco em âmbar** mediu 2,84:1 sobre a `--surface-2` e 2,998:1 sobre o `--ground`, no claro.
+  Passou para a `--acao-ink`, a 4,87:1 no pior fundo; no escuro, as duas são a mesma cor.
+- **A borda dos campos** usava a `--border`, a 1,24:1: o campo se distinguia do fundo pelo rótulo, e não por
+  ele mesmo. Ganhou um token próprio, a `--borda-controle`: 3,19:1 no pior fundo do claro, e 3,31:1 no do
+  escuro. Painéis, avisos e cartões continuam com a `--border`, que é separação, e não controle.
+
+**O axe-core é MPL-2.0** — copyleft fraco, por arquivo —, e fica só nos testes e na medição: não entra no que
+a aplicação distribui. A regra 2.8 pede licença permissiva para o que o sistema usa; para a ferramenta de
+teste, a escolha fica registrada aqui. O navegador da medição é o Edge da máquina, pelo Playwright (Apache
+2.0), sem nenhum navegador baixado.
+
 > **Ao medir contraste, desconfie do instrumento.** Numa auditoria anterior, um regex esperando `rgb()`
-> leu cores em outro formato como zeros e acusou falha catastrófica inexistente. Meça pintando a cor num
-> `<canvas>` e lendo o pixel.
+> leu cores em outro formato como zeros e acusou falha catastrófica inexistente. Por isso o teste lê só
+> hexadecimais de seis dígitos e reprova alto qualquer outra forma, e confere a fórmula contra 21:1 e 4,54:1
+> antes de medir. As verificações também provam que acham o que existe: o axe precisa acusar um botão sem
+> nome, e o teste da CSS, um texto em `--ink-3`.
 
 ---
 
