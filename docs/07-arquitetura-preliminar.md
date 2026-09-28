@@ -911,6 +911,58 @@ Uma sonda contra o `qwen2.5:7b`, na RTX 4060, mediu o que segue (issue #154).
   que merecem, e a instrução não bastou. É a H68, e a solução vai ser por código.
 - **Com o modelo carregado, a extração leva cerca de 4 s por pergunta**, no Ollama do Windows.
 
+**Adendo (27/09/2026, H66 a H68) — a fonte, a redação e a abstenção, medidas:**
+
+- **A fonte é do código** (H66). Cada resposta diz de que períodos consultou os dados, e a rota os devolve
+  como relatórios: o período, quando e por quem foi importado, e a origem. Na previsão e no plano, a fonte
+  traz também a versão do modelo e o cálculo. O modelo de linguagem não vê a fonte, e não tem como citar
+  outra.
+- **O modelo redige só a resposta em prosa** (H67): o desempenho, a posição, o segmento, a previsão, o resumo
+  e o plano. O ranking, a lista de um segmento, a evolução, a distribuição e a mobilidade saem como o código
+  as montou. Uma lista reescrita pode perder um item sem que número nenhum fique errado — omissão que a guarda
+  não pega.
+- **Três guardas conferem o texto do modelo.** Qualquer uma que reprove, e a resposta é a do código, com o
+  motivo:
+  - o número sem origem, a guarda de sempre;
+  - **o sentido trocado** (`guarda_numerica.sentido_trocado`, que as mensagens também passaram a usar). A
+    guarda do valor ignora o sinal, porque "caiu 12,50%" é o jeito certo de escrever -12,50%, e por isso
+    deixava passar "caiu 12,50%" onde o fato é +12,50%;
+  - **a unidade sem origem** — mês, ano, dia, dólar — que os fatos não têm.
+- **A abstenção é do código** (H68), antes do modelo, quando a pergunta pede:
+  - uma conta: média, soma, diferença, acumulado, "desde o começo";
+  - uma causa: "por que caiu?";
+  - um dado que o relatório não traz: lucro, telefone, estoque.
+
+  Depois do modelo, a pergunta com dois parceiros é comparação, e a previsão de outro período que não o
+  seguinte ao treino também recebe a abstenção.
+- **O código também acerta a leitura do modelo, com regra medida** (`servico._corrigir`):
+  - o resumo da rede com um parceiro citado é o desempenho dele;
+  - o desempenho de várias semanas é a evolução semana a semana — ou a abstenção, se a pergunta pede o total;
+  - a data que o modelo não trouxe, o código lê da pergunta: o mês, o ano, "o mês que vem".
+- **Medido** (`docs/medicoes/assistente.md`, `scripts/medir_assistente.py`), com três conjuntos versionados
+  em `api/tests/assistente/`:
+
+  | Conjunto | Resultado |
+  |---|---|
+  | Referência (RF41), 49 perguntas | O tipo e os campos certos em 47. As duas leituras erradas, o código corrige antes de responder |
+  | Armadilhas (H67), 18 perguntas | **Zero número sem origem na resposta.** O modelo redigiu 4 respostas que a guarda aprovou; 11 redações foram recusadas |
+  | Sem resposta (H68), 20 perguntas | **Abstenção em 20** |
+
+  Com o modelo carregado, a extração leva 3,8 s, e a pergunta inteira, com a redação, 9,4 s (medianas).
+- **A primeira rodada mudou o código.** A abstenção ficou em 18 de 20: "em 2019" e "em dezembro" chegaram sem
+  data, e a resposta saiu da semana mais recente — era outra pergunta. Duas redações passaram pela guarda com o
+  número certo e a unidade errada: "o faturamento previsto para o mês" (a previsão é de uma semana) e "o ticket
+  médio em dólares foi de R$ 91,25". Daí a leitura das datas pelo código, o período previsto nos fatos da
+  previsão e a guarda da unidade.
+- **A placa cheia derruba o modelo.** Na primeira rodada, com a GPU de 8 GB em 7,8 GB, um pedido trivial levou
+  114 s em vez de 2,5 s, e perguntas passaram do limite de 180 s. Descarregar e recarregar o modelo resolveu.
+  O assistente não trava — o limite vira "indisponível" —, mas o sintoma é esse.
+- **O limite, dito.** As listas de palavras da abstenção cobrem o que foi medido, e uma forma nova de pedir
+  uma conta pode escapar delas. Aí sobram a classificação do modelo e a guarda: o número não sai errado, mas
+  a resposta pode ser de outra pergunta. O juízo também passa: "a chance de cair" onde o fato é "a chance de
+  entrar em risco". É o limite de um assistente sem aprovação humana, e é por isso que ele responde só o
+  catálogo.
+
 ---
 
 ## 6. Ambiente de desenvolvimento

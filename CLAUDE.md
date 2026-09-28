@@ -404,9 +404,19 @@ frente com alguma, a resposta já está aqui.
   qualquer palavra; carregado, uma mensagem sai em 2 a 4 s. Não é travamento, e abaixar o limite do
   redator (120 s) faz a primeira mensagem de todo lote falhar.
 
+- **Modelo lento de repente é a memória da placa, e não o código.** Na medição do assistente, com a GPU de
+  8 GB em 7,8 GB, um pedido trivial levou 114 s em vez de 2,5 s, e as perguntas passaram do limite de 180 s.
+  Descarregar e recarregar o modelo resolveu. Antes de procurar defeito, olhe `nvidia-smi` e
+  `ollama ps`.
+
 - **Temperatura zero não faz o texto se repetir.** Com semente fixa, duas chamadas seguidas na GPU deram
   frases diferentes para os mesmos fatos. Não escreva teste que compare o texto do modelo; compare os números
   dele contra os fatos, que é o que a guarda faz.
+
+- **A guarda do valor não vê o sinal.** "Caiu 12,50%" é o jeito certo de escrever -12,50%, e por isso
+  `numeros_sem_origem` compara o valor sem o sinal — o que deixaria passar "caiu 12,50%" onde o fato é
+  +12,50%: o número certo e a notícia invertida. Quem confere o sentido é o `sentido_trocado`. Texto novo
+  do modelo passa pelas duas guardas, e não só pela primeira.
 
 - **Campo opcional no esquema do `extrair` volta vazio.** Com os campos da pergunta opcionais, o modelo
   fechava o JSON logo depois do tipo, e nenhuma data chegava. Todo campo do esquema é obrigatório, ainda que
