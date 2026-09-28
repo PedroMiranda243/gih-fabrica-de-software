@@ -335,6 +335,11 @@ frente com alguma, a resposta já está aqui.
 - **Ticket médio é derivado, nunca armazenado.** Guardar como coluna faz o valor divergir das parcelas que
   o originam (RN04).
 
+- **Limpar os parceiros apaga os usuários.** `usuario.parceiro_id` aponta para `parceiro`, e um
+  `TRUNCATE parceiro ... CASCADE` esvazia toda tabela que aponta para ela — o administrador junto. É por isso
+  que o `resetar_banco.py` e o `popular-demonstracao --substituir` recriam o administrador no fim. Script
+  novo que limpe a base precisa fazer o mesmo, ou deixa o sistema sem ninguém que entre.
+
 - **Sempre que a escolha for entre seguir com dado parcial e recusar explicando, recuse e explique.**
   Corromper em silêncio custa muito mais caro que falhar alto.
 
