@@ -218,7 +218,7 @@ Aprovação registrada na issue **#8**. Só depois disso começa o CSS em `web/`
 
 ## 9. Telas e navegação
 
-Dezenove telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
+Vinte telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
 passo, um recorte filtrado precisa poder ser mandado por link, e um cadastro precisa poder ser aberto
 direto — tudo isso depende de a tela estar na URL, e não num estado escondido da página.
 
@@ -245,6 +245,7 @@ flowchart TD
     Benchmark["Benchmark<br/>/benchmark"]
     Mensagens["Mensagens<br/>/mensagens"]
     Aprovacao["Aprovação<br/>/aprovacao"]
+    Assistente["Assistente<br/>/assistente"]
     MeuDesempenho["Meu desempenho<br/>/meu-desempenho"]
 
     Login -- "entrar" --> Menu
@@ -259,6 +260,7 @@ flowchart TD
     Menu -. "administrador e gestor" .-> Benchmark
     Menu -. "gestor e analista" .-> Mensagens
     Menu -. "gestor e analista" .-> Aprovacao
+    Menu -. "gestor e analista" .-> Assistente
     Menu -. "parceiro" .-> MeuDesempenho
     Painel -- "parceiro: a página<br/>inicial é o portal" --> MeuDesempenho
     Painel -- "base vazia:<br/>importar um relatório" --> Importacao
@@ -303,9 +305,9 @@ caminhos que **a própria tela** oferece.
 das permissões das próprias rotas —, e a interface só desenha o que ouviu (regras 2.4 e 2.5 do
 `CLAUDE.md`). O Administrador vê Painel, Importação (só o histórico, pelo RF13), Execuções (sem abrir o
 plano, pelo RF34), Benchmark, Modelo, Usuários e Limiares; o Parceiro, só Meu desempenho, que é a página
-inicial dele (RF26); o Gestor vê Painel, Importação, Parceiros,
-Campanha, Execuções, Mensagens, Aprovação, Benchmark e Modelo; o Analista, Painel, Importação, Parceiros, Campanha,
-Execuções, Mensagens e Aprovação — ele lê a previsão no
+inicial dele (RF26); o Gestor vê Painel, Importação, Parceiros, Assistente,
+Campanha, Execuções, Mensagens, Aprovação, Benchmark e Modelo; o Analista, Painel, Importação, Parceiros, Assistente,
+Campanha, Execuções, Mensagens e Aprovação — ele lê a previsão no
 cadastro do parceiro (RF28) e consulta o plano, mas não treina o modelo (UC07) nem calcula a campanha
 (UC08), e vê a fila de aprovação sem os botões de decidir (RN06). Dentro da tela, o botão de calcular,
 o de editar o catálogo e os de aprovar, editar e rejeitar seguem a mesma regra: a API diz a quem pergunta se ele pode, lendo a permissão da própria rota. Esconder o item não é controle de acesso: quem abre o
