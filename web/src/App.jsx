@@ -11,6 +11,7 @@ import { useSessao } from "./api/contextoSessao";
 import Casca from "./componentes/Casca";
 import Carregando from "./componentes/Carregando";
 import Aprovacao from "./paginas/Aprovacao";
+import Assistente from "./paginas/Assistente";
 import Benchmark from "./paginas/Benchmark";
 import Campanha from "./paginas/Campanha";
 import Comparacao from "./paginas/Comparacao";
@@ -188,6 +189,16 @@ export default function App() {
         }
       >
         <Route path="/aprovacao" element={<Aprovacao />} />
+      </Route>
+
+      <Route
+        element={
+          <Protegido>
+            <Casca titulo="Assistente" />
+          </Protegido>
+        }
+      >
+        <Route path="/assistente" element={<Assistente />} />
       </Route>
 
       <Route

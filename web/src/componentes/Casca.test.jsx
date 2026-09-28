@@ -80,6 +80,16 @@ describe("menu lateral", () => {
     expect(itens).toEqual(["Painel", "Importação", "Parceiros", "Mensagens", "Aprovação"]);
   });
 
+  it("o assistente fica junto das consultas, para quem o UC12 dá (H65)", () => {
+    const itens = menu({
+      nome: "Analista",
+      perfil: "ANALISTA",
+      telas: ["painel", "importar", "historico_importacoes", "parceiros", "assistente", "campanha"],
+    });
+
+    expect(itens).toEqual(["Painel", "Importação", "Parceiros", "Assistente", "Campanha"]);
+  });
+
   it("sessão de antes da atualização, sem telas, mantém o menu anterior", () => {
     /* Uma aba aberta durante a atualização não pode ficar com o trilho vazio. */
     const itens = menu({ nome: "Antiga", perfil: "GESTOR" });

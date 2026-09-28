@@ -1,0 +1,203 @@
+/* O assistente (UC12, H65 a H68).
+
+   Uma coluna só, na largura de leitura: a resposta é texto, e linha de texto
+   passando de ~75 caracteres cansa o olho (a mesma regra das mensagens). */
+
+.assistente {
+  display: grid;
+  gap: var(--esp-16);
+  max-width: 52rem;
+}
+
+.assistente__formulario {
+  display: grid;
+  gap: var(--esp-12);
+  padding: var(--esp-16);
+}
+
+/* A pergunta é frase, e não dado: a fonte da interface, e não a monoespaçada
+   que `.campo > textarea` usa para o CSV da importação. A especificidade
+   precisa passar da regra da base, e é por isso que o seletor repete o `.campo`. */
+.campo > .assistente__pergunta {
+  min-height: 5.5rem;
+  font-family: var(--fonte-interface);
+  font-size: var(--txt-14);
+  line-height: 1.5;
+}
+
+.assistente__acoes {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.assistente__exemplos {
+  display: grid;
+  gap: var(--esp-8);
+  padding: var(--esp-15) var(--esp-16) var(--esp-16);
+  border-top: 1px solid var(--border);
+}
+
+.assistente__exemplos-titulo {
+  font-size: var(--txt-12);
+  font-weight: var(--peso-rotulo);
+  color: var(--ink-2);
+}
+
+/* ------------------------------------------------------------- sugestões */
+/* Os exemplos e as opções da precisão. Respondem ao clique, e por isso levam a
+   tinta da ação (regra 1.1 do `docs/09`) — em texto, e não em fundo cheio: o
+   botão cheio fica só para "Perguntar", que é a ação da tela. */
+.sugestoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sugestao {
+  min-height: 44px;
+  padding: var(--esp-8) var(--esp-12);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-controle);
+  background: var(--surface);
+  color: var(--acao-ink);
+  font-family: inherit;
+  font-size: var(--txt-13);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--transicao),
+    border-color var(--transicao);
+}
+
+.sugestao:hover:not(:disabled) {
+  background: var(--acao-fraca);
+  border-color: var(--acao);
+}
+
+.sugestao:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* -------------------------------------------------------------- respostas */
+.conversa {
+  display: grid;
+  gap: var(--esp-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resposta {
+  display: grid;
+  gap: var(--esp-12);
+  padding: var(--esp-16);
+}
+
+/* Abstenção, precisão e indisponibilidade: respostas legítimas, com a barra
+   neutra do aviso informativo. A vermelha diria que algo quebrou (H68).
+   Duas classes, e não uma: com a mesma especificidade, o atalho `border` de
+   `.painel` apagava a barra conforme a ordem das folhas — medido no navegador,
+   a barra saía na cor da borda. É a armadilha do `.aviso--sucesso` na base. */
+.resposta.resposta--sem-base {
+  border-left: 3px solid var(--ink-3);
+}
+
+.resposta__pergunta {
+  font-size: var(--txt-14);
+  font-weight: var(--peso-nome);
+}
+
+.resposta__situacao {
+  font-size: var(--txt-12);
+  font-weight: var(--peso-rotulo);
+  color: var(--ink-2);
+}
+
+.resposta__texto {
+  display: grid;
+  gap: var(--esp-8);
+  max-width: 70ch;
+  font-size: var(--txt-14);
+  line-height: 1.6;
+}
+
+.resposta__lista {
+  display: grid;
+  gap: var(--esp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A fonte, sempre à vista (H66): separada da resposta por uma linha, na tinta
+   secundária — está ali para ser conferida, e não para competir com o texto. */
+.resposta__fonte {
+  padding-top: var(--esp-12);
+  border-top: 1px solid var(--border);
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+}
+
+.resposta__fonte-rotulo {
+  margin-right: var(--esp-4);
+  font-weight: var(--peso-rotulo);
+  color: var(--ink);
+}
+
+.resposta__redacao {
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+}
+
+.resposta__numeros > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--acao-ink);
+  font-size: var(--txt-13);
+  font-weight: var(--peso-rotulo);
+  cursor: pointer;
+}
+
+.resposta__numeros dl {
+  display: grid;
+  gap: var(--esp-4);
+  margin: var(--esp-4) 0 0;
+}
+
+.resposta__fato {
+  display: grid;
+  grid-template-columns: minmax(10rem, 16rem) 1fr;
+  gap: var(--esp-12);
+  font-size: var(--txt-12);
+}
+
+.resposta__fato dt {
+  color: var(--ink-2);
+}
+
+.resposta__fato dd {
+  margin: 0;
+  font-family: var(--fonte-dados);
+  font-variant-numeric: tabular-nums;
+}
+
+.resposta--aguardando .esqueleto + .esqueleto {
+  margin-top: calc(-1 * var(--esp-4));
+}
+
+.resposta__espera {
+  font-size: var(--txt-13);
+  color: var(--ink-2);
+}
+
+@media (max-width: 40rem) {
+  .resposta__fato {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
