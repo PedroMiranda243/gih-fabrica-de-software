@@ -7,7 +7,7 @@
  * com o último plano, e a execução aberta pelo histórico (H58).
  */
 import { useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import { ContextoSessao } from "../api/contextoSessao";
 
@@ -25,7 +25,14 @@ import EstadoVazio from "./EstadoVazio";
 import Segmento from "./Segmento";
 import "../estilos/campanha.css";
 
-export default function PlanoDeCampanha({ execucao }) {
+export default function PlanoDeCampanha({ execucao, origem = "Plano" }) {
+  /* O parceiro aberto do plano volta para ele, e não para a lista (H81). */
+  const lugar = useLocation();
+  const doPlano = {
+    lista: lugar.pathname + lugar.search,
+    rotuloLista: origem,
+    voltarPara: `Voltar para ${origem === "Campanha" ? "a campanha" : "o plano"}`,
+  };
   /* Quem gera mensagens vem da API (`usuario.telas`), como o menu. Lido direto do
      contexto, e não por `useSessao`: o plano também aparece fora da casca. */
   const sessao = useContext(ContextoSessao);
@@ -146,7 +153,7 @@ export default function PlanoDeCampanha({ execucao }) {
               {execucao.itens.map((item) => (
                 <tr key={item.parceiro_id}>
                   <td className="nome">
-                    <Link className="nome__link" to={`/parceiros/${item.parceiro_id}`}>
+                    <Link className="nome__link" to={`/parceiros/${item.parceiro_id}`} state={doPlano}>
                       {item.parceiro}
                     </Link>
                   </td>

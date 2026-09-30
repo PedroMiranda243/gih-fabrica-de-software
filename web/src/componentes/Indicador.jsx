@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { comoDelta, comoPercentual, sentidoDa, TRACO } from "../formato";
 import { IconeVariacao } from "./Icones";
 
@@ -20,6 +22,9 @@ import { IconeVariacao } from "./Icones";
  * `absoluta` troca o percentual pela diferença em unidades. Contagem pede
  * diferença absoluta: de 1 para 2 também é +100%, e "+100% em risco" faz o
  * gestor entender outra coisa do que aconteceu.
+ *
+ * `acao` leva do número a quem está por trás dele (H81) — "Em risco" abre a
+ * lista dos parceiros em risco.
  */
 export default function Indicador({
   rotulo,
@@ -28,6 +33,7 @@ export default function Indicador({
   absoluta = false,
   subirEBom = true,
   nota,
+  acao,
 }) {
   const sentido = sentidoDa(variacao);
   const indefinida = sentido === "indefinida";
@@ -53,6 +59,12 @@ export default function Indicador({
               : `em relação ao período anterior`}
           </span>
         </span>
+      )}
+
+      {acao && (
+        <Link className="indicador__acao" to={acao.para}>
+          {acao.rotulo}
+        </Link>
       )}
     </div>
   );

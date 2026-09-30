@@ -125,6 +125,11 @@ export default function Painel() {
               ? undefined
               : "Segmentação ainda não calculada para este período"
           }
+          acao={
+            indicadores.em_risco?.total
+              ? { para: "/parceiros?segmento=EM_RISCO", rotulo: "Ver quem está em risco" }
+              : undefined
+          }
         />
         <Indicador
           rotulo={`Mobilidade Top ${mobilidade.top_n}`}

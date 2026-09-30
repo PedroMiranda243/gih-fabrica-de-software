@@ -15,7 +15,7 @@
  * O endereço (`?a=&b=`) é o que o histórico monta, e é o que se manda a alguém.
  */
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { Esqueleto } from "../componentes/Carregando";
@@ -272,6 +272,8 @@ function Resultado({ comparacao: c }) {
 }
 
 function Parceiros({ comparacao: c }) {
+  /* O parceiro aberto daqui volta para a comparação, e não para a lista (H81). */
+  const lugar = useLocation();
   const [comIguais, setComIguais] = useState(false);
   const { mudaram, so_a: soA, so_b: soB, iguais } = c.resumo;
   const visiveis = comIguais ? c.itens : c.itens.filter((i) => i.situacao !== "IGUAL");
@@ -309,7 +311,15 @@ function Parceiros({ comparacao: c }) {
               {visiveis.map((i) => (
                 <tr key={i.parceiro_id}>
                   <td className="nome">
-                    <Link className="nome__link" to={`/parceiros/${i.parceiro_id}`}>
+                    <Link
+                      className="nome__link"
+                      to={`/parceiros/${i.parceiro_id}`}
+                      state={{
+                        lista: lugar.pathname + lugar.search,
+                        rotuloLista: "Comparação",
+                        voltarPara: "Voltar para a comparação",
+                      }}
+                    >
                       {i.parceiro}
                     </Link>
                   </td>

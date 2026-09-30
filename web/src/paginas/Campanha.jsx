@@ -233,7 +233,7 @@ export default function Campanha() {
       </section>
 
       {acompanhando && <Andamento execucao={acompanhando} />}
-      {!acompanhando && plano && <PlanoDeCampanha execucao={plano} />}
+      {!acompanhando && plano && <PlanoDeCampanha execucao={plano} origem="Campanha" />}
       {estado.ultima && (
         <p className="campanha__historico">
           <Link to="/execucoes">Ver as execuções anteriores</Link>, com quem calculou, os parâmetros e o
