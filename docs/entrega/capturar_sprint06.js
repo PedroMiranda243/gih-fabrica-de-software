@@ -7,8 +7,13 @@
  * precisa ser fotografado **antes** da mudança — depois não há mais como. Por
  * isso o roteiro tem etapas, rodadas em momentos diferentes:
  *
- *   node docs/entrega/capturar_sprint06.js antes    # da main anterior à H79
- *   node docs/entrega/capturar_sprint06.js depois   # com as melhorias no ar
+ *   node docs/entrega/capturar_sprint06.js antes       # da main anterior à H79
+ *   node docs/entrega/capturar_sprint06.js depois      # com as melhorias no ar
+ *   node docs/entrega/capturar_sprint06.js modulo      # a campanha e o benchmark, com a GPU
+ *   node docs/entrega/capturar_sprint06.js integracao  # do painel ao plano, por cliques
+ *
+ * A etapa `modulo` precisa da GPU: suba antes com
+ *   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
  *
  * Cada etapa grava em `evidencias/sprint06/` as capturas com o prefixo dela, e
  * um `navegacao-<etapa>.txt`: para cada endereço, o título da aba, onde a página
@@ -55,6 +60,22 @@ async function esperar(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+/** Quebra nas palavras, para caber nas 96 colunas do documento, com o recuo nas seguintes. */
+function quebrar(texto, recuo, largura = 94) {
+  const margem = /^ */.exec(texto)[0];
+  const linhas = [];
+  let linha = '';
+  for (const palavra of texto.slice(margem.length).split(' ')) {
+    if (linha && linha.length + palavra.length + 1 > largura) {
+      linhas.push(linha);
+      linha = recuo + palavra;
+    } else {
+      linha = linha ? `${linha} ${palavra}` : margem + palavra;
+    }
+  }
+  return [...linhas, linha].join('\n');
+}
+
 // ------------------------------------------------------------ API, pelo Node
 async function sessaoAdmin() {
   const r = await fetch(`${API}/api/sessao`, {
@@ -95,6 +116,8 @@ function limparExecucao(marca) {
 
 // ------------------------------------------------------------ na página
 async function fotografar(pagina, nome, opcoes = {}) {
+  // O ponteiro fica onde foi o último clique, e a linha embaixo dele sairia realçada.
+  await pagina.mouse.move(0, 0);
   await esperar(400); // transições de 180 ms terminadas
   await pagina.screenshot({ path: path.join(SAIDA, `${nome}.png`), ...opcoes });
   console.log(`${nome.padEnd(36)} ok`);
@@ -362,7 +385,294 @@ async function depois(contexto) {
   await registrarEnderecos(contexto, calculados, 'depois', 'Navegação — depois da H79');
 }
 
-const ETAPAS = { antes, depois };
+// ------------------------------------------------------- o módulo, pela tela
+/** Troca o valor do campo pelo teclado, como a pessoa faz: o React só ouve o evento. */
+async function digitar(pagina, seletor, texto) {
+  await pagina.click(seletor, { clickCount: 3 });
+  await pagina.keyboard.press('Backspace');
+  await pagina.type(seletor, texto);
+}
+
+/** A execução mais recente, com o plano, lida pela sessão da página. */
+async function ultimaExecucao(pagina) {
+  return pagina.evaluate(async () => {
+    const lista = await (await fetch('/api/otimizacoes?tamanho=1', { credentials: 'same-origin' })).json();
+    if (!lista.itens.length) return null;
+    return (await fetch(`/api/otimizacoes/${lista.itens[0].id}`, { credentials: 'same-origin' })).json();
+  });
+}
+
+/**
+ * O cálculo pela tela da Campanha: preenche, escolhe o modo, pede, confirma e
+ * espera o plano — ou a recusa — tomar o lugar do andamento. Com `andamento`,
+ * fotografa o cálculo rodando.
+ */
+async function calcularPelaTela(pagina, { orcamento, modo = '' }, andamento) {
+  const antes = (await ultimaExecucao(pagina))?.id ?? 0;
+  await ir(pagina, '/campanha', '#campo-orcamento');
+  await digitar(pagina, '#campo-orcamento', orcamento);
+  await digitar(pagina, '#campo-maximo_acoes', String(PARAMETROS.maximo_acoes));
+  await digitar(pagina, '#campo-cota_cauda_longa', '30');
+  await pagina.select('#campo-modo', modo);
+  await pagina.click('.campanha__acoes button[type="submit"]');
+  await pagina.waitForSelector('.confirmacao');
+  await pagina.click('.confirmacao button.botao:not(.botao--secundario)');
+  if (andamento) {
+    await pagina.waitForSelector('.campanha__andamento', { timeout: 15000 });
+    await fotografarElemento(pagina, andamento, '.campanha__andamento');
+  }
+  let execucao;
+  const limite = Date.now() + 300000;
+  do {
+    if (Date.now() > limite) throw new Error('O cálculo pela tela não terminou em 5 minutos.');
+    await esperar(1000);
+    execucao = await ultimaExecucao(pagina);
+  } while (!execucao || execucao.id === antes || execucao.situacao === 'EM_ANDAMENTO');
+  /* A tela consulta a cada 2 s: o fim, para ela, é quando o andamento some. */
+  await pagina.waitForFunction(
+    () => !document.querySelector('.campanha__andamento')
+      && document.querySelector('section[aria-labelledby="titulo-plano"]'),
+    { timeout: 15000, polling: 250 },
+  );
+  return execucao;
+}
+
+/** Os dois planos têm os mesmos parceiros, cada um com a mesma ação. */
+function mesmoPlano(a, b) {
+  const chave = (e) => (e.itens ?? []).map((i) => `${i.parceiro_id}:${i.acao_id}`).sort().join(',');
+  return a.viavel && b.viavel && chave(a) === chave(b) && a.uplift_total === b.uplift_total;
+}
+
+function resumoDoPlano(e) {
+  return `execução #${e.id} · ${(e.itens ?? []).length} ações · custo R$ ${e.custo_total}`
+    + ` · ganho R$ ${e.uplift_total} · ${e.tempo_ms} ms`;
+}
+
+/** O benchmark no cenário padrão da tela, pela sessão do gestor, esperado até o fim. */
+async function rodarBenchmark(pagina) {
+  return pagina.evaluate(async () => {
+    const estado = await (await fetch('/api/benchmark', { credentials: 'same-origin' })).json();
+    const pedido = await fetch('/api/benchmarks', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(estado.padrao),
+    });
+    if (pedido.status !== 202) return { erro: `o benchmark respondeu ${pedido.status}` };
+    const { id } = await pedido.json();
+    const limite = Date.now() + 600000;
+    for (;;) {
+      const agora = await (await fetch('/api/benchmark', { credentials: 'same-origin' })).json();
+      if (!agora.em_andamento) {
+        return agora.ultima?.id === id ? agora.ultima : { erro: 'o benchmark não terminou concluído' };
+      }
+      if (Date.now() > limite) return { erro: 'o benchmark não terminou em 10 minutos' };
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+  });
+}
+
+/**
+ * O terceiro módulo funcionando, pela tela (UC08, UC09). **Precisa da GPU**:
+ * suba com o docker-compose.gpu.yml, senão o automático cai para a CPU e o
+ * benchmark fica sem a quarta coluna — a etapa recusa em vez de fotografar
+ * menos do que diz.
+ *
+ * O mesmo pedido roda em dois modos: o serial, em Python, que demora o bastante
+ * para o andamento aparecer; e o automático, que com a placa é a GPU. Os dois
+ * planos precisam ser o mesmo (ADR-011, ADR-012). E um `modulo.txt` registra o
+ * que a captura não mostra: os modos, os tempos e a conferência dos planos.
+ */
+async function modulo(contexto) {
+  const { gestor, analista } = contexto;
+  const estado = await gestor.evaluate(
+    async () => (await fetch('/api/campanha', { credentials: 'same-origin' })).json(),
+  );
+  const gpu = estado.modos.find((m) => m.modo === 'GPU');
+  if (!gpu?.disponivel) {
+    throw new Error('A etapa do módulo precisa da GPU. Suba com: docker compose -f docker-compose.yml '
+      + `-f docker-compose.gpu.yml up -d --build (${gpu?.motivo ?? 'sem o modo GPU'})`);
+  }
+
+  /* UC08, passo 1: com o que a campanha vai trabalhar, antes de qualquer número. */
+  await ir(gestor, '/campanha', '#campo-orcamento');
+  await fotografarElemento(gestor, 'modulo-campanha-restricoes', 'section[aria-labelledby="titulo-restricoes"]');
+  /* O catálogo, que só o gestor edita — a API diz isso à tela (#190). */
+  await gestor.waitForSelector('section[aria-labelledby="titulo-catalogo"] button[aria-label^="Editar"]');
+  await fotografarElemento(gestor, 'modulo-campanha-catalogo', 'section[aria-labelledby="titulo-catalogo"]');
+
+  const serial = await calcularPelaTela(
+    gestor, { orcamento: '5.000,00', modo: 'SERIAL' }, 'modulo-campanha-andamento',
+  );
+  const automatico = await calcularPelaTela(gestor, { orcamento: '5.000,00' });
+  await fotografarElemento(gestor, 'modulo-campanha-plano', 'section[aria-labelledby="titulo-plano"]', 16, 900);
+  if (automatico.modo !== 'GPU') throw new Error(`O automático rodou em ${automatico.modo}, e não na GPU.`);
+  if (!mesmoPlano(serial, automatico)) {
+    throw new Error(`O plano da GPU não é o do serial: ${resumoDoPlano(serial)} × ${resumoDoPlano(automatico)}`);
+  }
+
+  const inviavel = await calcularPelaTela(gestor, { orcamento: '100,00' });
+  await fotografarElemento(gestor, 'modulo-campanha-inviavel', 'section[aria-labelledby="titulo-plano"]');
+
+  /* O histórico, o detalhe e a comparação com um plano de orçamento maior (RF34, RF35).
+     As datas são as que a tela sugeriu ao primeiro: só o orçamento muda. */
+  const maior = await calcularPlano(gestor, {
+    ...PARAMETROS,
+    orcamento: '8000.00',
+    aplicacao_inicio: automatico.parametros.aplicacao_inicio,
+    aplicacao_fim: automatico.parametros.aplicacao_fim,
+  });
+  if (maior.erro || !maior.viavel) throw new Error(`Sem o segundo plano: ${maior.erro ?? maior.motivo}`);
+  await ir(gestor, '/execucoes', 'section[aria-labelledby="titulo-execucoes"] table');
+  await fotografarElemento(gestor, 'modulo-execucoes', 'section[aria-labelledby="titulo-execucoes"]', 16, 560);
+  await ir(gestor, `/execucoes/${automatico.id}`, 'section[aria-labelledby="titulo-pedido"]');
+  await fotografar(gestor, 'modulo-execucao');
+  await ir(gestor, `/execucoes/comparar?a=${automatico.id}&b=${maior.id}`,
+    'section[aria-labelledby="titulo-parceiros"] table');
+  await fotografarElemento(gestor, 'modulo-comparacao', 'main.pagina', 0, 1200);
+
+  /* O benchmark no cenário padrão, com as quatro colunas (UC09, RNF02). */
+  const benchmark = await rodarBenchmark(gestor);
+  if (benchmark.erro) throw new Error(`Sem o benchmark: ${benchmark.erro}`);
+  const medidas = benchmark.colunas.filter((c) => c.situacao === 'MEDIDA').map((c) => c.coluna);
+  if (medidas.length !== 4) throw new Error(`O benchmark mediu só ${medidas.join(', ')}.`);
+  await ir(gestor, '/benchmark', 'section[aria-labelledby="titulo-escalabilidade"]');
+  await fotografarElemento(gestor, 'modulo-benchmark-resultado', 'section[aria-labelledby="titulo-resultado"]');
+  await fotografarElemento(gestor, 'modulo-benchmark-escalabilidade', 'section[aria-labelledby="titulo-escalabilidade"]');
+
+  /* O analista consulta a campanha, e não decide onde vai a verba (UC08): o
+     porquê no lugar do botão, que a API manda pelo perfil (#190). */
+  await ir(analista, '/campanha', '.campanha__bloqueio');
+  if (await analista.$('.campanha__acoes button[type="submit"]')) {
+    throw new Error('O analista ainda vê "Calcular plano": a API no ar é anterior à correção da #190.');
+  }
+  await fotografarElemento(analista, 'modulo-campanha-analista', 'section[aria-labelledby="titulo-restricoes"]');
+
+  const p = benchmark.parametros;
+  const linhas = [
+    'O módulo de campanha pela tela — o que as capturas não mostram',
+    `Gerado por docs/entrega/capturar_sprint06.js em ${new Date().toLocaleString('pt-BR')},`,
+    `na interface em ${WEB}.`,
+    '',
+    `Modos desta instalação: ${estado.modos.map((m) => `${m.modo} ${m.disponivel ? 'disponível' : 'indisponível'}`).join(' · ')}`,
+    `O automático escolhe: ${estado.modo_automatico}`,
+    '',
+    'O mesmo pedido, calculado pela tela em dois modos — orçamento de R$ 5.000,00, até',
+    `${PARAMETROS.maximo_acoes} ações, 30% delas na cauda longa:`,
+    `  Serial (Python)   ${resumoDoPlano(serial)}`,
+    `  Automático (${automatico.modo})  ${resumoDoPlano(automatico)}`,
+    '  o mesmo plano, parceiro a parceiro e ação a ação: sim',
+    '',
+    `Orçamento de R$ 100,00: ${inviavel.viavel ? 'VIÁVEL, ao contrário do esperado' : 'sem solução viável'}`,
+    quebrar(`  restrição: ${inviavel.restricao_violada} — ${inviavel.motivo}`, '    '),
+    '',
+    `Benchmark #${benchmark.id}: ${p.parceiros} parceiros, ${p.acoes} ações, ${p.repeticoes} repetições;`,
+    `  colunas medidas: ${medidas.join(', ')}`,
+    `  placa: ${benchmark.ambiente?.gpu ?? '(não informada)'}`,
+  ];
+  if (inviavel.viavel) throw new Error('O orçamento de R$ 100,00 deu plano viável.');
+  fs.writeFileSync(path.join(SAIDA, 'modulo.txt'), `${linhas.join('\n')}\n`, 'utf8');
+  console.log(`${'modulo.txt'.padEnd(36)} ok`);
+}
+
+// ------------------------------------------------------------ a integração
+/** O que a página mostra agora: endereço, título da aba, trilha e um trecho lido dela. */
+async function lerPasso(pagina, seletorDoTrecho) {
+  return pagina.evaluate((seletor) => ({
+    endereco: location.pathname + location.search,
+    titulo: document.title,
+    trilha: [...(document.querySelector('nav.trilha')?.children ?? [])]
+      .map((e) => e.textContent.trim()).filter((x) => x && x !== '›').join(' › '),
+    trecho: (document.querySelector(seletor)?.innerText ?? '').replace(/\s+/g, ' ').trim(),
+  }), seletorDoTrecho);
+}
+
+/** Clica num link pelo seletor e espera a página seguinte mostrar o que se espera dela. */
+async function clicar(pagina, seletor, esperado) {
+  await Promise.all([pagina.waitForSelector(esperado, { timeout: 15000 }), pagina.click(seletor)]);
+  await esperar(600);
+}
+
+/**
+ * A integração entre os três módulos, por um caminho de cliques (H81): do
+ * indicador do painel à lista de quem está em risco, ordenada pelo risco que o
+ * modelo estimou; dali ao cadastro de um parceiro, com a previsão e a ação que o
+ * último plano reservou; ao plano; e do plano de volta ao parceiro. Cada passo
+ * vai para o `integracao.txt`, com o que a página mostrava — e a ação que o
+ * cadastro diz é conferida contra o plano gravado.
+ */
+async function integracao(contexto) {
+  const { gestor } = contexto;
+  const plano = await calcularPlano(gestor, PARAMETROS);
+  if (plano.erro || !plano.viavel) throw new Error(`Sem plano viável: ${plano.erro ?? plano.motivo}`);
+  const noPlano = plano.itens.map((i) => i.parceiro_id);
+  const passos = [];
+
+  await ir(gestor, '/', 'a.indicador__acao');
+  await fotografarElemento(gestor, 'integracao-painel-indicador', '.indicador:has(a.indicador__acao)');
+  passos.push(['O painel (módulo de análise)', await lerPasso(gestor, '.indicador:has(a.indicador__acao)')]);
+
+  await clicar(gestor, 'a.indicador__acao', 'section[aria-labelledby="titulo-parceiros"] table');
+  /* Ordena pelo risco, pelo cabeçalho da coluna — o maior primeiro (H80). */
+  await gestor.evaluate(() => [...document.querySelectorAll('th button')]
+    .find((b) => b.textContent.includes('Risco de queda')).click());
+  await gestor.waitForFunction(() => location.search.includes('ordenar_por=risco'));
+  await esperar(800);
+  await fotografarElemento(gestor, 'integracao-lista-em-risco', 'section[aria-labelledby="titulo-parceiros"]', 16, 560);
+  passos.push(['Clicou em "Ver quem está em risco" e ordenou pelo risco de queda (análise + previsão)',
+    await lerPasso(gestor, 'section[aria-labelledby="titulo-parceiros"] tbody tr')]);
+
+  /* O primeiro da lista que está no plano: o cadastro dele mostra a ação. */
+  const alvo = await gestor.evaluate((ids) => {
+    const links = [...document.querySelectorAll('section[aria-labelledby="titulo-parceiros"] a.nome__link')];
+    const escolhido = links.find((a) => ids.includes(Number(a.getAttribute('href').split('/').pop())));
+    return escolhido ? Number(escolhido.getAttribute('href').split('/').pop()) : null;
+  }, noPlano);
+  if (!alvo) throw new Error('Nenhum parceiro da primeira página em risco está no plano.');
+  const item = plano.itens.find((i) => i.parceiro_id === alvo);
+  await clicar(gestor, `section[aria-labelledby="titulo-parceiros"] a.nome__link[href="/parceiros/${alvo}"]`,
+    'a.na-campanha__plano');
+  await fotografarElemento(gestor, 'integracao-cadastro', '.cadastro__lateral');
+  await fotografarTrilha(gestor, 'integracao-trilha-da-lista');
+  const cadastro = await lerPasso(gestor, 'section[aria-labelledby="titulo-na-campanha"]');
+  passos.push([`Clicou em ${item.parceiro} (previsão + campanha, no cadastro)`, cadastro]);
+  if (!cadastro.trecho.includes(item.acao)) {
+    throw new Error(`O cadastro não mostra a ação do plano (${item.acao}): ${cadastro.trecho}`);
+  }
+
+  await clicar(gestor, 'a.na-campanha__plano', 'section[aria-labelledby="titulo-plano"]');
+  await fotografarElemento(gestor, 'integracao-plano', 'section[aria-labelledby="titulo-plano"]', 16, 700);
+  passos.push(['Clicou em "Abrir o plano" (módulo de campanha)',
+    await lerPasso(gestor, 'section[aria-labelledby="titulo-plano"] .painel__cabecalho')]);
+
+  await clicar(gestor, `section[aria-labelledby="titulo-plano"] a.nome__link[href="/parceiros/${alvo}"]`,
+    'a.na-campanha__plano');
+  await fotografarTrilha(gestor, 'integracao-trilha-do-plano');
+  passos.push([`Clicou em ${item.parceiro}, no plano — a trilha volta para a execução`,
+    await lerPasso(gestor, 'section[aria-labelledby="titulo-na-campanha"]')]);
+
+  const linhas = [
+    'Integração entre os módulos — um caminho de cliques, do painel ao plano e de volta',
+    `Gerado por docs/entrega/capturar_sprint06.js em ${new Date().toLocaleString('pt-BR')},`,
+    `na interface em ${WEB}.`,
+    `O último plano: execução #${plano.id}, ${plano.itens.length} ações, modelo ${plano.modelo_versao}.`,
+    '',
+  ];
+  for (const [i, [acao, lido]] of passos.entries()) {
+    linhas.push(`${i + 1}. ${acao}`);
+    linhas.push(`   endereço: ${lido.endereco}`);
+    linhas.push(`   título da aba: ${lido.titulo}`);
+    linhas.push(`   trilha: ${lido.trilha || '(nenhuma)'}`);
+    linhas.push(quebrar(`   a página mostra: ${lido.trecho.slice(0, 400)}`, '     '));
+    linhas.push('');
+  }
+  linhas.push(quebrar(`Conferência: o cadastro de ${item.parceiro} mostra a ação que o plano #${plano.id} `
+    + `gravou para ele — ${item.acao}, R$ ${String(item.custo).replace('.', ',')}: sim`, '  '));
+  fs.writeFileSync(path.join(SAIDA, 'integracao.txt'), `${linhas.join('\n')}\n`, 'utf8');
+  console.log(`${'integracao.txt'.padEnd(36)} ok`);
+}
+
+const ETAPAS = { antes, depois, modulo, integracao };
 
 // -------------------------------------------------------------------- roteiro
 async function main() {
