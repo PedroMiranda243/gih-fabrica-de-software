@@ -8,6 +8,7 @@
  * isso o roteiro tem etapas, rodadas em momentos diferentes:
  *
  *   node docs/entrega/capturar_sprint06.js antes    # da main anterior à H79
+ *   node docs/entrega/capturar_sprint06.js depois   # com as melhorias no ar
  *
  * Cada etapa grava em `evidencias/sprint06/` as capturas com o prefixo dela, e
  * um `navegacao-<etapa>.txt`: para cada endereço, o título da aba, onde a página
@@ -222,18 +223,48 @@ async function registrarNavegacao(visitas, arquivo, titulo) {
 }
 
 // -------------------------------------------------------------------- etapas
-/**
- * O antes: a main anterior à H79, H80 e H81. O menu solto, a lista sem o risco,
- * o ranking e o cadastro do parceiro sem ligação com a campanha, a execução sem
- * trilha, e o endereço inválido caindo no painel.
- */
-async function antes({ gestor, analista, administrador, pessoas }) {
+/** Dois planos, para a execução e a comparação existirem, e um parceiro que está no primeiro. */
+async function planos(gestor) {
   const primeiro = await calcularPlano(gestor, PARAMETROS);
   if (primeiro.erro || !primeiro.viavel) {
     throw new Error(`Sem plano viável para as capturas: ${primeiro.erro ?? primeiro.motivo}`);
   }
   const segundo = await calcularPlano(gestor, { ...PARAMETROS, orcamento: '3000.00' });
-  const noPlano = primeiro.itens[0].parceiro_id;
+  return { primeiro, segundo, noPlano: primeiro.itens[0].parceiro_id };
+}
+
+/** Os mesmos endereços nas duas etapas: é o que torna o antes e o depois comparáveis. */
+async function registrarEnderecos({ gestor, administrador, pessoas }, { primeiro, segundo, noPlano }, etapa, titulo) {
+  /* As telas de administração são do Administrador; as outras, do Gestor. */
+  const doGestor = [
+    '/',
+    '/importacao',
+    '/parceiros',
+    `/parceiros/${noPlano}`,
+    '/modelo',
+    '/campanha',
+    '/execucoes',
+    `/execucoes/${primeiro.id}`,
+    ...(segundo.id ? [`/execucoes/comparar?a=${primeiro.id}&b=${segundo.id}`] : []),
+    '/benchmark',
+    '/mensagens',
+    '/aprovacao',
+    '/pagina-que-nao-existe',
+  ].map((e) => [gestor, e]);
+  const doAdministrador = ['/usuarios', `/usuarios/${pessoas.GESTOR.id}`, '/configuracao']
+    .map((e) => [administrador, e]);
+  await registrarNavegacao([...doGestor, ...doAdministrador], `navegacao-${etapa}.txt`, titulo);
+}
+
+/**
+ * O antes: a main anterior à H79, H80 e H81. O menu solto, a lista sem o risco,
+ * o ranking e o cadastro do parceiro sem ligação com a campanha, e o endereço
+ * inválido caindo no painel.
+ */
+async function antes(contexto) {
+  const { gestor, analista } = contexto;
+  const calculados = await planos(gestor);
+  const { primeiro, noPlano } = calculados;
 
   await ir(gestor, '/', '.trilho');
   await fotografarMenu(gestor, 'antes-menu-gestor');
@@ -256,32 +287,38 @@ async function antes({ gestor, analista, administrador, pessoas }) {
   await esperar(600);
   await fotografar(gestor, 'antes-endereco-invalido');
 
-  /* As telas de administração são do Administrador; as outras, do Gestor. */
-  const doGestor = [
-    '/',
-    '/importacao',
-    '/parceiros',
-    `/parceiros/${noPlano}`,
-    '/modelo',
-    '/campanha',
-    '/execucoes',
-    `/execucoes/${primeiro.id}`,
-    ...(segundo.id ? [`/execucoes/comparar?a=${primeiro.id}&b=${segundo.id}`] : []),
-    '/benchmark',
-    '/mensagens',
-    '/aprovacao',
-    '/pagina-que-nao-existe',
-  ].map((e) => [gestor, e]);
-  const doAdministrador = ['/usuarios', `/usuarios/${pessoas.GESTOR.id}`, '/configuracao']
-    .map((e) => [administrador, e]);
-  await registrarNavegacao(
-    [...doGestor, ...doAdministrador],
-    'navegacao-antes.txt',
-    'Navegação — antes da H79 (main de 30/09/2026)',
-  );
+  await registrarEnderecos(contexto, calculados, 'antes', 'Navegação — antes da H79 (main de 30/09/2026)');
 }
 
-const ETAPAS = { antes };
+/**
+ * O depois, com as melhorias no ar. H79: o menu por módulo em cada perfil, a
+ * página do endereço inválido e o título de cada aba.
+ */
+async function depois(contexto) {
+  const { gestor, analista, administrador } = contexto;
+  const calculados = await planos(gestor);
+
+  await ir(gestor, '/', '.trilho__grupo');
+  await fotografarMenu(gestor, 'depois-menu-gestor');
+  await ir(analista, '/', '.trilho__grupo');
+  await fotografarMenu(analista, 'depois-menu-analista');
+  await ir(administrador, '/', '.trilho__grupo');
+  await fotografarMenu(administrador, 'depois-menu-administrador');
+
+  await ir(gestor, '/pagina-que-nao-existe', 'section[aria-label="Página não encontrada"]');
+  await fotografar(gestor, 'depois-endereco-invalido');
+
+  /* No tablet (768 px, RNF21) o trilho vira barra horizontal: os títulos dos
+     grupos ficam só para o leitor de tela, e um fio separa um módulo do outro. */
+  await gestor.setViewport({ width: 768, height: 900, deviceScaleFactor: 2 });
+  await ir(gestor, '/', '.trilho__grupo');
+  await fotografarElemento(gestor, 'depois-menu-768', 'nav.trilho', 0);
+  await gestor.setViewport({ width: 1280, height: 900, deviceScaleFactor: 2 });
+
+  await registrarEnderecos(contexto, calculados, 'depois', 'Navegação — depois da H79');
+}
+
+const ETAPAS = { antes, depois };
 
 // -------------------------------------------------------------------- roteiro
 async function main() {
