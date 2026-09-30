@@ -34,6 +34,7 @@ import EstadoVazio from "../componentes/EstadoVazio";
 import { IconeVariacao } from "../componentes/Icones";
 import Segmento from "../componentes/Segmento";
 import SerieHistorica from "../componentes/SerieHistorica";
+import { useTituloDaAba } from "../componentes/tituloDaAba";
 import {
   comoData,
   comoDinheiro,
@@ -98,6 +99,7 @@ function Cadastro({ id }) {
      que nenhum — a primeira versão fazia isso, e a recusa da exclusão
      acontecia sem ninguém ver. */
   const [avisoSituacao, setAvisoSituacao] = useState(null);
+  useTituloDaAba(novo ? "Novo parceiro" : parceiro?.nome);
   /* A categoria que a regra da RN05 aponta pelo nome (H27). A API decide; a
      tela só oferece — usar, trocar ou ignorar é da pessoa. */
   const [sugestao, setSugestao] = useState(null);

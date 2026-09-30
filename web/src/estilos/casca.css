@@ -40,7 +40,25 @@
 .trilho__navegacao {
   display: flex;
   flex-direction: column;
+  gap: var(--esp-16);
+}
+
+/* Um grupo por módulo (H79). O título é rótulo, e não item: não responde a
+   clique, por isso é tinta secundária em caixa alta, como o nome do produto
+   acima — e nunca a cor de ação. */
+.trilho__grupo {
+  display: flex;
+  flex-direction: column;
   gap: var(--esp-4);
+}
+
+.trilho__grupo-titulo {
+  padding: 0 var(--esp-8);
+  font-size: var(--txt-11);
+  font-weight: var(--peso-rotulo);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-2);
 }
 
 .trilho__item {
@@ -103,6 +121,31 @@
 
   .trilho__navegacao {
     flex-direction: row;
+    gap: var(--esp-12);
+  }
+
+  /* Na barra horizontal, o título do grupo ocuparia o lugar dos itens: some da
+     tela e fica para o leitor de tela (as regras de `.so-leitor`). Um fio
+     separa um grupo do outro. */
+  .trilho__grupo {
+    flex-direction: row;
+  }
+
+  .trilho__grupo + .trilho__grupo {
+    padding-left: var(--esp-12);
+    border-left: 1px solid var(--border);
+  }
+
+  .trilho__grupo-titulo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .trilho__item {

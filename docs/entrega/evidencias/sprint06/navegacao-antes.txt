@@ -1,0 +1,83 @@
+Navegação — antes da H79 (main de 30/09/2026)
+Gerado por docs/entrega/capturar_sprint06.js em 30/09/2026, 05:24:26, na interface em http://localhost:5173.
+
+/
+  título da aba: Growth Intelligence Hub
+  a página parou em: /
+  trilha: (nenhuma)
+  grupos do menu: (nenhum — itens soltos)
+
+/importacao
+  título da aba: Growth Intelligence Hub
+  a página parou em: /importacao
+  trilha: (nenhuma)
+
+/parceiros
+  título da aba: Growth Intelligence Hub
+  a página parou em: /parceiros
+  trilha: (nenhuma)
+
+/parceiros/246
+  título da aba: Growth Intelligence Hub
+  a página parou em: /parceiros/246
+  trilha: Parceiros › Ponto Azul 2
+
+/modelo
+  título da aba: Growth Intelligence Hub
+  a página parou em: /modelo
+  trilha: (nenhuma)
+
+/campanha
+  título da aba: Growth Intelligence Hub
+  a página parou em: /campanha
+  trilha: (nenhuma)
+
+/execucoes
+  título da aba: Growth Intelligence Hub
+  a página parou em: /execucoes
+  trilha: (nenhuma)
+
+/execucoes/68
+  título da aba: Growth Intelligence Hub
+  a página parou em: /execucoes/68
+  trilha: Execuções › 30/09/2026 às 05:24
+
+/execucoes/comparar?a=68&b=69
+  título da aba: Growth Intelligence Hub
+  a página parou em: /execucoes/comparar?a=68&b=69
+  trilha: Execuções › Comparação
+
+/benchmark
+  título da aba: Growth Intelligence Hub
+  a página parou em: /benchmark
+  trilha: (nenhuma)
+
+/mensagens
+  título da aba: Growth Intelligence Hub
+  a página parou em: /mensagens
+  trilha: (nenhuma)
+
+/aprovacao
+  título da aba: Growth Intelligence Hub
+  a página parou em: /aprovacao
+  trilha: (nenhuma)
+
+/pagina-que-nao-existe
+  título da aba: Growth Intelligence Hub
+  a página parou em: /   (redirecionada)
+  trilha: (nenhuma)
+
+/usuarios
+  título da aba: Growth Intelligence Hub
+  a página parou em: /usuarios
+  trilha: (nenhuma)
+
+/usuarios/83
+  título da aba: Growth Intelligence Hub
+  a página parou em: /usuarios/83
+  trilha: Usuários › Gestora da Captura
+
+/configuracao
+  título da aba: Growth Intelligence Hub
+  a página parou em: /configuracao
+  trilha: (nenhuma)

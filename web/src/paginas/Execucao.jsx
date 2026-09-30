@@ -13,6 +13,7 @@ import { api } from "../api/cliente";
 import { Esqueleto } from "../componentes/Carregando";
 import EstadoVazio from "../componentes/EstadoVazio";
 import PlanoDeCampanha from "../componentes/PlanoDeCampanha";
+import { useTituloDaAba } from "../componentes/tituloDaAba";
 import { comoDataHora, comoDinheiro, comoFracao, comoInteiro, cotasDoPedido, ROTULO_MODO, TRACO } from "../formato";
 import "../estilos/execucoes.css";
 
@@ -34,6 +35,7 @@ export default function Execucao() {
   const atual = estado.id === id;
   const execucao = atual ? estado.dados : null;
   const erro = atual ? estado.erro : null;
+  useTituloDaAba(execucao ? `Execução de ${comoDataHora(execucao.iniciada_em)}` : null);
 
   if (erro?.status === 404) {
     return (

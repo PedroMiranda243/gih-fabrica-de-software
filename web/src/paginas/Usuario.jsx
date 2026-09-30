@@ -20,6 +20,7 @@ import Campo from "../componentes/Campo";
 import { Esqueleto } from "../componentes/Carregando";
 import Confirmacao from "../componentes/Confirmacao";
 import EstadoVazio from "../componentes/EstadoVazio";
+import { useTituloDaAba } from "../componentes/tituloDaAba";
 import { ROTULO_PERFIL } from "../formato";
 import "../estilos/usuarios.css";
 
@@ -48,6 +49,7 @@ function Conta({ id }) {
   const [enviando, setEnviando] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
   const [avisoSituacao, setAvisoSituacao] = useState(null);
+  useTituloDaAba(novo ? "Novo usuário" : conta?.nome);
 
   useEffect(() => {
     if (novo) return undefined;
