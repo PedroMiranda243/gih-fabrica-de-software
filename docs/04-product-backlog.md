@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 2.0 — 15/09/2026 · sprints semanais
+**Versão:** 2.1 — 30/09/2026 · as histórias da Sprint 06 acadêmica (2.0 — 15/09/2026, sprints semanais)
 
 ---
 
@@ -37,13 +37,13 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **E1** | Fundação, planejamento e ambiente | 47 | 1–3 |
 | **E2** | Autenticação, perfis e auditoria | 39 | 4–5 |
 | **E3** | Ingestão e modelo de dados | 46 | 2–6 |
-| **E4** | Inteligência de negócio e segmentação | 47 | 6–9 |
-| **E5** | Núcleo preditivo | 34 | 8–9 |
+| **E4** | Inteligência de negócio e segmentação | 52 | 6–9, S06 |
+| **E5** | Núcleo preditivo | 37 | 8–9, S06 |
 | **E6** | Otimização, paralelismo e GPU | 82 | 3–11 |
 | **E7** | Central de comunicação | 26 | 12 |
 | **E8** | Assistente analítico | 21 | 12–13 |
-| **E9** | Qualidade, documentação e entrega | 47 | 2–13 |
-| | **Total** | **389** | |
+| **E9** | Qualidade, documentação e entrega | 52 | 2–13, S06 |
+| | **Total** | **402** | |
 
 ---
 
@@ -107,6 +107,7 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H38** | Como analista, quero exportar a visão filtrada em CSV, para trabalhar fora do sistema quando necessário. | S | 3 | 7 | RF25; o arquivo reflete exatamente os filtros aplicados |
 | **H39** | Como parceiro, quero consultar meu próprio desempenho, para acompanhar minha evolução. | C | 3 | 12 | RF26; sem acesso a dados de terceiros nem a ranking comparativo; negação validada no servidor |
 | **H40** | Como gestor, quero que o painel responda rápido mesmo com base grande, para usar o sistema no dia a dia. | M | 3 | 6 | RNF03, RNF05; até 2 s com 5.000 parceiros; consultas com índice |
+| **H81** | Como gestor ou analista, quero passar de um módulo a outro pelos próprios dados, para seguir um parceiro do painel até a campanha sem procurar pelo menu. | S | 5 | S06 | RF22, RF28; ranking e segmentos do painel levam ao parceiro e à lista filtrada; o cadastro mostra a ação do parceiro no último plano, com link para a execução |
 
 ## E5 — Núcleo preditivo
 
@@ -118,6 +119,7 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H44** | Como gestor, quero ver previsão e risco na tela do parceiro, para decidir com base no que vem, não só no que passou. | M | 5 | 8 | RF28; valores exibidos com indicação clara de que são estimativas |
 | **H45** | Como administrador, quero disparar o retreino do modelo, para incorporar os períodos novos. | S | 5 | 9 | RF27; registra data, volume de dados e métricas obtidas; execução registrada na auditoria |
 | **H46** | Como equipe, quero comparar o modelo com baselines estatísticos, para provar que o aprendizado agrega. | M | 3 | 8 | Tabela comparativa com pelo menos dois baselines; resultado publicado na documentação |
+| **H80** | Como gestor ou analista, quero ver e ordenar a lista de parceiros pelo risco de queda, para saber em quem investir olhando a rede inteira de uma vez. | S | 3 | S06 | RF23, RF28; a probabilidade da versão em uso na lista e no CSV, ordenável, sem previsão por último; sem N+1 (RNF03) |
 
 ## E6 — Otimização, paralelismo e GPU
 
@@ -174,6 +176,7 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H74** | Como equipe, quero produzir o vídeo horizontal de apresentação, para cumprir a entrega final. | M | 8 | 13 | Até 10 minutos, formato 16:9, publicado; cobre problema, solução, arquitetura, tecnologias, demonstração, IA, GPU, otimizações e resultados |
 | **H75** | Como equipe, quero produzir o vídeo vertical de divulgação, para cumprir a entrega final. | M | 5 | 13 | Formato 9:16, publicado, com as marcações exigidas |
 | **H76** | Como equipe, quero validar acessibilidade e responsividade, para atender aos requisitos de interface. | S | 4 | 13 | RNF21, RNF22; contraste conferido por ferramenta; layout funcional a partir de 768 px |
+| **H79** | Como gestor ou analista, quero o menu organizado pelos módulos do produto e caminhos claros entre as telas, para chegar ao que preciso sem me perder. | S | 5 | S06 | RNF20; menu agrupado na ordem do fluxo, sem grupo vazio para o perfil; título da aba por tela; página "não encontrada" com a volta, em vez de cair no painel sem aviso |
 
 ---
 
@@ -197,7 +200,8 @@ Detalhamento e datas em [05 — Cronograma](05-cronograma.md).
 | **11** | GPU e benchmark | H54a, H54b, H54c, H57, H70, H59 | 31 |
 | **12** | Central de comunicação | H60, H61, H62, H63, H64, H39 | 29 |
 | **13** | Assistente e fechamento | H65, H66, H67, H68, H72, H73, H74, H75, H76 | 48 |
-| | | **Total** | **389** |
+| **S06** | Sprint 06 acadêmica — navegação, risco na lista e integração | H79, H80, H81 | 13 |
+| | | **Total** | **402** |
 
 > A média é de **30,2 pontos por semana**, contra uma capacidade nominal de ~40. A folga é pequena, e a
 > Sprint 13 está deliberadamente acima da média — ver a seção *A semana que não fecha* no cronograma.

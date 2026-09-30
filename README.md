@@ -157,7 +157,7 @@ rode com a aplicação livre. Nenhum dos scripts deixa resíduo no banco.
 | [01 — Visão do produto](docs/01-visao-do-produto.md) | Tema, problema, objetivos, público-alvo, KPIs |
 | [02 — Requisitos](docs/02-requisitos.md) | 43 requisitos funcionais e 29 não funcionais, com rastreabilidade |
 | [03 — Casos de uso](docs/03-casos-de-uso.md) | 14 casos de uso, diagrama e especificação detalhada |
-| [04 — Product Backlog](docs/04-product-backlog.md) | 9 épicos e 81 histórias priorizadas |
+| [04 — Product Backlog](docs/04-product-backlog.md) | 9 épicos e 84 histórias priorizadas |
 | [05 — Cronograma](docs/05-cronograma.md) | O plano e o realizado das 13 sprints semanais, o que resta até 05/12/2026, marcos e riscos |
 | [06 — Equipe e processo](docs/06-equipe-e-processo.md) | Papéis, cerimônias, Definition of Done, fluxo Git |
 | [07 — Arquitetura](docs/07-arquitetura-preliminar.md) | As camadas e onde cada uma roda, o núcleo, as decisões (ADR-001 a ADR-013), o ambiente |

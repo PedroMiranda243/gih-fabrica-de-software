@@ -243,7 +243,7 @@ Aprovação registrada na issue **#8**. Só depois disso começa o CSS em `web/`
 
 ## 9. Telas e navegação
 
-Vinte telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
+Vinte e uma telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
 passo, um recorte filtrado precisa poder ser mandado por link, e um cadastro precisa poder ser aberto
 direto — tudo isso depende de a tela estar na URL, e não num estado escondido da página.
 
@@ -251,7 +251,7 @@ direto — tudo isso depende de a tela estar na URL, e não num estado escondido
 ```mermaid
 flowchart TD
     Login["Login<br/>/entrar"]
-    Menu(["Menu lateral<br/>em toda tela"])
+    Menu(["Menu lateral, por módulo<br/>Análise · Previsão · Otimização<br/>Comunicação · Administração"])
     Painel["Painel<br/>/"]
     Importacao["Importação<br/>/importacao"]
     Parceiros["Parceiros<br/>/parceiros"]
@@ -272,6 +272,8 @@ flowchart TD
     Aprovacao["Aprovação<br/>/aprovacao"]
     Assistente["Assistente<br/>/assistente"]
     MeuDesempenho["Meu desempenho<br/>/meu-desempenho"]
+    Inexistente(["endereço que não existe"])
+    NaoEncontrada["Página não encontrada"]
 
     Login -- "entrar" --> Menu
     Menu -. "todos" .-> Painel
@@ -319,6 +321,8 @@ flowchart TD
     Mensagens -- "ver estas mensagens<br/>na fila" --> Aprovacao
     Aprovacao -- "decidir: o foco vai<br/>para a próxima" --> Aprovacao
     Aprovacao -- "fila vazia:<br/>gerar mensagens" --> Mensagens
+    Inexistente --> NaoEncontrada
+    NaoEncontrada -- "ir para o início" --> Painel
 ```
 
 **O menu lateral aparece como um nó só**, com setas tracejadas: ele fica visível em todas as telas depois do
@@ -326,19 +330,25 @@ login. Desenhá-lo como setas de cada tela para cada tela faria o mapa virar uma
 saía em grupos soltos, sem mostrar como se vai do painel à lista de parceiros. As setas cheias são os
 caminhos que **a própria tela** oferece.
 
-**O menu mostra só o que o perfil abre.** A lista vem do servidor — a sessão traz as telas do perfil, lidas
-das permissões das próprias rotas —, e a interface só desenha o que ouviu (regras 2.4 e 2.5 do
-`CLAUDE.md`). O Administrador vê Painel, Importação (só o histórico, pelo RF13), Execuções (sem abrir o
-plano, pelo RF34), Benchmark, Modelo, Usuários e Limiares; o Parceiro, só Meu desempenho, que é a página
-inicial dele (RF26); o Gestor vê Painel, Importação, Parceiros, Assistente,
-Campanha, Execuções, Mensagens, Aprovação, Benchmark e Modelo; o Analista, Painel, Importação, Parceiros, Assistente,
-Campanha, Execuções, Mensagens e Aprovação — ele lê a previsão no
-cadastro do parceiro (RF28) e consulta o plano, mas não treina o modelo (UC07) nem calcula a campanha
-(UC08), e vê a fila de aprovação sem os botões de decidir (RN06). Dentro da tela, o botão de calcular,
+**O menu se agrupa pelos módulos do produto, na ordem do fluxo** (H79): **Análise** (Painel, Importação,
+Parceiros, Assistente), **Previsão** (Modelo), **Otimização** (Campanha, Execuções, Benchmark),
+**Comunicação** (Mensagens, Aprovação) e, por último e à parte, **Administração** (Usuários, Limiares). Até a
+Sprint 06 eram itens soltos, na ordem em que foram construídos, e a pessoa precisava conhecer o sistema para
+achar o módulo. O título do grupo é rótulo, e não item: não responde a clique e não usa a cor de ação. Abaixo
+de 860 px o menu vira barra horizontal, os títulos ficam só para o leitor de tela e um fio separa os grupos.
+
+**O menu mostra só o que o perfil abre**, e grupo sem nenhuma tela do perfil não aparece. A lista vem do
+servidor — a sessão traz as telas do perfil, lidas das permissões das próprias rotas —, e a interface só
+desenha o que ouviu (regras 2.4 e 2.5 do `CLAUDE.md`). O Administrador vê Análise (Painel e Importação, só
+o histórico, pelo RF13), Previsão, Otimização (Execuções, sem abrir o plano, pelo RF34, e Benchmark) e
+Administração; o Parceiro, só Meu desempenho, que é a página inicial dele (RF26); o Gestor vê Análise,
+Previsão, Otimização e Comunicação inteiros; o Analista, os mesmos menos a Previsão e o Benchmark — ele lê a
+previsão no cadastro do parceiro (RF28) e consulta o plano, mas não treina o modelo (UC07) nem calcula a
+campanha (UC08), e vê a fila de aprovação sem os botões de decidir (RN06). Dentro da tela, o botão de calcular,
 o de editar o catálogo e os de aprovar, editar e rejeitar seguem a mesma regra: a API diz a quem pergunta se ele pode, lendo a permissão da própria rota. Esconder o item não é controle de acesso: quem abre o
 endereço direto recebe a recusa da rota.
 
-Três comportamentos que o desenho não mostra, e que valem para todas as telas:
+Os comportamentos que o desenho não mostra, e que valem para todas as telas:
 
 - **Sessão encerrada leva ao login, e o login devolve ao lugar de antes.** Quem abre um link direto sem
   estar autenticado entra e cai na tela que pediu, e não no painel genérico.
@@ -350,3 +360,9 @@ Três comportamentos que o desenho não mostra, e que valem para todas as telas:
   tracejado, com marcador vazado e legenda — cor diferente sozinha não bastaria (H44).
 - **Toda tela vazia oferece a saída.** Base sem dados leva à importação; parceiro ou usuário inexistente
   leva de volta à lista — nunca uma tela em branco sem explicação (seção 6).
+- **Endereço que não existe diz que não existe** (H79). A página "não encontrada" mostra o endereço pedido,
+  mantém o menu e oferece a volta ao início. Antes, ele era redirecionado ao painel sem aviso, e o endereço
+  sumia da barra.
+- **Cada aba diz onde está** (H79). O título vai do mais específico ao mais geral — "Ponto Azul 2 · Parceiros
+  · GIH" —, que é o que aparece com a aba estreita e no histórico do botão voltar. Antes, toda aba dizia
+  "Growth Intelligence Hub".
