@@ -1,0 +1,83 @@
+Navegação — depois da H79
+Gerado por docs/entrega/capturar_sprint06.js em 30/09/2026, 18:47:32, na interface em http://localhost:5173.
+
+/
+  título da aba: Painel · GIH
+  a página parou em: /
+  trilha: (nenhuma)
+  grupos do menu: Análise · Previsão · Otimização · Comunicação
+
+/importacao
+  título da aba: Importação de relatório · GIH
+  a página parou em: /importacao
+  trilha: (nenhuma)
+
+/parceiros
+  título da aba: Parceiros · GIH
+  a página parou em: /parceiros
+  trilha: (nenhuma)
+
+/parceiros/246
+  título da aba: Ponto Azul 2 · Parceiros · GIH
+  a página parou em: /parceiros/246
+  trilha: Parceiros › Ponto Azul 2
+
+/modelo
+  título da aba: Modelo preditivo · GIH
+  a página parou em: /modelo
+  trilha: (nenhuma)
+
+/campanha
+  título da aba: Campanha · GIH
+  a página parou em: /campanha
+  trilha: (nenhuma)
+
+/execucoes
+  título da aba: Execuções do otimizador · GIH
+  a página parou em: /execucoes
+  trilha: (nenhuma)
+
+/execucoes/107
+  título da aba: Execução de 30/09/2026 às 18:47 · Execuções do otimizador · GIH
+  a página parou em: /execucoes/107
+  trilha: Execuções › 30/09/2026 às 18:47
+
+/execucoes/comparar?a=107&b=108
+  título da aba: Comparação · Execuções do otimizador · GIH
+  a página parou em: /execucoes/comparar?a=107&b=108
+  trilha: Execuções › Comparação
+
+/benchmark
+  título da aba: Benchmark · GIH
+  a página parou em: /benchmark
+  trilha: (nenhuma)
+
+/mensagens
+  título da aba: Mensagens · GIH
+  a página parou em: /mensagens
+  trilha: (nenhuma)
+
+/aprovacao
+  título da aba: Aprovação · GIH
+  a página parou em: /aprovacao
+  trilha: (nenhuma)
+
+/pagina-que-nao-existe
+  título da aba: Página não encontrada · GIH
+  a página parou em: /pagina-que-nao-existe
+  trilha: (nenhuma)
+
+/usuarios
+  título da aba: Usuários · GIH
+  a página parou em: /usuarios
+  trilha: (nenhuma)
+
+/usuarios/132
+  título da aba: Gestora da Captura · Usuários · GIH
+  a página parou em: /usuarios/132
+  trilha: Usuários › Gestora da Captura
+
+/configuracao
+  título da aba: Configuração · GIH
+  a página parou em: /configuracao
+  trilha: (nenhuma)

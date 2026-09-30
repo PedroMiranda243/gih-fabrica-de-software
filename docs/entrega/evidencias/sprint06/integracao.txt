@@ -1,0 +1,44 @@
+Integração entre os módulos — um caminho de cliques, do painel ao plano e de volta
+Gerado por docs/entrega/capturar_sprint06.js em 30/09/2026, 18:47:10,
+na interface em http://localhost:5173.
+O último plano: execução #106, 23 ações, modelo rede-1.
+
+1. O painel (módulo de análise)
+   endereço: /
+   título da aba: Painel · GIH
+   trilha: (nenhuma)
+   a página mostra: Em risco 104 8 a mais em relação ao período anterior Ver quem está em
+     risco
+
+2. Clicou em "Ver quem está em risco" e ordenou pelo risco de queda (análise + previsão)
+   endereço: /parceiros?segmento=EM_RISCO&ordenar_por=risco&descendente=true
+   título da aba: Parceiros · GIH
+   trilha: (nenhuma)
+   a página mostra: Ponto Dourado Restaurante Em risco Ativo Ativo R$ 849,67 17 R$ 49,98
+     -12,67% 65%
+
+3. Clicou em Ponto Central 3 (previsão + campanha, no cadastro)
+   endereço: /parceiros/310
+   título da aba: Ponto Central 3 · Parceiros · GIH
+   trilha: Parceiros › Ponto Central 3
+   a página mostra: Na campanha plano de 30/09/2026 às 18:47 Ação Visita de relacionamento
+     Custo R$ 90,00 Ganho esperado R$ 1.980,44 Aplicação 05/10/2026 a 11/10/2026 O ganho
+     esperado é estimativa, pela previsão rede-1 (RN10). Abrir o plano
+
+4. Clicou em "Abrir o plano" (módulo de campanha)
+   endereço: /execucoes/106
+   título da aba: Execução de 30/09/2026 às 18:47 · Execuções do otimizador · GIH
+   trilha: Execuções › 30/09/2026 às 18:47
+   a página mostra: Plano recomendado ESTIMATIVA 23 ações · R$ 5.000,00 de R$ 5.000,00 · ganho
+     esperado R$ 114.527,81
+
+5. Clicou em Ponto Central 3, no plano — a trilha volta para a execução
+   endereço: /parceiros/310
+   título da aba: Ponto Central 3 · Parceiros · GIH
+   trilha: Execução › Ponto Central 3
+   a página mostra: Na campanha plano de 30/09/2026 às 18:47 Ação Visita de relacionamento
+     Custo R$ 90,00 Ganho esperado R$ 1.980,44 Aplicação 05/10/2026 a 11/10/2026 O ganho
+     esperado é estimativa, pela previsão rede-1 (RN10). Abrir o plano
+
+Conferência: o cadastro de Ponto Central 3 mostra a ação que o plano #106 gravou para ele —
+  Visita de relacionamento, R$ 90,00: sim

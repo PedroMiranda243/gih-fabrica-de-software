@@ -1,0 +1,144 @@
+Registro de testes — as quatro suítes, rodadas de verdade
+Gerado em 30/09/2026 19:00 por scripts/registrar_testes.py, no commit 1af1a11
+O otimizador rodou na imagem do núcleo, compilado com CUDA. GPU: NVIDIA GeForce RTX 4060 (capacidade 8.9, 8187 MB)
+
+Suítes
+  API (pytest, Postgres)        1213 testes  1208 passaram   0 falharam   5 pulados   381 s
+  Modelo preditivo (pytest)       31 testes    31 passaram   0 falharam   0 pulados     5 s
+  Otimizador (pytest, com GPU)   277 testes   277 passaram   0 falharam   0 pulados   104 s
+  Interface (Vitest)             248 testes   248 passaram   0 falharam   0 pulados    15 s
+
+Os quatro tipos que o enunciado pede — exemplos, com o resultado desta execução
+
+  Fluxos principais
+    ok    o plano respeita as restrições e é o ótimo da instância (UC08, RF30)
+          api · test_campanha.py · test_o_plano_respeita_as_restricoes_e_e_o_otimo
+    ok    a busca acerta onde a escolha gulosa erra
+          otimizador · test_otimizador.py · test_o_guloso_erra_onde_o_genetico_acerta
+    ok    a busca na GPU dá o mesmo plano do Python, numa instância grande (H54)
+          otimizador · test_gpu.py · test_a_busca_na_gpu_e_a_do_python_numa_instancia_grande
+    ok    a lista de parceiros traz o risco da versão em uso, e de onde ele vem (H80)
+          api · test_parceiros_risco.py · test_a_lista_traz_o_risco_da_versao_em_uso_e_diz_de_onde_ele_vem
+    ok    o cadastro do parceiro mostra a ação do último plano (H81)
+          api · test_parceiros_campanha.py · test_o_parceiro_no_plano_ve_a_acao_o_custo_e_o_ganho_esperado
+    ok    a tela calcula, acompanha e mostra o plano
+          interface · Campanha.test.jsx · calcular manda frações e reais no formato da API, acompanha e mostra o plano
+    ok    o menu agrupado por módulo, na ordem do fluxo (H79)
+          interface · Casca.test.jsx · os grupos seguem o fluxo do produto, e cada um é uma região com o nome dele
+
+  Operações com o banco
+    ok    a execução fica gravada e auditada, com parâmetros, modo e tempo
+          api · test_campanha.py · test_a_execucao_fica_na_auditoria_com_parametros_modo_e_tempo
+    ok    o histórico de execuções, da mais recente à mais antiga (RF34)
+          api · test_campanha.py · test_o_historico_lista_da_mais_recente_para_a_mais_antiga
+    ok    dois planos gravados, lado a lado, com o que mudou (RF35)
+          api · test_campanha.py · test_dois_planos_lado_a_lado_com_o_que_mudou
+    ok    o cadastro lê o plano mais recente gravado
+          api · test_parceiros_campanha.py · test_vale_o_plano_mais_recente
+    ok    o risco na lista não faz uma consulta por parceiro
+          api · test_parceiros_risco.py · test_o_risco_nao_custa_uma_consulta_por_linha
+
+  Validações
+    ok    campanha inviável diz a restrição e quanto falta (RN07)
+          api · test_campanha.py · test_campanha_inviavel_diz_quanto_falta
+    ok    mínimos que o orçamento não paga são inviáveis antes da busca (RF31)
+          otimizador · test_viabilidade.py · test_minimos_que_o_orcamento_nao_paga_nem_com_a_acao_mais_barata
+    ok    cota para uma categoria que não existe é recusada
+          api · test_campanha.py · test_cota_de_categoria_que_nao_existe
+    ok    orçamento zero diz o mínimo, na língua de quem usa
+          api · test_erros.py · test_orcamento_zero_na_campanha_diz_o_minimo
+    ok    o erro de cada campo aparece embaixo dele
+          interface · Campanha.test.jsx · os erros de campo da API aparecem embaixo do campo
+
+  Situações de erro
+    ok    falha no cálculo vira FALHOU, com motivo, e libera a trava
+          api · test_campanha.py · test_falha_vira_falhou_com_motivo_e_libera_a_trava
+    ok    uma segunda otimização, com outra rodando, é recusada com 409
+          api · test_campanha.py · test_com_uma_otimizacao_rodando_a_segunda_e_recusada
+    ok    o núcleo que não responde deixa só o serial, e a campanha segue (RNF06)
+          api · test_campanha.py · test_nucleo_que_nao_responde_deixa_so_o_serial
+    ok    o limite de tempo devolve o melhor plano viável, marcado como parcial
+          otimizador · test_otimizador.py · test_o_limite_de_tempo_devolve_o_melhor_viavel_e_marca_parcial
+    ok    endereço que não existe mostra a página não encontrada, com a volta (H79)
+          interface · NaoEncontrada.test.jsx · diz que a página não existe, mostra o endereço pedido e oferece a volta
+
+Por arquivo
+
+  API (pytest, Postgres)
+    test_aprovacao.py                              30
+    test_assistente.py                            156
+    test_auditoria.py                              14
+    test_autenticacao.py                           16
+    test_autorizacao.py                           317
+    test_benchmark.py                              23
+    test_campanha.py                               55
+    test_cli.py                                    27
+    test_configuracao.py                           14
+    test_erros.py                                  16
+    test_guarda_numerica.py                        99
+    test_health.py                                  3
+    test_importacao.py                             39
+    test_leitor_relatorio.py                       27
+    test_limpeza_da_verificacao.py                 15
+    test_mensagens.py                              60
+    test_meu_desempenho.py                         15
+    test_painel.py                                 39
+    test_parceiros.py                              49
+    test_parceiros_campanha.py                      7
+    test_parceiros_recorte.py                      25
+    test_parceiros_risco.py                        11
+    test_previsao.py                               25
+    test_redator.py                                26
+    test_segmentacao.py                            24
+    test_seguranca.py                              26
+    test_senha.py                                  13
+    test_sugestao_categoria.py                     21
+    test_usuarios.py                               21
+
+  Modelo preditivo (pytest)
+    test_baselines.py                               7
+    test_treino.py                                 10
+    test_variaveis.py                              14
+
+  Otimizador (pytest, com GPU)
+    test_aleatorio.py                               5
+    test_cenario.py                                18
+    test_gpu.py                                    72
+    test_nativo.py                                110
+    test_otimizador.py                             48
+    test_problema.py                               15
+    test_viabilidade.py                             9
+
+  Interface (Vitest)
+    App.acessibilidade.test.jsx                     2
+    Aprovacao.test.jsx                             14
+    Assistente.test.jsx                            12
+    Benchmark.test.jsx                              9
+    Campanha.test.jsx                              10
+    Casca.test.jsx                                 15
+    Comparacao.test.jsx                             7
+    ComparacaoReferencias.test.jsx                  2
+    Configuracao.test.jsx                           5
+    Execucoes.test.jsx                              6
+    Importacao.test.jsx                             5
+    Login.test.jsx                                  3
+    Mensagens.test.jsx                             14
+    MeuDesempenho.test.jsx                          5
+    Modelo.test.jsx                                 8
+    NaoEncontrada.test.jsx                          4
+    Painel.test.jsx                                16
+    Parceiro.test.jsx                              19
+    Parceiros.test.jsx                             18
+    PlanoDeCampanha.test.jsx                        3
+    SerieHistorica.test.jsx                         5
+    Usuario.test.jsx                                7
+    Usuarios.test.jsx                               4
+    acessibilidade.test.jsx                         2
+    contraste.test.js                               9
+    escalaLog.test.js                               7
+    escalaSerie.test.js                            19
+    formato.test.js                                10
+    seguranca.test.jsx                              7
+    tokens.test.js                                  1
+
+Resultado: 1769 testes, 1764 passaram, 0 falharam, 5 pulados.
