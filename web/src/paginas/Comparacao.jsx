@@ -21,6 +21,7 @@ import { api } from "../api/cliente";
 import { Esqueleto } from "../componentes/Carregando";
 import EstadoVazio from "../componentes/EstadoVazio";
 import Segmento from "../componentes/Segmento";
+import { useTituloDaAba } from "../componentes/tituloDaAba";
 import {
   comoDataHora,
   comoDinheiro,
@@ -72,6 +73,7 @@ export default function Comparacao() {
       vivo = false;
     };
   }, [a, b, chave]);
+  useTituloDaAba("Comparação");
 
   const atual = estado.chave === chave;
   const comparacao = atual ? estado.dados : null;

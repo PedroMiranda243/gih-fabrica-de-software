@@ -23,6 +23,7 @@ import Login from "./paginas/Login";
 import Mensagens from "./paginas/Mensagens";
 import MeuDesempenho from "./paginas/MeuDesempenho";
 import Modelo from "./paginas/Modelo";
+import NaoEncontrada from "./paginas/NaoEncontrada";
 import Painel from "./paginas/Painel";
 import Parceiro from "./paginas/Parceiro";
 import Parceiros from "./paginas/Parceiros";
@@ -211,7 +212,19 @@ export default function App() {
         <Route path="/meu-desempenho" element={<MeuDesempenho />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Endereço que não existe mostra a página que diz isso, dentro da casca
+          e com o menu (H79). Antes ia para o painel sem aviso, e o endereço
+          pedido sumia da barra. Sem sessão, o portão leva ao login e, depois
+          de entrar, de volta aqui. */}
+      <Route
+        element={
+          <Protegido>
+            <Casca titulo="Página não encontrada" />
+          </Protegido>
+        }
+      >
+        <Route path="*" element={<NaoEncontrada />} />
+      </Route>
     </Routes>
   );
 }

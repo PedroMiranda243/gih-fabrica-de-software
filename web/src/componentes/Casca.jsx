@@ -1,21 +1,28 @@
 /**
  * Casca da aplicação: trilho lateral, cabeçalho e o conteúdo da rota.
  *
- * O trilho lista **apenas o que existe**. A aprovação está no protótipo e não
- * entra aqui: as mensagens são a Sprint 12, e não há API atrás delas. O modelo
- * preditivo entrou na Sprint 05 da disciplina e a campanha na Sprint 9 interna,
- * cada um com a API junto. Item de menu que leva a uma tela vazia é pior que
- * item ausente — promete e não entrega.
+ * O trilho lista **apenas o que existe**: cada item entrou junto com a API que o
+ * sustenta. Item de menu que leva a uma tela vazia é pior que item ausente —
+ * promete e não entrega.
+ *
+ * **Os itens se agrupam pelos módulos do produto, na ordem do fluxo** (H79): a
+ * análise da rede, a previsão, a otimização da campanha, a comunicação e, por
+ * último e à parte, a administração. Até a Sprint 06 eram doze itens soltos, na
+ * ordem em que foram construídos — o Assistente entre Parceiros e Campanha, o
+ * Modelo depois do Benchmark —, e a pessoa precisava conhecer o sistema para
+ * achar o módulo.
  *
  * Pela mesma razão, **cada perfil vê só o que abre**. A lista vem do servidor
  * (`usuario.telas`), que a lê das permissões das próprias rotas: a interface
  * não decide quem pode o quê (regra 2.4), só desenha o que ouviu. E esconder o
  * item não é controle de acesso — a rota continua recusando (regra 2.5).
  */
+import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
 import { useSessao } from "../api/contextoSessao";
 import { useTema } from "../temas/useTema";
+import { ContextoTituloDaAba, tituloDaAba } from "./tituloDaAba";
 import {
   IconeAprovacao,
   IconeAssistente,
@@ -37,32 +44,62 @@ import {
 /* `exige`: as telas do servidor que sustentam o item — basta uma. A Importação
    aparece para quem importa **ou** só lê o histórico, que é o caso do
    Administrador (RF13). */
-const TELAS = [
-  { para: "/", rotulo: "Painel", Icone: IconePainel, fim: true, exige: ["painel"] },
-  /* O Parceiro tem só esta: o histórico dele, e nada da rede (RF26, H39). */
-  { para: "/meu-desempenho", rotulo: "Meu desempenho", Icone: IconePainel, exige: ["meu_desempenho"] },
+const GRUPOS = [
   {
-    para: "/importacao",
-    rotulo: "Importação",
-    Icone: IconeImportar,
-    exige: ["importar", "historico_importacoes"],
+    chave: "analise",
+    titulo: "Análise",
+    itens: [
+      { para: "/", rotulo: "Painel", Icone: IconePainel, fim: true, exige: ["painel"] },
+      /* O Parceiro tem só esta: o histórico dele, e nada da rede (RF26, H39). */
+      { para: "/meu-desempenho", rotulo: "Meu desempenho", Icone: IconePainel, exige: ["meu_desempenho"] },
+      {
+        para: "/importacao",
+        rotulo: "Importação",
+        Icone: IconeImportar,
+        exige: ["importar", "historico_importacoes"],
+      },
+      { para: "/parceiros", rotulo: "Parceiros", Icone: IconeParceiros, exige: ["parceiros"] },
+      /* Consulta, como o painel e a lista de parceiros: por isso junto deles (UC12). */
+      { para: "/assistente", rotulo: "Assistente", Icone: IconeAssistente, exige: ["assistente"] },
+    ],
   },
-  { para: "/parceiros", rotulo: "Parceiros", Icone: IconeParceiros, exige: ["parceiros"] },
-  /* Consulta, como o painel e a lista de parceiros: por isso junto deles (UC12). */
-  { para: "/assistente", rotulo: "Assistente", Icone: IconeAssistente, exige: ["assistente"] },
-  { para: "/campanha", rotulo: "Campanha", Icone: IconeCampanha, exige: ["campanha"] },
-  /* O histórico (RF34) é também do Administrador, que não tem a Campanha. */
-  { para: "/execucoes", rotulo: "Execuções", Icone: IconeExecucoes, exige: ["execucoes"] },
-  { para: "/mensagens", rotulo: "Mensagens", Icone: IconeMensagens, exige: ["mensagens"] },
-  { para: "/aprovacao", rotulo: "Aprovação", Icone: IconeAprovacao, exige: ["aprovacao"] },
-  { para: "/benchmark", rotulo: "Benchmark", Icone: IconeBenchmark, exige: ["benchmark"] },
-  { para: "/modelo", rotulo: "Modelo", Icone: IconeModelo, exige: ["modelo"] },
-  { para: "/usuarios", rotulo: "Usuários", Icone: IconeUsuarios, exige: ["usuarios"] },
   {
-    para: "/configuracao",
-    rotulo: "Configuração",
-    Icone: IconeConfiguracao,
-    exige: ["configuracao"],
+    chave: "previsao",
+    titulo: "Previsão",
+    itens: [{ para: "/modelo", rotulo: "Modelo", Icone: IconeModelo, exige: ["modelo"] }],
+  },
+  {
+    /* "Otimização", e não "Campanha": o grupo leva o nome do módulo, e o item
+       Campanha dentro de um grupo Campanha diria a mesma coisa duas vezes. */
+    chave: "otimizacao",
+    titulo: "Otimização",
+    itens: [
+      { para: "/campanha", rotulo: "Campanha", Icone: IconeCampanha, exige: ["campanha"] },
+      /* O histórico (RF34) é também do Administrador, que não tem a Campanha. */
+      { para: "/execucoes", rotulo: "Execuções", Icone: IconeExecucoes, exige: ["execucoes"] },
+      { para: "/benchmark", rotulo: "Benchmark", Icone: IconeBenchmark, exige: ["benchmark"] },
+    ],
+  },
+  {
+    chave: "comunicacao",
+    titulo: "Comunicação",
+    itens: [
+      { para: "/mensagens", rotulo: "Mensagens", Icone: IconeMensagens, exige: ["mensagens"] },
+      { para: "/aprovacao", rotulo: "Aprovação", Icone: IconeAprovacao, exige: ["aprovacao"] },
+    ],
+  },
+  {
+    chave: "administracao",
+    titulo: "Administração",
+    itens: [
+      { para: "/usuarios", rotulo: "Usuários", Icone: IconeUsuarios, exige: ["usuarios"] },
+      {
+        para: "/configuracao",
+        rotulo: "Configuração",
+        Icone: IconeConfiguracao,
+        exige: ["configuracao"],
+      },
+    ],
   },
 ];
 
@@ -72,14 +109,25 @@ const TELAS = [
    recarga, a lista chega. */
 const MENU_ANTERIOR = ["painel", "importar", "parceiros"];
 
+/* Grupo sem nenhum item que o perfil abre não aparece: um título sobre nada é
+   ruído, e diria ao Analista que existe uma Administração que ele não vê. */
 function visiveis(usuario) {
   const telas = Array.isArray(usuario?.telas) ? usuario.telas : MENU_ANTERIOR;
-  return TELAS.filter(({ exige }) => exige.some((tela) => telas.includes(tela)));
+  return GRUPOS.map((grupo) => ({
+    ...grupo,
+    itens: grupo.itens.filter(({ exige }) => exige.some((tela) => telas.includes(tela))),
+  })).filter(({ itens }) => itens.length > 0);
 }
 
 export default function Casca({ titulo }) {
   const { usuario, sair } = useSessao();
   const { tema, alternar } = useTema();
+  // O item aberto numa tela de detalhe, que a página sobe por `useTituloDaAba`.
+  const [detalhe, setDetalhe] = useState(null);
+
+  useEffect(() => {
+    document.title = tituloDaAba(titulo, detalhe);
+  }, [titulo, detalhe]);
 
   return (
     <div className="casca">
@@ -90,11 +138,18 @@ export default function Casca({ titulo }) {
         </div>
 
         <div className="trilho__navegacao">
-          {visiveis(usuario).map(({ para, rotulo, Icone, fim }) => (
-            <NavLink key={para} to={para} end={fim} className="trilho__item">
-              <Icone />
-              {rotulo}
-            </NavLink>
+          {visiveis(usuario).map(({ chave, titulo: grupo, itens }) => (
+            <div key={chave} className="trilho__grupo" role="group" aria-labelledby={`grupo-${chave}`}>
+              <span className="trilho__grupo-titulo" id={`grupo-${chave}`}>
+                {grupo}
+              </span>
+              {itens.map(({ para, rotulo, Icone, fim }) => (
+                <NavLink key={para} to={para} end={fim} className="trilho__item">
+                  <Icone />
+                  {rotulo}
+                </NavLink>
+              ))}
+            </div>
           ))}
         </div>
       </nav>
@@ -130,7 +185,9 @@ export default function Casca({ titulo }) {
         </header>
 
         <main className="pagina">
-          <Outlet />
+          <ContextoTituloDaAba.Provider value={setDetalhe}>
+            <Outlet />
+          </ContextoTituloDaAba.Provider>
         </main>
       </div>
     </div>
