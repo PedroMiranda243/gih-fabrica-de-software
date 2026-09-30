@@ -1,16 +1,26 @@
-"""Roda as três suítes de teste e gera o registro de testes de uma entrega.
+"""Roda as quatro suítes de teste e gera o registro de testes de uma entrega.
 
 O enunciado da Sprint 05 pede testes dos fluxos principais, das operações com o
 banco, das validações e das situações de erro, **com os resultados registrados
-no documento**. Este script é o registro: roda as suítes de verdade — API,
-modelo e interface — e escreve o que passou e o que falhou, por suíte e por
-arquivo.
+no documento**; o da Sprint 06, as evidências das funcionalidades. Este script
+é o registro: roda as suítes de verdade — API, modelo, otimizador e interface —
+e escreve o que passou e o que falhou, por suíte e por arquivo.
+
+**O otimizador roda na imagem do núcleo** (`nucleo/Dockerfile`), compilado com
+CUDA e com a placa da máquina (`--gpus all`). Na máquina de desenvolvimento o
+executável é compilado sem CUDA, e os testes da GPU pulariam; na imagem eles
+rodam na placa — é a evidência objetiva da GPU que a Pré-Banca pediu. A imagem
+liga o `GIH_NUCLEO_OBRIGATORIO`: sem o executável, a suíte reprova em vez de
+pular. Numa máquina sem placa NVIDIA, `--sem-gpu`: os testes da GPU pulam, e o
+registro diz isso.
 
 **Os quatro tipos do enunciado vêm com exemplos nomeados**, escolhidos à mão e
 conferidos contra a execução: se um exemplo deixar de existir, o script recusa
-em vez de publicar um teste que não rodou. Classificar os seiscentos testes um a
-um nos quatro tipos seria arbitrário — muitos são mais de um ao mesmo tempo —; os
-exemplos mostram o que cada tipo cobre, e o total diz quanto roda.
+em vez de publicar um teste que não rodou. Classificar os mais de mil testes um
+a um nos quatro tipos seria arbitrário — muitos são mais de um ao mesmo tempo —;
+os exemplos mostram o que cada tipo cobre, e o total diz quanto roda. Os
+exemplos são os da entrega em curso: os de antes ficam no registro congelado
+dela.
 
 A suíte da API precisa do Postgres no ar (o `conftest` cria o banco de teste).
 **Não rode duas vezes ao mesmo tempo**: as duas execuções truncariam as tabelas
@@ -18,7 +28,7 @@ uma da outra.
 
 Uso, da raiz do projeto:
 
-    api/.venv/Scripts/python scripts/registrar_testes.py --saida docs/entrega/evidencias/sprint05
+    api/.venv/Scripts/python scripts/registrar_testes.py --saida docs/entrega/evidencias/sprint06
 """
 from __future__ import annotations
 
@@ -37,62 +47,73 @@ from datetime import datetime
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
+IMAGEM_DO_NUCLEO = "gih-nucleo"
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 # Os exemplos de cada tipo que o enunciado nomeia: (suíte, arquivo, teste, o que prova).
+# Os da Sprint 06: o terceiro módulo — a campanha e o otimizador —, a integração
+# entre os módulos (H80, H81) e a navegação (H79).
 EXEMPLOS: dict[str, list[tuple[str, str, str, str]]] = {
     "Fluxos principais": [
-        ("api", "test_previsao.py", "test_treinar_registra_data_volume_e_metricas",
-         "o treino pela tela grava data, volume e métricas (RF27, UC07)"),
-        ("api", "test_previsao.py", "test_previsao_no_cadastro_e_estimativa_com_base_e_versao",
-         "a previsão chega ao cadastro do parceiro com base e versão (RF28)"),
-        ("modelo", "test_treino.py", "test_na_rede_sintetica_a_rede_supera_as_referencias",
-         "a rede supera as referências nas duas saídas (H42, H43)"),
-        ("api", "test_importacao.py", "test_importa_e_grava_as_metricas",
-         "a importação grava as métricas do período (módulo da Sprint 04)"),
-        ("interface", "Modelo.test.jsx",
-         "treinar pede confirmação, acompanha o andamento e anuncia o resultado",
-         "a tela dispara o treino, acompanha e anuncia o resultado"),
+        ("api", "test_campanha.py", "test_o_plano_respeita_as_restricoes_e_e_o_otimo",
+         "o plano respeita as restrições e é o ótimo da instância (UC08, RF30)"),
+        ("otimizador", "test_otimizador.py", "test_o_guloso_erra_onde_o_genetico_acerta",
+         "a busca acerta onde a escolha gulosa erra"),
+        ("otimizador", "test_gpu.py", "test_a_busca_na_gpu_e_a_do_python_numa_instancia_grande",
+         "a busca na GPU dá o mesmo plano do Python, numa instância grande (H54)"),
+        ("api", "test_parceiros_risco.py",
+         "test_a_lista_traz_o_risco_da_versao_em_uso_e_diz_de_onde_ele_vem",
+         "a lista de parceiros traz o risco da versão em uso, e de onde ele vem (H80)"),
+        ("api", "test_parceiros_campanha.py",
+         "test_o_parceiro_no_plano_ve_a_acao_o_custo_e_o_ganho_esperado",
+         "o cadastro do parceiro mostra a ação do último plano (H81)"),
+        ("interface", "Campanha.test.jsx",
+         "calcular manda frações e reais no formato da API, acompanha e mostra o plano",
+         "a tela calcula, acompanha e mostra o plano"),
+        ("interface", "Casca.test.jsx",
+         "os grupos seguem o fluxo do produto, e cada um é uma região com o nome dele",
+         "o menu agrupado por módulo, na ordem do fluxo (H79)"),
     ],
     "Operações com o banco": [
-        ("api", "test_previsao.py", "test_os_pesos_gravados_refazem_as_previsoes",
-         "os pesos gravados no banco refazem as previsões gravadas"),
-        ("api", "test_previsao.py", "test_versao_que_nao_supera_nao_entra_e_as_versoes_coexistem",
-         "versões coexistem no banco sobre o mesmo período (UC07-A2)"),
-        ("api", "test_previsao.py", "test_o_banco_nao_aceita_dois_treinos_em_andamento",
-         "o índice único parcial recusa dois treinos em andamento"),
-        ("api", "test_previsao.py", "test_ler_o_historico_nao_faz_uma_consulta_por_parceiro[60]",
-         "ler o histórico não faz uma consulta por parceiro"),
-        ("api", "test_importacao.py", "test_substituir_troca_as_metricas_sem_duplicar",
-         "substituir um período troca as métricas sem duplicar"),
+        ("api", "test_campanha.py", "test_a_execucao_fica_na_auditoria_com_parametros_modo_e_tempo",
+         "a execução fica gravada e auditada, com parâmetros, modo e tempo"),
+        ("api", "test_campanha.py", "test_o_historico_lista_da_mais_recente_para_a_mais_antiga",
+         "o histórico de execuções, da mais recente à mais antiga (RF34)"),
+        ("api", "test_campanha.py", "test_dois_planos_lado_a_lado_com_o_que_mudou",
+         "dois planos gravados, lado a lado, com o que mudou (RF35)"),
+        ("api", "test_parceiros_campanha.py", "test_vale_o_plano_mais_recente",
+         "o cadastro lê o plano mais recente gravado"),
+        ("api", "test_parceiros_risco.py", "test_o_risco_nao_custa_uma_consulta_por_linha",
+         "o risco na lista não faz uma consulta por parceiro"),
     ],
     "Validações": [
-        ("api", "test_previsao.py", "test_historico_curto_recusa_dizendo_quantos_faltam",
-         "histórico curto é recusado dizendo quantos períodos faltam (UC07-E1, RN09)"),
-        ("api", "test_previsao.py", "test_o_rotulo_de_risco_e_o_segmento_em_risco",
-         "o rótulo de risco é o segmento Em Risco, ponto a ponto (RN09)"),
-        ("modelo", "test_variaveis.py", "test_nenhuma_amostra_anterior_enxerga_o_periodo_seguinte[teste]",
-         "nenhuma amostra de treino enxerga o período de teste (H41)"),
-        ("api", "test_importacao.py", "test_sem_periodo_a_importacao_e_recusada",
-         "importação sem período é recusada (RN03)"),
-        ("api", "test_erros.py", "test_tipo_ainda_sem_traducao_nao_vaza_a_frase_em_ingles",
-         "erro de validação sem tradução não vaza a frase em inglês"),
+        ("api", "test_campanha.py", "test_campanha_inviavel_diz_quanto_falta",
+         "campanha inviável diz a restrição e quanto falta (RN07)"),
+        ("otimizador", "test_viabilidade.py",
+         "test_minimos_que_o_orcamento_nao_paga_nem_com_a_acao_mais_barata",
+         "mínimos que o orçamento não paga são inviáveis antes da busca (RF31)"),
+        ("api", "test_campanha.py", "test_cota_de_categoria_que_nao_existe",
+         "cota para uma categoria que não existe é recusada"),
+        ("api", "test_erros.py", "test_orcamento_zero_na_campanha_diz_o_minimo",
+         "orçamento zero diz o mínimo, na língua de quem usa"),
+        ("interface", "Campanha.test.jsx", "os erros de campo da API aparecem embaixo do campo",
+         "o erro de cada campo aparece embaixo dele"),
     ],
     "Situações de erro": [
-        ("api", "test_previsao.py", "test_falha_no_treino_vira_falhou_com_motivo_e_libera_a_trava",
-         "falha no treino vira FALHOU, com motivo, e libera a trava"),
-        ("api", "test_previsao.py", "test_a_subida_da_api_libera_o_treino_interrompido",
-         "a API que reinicia no meio do treino o marca como falho na subida"),
-        ("api", "test_previsao.py", "test_com_um_treino_rodando_o_segundo_e_recusado",
-         "um segundo treino, com outro rodando, é recusado com 409"),
-        ("modelo", "test_treino.py", "test_pesos_sao_lidos_sem_executar_codigo",
-         "pesos adulterados não executam código ao serem lidos"),
-        ("api", "test_erros.py", "test_falha_inesperada_responde_generico_com_correlacao",
-         "falha inesperada responde genérico, com identificador de correlação"),
-        ("interface", "Modelo.test.jsx", "a recusa do servidor aparece com a ajuda",
-         "a recusa da API aparece na tela com a ajuda"),
+        ("api", "test_campanha.py", "test_falha_vira_falhou_com_motivo_e_libera_a_trava",
+         "falha no cálculo vira FALHOU, com motivo, e libera a trava"),
+        ("api", "test_campanha.py", "test_com_uma_otimizacao_rodando_a_segunda_e_recusada",
+         "uma segunda otimização, com outra rodando, é recusada com 409"),
+        ("api", "test_campanha.py", "test_nucleo_que_nao_responde_deixa_so_o_serial",
+         "o núcleo que não responde deixa só o serial, e a campanha segue (RNF06)"),
+        ("otimizador", "test_otimizador.py",
+         "test_o_limite_de_tempo_devolve_o_melhor_viavel_e_marca_parcial",
+         "o limite de tempo devolve o melhor plano viável, marcado como parcial"),
+        ("interface", "NaoEncontrada.test.jsx",
+         "diz que a página não existe, mostra o endereço pedido e oferece a volta",
+         "endereço que não existe mostra a página não encontrada, com a volta (H79)"),
     ],
 }
 
@@ -121,17 +142,9 @@ def _python_da_api() -> str:
     return sys.executable
 
 
-def _pytest(nome: str, rotulo: str, pasta: Path, temporaria: Path) -> Suite:
-    relatorio = temporaria / f"{nome}.xml"
-    inicio = time.perf_counter()
-    subprocess.run(
-        [_python_da_api(), "-m", "pytest", "-q", "-p", "no:cacheprovider",
-         f"--junitxml={relatorio}"],
-        cwd=pasta, capture_output=True, text=True, encoding="utf-8", errors="replace",
-    )
-    suite = Suite(nome, rotulo, segundos=time.perf_counter() - inicio)
+def _junit(suite: Suite, relatorio: Path) -> Suite:
     if not relatorio.exists():
-        raise SystemExit(f"A suíte {rotulo} não produziu relatório — ela nem chegou a rodar.")
+        raise SystemExit(f"A suíte {suite.rotulo} não produziu relatório — ela nem chegou a rodar.")
     for caso in ET.parse(relatorio).getroot().iter("testcase"):
         arquivo = caso.get("classname", "").split(".")[-1] + ".py"
         if caso.find("failure") is not None or caso.find("error") is not None:
@@ -142,6 +155,48 @@ def _pytest(nome: str, rotulo: str, pasta: Path, temporaria: Path) -> Suite:
             situacao = "passou"
         suite.resultados[(arquivo, caso.get("name"))] = situacao
     return suite
+
+
+def _pytest(nome: str, rotulo: str, pasta: Path, temporaria: Path) -> Suite:
+    relatorio = temporaria / f"{nome}.xml"
+    inicio = time.perf_counter()
+    subprocess.run(
+        [_python_da_api(), "-m", "pytest", "-q", "-p", "no:cacheprovider",
+         f"--junitxml={relatorio}"],
+        cwd=pasta, capture_output=True, text=True, encoding="utf-8", errors="replace",
+    )
+    return _junit(Suite(nome, rotulo, segundos=time.perf_counter() - inicio), relatorio)
+
+
+def _otimizador(temporaria: Path, gpu: bool) -> tuple[Suite, str]:
+    """A suíte do núcleo na imagem dele, e a linha em que o executável diz a GPU."""
+    construcao = subprocess.run(
+        ["docker", "build", "-q", "-t", IMAGEM_DO_NUCLEO, "nucleo"],
+        cwd=RAIZ, capture_output=True, text=True, encoding="utf-8", errors="replace",
+    )
+    if construcao.returncode != 0:
+        raise SystemExit(f"A imagem do núcleo não foi construída:\n{construcao.stderr[-2000:]}")
+    placa = ["--gpus", "all"] if gpu else []
+    versao = subprocess.run(
+        ["docker", "run", "--rm", *placa, IMAGEM_DO_NUCLEO, "gih-nucleo", "versao"],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+    ).stdout
+    gpu_vista = next((linha for linha in versao.splitlines() if linha.startswith("gpu ")), "")
+
+    # O `scripts/` só de leitura, onde o teste do catálogo procura o gerador de
+    # dados: a imagem leva só o `nucleo/`, e sem ele esse teste pularia.
+    inicio = time.perf_counter()
+    subprocess.run(
+        ["docker", "run", "--rm", *placa,
+         "--mount", f"type=bind,source={temporaria},target=/saida",
+         "--mount", f"type=bind,source={RAIZ / 'scripts'},target=/scripts,readonly",
+         IMAGEM_DO_NUCLEO, "python", "-m", "pytest", "-q", "-p", "no:cacheprovider",
+         "--junitxml=/saida/otimizador.xml"],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+    )
+    rotulo = "Otimizador (pytest, com GPU)" if gpu else "Otimizador (pytest, sem GPU)"
+    suite = Suite("otimizador", rotulo, segundos=time.perf_counter() - inicio)
+    return _junit(suite, temporaria / "otimizador.xml"), gpu_vista
 
 
 def _vitest(temporaria: Path) -> Suite:
@@ -165,22 +220,31 @@ def _vitest(temporaria: Path) -> Suite:
     return suite
 
 
-def texto(suites: list[Suite], commit: str) -> str:
+def _placa(gpu_vista: str) -> str:
+    """`gpu 1 8.9 8187 NVIDIA GeForce RTX 4060` → a placa, a capacidade e a memória."""
+    partes = gpu_vista.split(maxsplit=4)
+    if len(partes) < 5 or partes[1] == "0":
+        return "nenhuma placa vista: os testes da GPU pularam"
+    return f"{partes[4]} (capacidade {partes[2]}, {partes[3]} MB)"
+
+
+def texto(suites: list[Suite], commit: str, gpu_vista: str) -> str:
     total = Counter()
     for suite in suites:
         total += suite.contagem()
     linhas = [
-        "Registro de testes — as três suítes, rodadas de verdade",
+        "Registro de testes — as quatro suítes, rodadas de verdade",
         f"Gerado em {datetime.now():%d/%m/%Y %H:%M} por scripts/registrar_testes.py, "
         f"no commit {commit}",
+        f"O otimizador rodou na imagem do núcleo, compilado com CUDA. GPU: {_placa(gpu_vista)}",
         "",
         "Suítes",
     ]
     for suite in suites:
         c = suite.contagem()
         linhas.append(
-            f"  {suite.rotulo:<30} {sum(c.values()):>4} testes  {c['passou']:>4} passaram  "
-            f"{c['falhou']:>3} falharam  {suite.segundos:>6.0f} s"
+            f"  {suite.rotulo:<29} {sum(c.values()):>4} testes {c['passou']:>5} passaram"
+            f" {c['falhou']:>3} falharam {c['pulado']:>3} pulados {suite.segundos:>5.0f} s"
         )
 
     linhas += ["", "Os quatro tipos que o enunciado pede — exemplos, com o resultado desta execução"]
@@ -192,7 +256,7 @@ def texto(suites: list[Suite], commit: str) -> str:
             situacao = indice.get((suite, arquivo, teste))
             if situacao is None:
                 raise SystemExit(f"O exemplo {suite}:{arquivo}::{teste} não existe mais nesta execução.")
-            marca = "ok   " if situacao == "passou" else "FALHA"
+            marca = {"passou": "ok   ", "pulado": "pulou"}.get(situacao, "FALHA")
             linhas.append(f"    {marca} {prova}")
             linhas.append(f"          {suite} · {arquivo} · {teste}")
 
@@ -210,7 +274,7 @@ def texto(suites: list[Suite], commit: str) -> str:
     linhas += [
         "",
         f"Resultado: {sum(total.values())} testes, {total['passou']} passaram, "
-        f"{total['falhou']} falharam.",
+        f"{total['falhou']} falharam, {total['pulado']} pulados.",
     ]
     return "\n".join(linhas) + "\n"
 
@@ -218,6 +282,8 @@ def texto(suites: list[Suite], commit: str) -> str:
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--saida", required=True, help="pasta das evidências da entrega")
+    p.add_argument("--sem-gpu", action="store_true",
+                   help="máquina sem placa NVIDIA: o otimizador roda sem --gpus all")
     a = p.parse_args()
 
     commit = subprocess.run(
@@ -229,10 +295,12 @@ def main() -> None:
         api = _pytest("api", "API (pytest, Postgres)", RAIZ / "api", temporaria)
         print("rodando a suíte do modelo...", flush=True)
         modelo = _pytest("modelo", "Modelo preditivo (pytest)", RAIZ / "modelo", temporaria)
+        print("rodando a suíte do otimizador, na imagem do núcleo...", flush=True)
+        otimizador, gpu_vista = _otimizador(temporaria, gpu=not a.sem_gpu)
         print("rodando a suíte da interface...", flush=True)
         interface = _vitest(temporaria)
 
-    registro = texto([api, modelo, interface], commit)
+    registro = texto([api, modelo, otimizador, interface], commit, gpu_vista)
     destino = RAIZ / a.saida
     destino.mkdir(parents=True, exist_ok=True)
     (destino / "testes.txt").write_text(registro, encoding="utf-8")
