@@ -453,6 +453,12 @@ frente com alguma, a resposta já está aqui.
   um fundo novo? Ponha o par na tabela e deixe o teste medir. Campo novo leva a `--borda-controle`, e não a
   `--border`.
 
+- **Teste da tela com a API simulada não prova o contrato.** A tela da Campanha lia `pode_editar_catalogo`, que a
+  API nunca mandou, e um `pode_executar` que a API calculava sem olhar o perfil. Os testes da tela passavam, porque
+  o `simularApi` mandava os dois campos certos; na tela de verdade, o gestor não editava o catálogo e o analista via
+  "Calcular plano" (#190). Campo que a tela lê precisa de teste **na API**, e é a captura com a API no ar que junta
+  os dois lados.
+
 - **Desconfie do instrumento antes do resultado.** Uma auditoria de contraste lia as cores com regex
   esperando `rgb()`; como as cores eram `oklch()`, o regex lia zeros e acusava falha catastrófica que não
   existia. O mesmo padrão deu falso positivo em testes de XSS feitos com regex sobre HTML. Meça contraste
