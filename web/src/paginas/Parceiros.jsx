@@ -11,7 +11,13 @@
  * são os mesmos.
  *
  * **Nenhum cálculo acontece aqui** (regra 2.4): faturamento, ticket, variação e
- * segmento vêm prontos da API, do período mais recente.
+ * segmento vêm prontos da API, do período mais recente — e o risco de queda, da
+ * versão em uso do modelo (H80).
+ *
+ * **O risco é estimativa, e a tela diz isso.** Ele fica na tinta secundária, como
+ * o ticket, e uma nota acima da tabela diz de que versão e de que período ele
+ * vem, como o cadastro do parceiro já diz junto da previsão (H44). Número
+ * estimado ao lado de número medido, sem marca, seria lido como medição.
  */
 import { useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
@@ -22,9 +28,11 @@ import EstadoVazio from "../componentes/EstadoVazio";
 import { IconeVariacao } from "../componentes/Icones";
 import Segmento from "../componentes/Segmento";
 import {
+  comoData,
   comoDinheiro,
   comoInteiro,
   comoPercentual,
+  comoProbabilidade,
   ROTULO_SEGMENTO,
   ROTULO_STATUS,
   sentidoDa,
@@ -60,6 +68,8 @@ const COLUNAS = [
   { campo: "pedidos", rotulo: "Pedidos", descPrimeiro: true, numerica: true },
   { campo: "ticket_medio", rotulo: "Ticket médio", descPrimeiro: true, numerica: true },
   { campo: "variacao", rotulo: "Variação", descPrimeiro: true, numerica: true },
+  /* O maior risco primeiro: é quem precisa de atenção (H80). */
+  { campo: "risco", rotulo: "Risco de queda", descPrimeiro: true, numerica: true },
 ];
 
 const TAMANHO_PAGINA = 50;
@@ -268,6 +278,8 @@ export default function Parceiros() {
           </div>
         </div>
 
+        {dados?.itens.length > 0 && <OrigemDoRisco risco={dados.risco} />}
+
         {!dados && (
           <div style={{ padding: "var(--esp-16)" }} role="status" aria-label="Carregando parceiros">
             {[0, 1, 2, 3, 4].map((i) => (
@@ -295,7 +307,8 @@ export default function Parceiros() {
             <div className="tabela-rolagem">
               <table className="tabela">
                 <caption className="so-leitor">
-                  Parceiros cadastrados, com o desempenho do período mais recente
+                  Parceiros cadastrados, com o desempenho do período mais recente e o risco
+                  estimado de queda
                 </caption>
                 <thead>
                   <tr>
@@ -355,6 +368,35 @@ export default function Parceiros() {
           </>
         )}
       </section>
+    </>
+  );
+}
+
+/**
+ * De onde vem o risco da coluna: a versão em uso e até quando ela tem dados — ou
+ * por que a coluna está vazia. Sem isso, a pessoa ordenaria a rede por um número
+ * sem saber que é uma estimativa, nem de quando.
+ */
+function OrigemDoRisco({ risco }) {
+  if (!risco) {
+    return (
+      <p className="previsao__nota">
+        O risco de queda aparece depois do primeiro treino do modelo, na tela Modelo.
+      </p>
+    );
+  }
+  return (
+    <>
+      <p className="previsao__nota">
+        <span className="etiqueta-estimativa">Estimativa</span> O risco de queda é a chance de o
+        parceiro fechar o próximo período em risco, pelo modelo {risco.modelo_versao}, com dados
+        até {comoData(risco.periodo_base.data_fim)}.
+      </p>
+      {risco.desatualizada && (
+        <p className="previsao__nota previsao__nota--alerta">
+          Há período importado depois desta estimativa; o próximo treino a refaz.
+        </p>
+      )}
     </>
   );
 }
@@ -424,6 +466,17 @@ function Linha({ parceiro, lista }) {
             {sentido !== "estavel" && <IconeVariacao sentido={sentido} />}
             {comoPercentual(desempenho.variacao_percentual)}
           </span>
+        )}
+      </td>
+      <td className="numerica secundaria">
+        {parceiro.risco_queda === null || parceiro.risco_queda === undefined ? (
+          /* Sem previsão não é risco zero: o travessão, e o porquê para quem não o vê. */
+          <span title="Sem previsão na versão em uso do modelo">
+            {TRACO}
+            <span className="so-leitor"> sem previsão</span>
+          </span>
+        ) : (
+          comoProbabilidade(parceiro.risco_queda)
         )}
       </td>
     </tr>
