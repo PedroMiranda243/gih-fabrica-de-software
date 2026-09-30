@@ -1088,8 +1088,13 @@ class EstadoCampanha(BaseModel):
     acoes: list[AcaoComercialResposta]
     em_andamento: ExecucaoResposta | None
     ultima: ExecucaoResposta | None
-    pode_executar: bool
+    pode_executar: bool = Field(
+        description="Se quem pergunta pode calcular agora: só o gestor, e só sem bloqueio."
+    )
     motivo_bloqueio: str | None
+    pode_editar_catalogo: bool = Field(
+        description="Se quem pergunta edita o catálogo: só o gestor (UC08)."
+    )
     modos: list[ModoCampanha] = Field(
         description="Na ordem da preferência do automático: GPU, CPU paralelo e serial."
     )
