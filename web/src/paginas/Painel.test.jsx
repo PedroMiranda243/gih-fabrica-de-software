@@ -263,3 +263,46 @@ describe("Painel", () => {
     expect(screen.getByText("Escolha outro período.")).toBeVisible();
   });
 });
+
+describe("do painel para os outros módulos (H81)", () => {
+  it("o nome no ranking leva ao cadastro do parceiro", async () => {
+    simularApi(respostas());
+    renderizar();
+
+    const link = await screen.findByRole("link", { name: "Comércio Alfa" });
+    expect(link).toHaveAttribute("href", "/parceiros/1");
+  });
+
+  it("cada segmento da distribuição leva à lista filtrada por ele", async () => {
+    simularApi(respostas());
+    renderizar();
+
+    const distribuicao = await screen.findByRole("region", { name: "Distribuição por segmento" });
+    expect(within(distribuicao).getByRole("link", { name: /Em risco/ })).toHaveAttribute(
+      "href",
+      "/parceiros?segmento=EM_RISCO",
+    );
+    expect(within(distribuicao).getByRole("link", { name: /Top 15/ })).toHaveAttribute(
+      "href",
+      "/parceiros?segmento=TOP",
+    );
+  });
+
+  it("o indicador de em risco leva a quem está em risco", async () => {
+    simularApi(respostas({
+      "GET /api/painel/indicadores": { corpo: indicadores({ em_risco: { total: 37, delta: 6 } }) },
+    }));
+    renderizar();
+
+    const link = await screen.findByRole("link", { name: "Ver quem está em risco" });
+    expect(link).toHaveAttribute("href", "/parceiros?segmento=EM_RISCO");
+  });
+
+  it("sem segmentação calculada, o indicador não oferece um link para lista vazia", async () => {
+    simularApi(respostas());
+    renderizar();
+    await screen.findByText("Comércio Alfa");
+
+    expect(screen.queryByRole("link", { name: "Ver quem está em risco" })).toBeNull();
+  });
+});

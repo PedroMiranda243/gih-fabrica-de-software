@@ -81,7 +81,7 @@ export default function Execucao() {
               </p>
             </div>
           ) : (
-            <PlanoDeCampanha execucao={execucao} />
+            <PlanoDeCampanha execucao={execucao} origem="Execução" />
           )}
         </>
       )}

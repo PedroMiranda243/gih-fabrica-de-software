@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { comoInteiro, ROTULO_SEGMENTO } from "../formato";
 
 import EstadoVazio from "./EstadoVazio";
@@ -19,6 +21,11 @@ import EstadoVazio from "./EstadoVazio";
  *
  * A cor é a do segmento, a mesma da tabela e do indicador. Como o número
  * aparece em texto ao lado, nada aqui depende só de cor (RNF22).
+ *
+ * **Cada segmento leva à lista filtrada por ele** (H81): o painel responde
+ * "quantos", e a lista, "quem". O painel mostra sempre o período mais recente,
+ * que é o mesmo de onde a lista tira o segmento — por isso o número daqui é o
+ * total que a lista encontra.
  */
 export default function DistribuicaoSegmentos({ itens, total }) {
   if (!itens.length) {
@@ -39,9 +46,13 @@ export default function DistribuicaoSegmentos({ itens, total }) {
     <ul className="distribuicao">
       {itens.map((item) => (
         <li className="distribuicao__linha" key={item.segmento}>
-          <span className="distribuicao__rotulo">
+          <Link
+            className="distribuicao__rotulo distribuicao__link"
+            to={`/parceiros?segmento=${item.segmento}`}
+          >
             {ROTULO_SEGMENTO[item.segmento] ?? item.segmento}
-          </span>
+            <span className="so-leitor">: ver os parceiros na lista</span>
+          </Link>
           <span className="distribuicao__trilho">
             <span
               className={`distribuicao__barra distribuicao__barra--${item.segmento.toLowerCase()}`}

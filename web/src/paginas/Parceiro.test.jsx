@@ -376,3 +376,102 @@ describe("Parceiro — previsão do próximo período (RF28, H44)", () => {
   });
 });
 
+const PLANO = {
+  execucao_id: 12,
+  concluida_em: "2026-09-30T08:21:00Z",
+  aplicacao_inicio: "2026-10-05",
+  aplicacao_fim: "2026-10-11",
+  modelo_versao: "rede-1",
+};
+
+describe("Parceiro — na campanha (H81)", () => {
+  it("no último plano, mostra a ação, o custo e o ganho esperado, e leva ao plano", async () => {
+    simularApi(
+      rotasDoCadastro({
+        "GET /api/parceiros/7/campanha": {
+          corpo: {
+            plano: PLANO,
+            no_plano: true,
+            acao: "Visita de relacionamento",
+            custo: "90.00",
+            uplift_esperado: "123.45",
+          },
+        },
+      }),
+    );
+    renderizar("/parceiros/7");
+
+    const secao = await screen.findByRole("region", { name: "Na campanha" });
+    expect(within(secao).getByText("Visita de relacionamento")).toBeInTheDocument();
+    expect(within(secao).getByText("R$ 90,00")).toBeInTheDocument();
+    expect(within(secao).getByText("R$ 123,45")).toBeInTheDocument();
+    expect(within(secao).getByText(/estimativa, pela previsão rede-1/)).toBeInTheDocument();
+    expect(within(secao).getByRole("link", { name: "Abrir o plano" })).toHaveAttribute(
+      "href",
+      "/execucoes/12",
+    );
+  });
+
+  it("fora do último plano, diz isso — e o plano continua a um clique", async () => {
+    simularApi(
+      rotasDoCadastro({
+        "GET /api/parceiros/7/campanha": {
+          corpo: { plano: PLANO, no_plano: false, acao: null, custo: null, uplift_esperado: null },
+        },
+      }),
+    );
+    renderizar("/parceiros/7");
+
+    const secao = await screen.findByRole("region", { name: "Na campanha" });
+    expect(within(secao).getByText(/Não entrou no último plano/)).toBeInTheDocument();
+    expect(within(secao).getByRole("link", { name: "Abrir o plano" })).toHaveAttribute(
+      "href",
+      "/execucoes/12",
+    );
+  });
+
+  it("sem plano calculado, leva à Campanha", async () => {
+    simularApi(
+      rotasDoCadastro({
+        "GET /api/parceiros/7/campanha": {
+          corpo: { plano: null, no_plano: false, acao: null, custo: null, uplift_esperado: null },
+        },
+      }),
+    );
+    renderizar("/parceiros/7");
+
+    const secao = await screen.findByRole("region", { name: "Na campanha" });
+    expect(within(secao).getByText("Nenhum plano de campanha calculado ainda")).toBeInTheDocument();
+    expect(within(secao).getByRole("link", { name: "Ir para a Campanha" })).toHaveAttribute(
+      "href",
+      "/campanha",
+    );
+  });
+});
+
+describe("Parceiro — de onde a pessoa veio (H81)", () => {
+  it("vindo do painel, a trilha e o voltar levam de volta ao painel", async () => {
+    simularApi(rotasDoCadastro());
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: "/parceiros/7",
+            state: { lista: "/", rotuloLista: "Painel", voltarPara: "Voltar para o painel" },
+          },
+        ]}
+      >
+        <Routes>
+          <Route path="/" element={<Lista />} />
+          <Route path="/parceiros/:id" element={<Parceiro />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const trilha = await screen.findByRole("navigation", { name: "Você está em" });
+    expect(within(trilha).getByRole("link", { name: "Painel" })).toHaveAttribute("href", "/");
+    await userEvent.click(screen.getByRole("link", { name: "Voltar para o painel" }));
+
+    expect(await screen.findByText("lista:/")).toBeVisible();
+  });
+});

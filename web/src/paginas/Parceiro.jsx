@@ -37,6 +37,7 @@ import SerieHistorica from "../componentes/SerieHistorica";
 import { useTituloDaAba } from "../componentes/tituloDaAba";
 import {
   comoData,
+  comoDataHora,
   comoDinheiro,
   comoInteiro,
   comoPercentual,
@@ -81,14 +82,20 @@ function Cadastro({ id }) {
   const lugar = useLocation();
 
   /* A lista vem com o filtro na URL. Guardar de onde a pessoa veio é o que faz
-     "Voltar" devolver o mesmo recorte, e não a base inteira. */
+     "Voltar" devolver o mesmo recorte, e não a base inteira. Quem chega de outro
+     módulo — o ranking do painel, um plano de campanha (H81) — manda também o
+     nome do lugar, e a trilha volta para lá com o nome certo. */
   const lista = lugar.state?.lista ?? "/parceiros";
+  const rotuloLista = lugar.state?.rotuloLista ?? "Parceiros";
+  const voltarPara = lugar.state?.voltarPara ?? "Voltar para a lista";
+  const origem = { lista, rotuloLista, voltarPara };
 
   const [parceiro, setParceiro] = useState(null);
   const [form, setForm] = useState(VAZIO);
   const [categorias, setCategorias] = useState([]);
   const [serie, setSerie] = useState(null);
   const [previsao, setPrevisao] = useState(null);
+  const [campanha, setCampanha] = useState(null);
   const [situacao, setSituacao] = useState(novo ? "pronto" : "carregando");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState(null);
@@ -125,13 +132,16 @@ function Cadastro({ id }) {
       api.get("/api/painel/series", { parceiro_id: id }).catch(() => null),
       /* A previsão também: é complemento do cadastro, pelo mesmo motivo. */
       api.get(`/api/parceiros/${id}/previsao`).catch(() => null),
+      /* E o parceiro no último plano (H81), idem. */
+      api.get(`/api/parceiros/${id}/campanha`).catch(() => null),
     ])
-      .then(([dados, historico, previsto]) => {
+      .then(([dados, historico, previsto, noPlano]) => {
         if (!vivo) return;
         setParceiro(dados);
         setForm(paraFormulario(dados));
         setSerie(historico);
         setPrevisao(previsto);
+        setCampanha(noPlano);
         setSituacao("pronto");
       })
       .catch((e) => {
@@ -169,7 +179,7 @@ function Cadastro({ id }) {
         const criado = await api.post("/api/parceiros", corpo);
         /* `replace`: voltar de um cadastro recém-criado não pode cair no
            formulário vazio de novo, que convidaria a criar o mesmo duas vezes. */
-        navegar(`/parceiros/${criado.id}`, { replace: true, state: { lista, criado: true } });
+        navegar(`/parceiros/${criado.id}`, { replace: true, state: { ...origem, criado: true } });
         return;
       }
       const salvo = await api.patch(`/api/parceiros/${id}`, corpo);
@@ -287,7 +297,7 @@ function Cadastro({ id }) {
   return (
     <>
       <nav className="trilha" aria-label="Você está em">
-        <Link to={lista}>Parceiros</Link>
+        <Link to={lista}>{rotuloLista}</Link>
         <span aria-hidden="true">›</span>
         <span aria-current="page">{novo ? "Novo parceiro" : parceiro.nome}</span>
       </nav>
@@ -315,7 +325,7 @@ function Cadastro({ id }) {
 
           {existente && (
             <p className="aviso__acao">
-              <Link to={`/parceiros/${existente.id}`} state={{ lista }}>
+              <Link to={`/parceiros/${existente.id}`} state={origem}>
                 Abrir o cadastro de {existente.nome}
               </Link>
             </p>
@@ -399,7 +409,7 @@ function Cadastro({ id }) {
                 {enviando ? "Salvando…" : novo ? "Cadastrar parceiro" : "Salvar alterações"}
               </button>
               <Link className="botao botao--secundario" to={lista}>
-                {novo ? "Cancelar" : "Voltar para a lista"}
+                {novo ? "Cancelar" : voltarPara}
               </Link>
             </div>
           </form>
@@ -409,6 +419,7 @@ function Cadastro({ id }) {
           <div className="cadastro__lateral">
             <Desempenho desempenho={parceiro.desempenho} serie={serie} />
             <Previsao previsao={previsao} />
+            <NaCampanha campanha={campanha} />
           </div>
         )}
       </div>
@@ -631,6 +642,67 @@ function Previsao({ previsao }) {
         </>
       ) : (
         <EstadoVazio titulo={previsao.motivo} texto={previsao.ajuda} />
+      )}
+    </section>
+  );
+}
+
+/**
+ * O parceiro no último plano de campanha viável (H81).
+ *
+ * É o caminho do cadastro para a campanha: a ação que o plano reserva para o
+ * parceiro, e o link para o plano. Ficar de fora também aparece — diz que a
+ * verba desta rodada foi para outros. O ganho esperado é estimativa (RN10), e a
+ * nota diz de qual previsão ele saiu.
+ */
+function NaCampanha({ campanha }) {
+  if (!campanha) return null;
+  const { plano } = campanha;
+
+  return (
+    <section className="painel" aria-labelledby="titulo-na-campanha">
+      <div className="painel__cabecalho">
+        <h2 className="painel__titulo" id="titulo-na-campanha">
+          Na campanha
+        </h2>
+        {plano && <span className="painel__nota">plano de {comoDataHora(plano.concluida_em)}</span>}
+      </div>
+
+      {!plano ? (
+        <EstadoVazio
+          titulo="Nenhum plano de campanha calculado ainda"
+          texto="O plano sai da tela Campanha, com o orçamento, o máximo de ações e as cotas."
+          acao={{ para: "/campanha", rotulo: "Ir para a Campanha" }}
+        />
+      ) : (
+        <>
+          {campanha.no_plano ? (
+            <>
+              <dl className="desempenho">
+                <dt>Ação</dt>
+                <dd>{campanha.acao}</dd>
+                <dt>Custo</dt>
+                <dd className="num">{comoDinheiro(campanha.custo)}</dd>
+                <dt>Ganho esperado</dt>
+                <dd className="num">{comoDinheiro(campanha.uplift_esperado)}</dd>
+                <dt>Aplicação</dt>
+                <dd>
+                  {comoData(plano.aplicacao_inicio)} a {comoData(plano.aplicacao_fim)}
+                </dd>
+              </dl>
+              <p className="previsao__nota">
+                O ganho esperado é estimativa, pela previsão {plano.modelo_versao} (RN10).
+              </p>
+            </>
+          ) : (
+            <p className="previsao__nota">
+              Não entrou no último plano: a verba desta rodada foi para outros parceiros.
+            </p>
+          )}
+          <Link className="botao botao--secundario na-campanha__plano" to={`/execucoes/${plano.execucao_id}`}>
+            Abrir o plano
+          </Link>
+        </>
       )}
     </section>
   );

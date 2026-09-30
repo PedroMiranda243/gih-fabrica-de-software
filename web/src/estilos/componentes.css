@@ -156,6 +156,14 @@
   color: var(--ink-2);
 }
 
+/* Do número a quem está por trás dele (H81). É link, então usa a cor de ação —
+   o trabalho dela é dizer "responde ao clique". */
+.indicador__acao {
+  font-size: var(--txt-12);
+  color: var(--acao-ink);
+  text-underline-offset: 3px;
+}
+
 /* ------------------------------------------------------------- segmentos */
 /* **Ponto, nunca texto.** A cor do segmento identifica; o rótulo ao lado
    informa. A regra 1.1 do `docs/09` reserva a cor de segmento para ponto ou
@@ -218,6 +226,21 @@
 .distribuicao__rotulo {
   font-size: var(--txt-13);
   color: var(--ink-2);
+}
+
+/* O rótulo leva à lista filtrada (H81). Continua na tinta secundária — a cor de
+   ação em seis rótulos seria ruído —, e o sublinhado discreto é o que diz que
+   ele responde ao clique, como o nome do parceiro na tabela. */
+.distribuicao__link {
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+}
+
+.distribuicao__link:hover,
+.distribuicao__link:focus-visible {
+  color: var(--ink);
+  text-decoration-color: var(--acao);
 }
 
 /* O trilho é recessivo, um passo da superfície: ele mostra a escala sem

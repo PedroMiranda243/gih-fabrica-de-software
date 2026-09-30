@@ -93,6 +93,12 @@
   color: var(--ink);
 }
 
+/* O link do cadastro para o plano (H81), alinhado com a nota acima dele. Sem a
+   margem, o botão encostava na borda do painel. */
+.na-campanha__plano {
+  margin: 0 var(--esp-16) var(--esp-16);
+}
+
 
 .desempenho {
   display: grid;

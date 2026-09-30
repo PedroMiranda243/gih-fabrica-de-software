@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import { comoDinheiro, comoInteiro, comoPercentual, sentidoDa, TRACO } from "../formato";
 import { IconeVariacao } from "./Icones";
 import Segmento from "./Segmento";
@@ -11,7 +13,12 @@ import Segmento from "./Segmento";
  *
  * Toda coluna numérica usa Fira Code com `tabular-nums`: dígito que não alinha
  * obriga a reler para comparar duas linhas.
+ *
+ * O nome leva ao cadastro do parceiro (H81), com a previsão e a ação no último
+ * plano — e a trilha de lá volta para o painel, e não para a lista.
  */
+const DO_PAINEL = { lista: "/", rotuloLista: "Painel", voltarPara: "Voltar para o painel" };
+
 
 /** Quem estreou não caiu de lugar nenhum — e sem isto pareceria ter despencado. */
 function Posicao({ atual, anterior, estreante }) {
@@ -84,7 +91,11 @@ export default function TabelaRanking({ itens }) {
                     estreante={item.estreante}
                   />
                 </td>
-                <td className="nome">{item.nome}</td>
+                <td className="nome">
+                  <Link className="nome__link" to={`/parceiros/${item.parceiro_id}`} state={DO_PAINEL}>
+                    {item.nome}
+                  </Link>
+                </td>
                 <td className="secundaria">{item.categoria ?? "sem categoria"}</td>
                 <td className="secundaria">
                   <Segmento valor={item.segmento} />
