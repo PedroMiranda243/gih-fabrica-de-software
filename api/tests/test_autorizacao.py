@@ -94,6 +94,8 @@ PERMISSOES: dict[tuple[str, str], object] = {
     # RF28 — Previsão e risco no cadastro do parceiro: os perfis do RF28, que
     # são os do cadastro (UC04).
     ("GET", "/api/parceiros/{parceiro_id}/previsao"): {Perfil.GESTOR, Perfil.ANALISTA},
+    # O parceiro no último plano (H81): quem abre o cadastro — os mesmos que abrem a Campanha.
+    ("GET", "/api/parceiros/{parceiro_id}/campanha"): {Perfil.GESTOR, Perfil.ANALISTA},
     # UC08 — Executar otimização: o Gestor executa, o Analista consulta. O
     # plano decide onde vai a verba; o Administrador cuida de acesso, e não de
     # campanha. O catálogo (RF29) segue a mesma divisão. O histórico (RF34) é a
