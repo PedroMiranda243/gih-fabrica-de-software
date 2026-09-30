@@ -292,6 +292,10 @@ flowchart TD
     Painel -- "parceiro: a página<br/>inicial é o portal" --> MeuDesempenho
     Painel -- "base vazia:<br/>importar um relatório" --> Importacao
     Importacao -- "importação concluída:<br/>ver no painel" --> Painel
+    Painel -- "nome no ranking" --> Cadastro
+    Painel -- "segmento ou Em risco:<br/>a lista filtrada" --> Parceiros
+    Cadastro -- "na campanha:<br/>abrir o plano" --> Execucao
+    Cadastro -- "sem plano:<br/>ir para a Campanha" --> Campanha
     Parceiros -- "nome do parceiro" --> Cadastro
     Parceiros -- "novo parceiro" --> Novo
     Parceiros -- "exportar" --> CSV
@@ -352,6 +356,13 @@ Os comportamentos que o desenho não mostra, e que valem para todas as telas:
 
 - **Sessão encerrada leva ao login, e o login devolve ao lugar de antes.** Quem abre um link direto sem
   estar autenticado entra e cai na tela que pediu, e não no painel genérico.
+- **Os módulos se ligam pelos próprios dados** (H81). O nome no ranking do painel abre o cadastro do
+  parceiro; cada segmento da distribuição, e o indicador de Em risco, abrem a lista filtrada; o cadastro
+  mostra a ação do parceiro no último plano de campanha, com o link para o plano, e a lista mostra o risco
+  estimado de cada um (H80). Seguir um parceiro do painel até a campanha não passa pelo menu.
+- **O cadastro volta para de onde a pessoa veio.** Aberto do painel, a trilha diz "Painel" e o botão, "Voltar
+  para o painel"; aberto de um plano ou da comparação, volta para eles — e não para a lista, que a pessoa
+  nem tinha aberto.
 - **O filtro da lista vive na URL.** Por isso "voltar" do cadastro devolve o mesmo recorte, e o link de
   exportar é a mesma consulta em outro formato. A lista de usuários abre nos ativos; "todas as situações"
   tem valor próprio no endereço.

@@ -125,6 +125,22 @@ async function fotografarElemento(pagina, nome, seletor, margem = 16, altura = I
   await fotografar(pagina, nome, recorte({ ...caixa, height: Math.min(caixa.height, altura) }, margem));
 }
 
+/** A trilha, do primeiro ao último passo: o elemento ocupa a largura toda, e o resto é vazio. */
+async function fotografarTrilha(pagina, nome) {
+  const caixa = await pagina.evaluate(() => {
+    const passos = [...document.querySelector('nav.trilha').children].map((e) => e.getBoundingClientRect());
+    const x = Math.min(...passos.map((r) => r.left));
+    const y = Math.min(...passos.map((r) => r.top));
+    return {
+      x: x + window.scrollX,
+      y: y + window.scrollY,
+      width: Math.max(...passos.map((r) => r.right)) - x,
+      height: Math.max(...passos.map((r) => r.bottom)) - y,
+    };
+  });
+  await fotografar(pagina, nome, recorte(caixa, 12));
+}
+
 /** O menu, da marca ao último item: o trilho ocupa a altura da tela, e o resto é vazio. */
 async function fotografarMenu(pagina, nome) {
   const caixa = await pagina.evaluate(() => {
@@ -329,6 +345,19 @@ async function depois(contexto) {
     return medidos.sort((x, y) => x - y);
   });
   console.log(`lista ordenada pelo risco: mediana de ${tempos[2].toFixed(0)} ms (de ${tempos[0].toFixed(0)} a ${tempos[4].toFixed(0)} ms)`);
+
+  /* H81: o cadastro de um parceiro que está no último plano — é o plano mais
+     recente que vale, o segundo —, com a ação e o link para o plano. E o mesmo
+     cadastro aberto pelo ranking do painel: a trilha volta para o painel. */
+  const ultimo = calculados.segundo?.viavel ? calculados.segundo : calculados.primeiro;
+  /* A coluna do lado do cadastro junta os três módulos: o desempenho medido, a
+     previsão e a ação no plano. */
+  await ir(gestor, `/parceiros/${ultimo.itens[0].parceiro_id}`, 'section[aria-labelledby="titulo-na-campanha"] dl');
+  await fotografarElemento(gestor, 'depois-parceiro-cadastro', '.cadastro__lateral');
+  await ir(gestor, '/', 'section[aria-labelledby="titulo-ranking"] a.nome__link');
+  await gestor.click('section[aria-labelledby="titulo-ranking"] a.nome__link');
+  await gestor.waitForSelector('section[aria-labelledby="titulo-na-campanha"]');
+  await fotografarTrilha(gestor, 'depois-trilha-do-painel');
 
   await registrarEnderecos(contexto, calculados, 'depois', 'Navegação — depois da H79');
 }
