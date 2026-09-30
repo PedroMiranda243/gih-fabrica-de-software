@@ -778,3 +778,54 @@ def recuperar_interrompidas(s: Session) -> int:
         execucao.concluida_em = agora
         execucao.motivo = "Interrompida: a API reiniciou durante a otimização. Calcule de novo."
     return len(interrompidas)
+
+
+# ------------------------------------------------ o parceiro no último plano (H81)
+@dataclass
+class ParceiroNoPlano:
+    """O último plano viável e o que ele reserva para o parceiro — ou nada, se ele ficou de fora."""
+
+    execucao: ExecucaoOtimizador
+    plano: PlanoCampanha
+    item: ItemPlano | None
+    acao: str | None
+
+
+def ultimo_plano(s: Session) -> tuple[ExecucaoOtimizador, PlanoCampanha] | None:
+    """O plano mais recente que dá para aplicar: execução concluída **e** viável.
+
+    O mesmo critério da comparação de planos: execução em andamento não tem plano
+    ainda, e a inviável não tem plano nenhum (RN07) — mostrar a ação de um plano
+    que não existe seria pior que não mostrar nada.
+    """
+    linha = s.execute(
+        select(ExecucaoOtimizador, PlanoCampanha)
+        .join(PlanoCampanha, PlanoCampanha.execucao_id == ExecucaoOtimizador.id)
+        .where(
+            ExecucaoOtimizador.situacao == SituacaoExecucao.CONCLUIDA,
+            ExecucaoOtimizador.viavel.is_(True),
+        )
+        .order_by(ExecucaoOtimizador.concluida_em.desc(), ExecucaoOtimizador.id.desc())
+        .limit(1)
+    ).first()
+    return (linha[0], linha[1]) if linha else None
+
+
+def parceiro_no_ultimo_plano(s: Session, parceiro_id: int) -> ParceiroNoPlano | None:
+    """A ação do parceiro no último plano viável (H81): o caminho do cadastro para a campanha.
+
+    `None` quando nenhum plano viável foi calculado; `item` nulo quando há plano,
+    mas o parceiro ficou de fora dele — que é informação também: diz a quem
+    olha o cadastro que a verba desta rodada foi para outros.
+    """
+    ultimo = ultimo_plano(s)
+    if ultimo is None:
+        return None
+    execucao, plano = ultimo
+    linha = s.execute(
+        select(ItemPlano, AcaoComercial.nome)
+        .join(AcaoComercial, AcaoComercial.id == ItemPlano.acao_id)
+        .where(ItemPlano.plano_id == plano.id, ItemPlano.parceiro_id == parceiro_id)
+    ).first()
+    item, acao = (linha[0], linha[1]) if linha else (None, None)
+    return ParceiroNoPlano(execucao=execucao, plano=plano, item=item, acao=acao)

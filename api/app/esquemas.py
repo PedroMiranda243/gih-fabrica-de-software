@@ -1540,3 +1540,31 @@ class EstadoDoAssistente(BaseModel):
     assistente: EstadoAssistente
     exemplos: list[ExemploPergunta]
     tamanho_maximo: int
+
+
+# ------------------------------------------------ o parceiro no último plano (H81)
+class PlanoResumido(BaseModel):
+    """Qual plano é o "último": quando saiu, para quando é, e de que previsão."""
+
+    execucao_id: int
+    concluida_em: datetime
+    aplicacao_inicio: date
+    aplicacao_fim: date
+    modelo_versao: str
+
+
+class CampanhaDoParceiro(BaseModel):
+    """O parceiro no último plano de campanha viável (H81) — o cadastro ligado à campanha.
+
+    `plano` nulo: nenhum plano viável foi calculado ainda. `no_plano` falso com
+    `plano` preenchido: há plano, e o parceiro ficou de fora dele. O ganho
+    esperado é estimativa, como no plano (RN10).
+    """
+
+    plano: PlanoResumido | None = None
+    no_plano: bool = False
+    acao: str | None = None
+    custo: Decimal | None = None
+    uplift_esperado: Decimal | None = Field(
+        default=None, description="Ganho esperado da ação, estimado pela previsão do plano (RN10)."
+    )

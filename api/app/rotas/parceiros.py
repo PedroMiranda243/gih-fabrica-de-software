@@ -18,12 +18,13 @@ from sqlalchemy import func, literal, nullslast, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app import auditoria, formato, planilha, servico_previsao
+from app import auditoria, formato, planilha, servico_otimizacao, servico_previsao
 from app.auditoria import Acao
 from app.calculos import ticket_medio, variacao_percentual
 from app.dependencias import Banco, UsuarioAtual, exigir
 from app.desempenho import ROTULO_SEGMENTO, com_desempenho, recorte
 from app.esquemas import (
+    CampanhaDoParceiro,
     DesempenhoParceiro,
     EdicaoParceiro,
     NovoParceiro,
@@ -33,6 +34,7 @@ from app.esquemas import (
     ParceiroComDesempenho,
     ParceiroResposta,
     PeriodoResposta,
+    PlanoResumido,
     PrevisaoParceiro,
     VinculoParceiro,
 )
@@ -407,6 +409,36 @@ def previsao(parceiro_id: int, s: Banco) -> PrevisaoParceiro:
         origem="REFERENCIA" if servico_previsao.e_referencia(previsto.modelo_versao) else "MODELO",
         gerada_em=previsto.gerada_em,
         desatualizada=lida.desatualizada,
+    )
+
+
+@router.get("/{parceiro_id}/campanha", response_model=CampanhaDoParceiro)
+def campanha(parceiro_id: int, s: Banco) -> CampanhaDoParceiro:
+    """O parceiro no último plano de campanha viável (H81) — ou que ficou de fora dele.
+
+    É o caminho do cadastro para a campanha: quem abre o parceiro vê a ação que o
+    plano reserva para ele, e dali abre o plano. Rota própria, como a previsão: é
+    complemento do cadastro, e a lista não precisa dela.
+    """
+    _buscar(s, parceiro_id)  # 404 com a mesma mensagem de sempre
+    no_plano = servico_otimizacao.parceiro_no_ultimo_plano(s, parceiro_id)
+    if no_plano is None:
+        return CampanhaDoParceiro()
+    plano = PlanoResumido(
+        execucao_id=no_plano.execucao.id,
+        concluida_em=no_plano.execucao.concluida_em,
+        aplicacao_inicio=no_plano.plano.aplicacao_inicio,
+        aplicacao_fim=no_plano.plano.aplicacao_fim,
+        modelo_versao=no_plano.execucao.modelo_versao,
+    )
+    if no_plano.item is None:
+        return CampanhaDoParceiro(plano=plano)
+    return CampanhaDoParceiro(
+        plano=plano,
+        no_plano=True,
+        acao=no_plano.acao,
+        custo=no_plano.item.custo,
+        uplift_esperado=no_plano.item.uplift_esperado,
     )
 
 
