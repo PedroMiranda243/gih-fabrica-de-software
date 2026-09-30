@@ -17,6 +17,11 @@ verdade, e não por simulação:
 treino (ADR-010): se a versão em uso ou a previsão mudassem depois de religar, é
 porque algo morava na memória do processo.
 
+**E a campanha, desde a Sprint 06.** Um gestor calcula um plano antes de
+desligar; depois de religar, o plano volta com os mesmos itens — parceiro, ação,
+custo e ganho —, e o cadastro de um parceiro do plano mostra a mesma ação (H81).
+O otimizador roda em segundo plano, e o que ele devolve só vale se foi gravado.
+
 O cookie é parte da prova: a sessão tem estado no servidor (`sessao_acesso`),
 então ela também é dado persistido, e não algo que só existia na memória do
 processo que acabou de morrer.
@@ -29,7 +34,7 @@ banco e o analista é desativado (ver `e2e/limpeza.py`).
 
 Precisa do Docker Desktop aberto e da aplicação no ar. Uso, da pasta `api/`:
     GIH_ADMIN_SENHA=... python e2e/persistencia.py \
-        > ../docs/entrega/evidencias/sprint05/persistencia.txt
+        > ../docs/entrega/evidencias/sprint06/persistencia.txt
 """
 from __future__ import annotations
 
@@ -111,11 +116,14 @@ def api_responde(url: str) -> bool:
         return False
 
 
-def retrato(c: httpx.Client, admin: httpx.Client, alvo: int, maior: int) -> dict:
+def retrato(
+    c: httpx.Client, admin: httpx.Client, alvo: int, maior: int, plano: dict
+) -> dict:
     """Tudo o que se compara depois: lido pela API, como a tela lê.
 
     Os limiares vêm pela sessão do administrador, que é o único perfil que os
-    enxerga (RF21) — e que, assim, também atravessa o reinício.
+    enxerga (RF21) — e que, assim, também atravessa o reinício. O plano, pela do
+    analista, que o consulta sem poder calculá-lo (UC08).
     """
     return {
         "parceiro": c.get(f"/api/parceiros/{alvo}").json(),
@@ -124,6 +132,8 @@ def retrato(c: httpx.Client, admin: httpx.Client, alvo: int, maior: int) -> dict
         "limiares": admin.get("/api/configuracao/segmentacao").json(),
         "modelo": _modelo(admin.get("/api/modelo").json()),
         "previsao": c.get(f"/api/parceiros/{maior}/previsao").json(),
+        "plano": c.get(f"/api/otimizacoes/{plano['id']}").json(),
+        "na_campanha": c.get(f"/api/parceiros/{plano['parceiro']}/campanha").json(),
     }
 
 
@@ -160,6 +170,13 @@ def mostrar_retrato(r: dict) -> None:
     if previsao.get("disponivel"):
         print(f"  previsão           R$ {previsao['faturamento_previsto']} · risco"
               f" {previsao['probabilidade_queda']:.4f} · {previsao['modelo_versao']}")
+    plano, na_campanha = r["plano"], r["na_campanha"]
+    print(f"  plano de campanha  execução {plano['id']} · {plano['situacao']} ·"
+          f" {len(plano.get('itens') or [])} ações · custo R$ {plano['custo_total']}"
+          f" · ganho R$ {plano['uplift_total']}")
+    if na_campanha.get("no_plano"):
+        print(f"  no cadastro        {na_campanha['acao']} · custo R$ {na_campanha['custo']}"
+              f" · plano {na_campanha['plano']['execucao_id']}")
 
 
 def mostrar_conteineres(ids: dict[str, str]) -> None:
@@ -204,11 +221,41 @@ def main() -> int:
     return 0 if limpo and passaram == len(conferencias) else 1
 
 
+def calcular_plano(url: str, gestor: str) -> dict:
+    """Um plano de campanha, calculado pelo gestor e esperado até o fim (UC08).
+
+    Os mesmos parâmetros da verificação de ponta a ponta, que cabem na base de
+    demonstração. Devolve a execução e um parceiro que está no plano.
+    """
+    with httpx.Client(base_url=url, timeout=30) as g:
+        g.post("/api/sessao", json={"login": gestor, "senha": SENHA})
+        pedido = troca(g, "POST", "/api/otimizacoes", {
+            "orcamento": "5000.00", "maximo_acoes": 30, "cota_cauda_longa": "0.3",
+            "aplicacao_inicio": "2026-10-05", "aplicacao_fim": "2026-10-11",
+        })
+        execucao = pedido.json()
+        inicio = time.monotonic()
+        while execucao.get("situacao") == "EM_ANDAMENTO":
+            if time.monotonic() - inicio > ESPERA_MAXIMA:
+                raise RuntimeError(f"O plano não terminou em {ESPERA_MAXIMA} s.")
+            time.sleep(1)
+            execucao = g.get(f"/api/otimizacoes/{execucao['id']}").json()
+        if not execucao.get("viavel") or not execucao.get("itens"):
+            raise RuntimeError(f"O plano não saiu viável: {execucao.get('motivo')}")
+        print(f"\n  ... o plano terminou em {time.monotonic() - inicio:.1f} s,"
+              f" com {len(execucao['itens'])} ações")
+        return {"id": execucao["id"], "parceiro": execucao["itens"][0]["parceiro_id"]}
+
+
 def demonstrar(url: str, admin: httpx.Client, marca: str) -> list[tuple[str, bool]]:
-    analista = f"{marca}.analista"
-    titulo("Preparação — um analista, que é quem gerencia parceiros (UC04)")
+    analista, gestor = f"{marca}.analista", f"{marca}.gestor"
+    titulo("Preparação — um analista, que gerencia parceiros (UC04), e um gestor, que calcula"
+           " a campanha (UC08)")
     troca(admin, "POST", "/api/usuarios", {
         "login": analista, "nome": "Analista da Evidência", "senha": SENHA, "perfil": "ANALISTA",
+    })
+    troca(admin, "POST", "/api/usuarios", {
+        "login": gestor, "nome": "Gestor da Evidência", "senha": SENHA, "perfil": "GESTOR",
     })
 
     with httpx.Client(base_url=url, timeout=30) as c:
@@ -227,7 +274,10 @@ def demonstrar(url: str, admin: httpx.Client, marca: str) -> list[tuple[str, boo
         maior = c.get("/api/parceiros", params={
             "tamanho": 1, "ordenar_por": "faturamento", "descendente": True,
         }).json()["itens"][0]["id"]
-        antes = retrato(c, admin, alvo, maior)
+
+        print("\nO gestor calcula um plano de campanha, que roda em segundo plano (ADR-011):")
+        plano = calcular_plano(url, gestor)
+        antes = retrato(c, admin, alvo, maior, plano)
         print("\nO estado anotado para comparar depois:")
         mostrar_retrato(antes)
         ids_antes = conteineres()
@@ -267,7 +317,7 @@ def demonstrar(url: str, admin: httpx.Client, marca: str) -> list[tuple[str, boo
         titulo("[4/4] Depois de religar — o mesmo cookie de antes, sem novo login")
         sessao = troca(c, "GET", "/api/sessao/atual")
         troca(c, "GET", f"/api/parceiros/{alvo}")
-        depois = retrato(c, admin, alvo, maior)
+        depois = retrato(c, admin, alvo, maior, plano)
         print("\nO estado lido agora:")
         mostrar_retrato(depois)
 
@@ -296,6 +346,11 @@ def demonstrar(url: str, admin: httpx.Client, marca: str) -> list[tuple[str, boo
          bool(antes["modelo"]["versao_em_uso"]) and depois["modelo"] == antes["modelo"]),
         ("a previsão do parceiro é a mesma, da mesma versão",
          antes["previsao"].get("disponivel") is True and depois["previsao"] == antes["previsao"]),
+        ("o plano de campanha voltou igual, item a item — parceiro, ação, custo e ganho",
+         bool(antes["plano"].get("itens")) and depois["plano"] == antes["plano"]),
+        ("o cadastro do parceiro do plano mostra a mesma ação (H81)",
+         antes["na_campanha"].get("no_plano") is True
+         and depois["na_campanha"] == antes["na_campanha"]),
     ]
     print("\nConferências:")
     for texto, ok in conferencias:
