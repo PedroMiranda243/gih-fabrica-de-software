@@ -12,7 +12,7 @@
  *
  * Uso:
  *   git fetch origin
- *   node docs/entrega/registrar_commits.js > docs/entrega/evidencias/sprint04/commits.txt
+ *   node docs/entrega/registrar_commits.js > docs/entrega/evidencias/sprint06/commits.txt
  *   node docs/entrega/registrar_commits.js outra-ref      # outra referência
  */
 const { execFileSync } = require('child_process');
@@ -25,11 +25,16 @@ const REPOSITORIO = 'https://github.com/PedroMiranda243/gih-fabrica-de-software'
 /* A da Sprint 04 fecha no dia em que o PDF dela foi gerado (21/09), e não no
    prazo (26/09): o trabalho de 22/09 em diante já é o da Sprint 05, e contá-lo
    pelo prazo daria a ela commits que ela não teve. */
+/* A da Sprint 05 fecha no PR do PDF dela (#112), e não num dia: no mesmo 25/09,
+   depois do PDF, entraram as correções achadas no ensaio (#114, #116) e o
+   começo do otimizador (#124 a #127), que são trabalho da Sprint 06. Até a
+   geração da Sprint 06, ela fechava em 03/10 e levava esse trabalho junto. */
 const JANELAS = [
   { rotulo: 'Sprint 01 — até 05/09', ate: '2026-09-05' },
   { rotulo: 'Sprints 02 e 03 — 06/09 a 19/09', ate: '2026-09-19' },
   { rotulo: 'Sprint 04 — 20/09 a 21/09, data do PDF', ate: '2026-09-21' },
-  { rotulo: 'Sprint 05 — 22/09 a 03/10', ate: '2026-10-03' },
+  { rotulo: 'Sprint 05 — 22/09 a 25/09, até o PR do PDF (#112)', atePr: 112 },
+  { rotulo: 'Sprint 06 — 25/09, depois do PDF, a 17/10', ate: '2026-10-17' },
 ];
 
 // Separadores de controle: nenhum deles aparece em mensagem de commit.
@@ -178,17 +183,28 @@ function main() {
 
   // --------------------------------------------------------------------- PRs
   titulo('Pull Requests incorporados, por janela de entrega');
-  let desde = '0000-00-00';
+  // Os PRs estão na ordem em que entraram: cada janela pega os seguintes até a
+  // data dela, ou até o PR que a fecha.
+  let proximo = 0;
   for (const janela of JANELAS) {
-    const daqui = prs.filter((p) => p.data > desde && p.data <= janela.ate);
-    desde = janela.ate;
+    const daqui = [];
+    if (janela.atePr) {
+      const fim = prs.findIndex((p) => p.numero === janela.atePr);
+      if (fim < proximo) throw new Error(`O PR #${janela.atePr}, que fecha a janela, não está em ${REF}.`);
+      daqui.push(...prs.slice(proximo, fim + 1));
+    } else {
+      while (proximo + daqui.length < prs.length && prs[proximo + daqui.length].data <= janela.ate) {
+        daqui.push(prs[proximo + daqui.length]);
+      }
+    }
+    proximo += daqui.length;
     console.log(`\n  ${janela.rotulo}: ${daqui.length}`);
     for (const p of daqui) {
       console.log(`    #${String(p.numero).padEnd(3)} ${ddmm(p.data)}  ${cortar(p.titulo, 78)}`);
     }
   }
-  const depois = prs.filter((p) => p.data > desde);
-  if (depois.length) console.log(`\n  depois de ${ddmm(desde)}: ${depois.length}`);
+  const depois = prs.slice(proximo);
+  if (depois.length) console.log(`\n  depois da última janela: ${depois.length}`);
 }
 
 main();
