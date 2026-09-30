@@ -2,9 +2,16 @@
 
 A quarta entrega da disciplina pede exemplos das validações e evidência das
 mensagens de erro; a quinta, os testes das validações e das situações de erro
-do segundo módulo — o de previsão, que tem seção própria desde então. Aqui cada
-regra é provocada contra a API no ar, e a troca inteira vai para a transcrição:
-o que foi enviado, o código que voltou e a mensagem que a tela mostra ao usuário.
+do segundo módulo — o de previsão, que tem seção própria desde então. A sexta
+ganha a seção do terceiro módulo, a campanha: quem calcula, o que o pedido
+precisa ter, e o plano que não cabe — a Pré-Banca pediu as validações negativas
+ampliadas (Sprint 03). Aqui cada regra é provocada contra a API no ar, e a troca
+inteira vai para a transcrição: o que foi enviado, o código que voltou e a
+mensagem que a tela mostra ao usuário.
+
+**A campanha vem primeiro.** Ela usa sempre o período mais recente (RN10), e o
+período que as outras seções importam fica longe no futuro — enquanto ele
+existe, é o mais recente, e nele ninguém tem previsão.
 
 Cada troca vem com o que se esperava dela, e o fim da transcrição conta quantas
 bateram. Uma evidência que só mostra respostas não diz se elas estão certas.
@@ -19,7 +26,7 @@ Como a transcrição do CRUD, não deixa resíduo (ver `e2e/limpeza.py`).
 
 Uso, da pasta `api/`:
     GIH_ADMIN_SENHA=... python e2e/validacoes.py \
-        > ../docs/entrega/evidencias/sprint05/validacoes.txt
+        > ../docs/entrega/evidencias/sprint06/validacoes.txt
 """
 from __future__ import annotations
 
@@ -119,7 +126,7 @@ def main() -> int:
 def transcrever(url: str, admin: httpx.Client, marca: str, confere: Conferencias,
                 falha: bool) -> None:
     analista, gestor = f"{marca}.analista", f"{marca}.gestor"
-    titulo("Preparação — um analista, um gestor, e um parceiro com faturamento importado")
+    titulo("Preparação — um analista e um gestor")
     troca(admin, "POST", "/api/usuarios", {
         "login": analista, "nome": "Analista da Evidência", "senha": SENHA, "perfil": "ANALISTA",
     })
@@ -129,8 +136,12 @@ def transcrever(url: str, admin: httpx.Client, marca: str, confere: Conferencias
 
     with httpx.Client(base_url=url, timeout=30) as c:
         c.post("/api/sessao", json={"login": analista, "senha": SENHA})
-        # Um período longe no futuro, que nenhuma base de demonstração tem: a
-        # limpeza recusa apagar período que tenha importação de outra pessoa.
+        # Antes do período no futuro: a campanha usa sempre o mais recente (RN10).
+        campanha(url, c, gestor, confere)
+
+        titulo("Preparação — um parceiro com faturamento importado, num período longe no futuro")
+        # Um período que nenhuma base de demonstração tem: a limpeza recusa
+        # apagar período que tenha importação de outra pessoa.
         inicio = date.today() + timedelta(days=365 + secrets.randbelow(2000) * 7)
         periodo = {
             "periodo_inicio": inicio.isoformat(),
@@ -151,7 +162,7 @@ def transcrever(url: str, admin: httpx.Client, marca: str, confere: Conferencias
 
 # ------------------------------------------------------------------ importação
 def importacao(c: httpx.Client, periodo: dict, marca: str, confere: Conferencias) -> None:
-    titulo("[1/7] Importação de relatório (UC03)")
+    titulo("[2/8] Importação de relatório (UC03)")
     texto = "Parceiro;Faturamento;Pedidos\nComércio Alfa;12500,40;312\n"
 
     print("\nRN03 — sem o período, a importação é recusada e diz por quê:")
@@ -206,7 +217,7 @@ def importacao(c: httpx.Client, periodo: dict, marca: str, confere: Conferencias
 
 # -------------------------------------------------------------------- cadastro
 def cadastro(c: httpx.Client, marca: str, comhist: dict, confere: Conferencias) -> None:
-    titulo("[2/7] Cadastro de parceiro (UC04)")
+    titulo("[3/8] Cadastro de parceiro (UC04)")
 
     print("\nNome vazio — a mensagem diz que é obrigatório e quanto falta:")
     confere("nome vazio", troca(c, "POST", "/api/parceiros", {"nome": ""}),
@@ -243,7 +254,7 @@ def cadastro(c: httpx.Client, marca: str, comhist: dict, confere: Conferencias) 
 
 # ----------------------------------------------------------------------- lista
 def lista(c: httpx.Client, confere: Conferencias) -> None:
-    titulo("[3/7] Lista de parceiros — filtros e ordenação vêm da URL")
+    titulo("[4/8] Lista de parceiros — filtros e ordenação vêm da URL")
     print("\nUm link editado à mão chega aqui. A recusa diz o que vale:")
     confere("ordenação desconhecida", troca(c, "GET", "/api/parceiros?ordenar_por=idade"),
             422, "Escolha uma destas opções")
@@ -255,7 +266,7 @@ def lista(c: httpx.Client, confere: Conferencias) -> None:
 
 # -------------------------------------------------------------------- limiares
 def limiares(admin: httpx.Client, confere: Conferencias) -> None:
-    titulo("[4/7] Limiares da segmentação (RF21) — só o administrador")
+    titulo("[5/8] Limiares da segmentação (RF21) — só o administrador")
     print("\nTop 0 esvaziaria o segmento Top da rede inteira. Nada é gravado:")
     confere("Top N zero", troca(admin, "PUT", "/api/configuracao/segmentacao", {
         "top_n": 0, "periodos_tendencia": 2, "periodos_novato": 3,
@@ -264,7 +275,7 @@ def limiares(admin: httpx.Client, confere: Conferencias) -> None:
 
 # ---------------------------------------------------------------------- acesso
 def acesso(url: str, c: httpx.Client, analista: str, confere: Conferencias) -> None:
-    titulo("[5/7] Acesso (RF01, RF03, RNF11)")
+    titulo("[6/8] Acesso (RF01, RF03, RNF11)")
     with httpx.Client(base_url=url, timeout=30) as anonimo:
         print("\nSenha errada, e depois um login que não existe. RNF11: as duas respostas são")
         print("iguais — duas mensagens diferentes entregariam a lista de logins válidos.")
@@ -288,7 +299,7 @@ def acesso(url: str, c: httpx.Client, analista: str, confere: Conferencias) -> N
 
 # ------------------------------------------------------------------- modelo
 def modelo(url: str, c: httpx.Client, gestor: str, confere: Conferencias) -> None:
-    titulo("[6/7] Modelo preditivo (UC07, RN09) — quem treina, e um por vez")
+    titulo("[7/8] Modelo preditivo (UC07, RN09) — quem treina, e um por vez")
     print("\nO analista lê a previsão no cadastro (RF28), mas não troca o modelo que toda a")
     print("equipe usa (UC07):")
     confere("analista não treina", troca(c, "POST", "/api/modelo/treinos"),
@@ -327,9 +338,69 @@ def modelo(url: str, c: httpx.Client, gestor: str, confere: Conferencias) -> Non
             200, '"disponivel":false', "ainda não há previsão", "são necessários 4")
 
 
+# ------------------------------------------------------------------ campanha
+# Um pedido válido na base de demonstração: os mesmos parâmetros da verificação
+# de ponta a ponta. Cada caso abaixo muda um campo só, para a mensagem ser dele.
+PEDIDO = {
+    "orcamento": "5000.00",
+    "maximo_acoes": 30,
+    "cota_cauda_longa": "0.3",
+    "aplicacao_inicio": "2026-10-05",
+    "aplicacao_fim": "2026-10-11",
+}
+
+
+def campanha(url: str, c: httpx.Client, gestor: str, confere: Conferencias) -> None:
+    titulo("[1/8] Campanha (UC08, RN07, RF31) — quem calcula, o que vale, e o plano que não cabe")
+    print("\nO analista consulta a campanha, mas não decide onde vai a verba (UC08):")
+    confere("analista não calcula o plano", troca(c, "POST", "/api/otimizacoes", PEDIDO),
+            403, "Seu perfil não permite esta operação.")
+
+    with httpx.Client(base_url=url, timeout=30) as g:
+        g.post("/api/sessao", json={"login": gestor, "senha": SENHA})
+
+        print("\nCada campo recusado diz o limite, na língua de quem usa (RNF20):")
+        confere("orçamento zero",
+                troca(g, "POST", "/api/otimizacoes", {**PEDIDO, "orcamento": "0"}),
+                422, "orcamento", "Use um valor maior que 0.")
+        confere("máximo de ações zero",
+                troca(g, "POST", "/api/otimizacoes", {**PEDIDO, "maximo_acoes": 0}),
+                422, "maximo_acoes", "Use um valor a partir de 1.")
+        confere("cota da cauda longa acima de 100%",
+                troca(g, "POST", "/api/otimizacoes", {**PEDIDO, "cota_cauda_longa": "1.5"}),
+                422, "cota_cauda_longa", "Use um valor até 1.")
+        confere("fim da aplicação antes do início", troca(g, "POST", "/api/otimizacoes", {
+            **PEDIDO, "aplicacao_inicio": "2026-10-11", "aplicacao_fim": "2026-10-05",
+        }), 422, "O fim da aplicação não pode ser anterior ao início.")
+        confere("cota para uma categoria que não existe", troca(g, "POST", "/api/otimizacoes", {
+            **PEDIDO, "cotas_categoria": [{"categoria_id": 999999, "minimo": "0.1"}],
+        }), 422, "Há cota para uma categoria que não existe.")
+
+        print("\nUm plano que não cabe: orçamento de R$ 100,00 e 30% das ações na cauda longa.")
+        print("A viabilidade é decidida antes da busca (RF31). O pedido é aceito e registrado,")
+        print("e a execução termina sem plano, dizendo qual restrição falhou e quanto falta")
+        print("(RN07, UC08-A1) — e não com um plano que desrespeita o orçamento:")
+        pedido = troca(g, "POST", "/api/otimizacoes", {**PEDIDO, "orcamento": "100.00"})
+        if pedido.status_code == 202:
+            limite = time.monotonic() + 180
+            while (g.get(f"/api/otimizacoes/{pedido.json()['id']}").json()["situacao"]
+                   == "EM_ANDAMENTO" and time.monotonic() < limite):
+                time.sleep(1)
+            confere("campanha inviável, registrada sem plano, com o que falta",
+                    troca(g, "GET", f"/api/otimizacoes/{pedido.json()['id']}"),
+                    200, '"viavel":false', '"restricao_violada":"orcamento"', "faltam",
+                    '"itens":[]')
+        else:
+            confere.registrar("a campanha inviável é aceita para registro (202)", False)
+
+        print("\nUma execução que não existe:")
+        confere("execução inexistente", troca(g, "GET", "/api/otimizacoes/999999"),
+                404, "Otimização não encontrada.")
+
+
 # ----------------------------------------------------------- falha inesperada
 def falha_inesperada(url: str, c: httpx.Client, confere: Conferencias) -> None:
-    titulo("[7/7] Falha inesperada (RNF18, RNF19) — o banco fora do ar")
+    titulo("[8/8] Falha inesperada (RNF18, RNF19) — o banco fora do ar")
     print("\nPara ver o que o usuário vê quando algo quebra de verdade, o banco é parado")
     print("por alguns segundos.")
     desde = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
