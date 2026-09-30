@@ -39,6 +39,10 @@ MENSAGENS = {
     "date_parsing": "Informe uma data válida, no formato AAAA-MM-DD.",
     "greater_than_equal": "Valor abaixo do mínimo permitido.",
     "less_than_equal": "Valor acima do máximo permitido.",
+    "greater_than": "Valor abaixo do mínimo permitido.",
+    "less_than": "Valor acima do máximo permitido.",
+    "decimal_max_digits": "Número grande demais.",
+    "decimal_max_places": "Casas decimais demais.",
     "int_from_float": "Informe um número inteiro, sem casas decimais.",
     "int_type": "Informe um número inteiro.",
     "bool_parsing": "Informe verdadeiro ou falso.",
@@ -65,6 +69,14 @@ MENSAGENS_COM_LIMITE = {
     "string_too_long": "Longo demais: use no máximo {max_length} caracteres.",
     "greater_than_equal": "Use um valor a partir de {ge}.",
     "less_than_equal": "Use um valor até {le}.",
+    # Os estritos — `gt` e `lt` — tinham ficado de fora, e caíam na frase
+    # genérica: um orçamento zero na campanha respondia "Valor inválido para este
+    # campo.", sem dizer o que vale. Achado ao transcrever as validações da
+    # campanha para a Sprint 06, com os dois de número decimal abaixo.
+    "greater_than": "Use um valor maior que {gt}.",
+    "less_than": "Use um valor menor que {lt}.",
+    "decimal_max_digits": "Número grande demais: use no máximo {max_digits} dígitos.",
+    "decimal_max_places": "Use no máximo {decimal_places} casas decimais.",
     "enum": "Escolha uma destas opções: {expected}.",
 }
 
