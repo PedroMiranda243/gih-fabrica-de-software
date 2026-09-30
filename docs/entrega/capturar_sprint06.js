@@ -315,6 +315,21 @@ async function depois(contexto) {
   await fotografarElemento(gestor, 'depois-menu-768', 'nav.trilho', 0);
   await gestor.setViewport({ width: 1280, height: 900, deviceScaleFactor: 2 });
 
+  /* H80: a lista ordenada pelo risco, do maior para o menor, com a nota de onde
+     ele vem. E o tempo da consulta com o risco, mediana de cinco (RNF03). */
+  await ir(gestor, '/parceiros?ordenar_por=risco&descendente=true', 'section[aria-labelledby="titulo-parceiros"] table');
+  await fotografarElemento(gestor, 'depois-parceiros-lista', 'section[aria-labelledby="titulo-parceiros"]', 16, 560);
+  const tempos = await gestor.evaluate(async () => {
+    const medidos = [];
+    for (let i = 0; i < 5; i += 1) {
+      const inicio = performance.now();
+      await fetch('/api/parceiros?tamanho=50&ordenar_por=risco&descendente=true', { credentials: 'same-origin' });
+      medidos.push(performance.now() - inicio);
+    }
+    return medidos.sort((x, y) => x - y);
+  });
+  console.log(`lista ordenada pelo risco: mediana de ${tempos[2].toFixed(0)} ms (de ${tempos[0].toFixed(0)} a ${tempos[4].toFixed(0)} ms)`);
+
   await registrarEnderecos(contexto, calculados, 'depois', 'Navegação — depois da H79');
 }
 

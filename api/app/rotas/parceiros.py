@@ -14,11 +14,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import StreamingResponse
-from sqlalchemy import func, nullslast, or_, select
+from sqlalchemy import func, literal, nullslast, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app import auditoria, planilha, servico_previsao
+from app import auditoria, formato, planilha, servico_previsao
 from app.auditoria import Acao
 from app.calculos import ticket_medio, variacao_percentual
 from app.dependencias import Banco, UsuarioAtual, exigir
@@ -28,6 +28,7 @@ from app.esquemas import (
     EdicaoParceiro,
     NovoParceiro,
     Ordenacao,
+    OrigemDoRisco,
     PaginaParceiros,
     ParceiroComDesempenho,
     ParceiroResposta,
@@ -44,6 +45,7 @@ from app.modelos import (
     OrigemCategoria,
     Parceiro,
     Perfil,
+    Periodo,
     Previsao,
     Segmento,
     StatusComercial,
@@ -78,6 +80,7 @@ CABECALHO_CSV = (
     "Pedidos",
     "Ticket medio",
     "Variacao %",
+    "Risco de queda",
 )
 
 
@@ -124,6 +127,42 @@ def _filtrar(
     return consulta
 
 
+def _com_risco(s: Session, consulta, colunas):
+    """A chance de queda da versão em uso, na mesma junção da lista (H80).
+
+    A mesma escolha do cadastro do parceiro (`servico_previsao.previsao_do_parceiro`):
+    o último treino concluído diz a versão e o período de onde ela parte. Uma
+    escolha diferente aqui faria a lista e o cadastro mostrarem dois riscos para o
+    mesmo parceiro.
+
+    **Junção externa, numa consulta só.** Buscar a previsão de cada linha depois
+    seria o N+1 que a paginação existe para evitar (RNF03, RNF04); e quem não tem
+    previsão continua na lista, com o risco nulo — que é diferente de risco zero.
+    """
+    concluido = servico_previsao.ultimo_concluido(s)
+    if concluido is None:
+        return consulta, colunas | {"risco": literal(None)}, None
+
+    risco = (
+        select(Previsao.parceiro_id, Previsao.probabilidade_queda)
+        .where(
+            Previsao.periodo_base_id == concluido.periodo_base_id,
+            Previsao.modelo_versao == concluido.versao_em_uso,
+        )
+        .subquery("risco")
+    )
+    consulta = consulta.outerjoin(risco, risco.c.parceiro_id == Parceiro.id)
+
+    base = s.get(Periodo, concluido.periodo_base_id)
+    recente = servico_previsao.periodo_mais_recente(s)
+    origem = OrigemDoRisco(
+        modelo_versao=concluido.versao_em_uso,
+        periodo_base=PeriodoResposta.model_validate(base),
+        desatualizada=recente is not None and recente.id != base.id,
+    )
+    return consulta, colunas | {"risco": risco.c.probabilidade_queda}, origem
+
+
 def _ordenar(consulta, colunas, ordenar_por: str, descendente: bool):
     """Aplica a ordem pedida, por **lista fechada** de colunas.
 
@@ -147,7 +186,7 @@ def _linha(bruta) -> ParceiroComDesempenho:
     arredondamento do painel e o desta tela precisam ser o mesmo, senão o
     sistema mostra R$ 48,23 numa tela e R$ 48,24 na outra para o mesmo parceiro.
     """
-    parceiro, faturamento, pedidos, anterior, segmento = bruta
+    parceiro, faturamento, pedidos, anterior, segmento, risco = bruta
     return ParceiroComDesempenho(
         # O cadastro sai do ORM pelo esquema que já existia; o desempenho vem
         # das colunas da junção. Validar o parceiro sozinho e atribuir o
@@ -161,6 +200,7 @@ def _linha(bruta) -> ParceiroComDesempenho:
             ticket_medio=ticket_medio(faturamento, pedidos),
             variacao_percentual=variacao_percentual(faturamento, anterior),
         ),
+        risco_queda=risco,
     )
 
 
@@ -198,6 +238,7 @@ def listar(
     """
     alvo, anterior = recorte(s)
     consulta, colunas = com_desempenho(s, alvo, anterior)
+    consulta, colunas, origem = _com_risco(s, consulta, colunas)
     consulta = _filtrar(
         consulta,
         colunas,
@@ -218,6 +259,7 @@ def listar(
             colunas["pedidos"],
             colunas["anterior"],
             colunas["segmento"],
+            colunas["risco"],
         )
         .offset((pagina - 1) * tamanho)
         .limit(tamanho)
@@ -228,6 +270,7 @@ def listar(
         total=total,
         pagina=pagina,
         tamanho=tamanho,
+        risco=origem,
         periodo=PeriodoResposta.model_validate(alvo) if alvo else None,
     )
 
@@ -260,6 +303,7 @@ def exportar(
     """
     alvo, anterior = recorte(s)
     consulta, colunas = com_desempenho(s, alvo, anterior)
+    consulta, colunas, _ = _com_risco(s, consulta, colunas)
     consulta = _filtrar(
         consulta,
         colunas,
@@ -275,6 +319,7 @@ def exportar(
         colunas["pedidos"],
         colunas["anterior"],
         colunas["segmento"],
+        colunas["risco"],
     )
 
     nome = f"parceiros-{alvo.data_fim.isoformat()}.csv" if alvo else "parceiros.csv"
@@ -299,6 +344,10 @@ def _linha_csv(bruta) -> tuple:
         "" if item.desempenho.pedidos is None else item.desempenho.pedidos,
         planilha.numero(item.desempenho.ticket_medio),
         planilha.numero(item.desempenho.variacao_percentual),
+        # O mesmo texto da tela — "24%", "menos de 1%" —, e não a fração crua: o
+        # usuário exporta o que está vendo, e a estimativa não finge certeza no
+        # arquivo que ela não finge na tela.
+        "" if item.risco_queda is None else formato.probabilidade(item.risco_queda),
     )
 
 
@@ -315,12 +364,14 @@ def obter(parceiro_id: int, s: Banco) -> ParceiroComDesempenho:
     _buscar(s, parceiro_id)  # 404 com a mesma mensagem de sempre
     alvo, anterior = recorte(s)
     consulta, colunas = com_desempenho(s, alvo, anterior)
+    consulta, colunas, _ = _com_risco(s, consulta, colunas)
     linha = s.execute(
         consulta.where(Parceiro.id == parceiro_id).add_columns(
             colunas["faturamento"],
             colunas["pedidos"],
             colunas["anterior"],
             colunas["segmento"],
+            colunas["risco"],
         )
     ).one()
     return _linha(linha)
@@ -330,9 +381,9 @@ def obter(parceiro_id: int, s: Banco) -> ParceiroComDesempenho:
 def previsao(parceiro_id: int, s: Banco) -> PrevisaoParceiro:
     """Faturamento previsto e risco do parceiro (RF28, H44) — ou o porquê de não haver.
 
-    Rota própria, e não um campo a mais no parceiro: a lista e a exportação
-    usam o mesmo formato do parceiro, e a previsão lá seria uma consulta por
-    linha que nenhuma das duas mostra.
+    Rota própria, com a previsão inteira e o porquê de não haver. A lista e a
+    exportação levam só o risco, e pela mesma junção da consulta delas (H80) —
+    e não por esta rota, que numa lista seria uma consulta por linha.
     """
     _buscar(s, parceiro_id)  # 404 com a mesma mensagem de sempre
     lida = servico_previsao.previsao_do_parceiro(s, parceiro_id)

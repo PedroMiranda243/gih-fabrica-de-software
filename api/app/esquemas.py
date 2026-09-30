@@ -371,6 +371,9 @@ class Ordenacao(enum.StrEnum):
     PEDIDOS = "pedidos"
     TICKET_MEDIO = "ticket_medio"
     VARIACAO = "variacao"
+    # A chance de queda da versão em uso do modelo (H80): "em quem investir?" feito
+    # à rede inteira de uma vez, que a Parte V deixou como próximo passo.
+    RISCO = "risco"
 
 
 class DesempenhoParceiro(BaseModel):
@@ -393,6 +396,33 @@ class DesempenhoParceiro(BaseModel):
 
 class ParceiroComDesempenho(ParceiroResposta):
     desempenho: DesempenhoParceiro
+    # Fora do `desempenho` de propósito: aquilo é o que o parceiro **fez**, medido;
+    # isto é o que o modelo **estima** que ele vai fazer. As duas coisas não se
+    # misturam na resposta, como não se misturam na tela (docs/09, seção 9).
+    risco_queda: float | None = Field(
+        default=None,
+        description=(
+            "Probabilidade de o parceiro entrar em risco no próximo período, pela versão em uso do "
+            "modelo (RF28, H80). Nula quando ele não tem previsão nessa versão."
+        ),
+    )
+
+
+class OrigemDoRisco(BaseModel):
+    """De onde vem o risco da lista: a versão em uso e o período de onde ela parte.
+
+    **É estimativa, e a resposta diz de onde ela vem** — a tela mostra isso junto
+    da coluna, como o cadastro do parceiro já mostra junto da previsão (H44).
+    """
+
+    modelo_versao: str
+    periodo_base: PeriodoResposta
+    desatualizada: bool = Field(
+        description=(
+            "Há período importado mais recente que o do último treino: o risco parte de dado "
+            "antigo."
+        ),
+    )
 
 
 class PaginaParceiros(BaseModel):
@@ -407,6 +437,12 @@ class PaginaParceiros(BaseModel):
     total: int
     pagina: int
     tamanho: int
+    risco: OrigemDoRisco | None = Field(
+        default=None,
+        description=(
+            "De onde vem o risco de queda da lista. Nulo quando o modelo nunca foi treinado."
+        ),
+    )
     periodo: PeriodoResposta | None = Field(
         default=None,
         description="Período de onde vem o desempenho. Nulo quando não há nenhum importado.",

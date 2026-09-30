@@ -54,7 +54,7 @@
 | **RF20** | O sistema deve classificar cada parceiro em exatamente um segmento (Top, Em Ascensão, Em Risco, Recém-chegado, Prospecção ou Estável) aplicando regra determinística com ordem de precedência explícita. | M | GES, ANL |
 | **RF21** | O sistema deve permitir configurar os limiares da segmentação (tamanho do Top N, número de períodos de queda para caracterizar risco, número de períodos para caracterizar novo parceiro) sem alteração de código. | S | ADM |
 | **RF22** | O sistema deve exibir a mobilidade do ranking entre dois períodos, listando quem entrou e quem saiu do Top N. | M | GES, ANL |
-| **RF23** | O sistema deve permitir filtrar e ordenar a lista de parceiros por categoria, segmento, faturamento, número de pedidos, ticket médio e variação. | M | GES, ANL |
+| **RF23** | O sistema deve permitir filtrar e ordenar a lista de parceiros por categoria, segmento, faturamento, número de pedidos, ticket médio, variação e risco estimado de queda (H80). | M | GES, ANL |
 | **RF24** | O sistema deve permitir buscar parceiro por nome, com correspondência parcial. | M | GES, ANL |
 | **RF25** | O sistema deve permitir exportar em CSV a visão atualmente filtrada da lista de parceiros. | S | GES, ANL |
 | **RF26** | O sistema deve permitir que o perfil Parceiro consulte exclusivamente o próprio desempenho histórico, sem acesso a dados de outros parceiros nem a rankings comparativos. | C | PAR |
