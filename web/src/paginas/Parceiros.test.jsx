@@ -223,3 +223,76 @@ describe("Parceiros", () => {
   });
 });
 
+const RISCO = { modelo_versao: "rede-7", periodo_base: PERIODO, desatualizada: false };
+
+describe("o risco de queda na lista (H80)", () => {
+  it("mostra a chance estimada, sem fingir certeza nos extremos", async () => {
+    simular(
+      pagina(
+        [
+          parceiro("Alfa", { risco_queda: 0.24 }),
+          parceiro("Beta", { id: 99, risco_queda: 0.002 }),
+        ],
+        { risco: RISCO },
+      ),
+    );
+    renderizar();
+
+    const alfa = (await screen.findByText("Alfa")).closest("tr");
+    expect(within(alfa).getByText("24%")).toBeInTheDocument();
+    const beta = screen.getByText("Beta").closest("tr");
+    expect(within(beta).getByText("menos de 1%")).toBeInTheDocument();
+  });
+
+  it("diz que é estimativa, de que versão e até quando ela tem dados", async () => {
+    simular(pagina([parceiro("Alfa", { risco_queda: 0.24 })], { risco: RISCO }));
+    renderizar();
+    await screen.findByText("Alfa");
+
+    expect(screen.getByText("Estimativa")).toBeInTheDocument();
+    expect(screen.getByText(/pelo modelo rede-7, com dados até 15\/03\/2026/)).toBeInTheDocument();
+    expect(screen.queryByText(/próximo treino a refaz/)).toBeNull();
+  });
+
+  it("sem previsão, o travessão — e o porquê para quem usa leitor de tela", async () => {
+    simular(pagina([parceiro("Alfa", { risco_queda: null })], { risco: RISCO }));
+    renderizar();
+
+    const linha = (await screen.findByText("Alfa")).closest("tr");
+    expect(within(linha).getByText("sem previsão")).toBeInTheDocument();
+    expect(within(linha).queryByText("0%")).toBeNull();
+  });
+
+  it("avisa quando há período importado depois da estimativa", async () => {
+    simular(
+      pagina([parceiro("Alfa", { risco_queda: 0.3 })], { risco: { ...RISCO, desatualizada: true } }),
+    );
+    renderizar();
+    await screen.findByText("Alfa");
+
+    expect(screen.getByText(/próximo treino a refaz/)).toBeInTheDocument();
+  });
+
+  it("sem modelo treinado, diz quando o risco vai aparecer", async () => {
+    simular(pagina([parceiro("Alfa")], { risco: null }));
+    renderizar();
+    await screen.findByText("Alfa");
+
+    expect(screen.getByText(/depois do primeiro treino do modelo/)).toBeInTheDocument();
+  });
+
+  it("ordenar pelo risco pede o maior primeiro", async () => {
+    const chamadas = simular(pagina([parceiro("Alfa", { risco_queda: 0.3 })], { risco: RISCO }));
+    renderizar();
+    await screen.findByText("Alfa");
+
+    await userEvent.click(screen.getByRole("button", { name: /Risco de queda/ }));
+
+    await waitFor(() => {
+      const ultima = chamadas.at(-1);
+      expect(ultima).toContain("ordenar_por=risco");
+      expect(ultima).toContain("descendente=true");
+    });
+  });
+});
+
