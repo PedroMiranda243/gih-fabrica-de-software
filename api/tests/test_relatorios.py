@@ -793,6 +793,7 @@ def test_as_operacoes_somam_a_trilha_no_mesmo_recorte(trilha):
     assert relatorio["total"] == da_trilha["total"]
     for agrupamento in ("por_acao", "por_usuario", "por_dia"):
         assert sum(linha["total"] for linha in relatorio[agrupamento]) == relatorio["total"]
+    assert relatorio["outras_pessoas"] is None
 
 
 def test_as_operacoes_por_acao_trazem_o_rotulo_da_trilha(trilha):
@@ -815,6 +816,40 @@ def test_as_operacoes_por_usuario_dizem_quem_e_contam_o_que_nao_tem_usuario(tril
     # A entrada recusada com login que não existe não tem usuário para apontar.
     assert por_usuario["sem usuário"]["total"] == 1
     assert por_usuario["sem usuário"]["chave"] is None
+
+
+def test_a_tela_lista_as_pessoas_que_mais_fizeram_e_soma_as_outras(trilha, criar_usuario):
+    """A base de demonstração guarda os usuários de cada verificação, e "por
+    pessoa" tinha duzentas linhas. A soma continua a do total; o CSV traz todas."""
+    # Direto na trilha: vinte entradas recusadas seguidas esbarrariam no bloqueio de login.
+    s = Sessao()
+    try:
+        for i in range(20):
+            pessoa = criar_usuario(
+                login=f"pessoa{i:02d}", perfil=Perfil.ANALISTA, nome=f"Pessoa {i:02d}"
+            )
+            s.add(Auditoria(usuario_id=pessoa, acao="LOGIN_SUCESSO", origem="teste"))
+        s.commit()
+    finally:
+        s.close()
+
+    relatorio = trilha.get("/api/relatorios/operacoes").json()
+    arquivo = _csv(trilha.get("/api/relatorios/operacoes/exportacao.csv"))
+
+    assert len(relatorio["por_usuario"]) == 15
+    # A Chefia, o "sem usuário" e as vinte pessoas: sete ficam na linha das outras.
+    assert relatorio["pessoas"] == 22
+    assert relatorio["outras_pessoas"]["rotulo"] == "Outras 7 pessoas"
+    listadas = sum(linha["total"] for linha in relatorio["por_usuario"])
+    assert listadas + relatorio["outras_pessoas"]["total"] == relatorio["total"]
+    assert len([linha for linha in arquivo if linha[0] == "Usuário"]) == 22
+
+
+def test_com_poucas_pessoas_nao_ha_linha_das_outras(trilha):
+    relatorio = trilha.get("/api/relatorios/operacoes").json()
+
+    assert relatorio["outras_pessoas"] is None
+    assert relatorio["pessoas"] == len(relatorio["por_usuario"]) == 2
 
 
 def test_sem_datas_valem_os_ultimos_trinta_dias_com_hoje_dentro(trilha):
