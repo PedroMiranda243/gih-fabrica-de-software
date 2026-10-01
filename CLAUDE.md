@@ -529,6 +529,12 @@ frente com alguma, a resposta já está aqui.
   `docker-compose.yml` usa `POSTGRES_PORT`, com 5433 como padrão — e o `DATABASE_URL` precisa apontar para
   a mesma porta, senão as migrações rodam no banco errado.
 
+- **A parte entregue do documento lê a cópia da entrega, nunca o arquivo vivo.** A Parte VI lia a medição das
+  telas direto de `docs/medicoes/`, e na geração da Sprint 07 passou a dizer 26 telas onde o PDF entregue diz
+  20 — sem erro e sem aviso (#208). Evidência, figura e medição de uma entrega ficam na pasta dela
+  (`docs/entrega/evidencias/sprintNN/`, `docs/entrega/diagramas/parte-…/`), e a seção só lê dali. Antes de
+  exportar o PDF, compare o texto e as figuras das partes anteriores com o documento já entregue.
+
 ---
 
 ## 8. Onde encontrar o resto
