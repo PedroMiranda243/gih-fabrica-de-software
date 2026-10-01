@@ -84,6 +84,47 @@ def test_tipo_ainda_sem_traducao_nao_vaza_a_frase_em_ingles():
     assert mensagem_de(erro) == GENERICA
 
 
+
+@pytest.mark.parametrize(
+    ("erro", "esperada"),
+    [
+        ({"type": "greater_than", "ctx": {"gt": 0}}, "Use um valor maior que 0."),
+        ({"type": "less_than", "ctx": {"lt": 1}}, "Use um valor menor que 1."),
+        (
+            {"type": "decimal_max_digits", "ctx": {"max_digits": 12}},
+            "Número grande demais: use no máximo 12 dígitos.",
+        ),
+        (
+            {"type": "decimal_max_places", "ctx": {"decimal_places": 2}},
+            "Use no máximo 2 casas decimais.",
+        ),
+    ],
+    ids=["maior-que", "menor-que", "digitos", "casas-decimais"],
+)
+def test_limite_estrito_e_decimal_dizem_o_limite(erro, esperada):
+    """Achados ao transcrever as validações da campanha: caíam na frase genérica."""
+    assert mensagem_de({"loc": (), "msg": "", **erro}) == esperada
+
+
+def test_orcamento_zero_na_campanha_diz_o_minimo(criar_usuario, autenticar, cliente):
+    """O caso que achou a lacuna: `orcamento` é `gt=0`, e respondia "Valor inválido"."""
+    criar_usuario(login="gestora", perfil=Perfil.GESTOR)
+    autenticar("gestora")
+
+    r = cliente.post(
+        "/api/otimizacoes",
+        json={
+            "orcamento": "0",
+            "maximo_acoes": 10,
+            "aplicacao_inicio": "2026-10-05",
+            "aplicacao_fim": "2026-10-11",
+        },
+    )
+
+    assert r.status_code == 422
+    assert "Use um valor maior que 0." in r.text
+
+
 # ============================================ RNF18 e RNF19 · falha inesperada
 @pytest.fixture
 def rota_que_falha():

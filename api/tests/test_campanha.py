@@ -571,6 +571,29 @@ def test_estado_da_campanha(base, gestor):
     assert estado["pode_executar"] is True and estado["ultima"] is None
 
 
+def test_o_estado_diz_a_quem_pergunta_se_calcula_e_se_edita_o_catalogo(
+    base, gestor, criar_usuario, autenticar
+):
+    """Quem pode o quê vem da API, pelo perfil de quem pergunta (regra 2.4, #190).
+
+    Sem isso, o analista via "Calcular plano" e recebia 403 ao clicar, e o
+    gestor não via a edição do catálogo: a tela lia um campo que não vinha.
+    """
+    base(_seis())
+    do_gestor = gestor.get("/api/campanha").json()
+    assert do_gestor["pode_executar"] is True and do_gestor["motivo_bloqueio"] is None
+    assert do_gestor["pode_editar_catalogo"] is True
+
+    criar_usuario(login="analista2", perfil=Perfil.ANALISTA)
+    do_analista = autenticar("analista2").get("/api/campanha").json()
+    assert do_analista["pode_executar"] is False
+    assert do_analista["motivo_bloqueio"] == "Só o gestor calcula o plano; o analista consulta."
+    assert do_analista["pode_editar_catalogo"] is False
+    # O resto é o mesmo: o analista consulta o que o gestor vê.
+    assert do_analista["elegiveis"] == do_gestor["elegiveis"]
+    assert do_analista["acoes"] == do_gestor["acoes"]
+
+
 def test_o_historico_lista_da_mais_recente_para_a_mais_antiga(base, gestor):
     base(_seis())
     primeira = _calcular(gestor)

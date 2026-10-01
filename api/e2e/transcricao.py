@@ -51,10 +51,30 @@ def mascarar(corpo: dict) -> dict:
     return {k: ("********" if k in SIGILOSOS else v) for k, v in corpo.items()}
 
 
+def resumir(valor: object) -> object:
+    """Listas longas, em qualquer nível, viram os dois primeiros e a contagem do resto."""
+    if isinstance(valor, dict):
+        return {k: resumir(v) for k, v in valor.items()}
+    if isinstance(valor, list):
+        if len(valor) > 3:
+            return [*(resumir(v) for v in valor[:2]), f"... mais {len(valor) - 2} registros"]
+        return [resumir(v) for v in valor]
+    return valor
+
+
 def troca(
-    cliente: httpx.Client, metodo: str, caminho: str, corpo: dict | None = None
+    cliente: httpx.Client,
+    metodo: str,
+    caminho: str,
+    corpo: dict | None = None,
+    *,
+    resumida: bool = False,
 ) -> httpx.Response:
-    """Faz a requisição e imprime os dois lados dela."""
+    """Faz a requisição e imprime os dois lados dela.
+
+    `resumida` encurta também as listas de dentro da resposta — o plano de uma
+    campanha tem dezenas de itens, e a evidência é o formato de cada um.
+    """
     print(f"\n$ {metodo} {caminho}")
     if corpo is not None:
         visivel = json.dumps(mascarar(corpo), ensure_ascii=False, indent=2)
@@ -82,6 +102,8 @@ def troca(
         print(f"  < ... mais {len(conteudo) - 2} registros")
         return resposta
 
+    if resumida:
+        conteudo = resumir(conteudo)
     for linha in json.dumps(conteudo, ensure_ascii=False, indent=2).splitlines():
         print(f"  < {linha}")
     return resposta

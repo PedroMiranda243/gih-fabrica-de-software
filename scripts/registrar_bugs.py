@@ -11,7 +11,7 @@ que aconteceu no primeiro bug que alguém esquecer de copiar.
 
 Precisa do `gh` autenticado. Uso, da raiz do projeto:
 
-    python scripts/registrar_bugs.py --desde 2026-09-22 --saida docs/entrega/evidencias/sprint05
+    python scripts/registrar_bugs.py --desde 2026-09-26 --saida docs/entrega/evidencias/sprint06
 """
 from __future__ import annotations
 

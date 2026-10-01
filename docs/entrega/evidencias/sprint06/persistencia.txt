@@ -1,0 +1,333 @@
+Persistência: os dados sobrevivem a desligar e religar a aplicação · http://localhost:8000
+Dados sintéticos; nenhum nome real de empresa ou pessoa.
+
+==============================================================================
+Preparação — um analista, que gerencia parceiros (UC04), e um gestor, que calcula a campanha (UC08)
+==============================================================================
+
+$ POST /api/usuarios
+  > {
+  >   "login": "t73396.analista",
+  >   "nome": "Analista da Evidência",
+  >   "senha": "********",
+  >   "perfil": "ANALISTA"
+  > }
+  201 Created
+  < {
+  <   "id": 141,
+  <   "login": "t73396.analista",
+  <   "nome": "Analista da Evidência",
+  <   "perfil": "ANALISTA",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-09-30T21:51:04.164682Z"
+  < }
+
+$ POST /api/usuarios
+  > {
+  >   "login": "t73396.gestor",
+  >   "nome": "Gestor da Evidência",
+  >   "senha": "********",
+  >   "perfil": "GESTOR"
+  > }
+  201 Created
+  < {
+  <   "id": 142,
+  <   "login": "t73396.gestor",
+  <   "nome": "Gestor da Evidência",
+  <   "perfil": "GESTOR",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-09-30T21:51:04.227924Z"
+  < }
+
+==============================================================================
+[1/4] Antes de desligar — o analista cadastra e altera um parceiro
+==============================================================================
+
+$ POST /api/sessao
+  > {
+  >   "login": "t73396.analista",
+  >   "senha": "********"
+  > }
+  201 Created
+  < {
+  <   "usuario": {
+  <     "id": 141,
+  <     "login": "t73396.analista",
+  <     "nome": "Analista da Evidência",
+  <     "perfil": "ANALISTA",
+  <     "ativo": true,
+  <     "parceiro_id": null,
+  <     "criado_em": "2026-09-30T21:51:04.164682Z",
+  <     "telas": [
+  <       "painel",
+  <       "importar",
+  <       "historico_importacoes",
+  <       "parceiros",
+  <       "campanha",
+  <       "execucoes",
+  <       "execucao",
+  <       "mensagens",
+  <       "aprovacao",
+  <       "assistente"
+  <     ]
+  <   },
+  <   "expira_em": "2026-10-01T05:51:06.583638Z"
+  < }
+
+$ POST /api/categorias
+  > {
+  >   "nome": "Categoria t73396"
+  > }
+  201 Created
+  < {
+  <   "id": 31,
+  <   "nome": "Categoria t73396",
+  <   "ativa": true
+  < }
+
+$ POST /api/parceiros
+  > {
+  >   "nome": "Comércio t73396",
+  >   "status": "PROSPECCAO"
+  > }
+  201 Created
+  < {
+  <   "id": 622,
+  <   "nome": "Comércio t73396",
+  <   "categoria": null,
+  <   "origem_categoria": null,
+  <   "status": "PROSPECCAO",
+  <   "contato": null,
+  <   "ativo": true,
+  <   "criado_em": "2026-09-30T21:51:06.603970Z"
+  < }
+
+$ PATCH /api/parceiros/622
+  > {
+  >   "status": "ATIVO",
+  >   "categoria_id": 31,
+  >   "contato": "contato@exemplo.test"
+  > }
+  200 OK
+  < {
+  <   "id": 622,
+  <   "nome": "Comércio t73396",
+  <   "categoria": {
+  <     "id": 31,
+  <     "nome": "Categoria t73396",
+  <     "ativa": true
+  <   },
+  <   "origem_categoria": "MANUAL",
+  <   "status": "ATIVO",
+  <   "contato": "contato@exemplo.test",
+  <   "ativo": true,
+  <   "criado_em": "2026-09-30T21:51:06.603970Z"
+  < }
+
+O gestor calcula um plano de campanha, que roda em segundo plano (ADR-011):
+
+$ POST /api/otimizacoes
+  > {
+  >   "orcamento": "5000.00",
+  >   "maximo_acoes": 30,
+  >   "cota_cauda_longa": "0.3",
+  >   "aplicacao_inicio": "2026-10-05",
+  >   "aplicacao_fim": "2026-10-11"
+  > }
+  202 Accepted
+  < {
+  <   "id": 113,
+  <   "situacao": "EM_ANDAMENTO",
+  <   "autor": "Gestor da Evidência",
+  <   "modo": "GPU",
+  <   "substituicao": null,
+  <   "threads": null,
+  <   "iniciada_em": "2026-09-30T21:51:08.962730Z",
+  <   "concluida_em": null,
+  <   "parametros": {
+  <     "orcamento": "5000.00",
+  <     "maximo_acoes": 30,
+  <     "cota_cauda_longa": "0.3",
+  <     "cotas_categoria": [],
+  <     "aplicacao_inicio": "2026-10-05",
+  <     "aplicacao_fim": "2026-10-11",
+  <     "modo": null
+  <   },
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "modelo_versao": "rede-1",
+  <   "viavel": null,
+  <   "restricao_violada": null,
+  <   "motivo": null,
+  <   "ajuda": null,
+  <   "uplift_total": null,
+  <   "custo_total": null,
+  <   "tempo_ms": null,
+  <   "parcial": null,
+  <   "acoes": null,
+  <   "elegiveis": null,
+  <   "excluidos": null,
+  <   "cotas": [],
+  <   "folga_orcamento": null,
+  <   "folga_acoes": null,
+  <   "ganho_guloso": null,
+  <   "itens": null
+  < }
+
+  ... o plano terminou em 1.0 s, com 23 ações
+
+O estado anotado para comparar depois:
+  parceiro           Comércio t73396 · ATIVO · contato@exemplo.test · Categoria t73396
+  parceiros na base  501
+  painel             2026-09-14 a 2026-09-20 · faturamento 1839707.96 · 41974 pedidos
+  limiares           Top 15 · tendência em 2 períodos · recém-chegado até 3
+  modelo em uso      rede-1 (treino 1) · MAPE 0.0922 · Brier 0.1051
+  previsão           R$ 84818.53 · risco 0.2355 · rede-1
+  plano de campanha  execução 113 · CONCLUIDA · 23 ações · custo R$ 5000.00 · ganho R$ 114527.81
+  no cadastro        Campanha de categoria · custo R$ 480.00 · plano 113
+
+Contêineres em execução:
+  api        b9ca4b8d61b7
+  postgres   8a9fca57899b
+  web        ca6def5c2c32
+
+Volume do banco: growth-intelligence-hub_dados_postgres, criado em 2026-09-15T20:18:27Z
+
+==============================================================================
+[2/4] Desligar — docker compose down
+==============================================================================
+
+$ docker compose down
+   Container growth-intelligence-hub-web-1 Stopping 
+   Container growth-intelligence-hub-web-1 Stopped 
+   Container growth-intelligence-hub-web-1 Removing 
+   Container growth-intelligence-hub-web-1 Removed 
+   Container growth-intelligence-hub-api-1 Stopping 
+   Container growth-intelligence-hub-api-1 Stopped 
+   Container growth-intelligence-hub-api-1 Removing 
+   Container growth-intelligence-hub-api-1 Removed 
+   Container growth-intelligence-hub-postgres-1 Stopping 
+   Container growth-intelligence-hub-postgres-1 Stopped 
+   Container growth-intelligence-hub-postgres-1 Removing 
+   Container growth-intelligence-hub-postgres-1 Removed 
+   Network growth-intelligence-hub_default Removing 
+   Network growth-intelligence-hub_default Removed 
+
+A API responde? não
+Contêineres depois do down:
+  (nenhum contêiner)
+Volume do banco: growth-intelligence-hub_dados_postgres, criado em 2026-09-15T20:18:27Z
+
+==============================================================================
+[3/4] Religar — docker compose up -d
+==============================================================================
+
+$ docker compose up -d
+   Network growth-intelligence-hub_default Creating 
+   Network growth-intelligence-hub_default Created 
+   Container growth-intelligence-hub-postgres-1 Creating 
+   Container growth-intelligence-hub-postgres-1 Created 
+   Container growth-intelligence-hub-api-1 Creating 
+   Container growth-intelligence-hub-api-1 Created 
+   Container growth-intelligence-hub-web-1 Creating 
+   Container growth-intelligence-hub-web-1 Created 
+   Container growth-intelligence-hub-postgres-1 Starting 
+   Container growth-intelligence-hub-postgres-1 Started 
+   Container growth-intelligence-hub-postgres-1 Waiting 
+   Container growth-intelligence-hub-postgres-1 Healthy 
+   Container growth-intelligence-hub-api-1 Starting 
+   Container growth-intelligence-hub-api-1 Started 
+   Container growth-intelligence-hub-web-1 Starting 
+   Container growth-intelligence-hub-web-1 Started 
+
+A API voltou a responder em 2 s.
+Contêineres novos:
+  api        ddb4e58aeb58
+  postgres   284dc7e5e98a
+  web        fd83f423b8c1
+
+==============================================================================
+[4/4] Depois de religar — o mesmo cookie de antes, sem novo login
+==============================================================================
+
+$ GET /api/sessao/atual
+  200 OK
+  < {
+  <   "id": 141,
+  <   "login": "t73396.analista",
+  <   "nome": "Analista da Evidência",
+  <   "perfil": "ANALISTA",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-09-30T21:51:04.164682Z",
+  <   "telas": [
+  <     "painel",
+  <     "importar",
+  <     "historico_importacoes",
+  <     "parceiros",
+  <     "campanha",
+  <     "execucoes",
+  <     "execucao",
+  <     "mensagens",
+  <     "aprovacao",
+  <     "assistente"
+  <   ]
+  < }
+
+$ GET /api/parceiros/622
+  200 OK
+  < {
+  <   "id": 622,
+  <   "nome": "Comércio t73396",
+  <   "categoria": {
+  <     "id": 31,
+  <     "nome": "Categoria t73396",
+  <     "ativa": true
+  <   },
+  <   "origem_categoria": "MANUAL",
+  <   "status": "ATIVO",
+  <   "contato": "contato@exemplo.test",
+  <   "ativo": true,
+  <   "criado_em": "2026-09-30T21:51:06.603970Z",
+  <   "desempenho": {
+  <     "segmento": null,
+  <     "faturamento": null,
+  <     "pedidos": null,
+  <     "ticket_medio": null,
+  <     "variacao_percentual": null
+  <   },
+  <   "risco_queda": null
+  < }
+
+O estado lido agora:
+  parceiro           Comércio t73396 · ATIVO · contato@exemplo.test · Categoria t73396
+  parceiros na base  501
+  painel             2026-09-14 a 2026-09-20 · faturamento 1839707.96 · 41974 pedidos
+  limiares           Top 15 · tendência em 2 períodos · recém-chegado até 3
+  modelo em uso      rede-1 (treino 1) · MAPE 0.0922 · Brier 0.1051
+  previsão           R$ 84818.53 · risco 0.2355 · rede-1
+  plano de campanha  execução 113 · CONCLUIDA · 23 ações · custo R$ 5000.00 · ganho R$ 114527.81
+  no cadastro        Campanha de categoria · custo R$ 480.00 · plano 113
+
+Conferências:
+  ok    o down removeu os contêineres, e a API parou de responder
+  ok    o up criou contêineres novos — não é o mesmo processo de antes
+  ok    o volume do banco é o mesmo, com a mesma data de criação
+  ok    a sessão aberta antes de desligar continua valendo
+  ok    o parceiro voltou com todos os campos iguais
+  ok    a alteração feita antes de desligar continua lá
+  ok    a base tem o mesmo número de parceiros
+  ok    o painel mostra os mesmos indicadores
+  ok    os limiares da segmentação são os mesmos
+  ok    a versão do modelo em uso é a mesma, com as mesmas métricas
+  ok    a previsão do parceiro é a mesma, da mesma versão
+  ok    o plano de campanha voltou igual, item a item — parceiro, ação, custo e ganho
+  ok    o cadastro do parceiro do plano mostra a mesma ação (H81)
+
+==============================================================================
+Resultado: 13 de 13 conferências passaram.

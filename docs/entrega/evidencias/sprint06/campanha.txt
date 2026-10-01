@@ -1,0 +1,831 @@
+Módulo de campanha integrado ao banco e aos outros módulos · http://localhost:8000
+Dados sintéticos; nenhum nome real de empresa ou pessoa.
+
+==============================================================================
+Preparação — um gestor, que calcula a campanha (UC08), e um analista, que a consulta
+==============================================================================
+
+$ POST /api/usuarios
+  > {
+  >   "login": "t95173.gestor",
+  >   "nome": "Gestor da Evidência",
+  >   "senha": "********",
+  >   "perfil": "GESTOR"
+  > }
+  201 Created
+  < {
+  <   "id": 112,
+  <   "login": "t95173.gestor",
+  <   "nome": "Gestor da Evidência",
+  <   "perfil": "GESTOR",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-09-30T21:32:17.665646Z"
+  < }
+
+$ POST /api/usuarios
+  > {
+  >   "login": "t95173.analista",
+  >   "nome": "Analista da Evidência",
+  >   "senha": "********",
+  >   "perfil": "ANALISTA"
+  > }
+  201 Created
+  < {
+  <   "id": 113,
+  <   "login": "t95173.analista",
+  <   "nome": "Analista da Evidência",
+  <   "perfil": "ANALISTA",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-09-30T21:32:17.725363Z"
+  < }
+
+==============================================================================
+[1/5] Consultar — com o que a campanha vai trabalhar
+==============================================================================
+
+As listas longas da resposta aparecem com os dois primeiros registros.
+
+$ GET /api/campanha
+  200 OK
+  < {
+  <   "modelo_versao": "rede-1",
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "top_n": 15,
+  <   "elegiveis": 469,
+  <   "excluidos": {
+  <     "historico_curto": 31,
+  <     "fora_do_periodo": 0,
+  <     "sem_previsao": 0,
+  <     "inativos": 0,
+  <     "em_prospeccao": 0
+  <   },
+  <   "sem_categoria": 0,
+  <   "categorias": [
+  <     {
+  <       "id": 6,
+  <       "nome": "Açaí e sorvetes",
+  <       "elegiveis": 29
+  <     },
+  <     {
+  <       "id": 8,
+  <       "nome": "Bebidas",
+  <       "elegiveis": 22
+  <     },
+  <     "... mais 8 registros"
+  <   ],
+  <   "acoes": [
+  <     {
+  <       "id": 1,
+  <       "nome": "Cupom de primeira compra",
+  <       "custo_unitario": "120.00",
+  <       "efeito_crescimento": "0.0800",
+  <       "efeito_retencao": "0.0300",
+  <       "ativa": true
+  <     },
+  <     {
+  <       "id": 2,
+  <       "nome": "Destaque na vitrine",
+  <       "custo_unitario": "260.00",
+  <       "efeito_crescimento": "0.1400",
+  <       "efeito_retencao": "0.0500",
+  <       "ativa": true
+  <     },
+  <     "... mais 3 registros"
+  <   ],
+  <   "em_andamento": null,
+  <   "ultima": null,
+  <   "pode_executar": true,
+  <   "motivo_bloqueio": null,
+  <   "modos": [
+  <     {
+  <       "modo": "GPU",
+  <       "disponivel": true,
+  <       "motivo": null
+  <     },
+  <     {
+  <       "modo": "CPU_PARALELO",
+  <       "disponivel": true,
+  <       "motivo": null
+  <     },
+  <     {
+  <       "modo": "SERIAL",
+  <       "disponivel": true,
+  <       "motivo": null
+  <     }
+  <   ],
+  <   "modo_automatico": "GPU"
+  < }
+  ok    a campanha parte da versão do modelo em uso e do período das previsões (RN10)
+  ok    quem fica fora do plano tem o motivo contado (RN11)
+  ok    a API diz se dá para calcular, e os modos desta instalação (RF32)
+
+==============================================================================
+[2/5] Armazenar — o gestor calcula o plano
+==============================================================================
+
+A requisição devolve na hora, com a execução gravada em andamento; a busca
+roda fora dela (ADR-011):
+
+$ POST /api/otimizacoes
+  > {
+  >   "orcamento": "5000.00",
+  >   "maximo_acoes": 30,
+  >   "cota_cauda_longa": "0.3",
+  >   "aplicacao_inicio": "2026-10-05",
+  >   "aplicacao_fim": "2026-10-11"
+  > }
+  202 Accepted
+  < {
+  <   "id": 87,
+  <   "situacao": "EM_ANDAMENTO",
+  <   "autor": "Gestor da Evidência",
+  <   "modo": "GPU",
+  <   "substituicao": null,
+  <   "threads": null,
+  <   "iniciada_em": "2026-09-30T21:32:22.518278Z",
+  <   "concluida_em": null,
+  <   "parametros": {
+  <     "orcamento": "5000.00",
+  <     "maximo_acoes": 30,
+  <     "cota_cauda_longa": "0.3",
+  <     "cotas_categoria": [],
+  <     "aplicacao_inicio": "2026-10-05",
+  <     "aplicacao_fim": "2026-10-11",
+  <     "modo": null
+  <   },
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "modelo_versao": "rede-1",
+  <   "viavel": null,
+  <   "restricao_violada": null,
+  <   "motivo": null,
+  <   "ajuda": null,
+  <   "uplift_total": null,
+  <   "custo_total": null,
+  <   "tempo_ms": null,
+  <   "parcial": null,
+  <   "acoes": null,
+  <   "elegiveis": null,
+  <   "excluidos": null,
+  <   "cotas": [],
+  <   "folga_orcamento": null,
+  <   "folga_acoes": null,
+  <   "ganho_guloso": null,
+  <   "itens": null
+  < }
+  ok    o pedido é aceito e gravado em andamento (202)
+
+  ... 2 consulta(s) a GET /api/otimizacoes/87 até a situação mudar (1.0 s)
+
+O registro gravado, lido de volta — com o plano, parceiro a parceiro:
+
+$ GET /api/otimizacoes/87
+  200 OK
+  < {
+  <   "id": 87,
+  <   "situacao": "CONCLUIDA",
+  <   "autor": "Gestor da Evidência",
+  <   "modo": "GPU",
+  <   "substituicao": null,
+  <   "threads": null,
+  <   "iniciada_em": "2026-09-30T21:32:22.518278Z",
+  <   "concluida_em": "2026-09-30T21:32:22.870577Z",
+  <   "parametros": {
+  <     "orcamento": "5000.00",
+  <     "maximo_acoes": 30,
+  <     "cota_cauda_longa": "0.3",
+  <     "cotas_categoria": [],
+  <     "aplicacao_inicio": "2026-10-05",
+  <     "aplicacao_fim": "2026-10-11",
+  <     "modo": null
+  <   },
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "modelo_versao": "rede-1",
+  <   "viavel": true,
+  <   "restricao_violada": null,
+  <   "motivo": null,
+  <   "ajuda": null,
+  <   "uplift_total": "114527.81",
+  <   "custo_total": "5000.00",
+  <   "tempo_ms": 280,
+  <   "parcial": false,
+  <   "acoes": 23,
+  <   "elegiveis": 469,
+  <   "excluidos": {
+  <     "historico_curto": 31,
+  <     "fora_do_periodo": 0,
+  <     "sem_previsao": 0,
+  <     "inativos": 0,
+  <     "em_prospeccao": 0
+  <   },
+  <   "cotas": [
+  <     {
+  <       "categoria_id": null,
+  <       "nome": "Cauda longa",
+  <       "acoes": 12,
+  <       "minimo": 9,
+  <       "maximo": 30
+  <     }
+  <   ],
+  <   "folga_orcamento": "0",
+  <   "folga_acoes": 7,
+  <   "ganho_guloso": "110496.67",
+  <   "itens": [
+  <     {
+  <       "parceiro_id": 246,
+  <       "parceiro": "Ponto Azul 2",
+  <       "segmento": "EM_RISCO",
+  <       "categoria": "Mercado",
+  <       "cauda_longa": false,
+  <       "acao_id": 3,
+  <       "acao": "Campanha de categoria",
+  <       "custo": "480.00",
+  <       "ganho": "20258.29"
+  <     },
+  <     {
+  <       "parceiro_id": 460,
+  <       "parceiro": "Quintal Verde 2",
+  <       "segmento": "TOP",
+  <       "categoria": "Restaurante",
+  <       "cauda_longa": false,
+  <       "acao_id": 3,
+  <       "acao": "Campanha de categoria",
+  <       "custo": "480.00",
+  <       "ganho": "14950.60"
+  <     },
+  <     "... mais 21 registros"
+  <   ]
+  < }
+  ok    a execução terminou viável, com autor, modo, tempo e o plano (RF33)
+  ok    o plano cabe no orçamento e no máximo de ações (RN07)
+  ok    cada cota ficou entre o mínimo e o máximo dela
+  ok    os itens somam o custo total, e o ganho total a menos do arredondamento
+
+==============================================================================
+[3/5] Integração — o plano parte da previsão e do ranking, e volta ao cadastro
+==============================================================================
+
+O analista abre o cadastro de Ponto Azul 2, o de maior ganho esperado no
+plano. A previsão, do segundo módulo:
+
+$ GET /api/parceiros/246/previsao
+  200 OK
+  < {
+  <   "disponivel": true,
+  <   "faturamento_previsto": "84818.53",
+  <   "probabilidade_queda": 0.23553472047326202,
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "modelo_versao": "rede-1",
+  <   "origem": "MODELO",
+  <   "gerada_em": "2026-09-26T06:11:54.148482Z",
+  <   "desatualizada": false,
+  <   "motivo": null,
+  <   "ajuda": null
+  < }
+  ok    o plano saiu da previsão da versão em uso, sobre o mesmo período-base (RN10)
+
+O risco na lista de parceiros (H80) é o da mesma previsão:
+
+$ GET /api/parceiros?busca=Ponto Azul 2&ordenar_por=risco
+  200 OK
+  < {
+  <   "itens": [
+  <     {
+  <       "id": 246,
+  <       "nome": "Ponto Azul 2",
+  <       "categoria": {
+  <         "id": 5,
+  <         "nome": "Mercado",
+  <         "ativa": true
+  <       },
+  <       "origem_categoria": "MANUAL",
+  <       "status": "ATIVO",
+  <       "contato": null,
+  <       "ativo": true,
+  <       "criado_em": "2026-09-26T06:11:46.003096Z",
+  <       "desempenho": {
+  <         "segmento": "EM_RISCO",
+  <         "faturamento": "79410.29",
+  <         "pedidos": 1070,
+  <         "ticket_medio": "74.22",
+  <         "variacao_percentual": "-15.06"
+  <       },
+  <       "risco_queda": 0.23553472047326202
+  <     }
+  <   ],
+  <   "total": 1,
+  <   "pagina": 1,
+  <   "tamanho": 50,
+  <   "risco": {
+  <     "modelo_versao": "rede-1",
+  <     "periodo_base": {
+  <       "id": 12,
+  <       "data_inicio": "2026-09-14",
+  <       "data_fim": "2026-09-20"
+  <     },
+  <     "desatualizada": false
+  <   },
+  <   "periodo": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   }
+  < }
+  ok    o risco da lista é a probabilidade de queda da previsão
+
+E a campanha, no mesmo cadastro (H81):
+
+$ GET /api/parceiros/246/campanha
+  200 OK
+  < {
+  <   "plano": {
+  <     "execucao_id": 87,
+  <     "concluida_em": "2026-09-30T21:32:22.870577Z",
+  <     "aplicacao_inicio": "2026-10-05",
+  <     "aplicacao_fim": "2026-10-11",
+  <     "modelo_versao": "rede-1"
+  <   },
+  <   "no_plano": true,
+  <   "acao": "Campanha de categoria",
+  <   "custo": "480.00",
+  <   "uplift_esperado": "20258.29"
+  < }
+  ok    o cadastro mostra a ação, o custo e o ganho que o plano reservou (H81)
+
+O ranking do painel, do primeiro módulo: os 15 maiores do período-base.
+
+$ GET /api/painel/ranking?periodo_id=12&tamanho=15
+  200 OK
+  < {
+  <   "periodo": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "periodo_anterior": {
+  <     "id": 11,
+  <     "data_inicio": "2026-09-07",
+  <     "data_fim": "2026-09-13"
+  <   },
+  <   "itens": [
+  <     {
+  <       "parceiro_id": 246,
+  <       "nome": "Ponto Azul 2",
+  <       "categoria": "Mercado",
+  <       "segmento": "EM_RISCO",
+  <       "posicao": 1,
+  <       "posicao_anterior": 1,
+  <       "faturamento": "79410.29",
+  <       "pedidos": 1070,
+  <       "ticket_medio": "74.22",
+  <       "variacao_percentual": "-15.06",
+  <       "estreante": false
+  <     },
+  <     {
+  <       "parceiro_id": 460,
+  <       "nome": "Quintal Verde 2",
+  <       "categoria": "Restaurante",
+  <       "segmento": "TOP",
+  <       "posicao": 2,
+  <       "posicao_anterior": 2,
+  <       "faturamento": "57841.79",
+  <       "pedidos": 1129,
+  <       "ticket_medio": "51.23",
+  <       "variacao_percentual": "-14.11",
+  <       "estreante": false
+  <     },
+  <     "... mais 13 registros"
+  <   ],
+  <   "total": 500,
+  <   "pagina": 1,
+  <   "tamanho": 15
+  < }
+
+  No plano: 11 ações no Top 15 e 12 na cauda longa.
+  ok    a cauda longa do plano é quem está fora do Top 15 do painel (RN11)
+
+Parada Central, 10º do ranking, ficou fora do plano:
+
+$ GET /api/parceiros/7/campanha
+  200 OK
+  < {
+  <   "plano": {
+  <     "execucao_id": 87,
+  <     "concluida_em": "2026-09-30T21:32:22.870577Z",
+  <     "aplicacao_inicio": "2026-10-05",
+  <     "aplicacao_fim": "2026-10-11",
+  <     "modelo_versao": "rede-1"
+  <   },
+  <   "no_plano": false,
+  <   "acao": null,
+  <   "custo": null,
+  <   "uplift_esperado": null
+  < }
+  ok    quem ficou fora aparece como fora, com o plano de referência
+
+==============================================================================
+[4/5] Atualizar — um segundo plano, com outro orçamento, passa a ser o último
+==============================================================================
+
+$ POST /api/otimizacoes
+  > {
+  >   "orcamento": "8000.00",
+  >   "maximo_acoes": 30,
+  >   "cota_cauda_longa": "0.3",
+  >   "aplicacao_inicio": "2026-10-05",
+  >   "aplicacao_fim": "2026-10-11"
+  > }
+  202 Accepted
+  < {
+  <   "id": 88,
+  <   "situacao": "EM_ANDAMENTO",
+  <   "autor": "Gestor da Evidência",
+  <   "modo": "GPU",
+  <   "substituicao": null,
+  <   "threads": null,
+  <   "iniciada_em": "2026-09-30T21:32:23.700296Z",
+  <   "concluida_em": null,
+  <   "parametros": {
+  <     "orcamento": "8000.00",
+  <     "maximo_acoes": 30,
+  <     "cota_cauda_longa": "0.3",
+  <     "cotas_categoria": [],
+  <     "aplicacao_inicio": "2026-10-05",
+  <     "aplicacao_fim": "2026-10-11",
+  <     "modo": null
+  <   },
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "modelo_versao": "rede-1",
+  <   "viavel": null,
+  <   "restricao_violada": null,
+  <   "motivo": null,
+  <   "ajuda": null,
+  <   "uplift_total": null,
+  <   "custo_total": null,
+  <   "tempo_ms": null,
+  <   "parcial": null,
+  <   "acoes": null,
+  <   "elegiveis": null,
+  <   "excluidos": null,
+  <   "cotas": [],
+  <   "folga_orcamento": null,
+  <   "folga_acoes": null,
+  <   "ganho_guloso": null,
+  <   "itens": null
+  < }
+
+  ... 2 consulta(s) a GET /api/otimizacoes/88 até a situação mudar (1.0 s)
+  ... 30 ações · custo R$ 7810.00 · ganho R$ 132995.81
+  ok    o segundo plano terminou viável
+
+O cadastro de Ponto Azul 2, de novo:
+
+$ GET /api/parceiros/246/campanha
+  200 OK
+  < {
+  <   "plano": {
+  <     "execucao_id": 88,
+  <     "concluida_em": "2026-09-30T21:32:24.005703Z",
+  <     "aplicacao_inicio": "2026-10-05",
+  <     "aplicacao_fim": "2026-10-11",
+  <     "modelo_versao": "rede-1"
+  <   },
+  <   "no_plano": true,
+  <   "acao": "Campanha de categoria",
+  <   "custo": "480.00",
+  <   "uplift_esperado": "20258.29"
+  < }
+  ok    o cadastro passa a ler o plano novo — o último concluído e viável
+
+Os dois planos lado a lado (RF35):
+
+$ GET /api/otimizacoes/comparacao?a=87&b=88
+  200 OK
+  < {
+  <   "a": {
+  <     "id": 87,
+  <     "situacao": "CONCLUIDA",
+  <     "autor": "Gestor da Evidência",
+  <     "modo": "GPU",
+  <     "substituicao": null,
+  <     "threads": null,
+  <     "iniciada_em": "2026-09-30T21:32:22.518278Z",
+  <     "concluida_em": "2026-09-30T21:32:22.870577Z",
+  <     "parametros": {
+  <       "orcamento": "5000.00",
+  <       "maximo_acoes": 30,
+  <       "cota_cauda_longa": "0.3",
+  <       "cotas_categoria": [],
+  <       "aplicacao_inicio": "2026-10-05",
+  <       "aplicacao_fim": "2026-10-11",
+  <       "modo": null
+  <     },
+  <     "periodo_base": {
+  <       "id": 12,
+  <       "data_inicio": "2026-09-14",
+  <       "data_fim": "2026-09-20"
+  <     },
+  <     "modelo_versao": "rede-1",
+  <     "viavel": true,
+  <     "restricao_violada": null,
+  <     "motivo": null,
+  <     "ajuda": null,
+  <     "uplift_total": "114527.81",
+  <     "custo_total": "5000.00",
+  <     "tempo_ms": 280,
+  <     "parcial": false,
+  <     "acoes": 23,
+  <     "elegiveis": 469,
+  <     "excluidos": {
+  <       "historico_curto": 31,
+  <       "fora_do_periodo": 0,
+  <       "sem_previsao": 0,
+  <       "inativos": 0,
+  <       "em_prospeccao": 0
+  <     },
+  <     "cotas": [
+  <       {
+  <         "categoria_id": null,
+  <         "nome": "Cauda longa",
+  <         "acoes": 12,
+  <         "minimo": 9,
+  <         "maximo": 30
+  <       }
+  <     ],
+  <     "folga_orcamento": "0",
+  <     "folga_acoes": 7,
+  <     "ganho_guloso": "110496.67",
+  <     "itens": null
+  <   },
+  <   "b": {
+  <     "id": 88,
+  <     "situacao": "CONCLUIDA",
+  <     "autor": "Gestor da Evidência",
+  <     "modo": "GPU",
+  <     "substituicao": null,
+  <     "threads": null,
+  <     "iniciada_em": "2026-09-30T21:32:23.700296Z",
+  <     "concluida_em": "2026-09-30T21:32:24.005703Z",
+  <     "parametros": {
+  <       "orcamento": "8000.00",
+  <       "maximo_acoes": 30,
+  <       "cota_cauda_longa": "0.3",
+  <       "cotas_categoria": [],
+  <       "aplicacao_inicio": "2026-10-05",
+  <       "aplicacao_fim": "2026-10-11",
+  <       "modo": null
+  <     },
+  <     "periodo_base": {
+  <       "id": 12,
+  <       "data_inicio": "2026-09-14",
+  <       "data_fim": "2026-09-20"
+  <     },
+  <     "modelo_versao": "rede-1",
+  <     "viavel": true,
+  <     "restricao_violada": null,
+  <     "motivo": null,
+  <     "ajuda": null,
+  <     "uplift_total": "132995.81",
+  <     "custo_total": "7810.00",
+  <     "tempo_ms": 238,
+  <     "parcial": false,
+  <     "acoes": 30,
+  <     "elegiveis": 469,
+  <     "excluidos": {
+  <       "historico_curto": 31,
+  <       "fora_do_periodo": 0,
+  <       "sem_previsao": 0,
+  <       "inativos": 0,
+  <       "em_prospeccao": 0
+  <     },
+  <     "cotas": [
+  <       {
+  <         "categoria_id": null,
+  <         "nome": "Cauda longa",
+  <         "acoes": 17,
+  <         "minimo": 9,
+  <         "maximo": 30
+  <       }
+  <     ],
+  <     "folga_orcamento": "190",
+  <     "folga_acoes": 0,
+  <     "ganho_guloso": "129898.67",
+  <     "itens": null
+  <   },
+  <   "parametros_diferentes": [
+  <     "orcamento"
+  <   ],
+  <   "mesmas_previsoes": true,
+  <   "diferenca_uplift": "18468.00",
+  <   "diferenca_custo": "2810.00",
+  <   "diferenca_acoes": 7,
+  <   "resumo": {
+  <     "mudaram": 3,
+  <     "so_a": 1,
+  <     "so_b": 8,
+  <     "iguais": 19
+  <   },
+  <   "itens": [
+  <     {
+  <       "parceiro_id": 263,
+  <       "parceiro": "Parada Mineiro 2",
+  <       "segmento": "TOP",
+  <       "situacao": "MUDOU",
+  <       "acao_a": "Destaque na vitrine",
+  <       "acao_b": "Visita de relacionamento",
+  <       "ganho_a": "2621.72",
+  <       "ganho_b": "1586.48"
+  <     },
+  <     {
+  <       "parceiro_id": 310,
+  <       "parceiro": "Ponto Central 3",
+  <       "segmento": "EM_RISCO",
+  <       "situacao": "MUDOU",
+  <       "acao_a": "Visita de relacionamento",
+  <       "acao_b": "Frete subsidiado",
+  <       "ganho_a": "1980.44",
+  <       "ganho_b": "2665.42"
+  <     },
+  <     "... mais 29 registros"
+  <   ]
+  < }
+  ok    a comparação diz que só o orçamento mudou, sobre as mesmas previsões
+  ok    as diferenças são do segundo plano para o primeiro
+
+O histórico, do mais recente para o mais antigo (RF34):
+
+$ GET /api/otimizacoes?tamanho=2
+  200 OK
+  < {
+  <   "itens": [
+  <     {
+  <       "id": 88,
+  <       "situacao": "CONCLUIDA",
+  <       "autor": "Gestor da Evidência",
+  <       "modo": "GPU",
+  <       "substituicao": null,
+  <       "threads": null,
+  <       "iniciada_em": "2026-09-30T21:32:23.700296Z",
+  <       "concluida_em": "2026-09-30T21:32:24.005703Z",
+  <       "parametros": {
+  <         "orcamento": "8000.00",
+  <         "maximo_acoes": 30,
+  <         "cota_cauda_longa": "0.3",
+  <         "cotas_categoria": [],
+  <         "aplicacao_inicio": "2026-10-05",
+  <         "aplicacao_fim": "2026-10-11",
+  <         "modo": null
+  <       },
+  <       "periodo_base": {
+  <         "id": 12,
+  <         "data_inicio": "2026-09-14",
+  <         "data_fim": "2026-09-20"
+  <       },
+  <       "modelo_versao": "rede-1",
+  <       "viavel": true,
+  <       "restricao_violada": null,
+  <       "motivo": null,
+  <       "ajuda": null,
+  <       "uplift_total": "132995.81",
+  <       "custo_total": "7810.00",
+  <       "tempo_ms": 238,
+  <       "parcial": false,
+  <       "acoes": 30,
+  <       "elegiveis": 469,
+  <       "excluidos": {
+  <         "historico_curto": 31,
+  <         "fora_do_periodo": 0,
+  <         "sem_previsao": 0,
+  <         "inativos": 0,
+  <         "em_prospeccao": 0
+  <       },
+  <       "cotas": [
+  <         {
+  <           "categoria_id": null,
+  <           "nome": "Cauda longa",
+  <           "acoes": 17,
+  <           "minimo": 9,
+  <           "maximo": 30
+  <         }
+  <       ],
+  <       "folga_orcamento": "190",
+  <       "folga_acoes": 0,
+  <       "ganho_guloso": "129898.67",
+  <       "itens": null
+  <     },
+  <     {
+  <       "id": 87,
+  <       "situacao": "CONCLUIDA",
+  <       "autor": "Gestor da Evidência",
+  <       "modo": "GPU",
+  <       "substituicao": null,
+  <       "threads": null,
+  <       "iniciada_em": "2026-09-30T21:32:22.518278Z",
+  <       "concluida_em": "2026-09-30T21:32:22.870577Z",
+  <       "parametros": {
+  <         "orcamento": "5000.00",
+  <         "maximo_acoes": 30,
+  <         "cota_cauda_longa": "0.3",
+  <         "cotas_categoria": [],
+  <         "aplicacao_inicio": "2026-10-05",
+  <         "aplicacao_fim": "2026-10-11",
+  <         "modo": null
+  <       },
+  <       "periodo_base": {
+  <         "id": 12,
+  <         "data_inicio": "2026-09-14",
+  <         "data_fim": "2026-09-20"
+  <       },
+  <       "modelo_versao": "rede-1",
+  <       "viavel": true,
+  <       "restricao_violada": null,
+  <       "motivo": null,
+  <       "ajuda": null,
+  <       "uplift_total": "114527.81",
+  <       "custo_total": "5000.00",
+  <       "tempo_ms": 280,
+  <       "parcial": false,
+  <       "acoes": 23,
+  <       "elegiveis": 469,
+  <       "excluidos": {
+  <         "historico_curto": 31,
+  <         "fora_do_periodo": 0,
+  <         "sem_previsao": 0,
+  <         "inativos": 0,
+  <         "em_prospeccao": 0
+  <       },
+  <       "cotas": [
+  <         {
+  <           "categoria_id": null,
+  <           "nome": "Cauda longa",
+  <           "acoes": 12,
+  <           "minimo": 9,
+  <           "maximo": 30
+  <         }
+  <       ],
+  <       "folga_orcamento": "0",
+  <       "folga_acoes": 7,
+  <       "ganho_guloso": "110496.67",
+  <       "itens": null
+  <     }
+  <   ],
+  <   "total": 2,
+  <   "pagina": 1,
+  <   "tamanho": 2
+  < }
+  ok    o histórico traz os dois planos, o novo primeiro
+
+==============================================================================
+[5/5] No banco — o que ficou gravado
+==============================================================================
+
+$ SQL, só leitura, no banco da API
+  > SELECT id, situacao, modo, viavel, custo_total, uplift_total,
+  > modelo_versao, periodo_base_id
+  > FROM execucao_otimizador WHERE id IN (:a, :b) ORDER BY id
+  < id | situacao  | modo | viavel | custo   | ganho     | versao | periodo
+  < ---+-----------+------+--------+---------+-----------+--------+--------
+  < 87 | CONCLUIDA | GPU  | True   | 5000.00 | 114527.81 | rede-1 | 12     
+  < 88 | CONCLUIDA | GPU  | True   | 7810.00 | 132995.81 | rede-1 | 12     
+  ok    as duas execuções estão gravadas, com o resultado na própria linha
+
+$ SQL, só leitura, no banco da API
+  > SELECT p.execucao_id, p.aplicacao_inicio, p.aplicacao_fim,
+  > count(i.id), sum(i.custo), sum(i.uplift_esperado)
+  > FROM plano_campanha p JOIN item_plano i ON i.plano_id = p.id
+  > WHERE p.execucao_id IN (:a, :b)
+  > GROUP BY p.id ORDER BY p.execucao_id
+  < execucao | inicio     | fim        | itens | custo   | ganho    
+  < ---------+------------+------------+-------+---------+----------
+  < 87       | 2026-10-05 | 2026-10-11 | 23    | 5000.00 | 114527.81
+  < 88       | 2026-10-05 | 2026-10-11 | 30    | 7810.00 | 132995.81
+  ok    o plano e os itens de cada execução estão gravados, com o custo total dela
+
+==============================================================================
+Depois da limpeza
+==============================================================================
+  ok    o histórico de execuções voltou a ser o de antes da transcrição
+
+==============================================================================
+Resultado: 21 de 21 conferências passaram.

@@ -75,6 +75,7 @@ historico = APIRouter(
 )
 
 SO_GESTOR = [Depends(exigir(Perfil.GESTOR))]
+SO_O_GESTOR_CALCULA = "Só o gestor calcula o plano; o analista consulta."
 
 
 # ------------------------------------------------------------ as respostas
@@ -172,12 +173,18 @@ def _recusa(recusa: servico_otimizacao.OtimizacaoRecusada) -> HTTPException:
 
 # ------------------------------------------------------------ a campanha
 @router.get("/campanha", response_model=EstadoCampanha)
-def estado(s: Banco) -> EstadoCampanha:
+def estado(s: Banco, usuario: UsuarioAtual) -> EstadoCampanha:
     """O que a tela de campanha precisa ao abrir (UC08, passo 1).
 
     Quantos parceiros entram e quantos ficam fora, com o motivo (RN11); as
     categorias para as cotas; o catálogo; os modos de execução que esta
-    instalação tem, e qual roda sem escolha (RF32); e se dá para calcular agora.
+    instalação tem, e qual roda sem escolha (RF32); e se **quem pergunta** pode
+    calcular agora e editar o catálogo.
+
+    **O perfil entra na resposta** (regra 2.4): a tela esconde o botão pelo que
+    vem daqui, e não por um `if` sobre o perfil. Sem ele, o analista via
+    "Calcular plano" e recebia 403 ao clicar, e o gestor não via a edição do
+    catálogo (#190).
     """
     concluido = servico_previsao.ultimo_concluido(s)
     elegiveis, excluidos = [], None
@@ -194,6 +201,11 @@ def estado(s: Banco) -> EstadoCampanha:
         if e.categoria_id is not None:
             por_categoria[e.categoria_id] = por_categoria.get(e.categoria_id, 0) + 1
     recusa = servico_otimizacao.bloqueio(s)
+    gestor = usuario.perfil == Perfil.GESTOR
+    # O perfil vem antes do bloqueio: o do sistema passa, e o do perfil não.
+    motivo = None if gestor else SO_O_GESTOR_CALCULA
+    if motivo is None and recusa is not None:
+        motivo = recusa.erro
     modos = servico_otimizacao.modos()
     return EstadoCampanha(
         modelo_versao=concluido.versao_em_uso if concluido else None,
@@ -218,8 +230,9 @@ def estado(s: Banco) -> EstadoCampanha:
         ],
         em_andamento=_resposta(s, servico_otimizacao.em_andamento(s)),
         ultima=_resposta(s, servico_otimizacao.ultima_concluida(s), com_itens=True),
-        pode_executar=recusa is None,
-        motivo_bloqueio=recusa.erro if recusa else None,
+        pode_executar=motivo is None,
+        motivo_bloqueio=motivo,
+        pode_editar_catalogo=gestor,
         modos=[ModoCampanha(modo=m.modo, disponivel=m.disponivel, motivo=m.motivo) for m in modos],
         modo_automatico=servico_otimizacao.escolher(None, modos)[0],
     )
