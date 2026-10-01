@@ -1180,6 +1180,368 @@ def item_campanha(r: Relatorio, url: str, criados: dict[str, str]) -> None:
             )
 
 
+def _csv(resposta: httpx.Response) -> list[list[str]]:
+    """As linhas de um CSV exportado; lista vazia se a resposta não for um arquivo."""
+    if resposta.status_code != 200:
+        return []
+    return list(csv.reader(io.StringIO(resposta.content.decode("utf-8-sig")), delimiter=";"))
+
+
+def item_recorte_do_painel(r: Relatorio, url: str, admin: httpx.Client, criados: dict) -> None:
+    """O painel por período e categoria, e a previsão e a campanha dentro dele (H82, H83).
+
+    Roda depois da campanha e antes das importações da execução, como ela: o
+    bloco fala do último plano viável e da previsão da versão em uso.
+    """
+    r.secao("Painel — o recorte por período e categoria, e os três módulos")
+
+    login = criados.get("ANALISTA")
+    if not login:
+        r.checar("há analista para consultar o painel", False)
+        return
+    with sessao(url) as c:
+        entrar(c, login, SENHA)
+        recortes = c.get("/api/painel/recortes").json()
+        periodos, categorias = recortes.get("periodos", []), recortes.get("categorias", [])
+        if len(periodos) < 2 or not categorias:
+            r.checar("há mais de um período e ao menos uma categoria para recortar", False)
+            return
+        r.checar(
+            "o painel oferece os períodos do mais recente ao mais antigo, e as categorias",
+            [p["data_inicio"] for p in periodos]
+            == sorted((p["data_inicio"] for p in periodos), reverse=True),
+            f"{len(periodos)} períodos, {len(categorias)} categorias",
+        )
+
+        antigo, categoria = periodos[1], categorias[0]
+        filtro = {"periodo_id": antigo["id"], "categoria_id": categoria["id"]}
+        ind = c.get("/api/painel/indicadores", params=filtro).json()
+        ranking = c.get("/api/painel/ranking", params={**filtro, "tamanho": 200}).json()
+        r.checar(
+            "os indicadores do recorte são a soma do ranking do mesmo recorte",
+            (ind.get("categoria") or {}).get("id") == categoria["id"]
+            and ind["periodo"]["id"] == antigo["id"]
+            and sum(Decimal(i["faturamento"]) for i in ranking["itens"])
+            == Decimal(ind["faturamento"])
+            and ranking["total"] == ind["parceiros_ativos"],
+            f"{categoria['nome']}: R$ {ind.get('faturamento')} em {ind.get('parceiros_ativos')}"
+            " parceiros",
+        )
+
+        # RN02: a categoria escolhe quem aparece, e não renumera.
+        da_rede = {}
+        pagina = 1
+        while True:
+            parte = c.get(
+                "/api/painel/ranking",
+                params={"periodo_id": antigo["id"], "tamanho": 200, "pagina": pagina},
+            ).json()
+            da_rede.update({i["parceiro_id"]: i["posicao"] for i in parte["itens"]})
+            if len(da_rede) >= parte["total"] or not parte["itens"]:
+                break
+            pagina += 1
+        posicoes = [i["posicao"] for i in ranking["itens"]]
+        r.checar(
+            "no ranking da categoria, a posição é a do ranking da rede (RN02)",
+            bool(posicoes)
+            and all(da_rede.get(i["parceiro_id"]) == i["posicao"] for i in ranking["itens"])
+            and posicoes == sorted(posicoes),
+            f"posições {posicoes[0]} a {posicoes[-1]}, entre {len(da_rede)}" if posicoes else "",
+        )
+
+        serie = c.get("/api/painel/series", params=filtro).json()
+        r.checar(
+            "a série do recorte é da categoria e termina no período escolhido",
+            serie["escopo"] == "categoria"
+            and serie["pontos"][-1]["periodo"]["id"] == antigo["id"]
+            and serie["pontos"][-1]["faturamento"] == ind["faturamento"],
+            f"{len(serie['pontos'])} períodos",
+        )
+        r.checar(
+            "categoria que não existe é recusada, e não vira a rede inteira",
+            c.get("/api/painel/indicadores", params={"categoria_id": 999999}).status_code == 404,
+            "404",
+        )
+
+        decisao = c.get("/api/painel/decisao")
+        corpo = decisao.json() if decisao.status_code == 200 else {}
+        previsao, campanha = corpo.get("previsao", {}), corpo.get("campanha", {})
+        r.checar(
+            "o painel traz o previsto ao lado do medido, nos mesmos parceiros",
+            previsao.get("disponivel") is True and previsao.get("parceiros", 0) > 0,
+            f"previsto R$ {previsao.get('faturamento_previsto')} · medido R$"
+            f" {previsao.get('faturamento_medido')} · {previsao.get('parceiros')} parceiros",
+        )
+        maior = (previsao.get("maior_risco") or [None])[0]
+        do_cadastro = (
+            c.get(f"/api/parceiros/{maior['parceiro_id']}/previsao").json() if maior else {}
+        )
+        riscos = [p["probabilidade_queda"] for p in previsao.get("maior_risco", [])]
+        r.checar(
+            "o maior risco do painel é o da previsão no cadastro do parceiro",
+            bool(maior)
+            and abs(maior["probabilidade_queda"] - do_cadastro.get("probabilidade_queda", -1))
+            < 1e-9
+            and riscos == sorted(riscos, reverse=True),
+            f"{maior['nome']}: {maior['probabilidade_queda']:.2f}" if maior else "",
+        )
+        ultimo = c.get("/api/otimizacoes", params={"resultado": "VIAVEL", "tamanho": 1}).json()
+        r.checar(
+            "a campanha do painel é o último plano viável do histórico",
+            bool(ultimo["itens"])
+            and (campanha.get("plano") or {}).get("execucao_id") == ultimo["itens"][0]["id"]
+            and campanha.get("acoes") == ultimo["itens"][0]["acoes"],
+            f"execução {(campanha.get('plano') or {}).get('execucao_id')},"
+            f" {campanha.get('acoes')} ações",
+        )
+    r.checar(
+        "o administrador lê o painel, e não recebe a previsão e a campanha",
+        admin.get("/api/painel/indicadores").status_code == 200
+        and admin.get("/api/painel/decisao").status_code == 403,
+        "o bloco é a soma do que ele não abre",
+    )
+
+
+def item_relatorios(r: Relatorio, url: str, admin: httpx.Client, criados: dict) -> None:
+    """Os quatro relatórios, cada um contra a tela que resume, e o CSV de cada um
+    (UC15 · RF44 a RF48 · H84 a H88).
+
+    Um relatório que só mostra números não diz se eles estão certos. Aqui cada
+    um é comparado com o que o painel, o cadastro, o plano e a trilha dizem.
+    """
+    r.secao("Relatórios — conferidos contra as telas que resumem, e o CSV de cada um")
+
+    login = criados.get("ANALISTA")
+    if not login:
+        r.checar("há analista para abrir os relatórios", False)
+        return
+    with sessao(url) as c:
+        entrar(c, login, SENHA)
+
+        rel = c.get("/api/relatorios/desempenho").json()
+        painel = c.get("/api/painel/indicadores").json()
+        total = rel["total"]
+        r.checar(
+            "desempenho: o total é o indicador do painel no mesmo período",
+            total["faturamento"] == painel["faturamento"]
+            and total["parceiros"] == painel["parceiros_ativos"]
+            and total["ticket_medio"] == painel["ticket_medio"]
+            and total["variacao_percentual"] == painel["variacao"]["faturamento"],
+            f"R$ {total['faturamento']} em {total['parceiros']} parceiros",
+        )
+        iguais = [
+            linha["faturamento"]
+            == c.get("/api/painel/indicadores", params={"categoria_id": linha["chave"]}).json()[
+                "faturamento"
+            ]
+            for linha in rel["por_categoria"]
+            if linha["chave"] is not None
+        ]
+        r.checar(
+            "desempenho: cada categoria é o painel filtrado por ela, e elas somam o total",
+            bool(iguais)
+            and all(iguais)
+            and sum(Decimal(linha["faturamento"]) for linha in rel["por_categoria"])
+            == Decimal(total["faturamento"]),
+            f"{len(iguais)} categorias",
+        )
+        segmentos = c.get("/api/painel/segmentos").json()
+        r.checar(
+            "desempenho: cada segmento tem os parceiros que o painel conta nele",
+            {linha["chave"]: linha["parceiros"] for linha in rel["por_segmento"]}
+            == {fatia["segmento"]: fatia["total"] for fatia in segmentos["itens"]},
+            f"{len(rel['por_segmento'])} segmentos",
+        )
+        arquivo = _csv(c.get("/api/relatorios/desempenho/exportacao.csv"))
+        r.checar(
+            "desempenho: o CSV traz as categorias, os segmentos e o total da tela",
+            len(arquivo) - 1 == len(rel["por_categoria"]) + len(rel["por_segmento"]) + 1
+            and arquivo[-1][3] == total["faturamento"].replace(".", ","),
+            f"{len(arquivo) - 1} linhas",
+        )
+
+        risco = c.get("/api/relatorios/risco", params={"tamanho": 200}).json()
+        com_risco = [i for i in risco["itens"] if i["probabilidade_queda"] is not None]
+        chances = [i["probabilidade_queda"] for i in com_risco]
+        do_cadastro = (
+            c.get(f"/api/parceiros/{com_risco[0]['parceiro_id']}/previsao").json()
+            if com_risco
+            else {}
+        )
+        r.checar(
+            "risco: do maior para o menor, e o primeiro é a previsão do cadastro dele",
+            risco["disponivel"] is True
+            and bool(chances)
+            and chances == sorted(chances, reverse=True)
+            and abs(chances[0] - do_cadastro.get("probabilidade_queda", -1)) < 1e-9,
+            f"{risco['total']} parceiros, {risco['com_previsao']} com previsão",
+        )
+        # Os recém-chegados não têm a janela de histórico que a previsão exige, e
+        # ficam no fim da ordem por risco: é entre eles que se acha quem não tem.
+        novatos = c.get(
+            "/api/relatorios/risco", params={"segmento": "RECEM_CHEGADO", "tamanho": 200}
+        ).json()
+        sem = [i for i in novatos["itens"] if i["probabilidade_queda"] is None]
+        r.checar(
+            "risco: quem não tem previsão vem com o motivo, e não com zero (RN09)",
+            bool(sem)
+            and all(i["sem_previsao"] and i["faturamento_previsto"] is None for i in sem)
+            and all(i["sem_previsao"] is None for i in com_risco),
+            f"{len(sem)} recém-chegados sem previsão: {sem[0]['sem_previsao']}" if sem else "",
+        )
+        filtrado = c.get("/api/relatorios/risco", params={"risco_minimo": 0.5}).json()
+        arquivo = _csv(c.get("/api/relatorios/risco/exportacao.csv", params={"risco_minimo": 0.5}))
+        r.checar(
+            "risco: o CSV é o recorte inteiro, com o filtro da tela",
+            all(i["probabilidade_queda"] >= 0.5 for i in filtrado["itens"])
+            and len(arquivo) - 1 == filtrado["total"],
+            f"{filtrado['total']} com chance a partir de 50%",
+        )
+
+        camp = c.get("/api/relatorios/campanha").json()
+        do_plano = (camp["plano"] or {}).get("execucao_id")
+        plano = c.get(f"/api/otimizacoes/{do_plano}").json() if do_plano else {}
+        itens = plano.get("itens") or []
+        r.checar(
+            "campanha: o relatório soma o plano gravado, e cada agrupamento soma o total",
+            bool(itens)
+            and camp["total"]["parceiros"] == len(itens)
+            and Decimal(camp["total"]["custo"]) == sum(Decimal(i["custo"]) for i in itens)
+            and Decimal(camp["total"]["ganho_esperado"]) == sum(Decimal(i["ganho"]) for i in itens)
+            and all(
+                sum(Decimal(linha["custo"]) for linha in camp[grupo])
+                == Decimal(camp["total"]["custo"])
+                for grupo in ("por_acao", "por_categoria", "por_segmento")
+            ),
+            f"{len(itens)} ações, custo R$ {camp['total']['custo']}" if itens else "sem plano",
+        )
+        if itens:
+            arquivo = _csv(c.get(f"/api/otimizacoes/{plano['id']}/exportacao.csv"))
+            r.checar(
+                "campanha: o CSV do plano tem uma linha por item, na ordem da tela (RF53)",
+                [linha[0] for linha in arquivo[1:-1]] == [i["parceiro"] for i in itens]
+                and arquivo[-1][0] == "Total",
+                f"{len(arquivo) - 2} itens",
+            )
+        r.checar(
+            "o analista não abre o relatório de operações",
+            c.get("/api/relatorios/operacoes").status_code == 403,
+            "é do administrador",
+        )
+
+    ops = admin.get("/api/relatorios/operacoes").json()
+    trilha = admin.get("/api/auditoria", params={"de": ops["de"], "ate": ops["ate"]}).json()
+    outras = (ops["outras_pessoas"] or {}).get("total", 0)
+    r.checar(
+        "operações: o total é o da trilha no mesmo intervalo, e cada agrupamento o soma",
+        ops["total"] == trilha["total"]
+        and sum(linha["total"] for linha in ops["por_acao"]) == ops["total"]
+        and sum(linha["total"] for linha in ops["por_usuario"]) + outras == ops["total"]
+        and sum(linha["total"] for linha in ops["por_dia"]) == ops["total"],
+        f"{ops['total']} operações de {ops['de']} a {ops['ate']}",
+    )
+    arquivo = _csv(admin.get("/api/relatorios/operacoes/exportacao.csv"))
+    r.checar(
+        "operações: o CSV traz todas as pessoas, que a tela resume",
+        sum(linha[0] == "Usuário" for linha in arquivo) == ops["pessoas"]
+        and ops["pessoas"] >= len(ops["por_usuario"]),
+        f"{ops['pessoas']} pessoas, {len(ops['por_usuario'])} na tela",
+    )
+    r.checar(
+        "o administrador não abre os relatórios da rede",
+        admin.get("/api/relatorios/desempenho").status_code == 403
+        and admin.get("/api/relatorios/risco").status_code == 403
+        and admin.get("/api/relatorios/campanha").status_code == 403,
+        "são do gestor e do analista",
+    )
+
+
+def item_trilha(r: Relatorio, url: str, admin: httpx.Client, criados: dict, marca: str) -> None:
+    """A trilha de auditoria lida, o histórico do cadastro e os filtros das listas
+    (H89, H90, H91 · RF49 a RF52).
+    """
+    r.secao("Trilha de auditoria, histórico do cadastro e filtros das listas")
+
+    acoes = admin.get("/api/auditoria/acoes").json()
+    r.checar(
+        "toda ação da trilha tem rótulo em português",
+        len(acoes) > 30 and all(a["rotulo"] and a["rotulo"] != a["acao"] for a in acoes),
+        f"{len(acoes)} ações",
+    )
+
+    login = criados.get("ANALISTA")
+    if not login:
+        r.checar("há analista para alterar um parceiro", False)
+        return
+    with sessao(url) as c:
+        entrar(c, login, SENHA)
+        categorias = c.get("/api/categorias").json()
+        criado = c.post("/api/parceiros", json={"nome": f"Histórico {marca}"})
+        alvo = criado.json()["id"]
+        c.patch(f"/api/parceiros/{alvo}", json={"nome": f"Histórico Novo {marca}"})
+        if categorias:
+            c.patch(f"/api/parceiros/{alvo}", json={"categoria_id": categorias[0]["id"]})
+        eventos = c.get(f"/api/parceiros/{alvo}/historico").json()
+        r.checar(
+            "o cadastro do parceiro mostra o que mudou nele, do mais recente ao mais antigo",
+            [e["acao"] for e in eventos][-2:] == ["PARCEIRO_EDITADO", "PARCEIRO_CRIADO"]
+            and eventos[-2]["resumo"] == f"nome de Histórico {marca} para Histórico Novo {marca}"
+            and all(
+                set(e) == {"acao", "rotulo", "resumo", "autor", "ocorrido_em"} for e in eventos
+            ),
+            f"{len(eventos)} eventos, sem a origem nem os parâmetros crus",
+        )
+        if categorias:
+            r.checar(
+                "a troca de categoria diz de qual para qual, pelo nome",
+                eventos[0]["resumo"] == f"categoria de sem categoria para {categorias[0]['nome']}",
+                eventos[0]["resumo"],
+            )
+        r.checar(
+            "o analista não consulta a trilha inteira",
+            c.get("/api/auditoria").status_code == 403,
+            "é do administrador (RF08)",
+        )
+
+        viaveis, inviaveis = (
+            c.get("/api/otimizacoes", params={"resultado": resultado, "tamanho": 50}).json()
+            for resultado in ("VIAVEL", "INVIAVEL")
+        )
+        r.checar(
+            "o histórico de execuções filtra pelo resultado (RF51)",
+            bool(viaveis["itens"])
+            and all(e["viavel"] is True for e in viaveis["itens"])
+            and all(e["viavel"] is False for e in inviaveis["itens"]),
+            f"{viaveis['total']} viáveis, {inviaveis['total']} inviáveis",
+        )
+
+    trilha = admin.get("/api/auditoria", params={"busca": f"Histórico Novo {marca}"}).json()
+    r.checar(
+        "a busca na trilha acha as alterações pelo nome do parceiro, com autor e frase (RF49)",
+        trilha["total"] >= 1
+        and all(
+            reg["autor"] and reg["rotulo"] and marca in reg["resumo"] for reg in trilha["itens"]
+        ),
+        f"{trilha['total']} registros",
+    )
+    arquivo = _csv(
+        admin.get("/api/auditoria/exportacao.csv", params={"busca": f"Histórico Novo {marca}"})
+    )
+    r.checar(
+        "o CSV da trilha traz o recorte da busca",
+        len(arquivo) - 1 == trilha["total"],
+        f"{len(arquivo) - 1} linhas",
+    )
+    usuarios = admin.get("/api/usuarios", params={"busca": marca}).json()
+    sem_acento = admin.get("/api/usuarios", params={"busca": "verificacao", "ativo": True}).json()
+    r.checar(
+        "a busca de usuários acha pelo login e ignora o acento do nome (RF52)",
+        {u["login"] for u in usuarios} == set(criados.values())
+        and {u["login"] for u in usuarios} <= {u["login"] for u in sem_acento},
+        f"{len(usuarios)} pelo login, {len(sem_acento)} por \"verificacao\"",
+    )
+
+
 def _tempo(segundos: float) -> str:
     texto = f"{segundos:.2f} s" if segundos >= 1 else f"{segundos * 1000:.1f} ms"
     return texto.replace(".", ",")
@@ -1736,6 +2098,9 @@ def main() -> int:
             item_perfis(r, a.url, criados)
             item_modelo(r, a.url, criados)
             item_campanha(r, a.url, criados)
+            item_recorte_do_painel(r, a.url, admin, criados)
+            item_relatorios(r, a.url, admin, criados)
+            item_trilha(r, a.url, admin, criados, marca)
             item_benchmark(r, a.url, criados)
             item_mensagens(r, a.url, criados)
             item_portal(r, a.url, admin, criados, marca)
