@@ -21,6 +21,24 @@ function menu(usuario) {
 }
 
 describe("menu lateral", () => {
+  it("os relatórios da rede ficam na Análise, e o de operações, ao lado da Auditoria (UC15)", () => {
+    const daGestora = menu({
+      nome: "Gestora",
+      perfil: "GESTOR",
+      telas: ["painel", "parceiros", "relatorios"],
+    });
+    expect(daGestora).toEqual(["Painel", "Parceiros", "Relatórios"]);
+  });
+
+  it("o Administrador não vê os relatórios da rede, e vê o de operações", () => {
+    const doAdmin = menu({
+      nome: "Admin",
+      perfil: "ADMINISTRADOR",
+      telas: ["painel", "usuarios", "auditoria", "relatorio_operacoes", "configuracao"],
+    });
+    expect(doAdmin).toEqual(["Painel", "Usuários", "Auditoria", "Operações", "Configuração"]);
+  });
+
   it("o Administrador vê usuários e configuração, e não Parceiros, que a rota lhe recusa", () => {
     const itens = menu({
       nome: "Admin",

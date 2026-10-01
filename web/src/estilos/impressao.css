@@ -1,0 +1,126 @@
+/* A folha impressa (RF48 · H88) — o PDF dos relatórios é o da impressão do navegador.
+ *
+ * Nenhuma biblioteca gera PDF aqui: "Imprimir ou salvar em PDF" é a impressão
+ * do navegador, e esta folha é o que faz a página virar documento. Vale para a
+ * aplicação inteira — quem imprime qualquer tela sai sem o menu —, mas foi
+ * escrita para os relatórios, que são o que se leva para fora do sistema.
+ *
+ * O que ela faz:
+ *   1. tira o que é da aplicação, e não do documento: o menu, o cabeçalho, os
+ *      filtros, os botões e a trilha (`.nao-imprime`);
+ *   2. mostra o que só o documento tem: a linha de emissão (`.so-impressao`);
+ *   3. solta as tabelas da rolagem, e não corta linha entre duas páginas;
+ *   4. imprime no tema claro, que é o que tem contraste no papel — o
+ *      `impressao.js` troca o tema antes de imprimir e o devolve depois.
+ *
+ * Carregada por último em `main.jsx`: as regras daqui precisam ganhar das
+ * folhas das telas.
+ */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 12mm;
+  }
+
+  /* 1. O que é da aplicação fica de fora. */
+  .trilho,
+  .cabecalho,
+  .nao-imprime {
+    display: none !important;
+  }
+
+  /* 2. O que só a folha tem. */
+  .so-impressao {
+    display: block;
+  }
+
+  /* A casca é uma grade de duas colunas, com o menu na primeira; sem o menu,
+     o conteúdo ocupa a folha inteira. */
+  .casca {
+    display: block;
+    min-height: 0;
+  }
+
+  body {
+    background: var(--surface);
+  }
+
+  .pagina {
+    padding: 0;
+    gap: var(--esp-12);
+  }
+
+  /* 3. As tabelas, inteiras. A caixa de rolagem cortaria as colunas que não
+     cabem na tela; na folha a tabela ocupa a largura dela. */
+  .tabela-rolagem {
+    overflow: visible;
+  }
+
+  /* O cabeçalho grudado da tela se repete em cada página, que é o que o
+     `table-header-group` faz — e `sticky` na impressão o deixa só na primeira. */
+  .tabela thead {
+    display: table-header-group;
+  }
+
+  .tabela thead th {
+    position: static;
+  }
+
+  .tabela tfoot {
+    display: table-row-group;
+  }
+
+  /* Nenhuma linha cortada entre duas páginas. */
+  .tabela tr,
+  .relatorio__resumo > div {
+    break-inside: avoid;
+  }
+
+  .tabela th,
+  .tabela td {
+    padding: var(--esp-6) var(--esp-8);
+    white-space: normal;
+  }
+
+  /* O texto quebra para caber na folha; o número, não: "mais de 99%" em três
+     linhas, uma palavra em cada, foi o que saiu no primeiro PDF. */
+  .tabela td.numerica {
+    white-space: nowrap;
+  }
+
+  /* O título de um bloco não fica sozinho no pé da página, sem a tabela dele. */
+  .painel__cabecalho,
+  .relatorio__cabecalho {
+    break-after: avoid;
+  }
+
+  /* O painel pode quebrar: uma tabela longa não cabe numa página só. O bloco
+     curto — um resumo, uma tabela de grupos — pede para ir inteiro: partido,
+     sobrava uma linha sozinha na página seguinte, medido no primeiro PDF. */
+  .painel {
+    break-inside: auto;
+  }
+
+  .painel--inteiro {
+    break-inside: avoid;
+  }
+
+  /* As barras e os pontos de segmento são fundo, e o navegador não imprime
+     fundo por padrão. Sem isto a coluna das barras sairia em branco. */
+  .contagem__trilho,
+  .contagem__barra,
+  .distribuicao__trilho,
+  .distribuicao__barra,
+  .segmento__ponto {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* No papel, o link não responde a clique: sai como texto. */
+  a,
+  .nome__link {
+    color: inherit;
+    text-decoration: none;
+  }
+}

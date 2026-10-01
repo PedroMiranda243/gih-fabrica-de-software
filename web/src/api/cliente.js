@@ -92,7 +92,12 @@ async function requisitar(metodo, caminho, { corpo, formulario } = {}) {
   return conteudo;
 }
 
-function comConsulta(caminho, parametros) {
+/**
+ * O caminho com os filtros que têm valor. Exportada porque o link de um CSV é a
+ * mesma consulta da tela em outro formato: montado por aqui, ele leva
+ * exatamente os filtros que o `api.get` da tela levou.
+ */
+export function comConsulta(caminho, parametros) {
   if (!parametros) return caminho;
   /* Chave com valor nulo ou vazio não vira parâmetro: `?busca=` faria o
      servidor filtrar por texto vazio em vez de não filtrar. */

@@ -1,0 +1,201 @@
+/* Os relatórios (UC15 · H84 a H88): a moldura, o resumo e as tabelas de grupos.
+   O que só vale na folha impressa está em `impressao.css`. */
+
+/* ------------------------------------------------------------ a moldura */
+.relatorio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-12);
+  min-width: 0;
+}
+
+.relatorio__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--esp-12) var(--esp-16);
+}
+
+/* O título do relatório é o da folha: o maior texto da página depois do
+   cabeçalho da aplicação, que some na impressão. */
+.relatorio__titulo {
+  margin: 0;
+  font-size: var(--txt-19);
+  font-weight: var(--peso-nome);
+  text-wrap: balance;
+}
+
+.relatorio__recorte,
+.relatorio__emissao {
+  margin: var(--esp-4) 0 0;
+  max-width: 80ch;
+  color: var(--ink-2);
+  font-size: var(--txt-13);
+  line-height: 1.5;
+}
+
+.relatorio__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-8);
+}
+
+/* ------------------------------------------------------------- o resumo */
+/* Os números do recorte inteiro, lado a lado, antes das tabelas: o resumo
+   antes do detalhe, como no painel. Sem caixa em cada um — já estão num painel. */
+.relatorio__resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-16) var(--esp-24);
+  margin: 0;
+  padding: var(--esp-16);
+}
+
+/* Cada número com a largura do que tem dentro, e não uma coluna de grade: em
+   colunas iguais, na largura da folha A4, o faturamento em tamanho de destaque
+   passava da coluna dele e cobria o número ao lado — medido no primeiro PDF. */
+.relatorio__resumo > div {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--esp-6);
+  min-width: 8.5rem;
+}
+
+.relatorio__resumo dd {
+  white-space: nowrap;
+}
+
+.relatorio__resumo dt {
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+}
+
+.relatorio__resumo dd {
+  margin: 0;
+  font-size: var(--txt-14);
+}
+
+/* Um número em peso alto por resumo: o que o relatório existe para mostrar. */
+.relatorio__resumo .relatorio__principal {
+  font-size: var(--txt-19);
+  font-weight: var(--peso-nome);
+}
+
+/* A nota de um bloco: de que modelo é a estimativa, de que grupo é a variação. */
+.relatorio__nota {
+  margin: 0;
+  padding: var(--esp-12) var(--esp-16) var(--esp-16);
+  max-width: 76ch;
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+  line-height: 1.5;
+}
+
+/* O caminho de um bloco para a tela do detalhe, alinhado com a nota acima
+   dele. Sem a margem, o botão encostava na borda do painel. */
+.relatorio__caminho {
+  margin: 0 var(--esp-16) var(--esp-16);
+}
+
+/* ----------------------------------------------------- tabelas de grupos */
+/* O total fecha a tabela, em peso alto e com um fio em cima: é a linha que se
+   confere contra o painel. */
+.tabela tfoot td,
+.tabela tfoot th {
+  border-top: 1px solid var(--border);
+  font-weight: var(--peso-nome);
+}
+
+/* O motivo de não haver previsão é uma frase, e quebra de linha — a célula da
+   tabela, por padrão, não quebra. Com a tabela na frente, para ganhar de
+   `.tabela td`. */
+.tabela .relatorio__motivo {
+  min-width: 22ch;
+  max-width: 34ch;
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+  white-space: normal;
+}
+
+/* A ação e o custo dela, que juntos passam da largura da tela: quebram, em vez
+   de empurrar a tabela para a rolagem. */
+.tabela .relatorio__acao {
+  min-width: 14ch;
+  white-space: normal;
+}
+
+/* ------------------------------------------------- barras de contagem */
+/* Quantas operações em cada grupo: a barra dá a proporção de relance, e o
+   número ao lado dá o valor — nada depende só da barra. Uma cor só, a primeira
+   da rampa dos gráficos: é magnitude, e não categoria. */
+.contagem__celula {
+  width: 45%;
+  min-width: 8rem;
+}
+
+/* A coluna das barras não tem título — a barra repete o número ao lado —, e a
+   célula vazia do cabeçalho precisa do mesmo fio das vizinhas: sem ele, a linha
+   do cabeçalho ficava interrompida no meio. */
+.tabela thead .contagem__celula {
+  border-bottom: 1px solid var(--border);
+}
+
+.contagem__trilho {
+  display: block;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--grade);
+  overflow: hidden;
+}
+
+/* Extremidade do dado arredondada, base reta: a barra cresce de uma linha de
+   base comum, como a da distribuição por segmento. */
+.contagem__barra {
+  display: block;
+  height: 100%;
+  min-width: 3px; /* uma operação só ainda precisa aparecer */
+  border-radius: 0 4px 4px 0;
+  background: var(--serie-1);
+}
+
+/* --------------------------------------------- a lista de relatórios */
+.relatorios {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.relatorios__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-8) var(--esp-16);
+  padding: var(--esp-16);
+  border-top: 1px solid var(--border);
+}
+
+.relatorios__item:first-child {
+  border-top: none;
+}
+
+.relatorios__nome {
+  margin: 0;
+  font-size: var(--txt-14);
+  font-weight: var(--peso-nome);
+}
+
+.relatorios__descricao {
+  margin: var(--esp-4) 0 0;
+  max-width: 64ch;
+  color: var(--ink-2);
+  font-size: var(--txt-13);
+  line-height: 1.5;
+}
+
+/* Só na folha impressa — ver `impressao.css`. */
+.so-impressao {
+  display: none;
+}

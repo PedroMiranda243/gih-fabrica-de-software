@@ -8,6 +8,11 @@ import "./estilos/base.css";
 import "./estilos/casca.css";
 import "./estilos/componentes.css";
 import "./estilos/lista-e-cadastro.css";
+/* Por último: as regras da folha impressa precisam ganhar das folhas das telas. */
+import "./estilos/impressao.css";
+import { imprimirNoTemaClaro } from "./temas/impressao";
+
+imprimirNoTemaClaro();
 
 createRoot(document.getElementById("raiz")).render(
   <StrictMode>

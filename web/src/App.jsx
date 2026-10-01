@@ -28,6 +28,11 @@ import NaoEncontrada from "./paginas/NaoEncontrada";
 import Painel from "./paginas/Painel";
 import Parceiro from "./paginas/Parceiro";
 import Parceiros from "./paginas/Parceiros";
+import RelatorioCampanha from "./paginas/RelatorioCampanha";
+import RelatorioDesempenho from "./paginas/RelatorioDesempenho";
+import RelatorioOperacoes from "./paginas/RelatorioOperacoes";
+import RelatorioRisco from "./paginas/RelatorioRisco";
+import Relatorios from "./paginas/Relatorios";
 import Usuario from "./paginas/Usuario";
 import Usuarios from "./paginas/Usuarios";
 
@@ -129,6 +134,22 @@ export default function App() {
         }
       >
         <Route path="/auditoria" element={<Auditoria />} />
+      </Route>
+
+      <Route
+        element={
+          <Protegido>
+            <Casca titulo="Relatórios" />
+          </Protegido>
+        }
+      >
+        {/* Cada relatório com endereço próprio, e o recorte nele: é o que deixa
+            mandar o link de um relatório já filtrado (UC15). */}
+        <Route path="/relatorios" element={<Relatorios />} />
+        <Route path="/relatorios/desempenho" element={<RelatorioDesempenho />} />
+        <Route path="/relatorios/risco" element={<RelatorioRisco />} />
+        <Route path="/relatorios/campanha" element={<RelatorioCampanha />} />
+        <Route path="/relatorios/operacoes" element={<RelatorioOperacoes />} />
       </Route>
 
       <Route

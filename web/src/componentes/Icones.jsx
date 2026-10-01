@@ -130,6 +130,31 @@ export function IconeAuditoria(props) {
   );
 }
 
+/* Uma folha com linhas e um total: o relatório é o que se leva para fora. */
+export function IconeRelatorios(props) {
+  return (
+    <svg {...comuns} {...props}>
+      <path d="M4 1.8h5.5L12.5 5v9.2H4z" />
+      <path d="M9.5 1.8V5h3" />
+      <path d="M6 8h4.5" />
+      <path d="M6 10.2h4.5" />
+      <path d="M6 12.4h2.5" />
+    </svg>
+  );
+}
+
+/* Barras de contagem: quanto se fez, por grupo. */
+export function IconeOperacoes(props) {
+  return (
+    <svg {...comuns} {...props}>
+      <path d="M2.5 13.5h11" />
+      <path d="M4.5 11V7.5" />
+      <path d="M8 11V3.5" />
+      <path d="M11.5 11V6" />
+    </svg>
+  );
+}
+
 /* Um velocímetro: o benchmark mede a velocidade de cada modo. */
 export function IconeBenchmark(props) {
   return (
