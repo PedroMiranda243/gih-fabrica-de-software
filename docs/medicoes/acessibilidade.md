@@ -12,7 +12,7 @@ Três verificações, em três lugares:
 
 | Item | Valor |
 |---|---|
-| Data | 30/09/2026 23:22 |
+| Data | 01/10/2026 06:17 |
 | Navegador | Microsoft Edge 154.0.4258.37, sem cabeça, pelo Playwright |
 | axe-core | 4.13.0 |
 | Dados | a base de trabalho, com a massa do gerador; dois planos calculados para a medição e apagados depois |
@@ -53,7 +53,7 @@ api/.venv/Scripts/python scripts/medir_telas.py
 
 ## As telas
 
-**20 telas. Com a página rolando na horizontal ou conteúdo cortado: 0 das 40 medidas. Com violação do axe no navegador: 0 das 40 auditorias** (cada tela, nos dois temas).
+**21 telas. Com a página rolando na horizontal ou conteúdo cortado: 0 das 42 medidas. Com violação do axe no navegador: 0 das 42 auditorias** (cada tela, nos dois temas).
 
 | Tela | Rota | Perfil | 768 px | 1440 px | axe, claro | axe, escuro |
 |---|---|---|---|---|--:|--:|
@@ -66,15 +66,16 @@ api/.venv/Scripts/python scripts/medir_telas.py
 | Assistente | `/assistente` | gestor | ok | ok | 0 | 0 |
 | Campanha | `/campanha` | gestor | ok | ok | 0 | 0 |
 | Execuções | `/execucoes` | gestor | ok | ok | 0 | 0 |
-| Execução | `/execucoes/118` | gestor | ok | ok | 0 | 0 |
-| Comparação | `/execucoes/comparar?a=118&b=119` | gestor | ok | ok | 0 | 0 |
+| Execução | `/execucoes/128` | gestor | ok | ok | 0 | 0 |
+| Comparação | `/execucoes/comparar?a=128&b=129` | gestor | ok | ok | 0 | 0 |
 | Mensagens | `/mensagens` | gestor | ok | ok | 0 | 0 |
 | Aprovação | `/aprovacao` | gestor | ok | ok | 0 | 0 |
 | Benchmark | `/benchmark` | gestor | ok | ok | 0 | 0 |
 | Modelo | `/modelo` | gestor | ok | ok | 0 | 0 |
 | Usuários | `/usuarios` | administrador | ok | ok | 0 | 0 |
 | Novo usuário | `/usuarios/novo` | administrador | ok | ok | 0 | 0 |
-| Conta do usuário | `/usuarios/149` | administrador | ok | ok | 0 | 0 |
+| Conta do usuário | `/usuarios/167` | administrador | ok | ok | 0 | 0 |
+| Auditoria | `/auditoria` | administrador | ok | ok | 0 | 0 |
 | Limiares | `/configuracao` | administrador | ok | ok | 0 | 0 |
 | Meu desempenho | `/meu-desempenho` | parceiro | ok | ok | 0 | 0 |
 
@@ -99,6 +100,7 @@ api/.venv/Scripts/python scripts/medir_telas.py
 | Usuários | 768 px | `nav.trilho` |
 | Novo usuário | 768 px | `nav.trilho` |
 | Conta do usuário | 768 px | `nav.trilho` |
+| Auditoria | 768 px | `nav.trilho`, `div.tabela-rolagem` |
 | Limiares | 768 px | `nav.trilho` |
 
 ## As capturas
@@ -176,6 +178,10 @@ Tema claro. À esquerda, 768 px; à direita, 1440 px.
 ### Conta do usuário
 
 <img src="telas/usuario-768.jpg" width="280" alt="Conta do usuário a 768 px"> <img src="telas/usuario-1440.jpg" width="480" alt="Conta do usuário a 1440 px">
+
+### Auditoria
+
+<img src="telas/auditoria-768.jpg" width="280" alt="Auditoria a 768 px"> <img src="telas/auditoria-1440.jpg" width="480" alt="Auditoria a 1440 px">
 
 ### Limiares
 

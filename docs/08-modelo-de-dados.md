@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Entrega:** Sprint 02 acadêmica — itens 3 (MER), 4 (modelo relacional) e 6 (banco criado)
-**Versão:** 3.0 — 28/09/2026, o banco construído
+**Versão:** 3.1 — 01/10/2026, os índices da trilha de auditoria (3.0 — 28/09/2026, o banco construído)
 
 > **Como o esquema cresceu.** A versão 1.0 tinha 14 tabelas; a 2.0, da entrega da Sprint 02, **16**: a
 > autenticação acrescentou `sessao_acesso` e `tentativa_login`. A construção trouxe mais quatro, cada uma
@@ -582,6 +582,9 @@ Cada índice existe por causa de uma consulta concreta, não por precaução (RN
 | `ix_metrica_periodo_faturamento` | metrica | periodo_id, faturamento | Ranking do período sem varrer a tabela (RF17) |
 | `ix_segmento_periodo_segmento` | historico_segmento | periodo_id, segmento | Filtro por segmento no painel (RF21) |
 | `ix_auditoria_ocorrido_em` | auditoria | ocorrido_em | Consulta da trilha por intervalo (RF08) |
+| `ix_auditoria_acao` | auditoria | acao, ocorrido_em | Filtro da trilha por tipo de ação, na ordem da lista (RF08, H89) |
+| `ix_auditoria_usuario` | auditoria | usuario_id, ocorrido_em | Filtro da trilha por quem fez (RF08, H89) |
+| `ix_auditoria_alvo` | auditoria | `detalhes->>'alvo'` (expressão) | O histórico de um cadastro de parceiro, lido da trilha (RF50, H90) |
 | `ix_sessao_acesso_usuario` | sessao_acesso | usuario_id | Derrubar as sessões de um usuário de uma vez |
 | `ix_tentativa_origem_ocorrido` | tentativa_login | origem, ocorrido_em | Contagem de falhas na janela do bloqueio (RNF11) |
 | `ix_mensagem_estado` | mensagem | estado | Fila de aprovação (RF37) |
@@ -656,7 +659,7 @@ O esquema não está só desenhado: está aplicado e em uso. O ambiente sobe com
 
 ```
 $ docker compose exec api alembic current
-3e8a6c1f7b52 (head)
+5b2e9d47a1c8 (head)
 ```
 
 **Tabelas criadas** (`docker compose exec postgres psql -U gih -d gih -c "\dt"`):
@@ -700,11 +703,13 @@ qual versão do esquema está aplicada.
 | Chaves estrangeiras | 28 |
 | Restrições `UNIQUE` | 11 |
 | Restrições `CHECK` declaradas | 25 |
-| Índices | 45 |
+| Índices | 48 |
 | Tipos `ENUM` | 10 |
 
-Medido em 27/09/2026, contra o banco no ar, sem a tabela do Alembic. Desde a medição de 26/09 (18, 18, 25,
-11, 18, 40 e 9) entraram o benchmark (H57: +1 tabela, +1 chave estrangeira, +5 `CHECK`, +2 índices) e o
+Medido em 01/10/2026, contra o banco no ar, sem a tabela do Alembic. Desde a medição de 27/09 (20, 20, 28,
+11, 25, 45 e 10) entraram só os três índices da trilha de auditoria (H89 e H90, Sprint 07 da disciplina):
+nenhuma tabela, coluna ou restrição mudou. Entre a medição de 26/09 (18, 18, 25, 11, 18, 40 e 9) e a de
+27/09 tinham entrado o benchmark (H57: +1 tabela, +1 chave estrangeira, +5 `CHECK`, +2 índices) e o
 lote de mensagens (H60: +1 tabela, +2 chaves estrangeiras, +2 `CHECK`, +3 índices, +1 enum). A contagem
 de `CHECK` do catálogo inclui as quatro da configuração da segmentação, que a seção 5 não repete.
 **Na Sprint 02 eram 16, 16, 21, 11, 9, 34 e 7**, e a diferença até 26/09 é

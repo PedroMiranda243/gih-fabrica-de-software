@@ -243,7 +243,7 @@ Aprovação registrada na issue **#8**. Só depois disso começa o CSS em `web/`
 
 ## 9. Telas e navegação
 
-Vinte e uma telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
+Vinte e duas telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
 passo, um recorte filtrado precisa poder ser mandado por link, e um cadastro precisa poder ser aberto
 direto — tudo isso depende de a tela estar na URL, e não num estado escondido da página.
 
@@ -261,6 +261,7 @@ flowchart TD
     Usuarios["Usuários<br/>/usuarios"]
     NovoUsuario["Novo usuário<br/>/usuarios/novo"]
     Conta["Conta do usuário<br/>/usuarios/:id"]
+    Auditoria["Auditoria<br/>/auditoria"]
     Configuracao["Limiares<br/>/configuracao"]
     Modelo["Modelo preditivo<br/>/modelo"]
     Campanha["Campanha<br/>/campanha"]
@@ -280,6 +281,7 @@ flowchart TD
     Menu -. "todos" .-> Importacao
     Menu -. "gestor e analista" .-> Parceiros
     Menu -. "administrador" .-> Usuarios
+    Menu -. "administrador" .-> Auditoria
     Menu -. "administrador" .-> Configuracao
     Menu -. "administrador e gestor" .-> Modelo
     Menu -. "gestor e analista" .-> Campanha
@@ -300,6 +302,7 @@ flowchart TD
     Parceiros -- "novo parceiro" --> Novo
     Parceiros -- "exportar" --> CSV
     Aprovacao -- "aprovadas: exportar" --> CSV
+    Auditoria -- "o recorte: exportar" --> CSV
     Novo -- "cadastrar" --> Cadastro
     Cadastro -- "nome em uso:<br/>abrir o existente" --> Cadastro
     Cadastro -- "voltar, com o<br/>mesmo filtro" --> Parceiros
@@ -336,7 +339,8 @@ caminhos que **a própria tela** oferece.
 
 **O menu se agrupa pelos módulos do produto, na ordem do fluxo** (H79): **Análise** (Painel, Importação,
 Parceiros, Assistente), **Previsão** (Modelo), **Otimização** (Campanha, Execuções, Benchmark),
-**Comunicação** (Mensagens, Aprovação) e, por último e à parte, **Administração** (Usuários, Limiares). Até a
+**Comunicação** (Mensagens, Aprovação) e, por último e à parte, **Administração** (Usuários, Auditoria,
+Limiares). Até a
 Sprint 06 eram itens soltos, na ordem em que foram construídos, e a pessoa precisava conhecer o sistema para
 achar o módulo. O título do grupo é rótulo, e não item: não responde a clique e não usa a cor de ação. Abaixo
 de 860 px o menu vira barra horizontal, os títulos ficam só para o leitor de tela e um fio separa os grupos.
@@ -356,6 +360,10 @@ Os comportamentos que o desenho não mostra, e que valem para todas as telas:
 
 - **Sessão encerrada leva ao login, e o login devolve ao lugar de antes.** Quem abre um link direto sem
   estar autenticado entra e cai na tela que pediu, e não no painel genérico.
+- **O que foi feito tem tela** (H89, H90). A trilha de auditoria — quem fez o quê, e quando — é do
+  Administrador: filtra por pessoa, ação e datas, busca por texto e exporta o recorte. A frase de cada
+  operação vem do servidor, e é a mesma na tela, no arquivo e no cadastro do parceiro, que mostra o
+  histórico das alterações dele, sem a origem nem os parâmetros, que são da auditoria.
 - **Os módulos se ligam pelos próprios dados** (H81). O nome no ranking do painel abre o cadastro do
   parceiro; cada segmento da distribuição, e o indicador de Em risco, abrem a lista filtrada; o cadastro
   mostra a ação do parceiro no último plano de campanha, com o link para o plano, e a lista mostra o risco
