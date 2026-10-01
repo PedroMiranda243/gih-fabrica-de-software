@@ -249,6 +249,55 @@ def test_lista_e_filtra(admin, criar_usuario):
     assert {u["login"] for u in apenas_gestores} == {"ativa", "inativa"}
 
 
+# ----------------------------------------------- a busca (RF52, H91)
+def test_busca_por_trecho_do_nome_ou_do_login(admin, criar_usuario):
+    criar_usuario(login="ana.gestora", perfil=Perfil.GESTOR, nome="Ana Paula")
+    criar_usuario(login="bruno", perfil=Perfil.ANALISTA, nome="Bruno Anastácio")
+    criar_usuario(login="carla", perfil=Perfil.ANALISTA, nome="Carla")
+
+    def logins(busca):
+        return {u["login"] for u in admin.get("/api/usuarios", params={"busca": busca}).json()}
+
+    # "ana" está no nome de uma, no login dela, e no meio do sobrenome do outro.
+    assert logins("ana") == {"ana.gestora", "bruno"}
+    assert logins("gestora") == {"ana.gestora"}
+    assert logins("nada-com-esse-nome") == set()
+
+
+def test_a_busca_ignora_maiuscula_e_acento_dos_dois_lados(admin, criar_usuario):
+    criar_usuario(login="bruno", perfil=Perfil.ANALISTA, nome="Bruno Anastácio")
+
+    for termo in ("anastacio", "ANASTÁCIO", "Anastácio", "  anasta  "):
+        achados = admin.get("/api/usuarios", params={"busca": termo}).json()
+        assert [u["login"] for u in achados] == ["bruno"], termo
+
+
+def test_a_busca_trata_curinga_como_texto(admin, criar_usuario):
+    criar_usuario(login="ana", perfil=Perfil.GESTOR, nome="Ana")
+
+    # "%" casaria com todos, e "_" com qualquer letra: a pessoa digita um nome, e não um padrão.
+    assert admin.get("/api/usuarios", params={"busca": "%"}).json() == []
+    assert admin.get("/api/usuarios", params={"busca": "an_"}).json() == []
+
+
+def test_a_busca_combina_com_a_situacao_e_o_perfil(admin, criar_usuario):
+    criar_usuario(login="ana.ativa", perfil=Perfil.GESTOR, nome="Ana Ativa")
+    criar_usuario(login="ana.inativa", perfil=Perfil.GESTOR, nome="Ana Inativa", ativo=False)
+    criar_usuario(login="ana.analista", perfil=Perfil.ANALISTA, nome="Ana Analista")
+
+    achados = admin.get(
+        "/api/usuarios", params={"busca": "ana", "ativo": True, "perfil": "GESTOR"}
+    ).json()
+
+    assert [u["login"] for u in achados] == ["ana.ativa"]
+
+
+def test_busca_em_branco_nao_filtra(admin, criar_usuario):
+    criar_usuario(login="ana", perfil=Perfil.GESTOR, nome="Ana")
+
+    assert len(admin.get("/api/usuarios", params={"busca": "   "}).json()) == 2
+
+
 def test_listagem_nunca_devolve_o_hash(admin, criar_usuario):
     criar_usuario(login="alguem")
 

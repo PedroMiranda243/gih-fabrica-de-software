@@ -112,6 +112,7 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("GET", "/api/otimizacoes/{execucao_id}"): {Perfil.GESTOR, Perfil.ANALISTA},
     # Comparar dois planos é abrir os dois (RF35, H59).
     ("GET", "/api/otimizacoes/comparacao"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/otimizacoes/{execucao_id}/exportacao.csv"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/acoes-comerciais"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("POST", "/api/acoes-comerciais"): {Perfil.GESTOR},
     ("PATCH", "/api/acoes-comerciais/{acao_id}"): {Perfil.GESTOR},
