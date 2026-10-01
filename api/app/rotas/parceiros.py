@@ -18,7 +18,14 @@ from sqlalchemy import func, literal, nullslast, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app import auditoria, formato, planilha, servico_otimizacao, servico_previsao
+from app import (
+    auditoria,
+    formato,
+    planilha,
+    servico_auditoria,
+    servico_otimizacao,
+    servico_previsao,
+)
 from app.auditoria import Acao
 from app.calculos import ticket_medio, variacao_percentual
 from app.dependencias import Banco, UsuarioAtual, exigir
@@ -27,6 +34,7 @@ from app.esquemas import (
     CampanhaDoParceiro,
     DesempenhoParceiro,
     EdicaoParceiro,
+    EventoDoParceiro,
     NovoParceiro,
     Ordenacao,
     OrigemDoRisco,
@@ -39,6 +47,7 @@ from app.esquemas import (
     VinculoParceiro,
 )
 from app.modelos import (
+    Auditoria,
     Categoria,
     HistoricoSegmento,
     ItemPlano,
@@ -442,6 +451,43 @@ def campanha(parceiro_id: int, s: Banco) -> CampanhaDoParceiro:
     )
 
 
+# Os eventos de um cadastro são poucos; o teto existe para um cadastro que
+# alguém editou centenas de vezes não virar uma página sem fim.
+EVENTOS_DO_HISTORICO = 50
+
+
+@router.get("/{parceiro_id}/historico", response_model=list[EventoDoParceiro])
+def historico(parceiro_id: int, s: Banco) -> list[EventoDoParceiro]:
+    """O que mudou no cadastro do parceiro, quando e por quem (RF50, H90).
+
+    Sai da trilha de auditoria — os eventos de cadastro com este parceiro como
+    alvo —, do mais recente para o mais antigo. **Só os do próprio parceiro**: a
+    trilha inteira continua sendo do Administrador (RF08), e por isso a origem e
+    os parâmetros crus não vêm aqui, só a frase. E a frase é só a mudança: o
+    nome do parceiro, que a trilha repete em cada linha, aqui é o título da página.
+    """
+    _buscar(s, parceiro_id)  # 404 com a mesma mensagem de sempre
+    linhas = s.execute(
+        servico_auditoria.consulta(
+            [
+                Auditoria.acao.in_([str(a) for a in servico_auditoria.DO_CADASTRO_DO_PARCEIRO]),
+                # Como texto, que é a expressão do índice: `detalhes->>'alvo'`.
+                Auditoria.detalhes["alvo"].astext == str(parceiro_id),
+            ]
+        ).limit(EVENTOS_DO_HISTORICO)
+    )
+    return [
+        EventoDoParceiro(
+            acao=evento.acao,
+            rotulo=servico_auditoria.rotulo(evento.acao),
+            resumo=servico_auditoria.mudanca_no_cadastro(evento.acao, evento.detalhes),
+            autor=nome,
+            ocorrido_em=evento.ocorrido_em,
+        )
+        for evento, nome, _login in linhas
+    ]
+
+
 @router.post("", response_model=ParceiroResposta, status_code=status.HTTP_201_CREATED)
 def criar(
     dados: NovoParceiro,
@@ -494,9 +540,14 @@ def editar(
     parceiro = _buscar(s, parceiro_id)
     origem = auditoria.origem_de(request)
     informados = dados.campos_informados
+    # O nome da categoria vem por `s.get`, e não por `parceiro.categoria`: ler o
+    # relacionamento agora o deixaria carregado com a categoria antiga, e a
+    # resposta sairia com ela depois da troca.
+    categoria = s.get(Categoria, parceiro.categoria_id) if parceiro.categoria_id else None
     anterior = {
         "nome": parceiro.nome,
         "categoria_id": parceiro.categoria_id,
+        "categoria": categoria.nome if categoria else None,
         "status": str(parceiro.status),
         "contato": parceiro.contato,
         "ativo": parceiro.ativo,
@@ -528,7 +579,7 @@ def editar(
             raise _nome_em_uso(s, dados.nome) from e
         raise
 
-    _auditar_edicao(parceiro, anterior, autor_id=autor.id, origem=origem)
+    _auditar_edicao(s, parceiro, anterior, autor_id=autor.id, origem=origem)
     return parceiro
 
 
@@ -669,19 +720,33 @@ def _contar_vinculos(s: Session, parceiro_id: int) -> VinculoParceiro:
     )
 
 
-def _auditar_edicao(parceiro: Parceiro, anterior: dict, *, autor_id: int, origem: str) -> None:
+def _auditar_edicao(
+    s: Session, parceiro: Parceiro, anterior: dict, *, autor_id: int, origem: str
+) -> None:
     """Uma ação por tipo de mudança, para o filtro da trilha ser útil.
 
     Registrar tudo como "parceiro editado" faria a consulta por classificação
     devolver toda correção de contato junto.
+
+    **A trilha diz o que mudou, e não só que mudou** (RF50). A categoria vai com
+    o nome que tinha na hora — o identificador sozinho não se lê, e o nome de uma
+    categoria pode ser outro amanhã. O contato vai como "mudou", sem o valor: é o
+    dado de uma pessoa, e a trilha não se apaga.
     """
     alvo = {"alvo": parceiro.id, "nome": parceiro.nome}
 
     if parceiro.categoria_id != anterior["categoria_id"]:
+        nova = s.get(Categoria, parceiro.categoria_id) if parceiro.categoria_id else None
         auditoria.registrar(
             Acao.PARCEIRO_CLASSIFICADO,
             usuario_id=autor_id,
-            detalhes={**alvo, "de": anterior["categoria_id"], "para": parceiro.categoria_id},
+            detalhes={
+                **alvo,
+                "de": anterior["categoria_id"],
+                "para": parceiro.categoria_id,
+                "de_nome": anterior["categoria"],
+                "para_nome": nova.nome if nova else None,
+            },
             origem=origem,
         )
 
@@ -703,6 +768,7 @@ def _auditar_edicao(parceiro: Parceiro, anterior: dict, *, autor_id: int, origem
                 "nome_de": anterior["nome"],
                 "status_de": anterior["status"],
                 "status_para": str(parceiro.status),
+                "contato_alterado": parceiro.contato != anterior["contato"],
             },
             origem=origem,
         )

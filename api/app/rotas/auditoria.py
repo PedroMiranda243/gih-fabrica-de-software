@@ -1,16 +1,18 @@
-"""Consulta da trilha de auditoria (RF06, RF08 · história H18)."""
+"""Consulta da trilha de auditoria (RF06, RF08, RF49 · histórias H18 e H89)."""
 from __future__ import annotations
 
-from datetime import date, datetime, time, timedelta
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 
+from app import planilha, servico_auditoria
 from app.auditoria import Acao
 from app.dependencias import Banco, exigir
-from app.esquemas import PaginaAuditoria, RegistroAuditoria
-from app.modelos import Auditoria, Perfil
+from app.esquemas import AcaoAuditavel, PaginaAuditoria, RegistroAuditoria
+from app.modelos import Auditoria, Perfil, Usuario
 
 router = APIRouter(
     prefix="/api/auditoria",
@@ -20,75 +22,120 @@ router = APIRouter(
 
 TAMANHO_MAXIMO = 200
 
+Autor = Annotated[int | None, Query(description="Id do usuário que executou a ação.")]
+De = Annotated[date | None, Query(description="Data inicial, inclusiva.")]
+Ate = Annotated[date | None, Query(description="Data final, inclusiva.")]
+Busca = Annotated[
+    str | None,
+    Query(max_length=120, description="Texto no que foi gravado ou em quem fez."),
+]
+
+
+def _registro(evento: Auditoria, nome: str | None, login: str | None) -> RegistroAuditoria:
+    return RegistroAuditoria(
+        id=evento.id,
+        usuario_id=evento.usuario_id,
+        autor=nome,
+        autor_login=login,
+        acao=evento.acao,
+        rotulo=servico_auditoria.rotulo(evento.acao),
+        resumo=servico_auditoria.resumo(evento.acao, evento.detalhes),
+        detalhes=evento.detalhes,
+        origem=evento.origem,
+        ocorrido_em=evento.ocorrido_em,
+    )
+
 
 @router.get("", response_model=PaginaAuditoria)
 def consultar(
     s: Banco,
-    autor: Annotated[int | None, Query(description="Id do usuário que executou a ação.")] = None,
+    autor: Autor = None,
     acao: Annotated[Acao | None, Query()] = None,
-    de: Annotated[date | None, Query(description="Data inicial, inclusiva.")] = None,
-    ate: Annotated[date | None, Query(description="Data final, inclusiva.")] = None,
+    de: De = None,
+    ate: Ate = None,
+    busca: Busca = None,
     pagina: Annotated[int, Query(ge=1)] = 1,
     tamanho: Annotated[int, Query(ge=1, le=TAMANHO_MAXIMO)] = 50,
 ) -> PaginaAuditoria:
-    """Trilha filtrada por autor, ação e intervalo de datas (RF08).
+    """Trilha filtrada por autor, ação, intervalo de datas e texto (RF08, RF49).
 
     Paginada porque esta tabela só cresce: a mais movimentada do sistema recebe
     uma linha por login, por importação e por decisão de mensagem. Devolver tudo
     funcionaria na demonstração e travaria depois.
+
+    **O autor vem na mesma consulta**, pela junção — e não por uma busca a cada
+    linha. Ela é externa: a tentativa de entrada com login que não existe não tem
+    autor (UC14-A1), e precisa continuar na lista.
     """
-    condicoes = []
-    if autor is not None:
-        condicoes.append(Auditoria.usuario_id == autor)
-    if acao is not None:
-        condicoes.append(Auditoria.acao == str(acao))
-    if de is not None:
-        condicoes.append(Auditoria.ocorrido_em >= _inicio_do_dia(de))
-    if ate is not None:
-        # Fim do dia, não início: quem filtra "até 15/09" espera o dia 15
-        # inteiro. Comparar com o início excluiria tudo o que aconteceu nele.
-        condicoes.append(Auditoria.ocorrido_em < _inicio_do_dia(ate + timedelta(days=1)))
-
-    total = s.scalar(select(func.count()).select_from(Auditoria).where(*condicoes)) or 0
-
-    itens = s.scalars(
-        select(Auditoria)
-        .where(*condicoes)
-        .order_by(Auditoria.ocorrido_em.desc(), Auditoria.id.desc())
-        .offset((pagina - 1) * tamanho)
-        .limit(tamanho)
+    filtros = servico_auditoria.condicoes(autor=autor, acao=acao, de=de, ate=ate, busca=busca)
+    total = (
+        s.scalar(
+            select(func.count())
+            .select_from(Auditoria)
+            .outerjoin(Usuario, Usuario.id == Auditoria.usuario_id)
+            .where(*filtros)
+        )
+        or 0
     )
-
+    linhas = s.execute(
+        servico_auditoria.consulta(filtros).offset((pagina - 1) * tamanho).limit(tamanho)
+    )
     return PaginaAuditoria(
-        itens=[RegistroAuditoria.model_validate(i) for i in itens],
+        itens=[_registro(evento, nome, login) for evento, nome, login in linhas],
         total=total,
         pagina=pagina,
         tamanho=tamanho,
     )
 
 
-def _inicio_do_dia(dia: date) -> datetime:
-    """Meia-noite daquele dia **no fuso do servidor**.
+@router.get("/exportacao.csv", response_class=StreamingResponse)
+def exportar(
+    autor: Autor = None,
+    acao: Annotated[Acao | None, Query()] = None,
+    de: De = None,
+    ate: Ate = None,
+    busca: Busca = None,
+) -> StreamingResponse:
+    """A trilha em CSV, com **exatamente** o recorte da tela (RF49).
 
-    A coluna é `timestamptz`, então comparar com data ingênua levanta TypeError —
-    mas o detalhe que importa é outro: usar UTC aqui faz o filtro "hoje" perder
-    o que acabou de acontecer. Às 23h no horário de Brasília já é o dia seguinte
-    em UTC, e o registro cai fora do intervalo que o usuário pediu. O dia é o do
-    relógio de quem consulta, não o do meridiano de Greenwich.
+    Os mesmos filtros, pela mesma função da lista: exportar um recorte diferente
+    do que está na tela é pior que não exportar. Sem paginação — é o arquivo
+    inteiro do recorte —, e as linhas saem em lotes, sem montar a lista antes.
 
-    Isso torna o resultado dependente do `TZ` do servidor — que por isso está
-    declarado no `docker-compose.yml` e no `.env.example`, e não deixado ao
-    padrão do contêiner, que é UTC.
+    O resumo e o login passam pela proteção contra fórmula: os dois trazem texto
+    que alguém digitou — um nome de parceiro, um login tentado.
     """
-    return datetime.combine(dia, time.min).astimezone()
+    filtros = servico_auditoria.condicoes(autor=autor, acao=acao, de=de, ate=ate, busca=busca)
+
+    def linha(bruta) -> list[str]:
+        evento, nome, login = bruta
+        return [
+            evento.ocorrido_em.astimezone().strftime("%d/%m/%Y %H:%M:%S"),
+            planilha.texto(nome),
+            planilha.texto(login),
+            servico_auditoria.rotulo(evento.acao),
+            planilha.texto(servico_auditoria.resumo(evento.acao, evento.detalhes)),
+            planilha.texto(evento.origem),
+        ]
+
+    nome = f"auditoria-{date.today().isoformat()}.csv"
+    return StreamingResponse(
+        planilha.gerar(
+            ["Quando", "Autor", "Login", "Ação", "O que aconteceu", "Origem"],
+            servico_auditoria.consulta(filtros),
+            linha,
+        ),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{nome}"'},
+    )
 
 
-@router.get("/acoes", response_model=list[str])
-def acoes_possiveis() -> list[str]:
-    """As ações que existem, para o filtro da interface.
+@router.get("/acoes", response_model=list[AcaoAuditavel])
+def acoes_possiveis() -> list[AcaoAuditavel]:
+    """As ações que existem, com o rótulo, para o filtro da interface.
 
     Vem do enum, não de um `SELECT DISTINCT`: a lista precisa ser a mesma ainda
     que uma ação nunca tenha ocorrido, senão o filtro some justo quando ninguém
     fez aquilo — que é o caso mais interessante de procurar.
     """
-    return [str(a) for a in Acao]
+    return [AcaoAuditavel(acao=str(a), rotulo=servico_auditoria.rotulo(str(a))) for a in Acao]

@@ -150,7 +150,15 @@ class Auditoria(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
-    __table_args__ = (Index("ix_auditoria_ocorrido_em", "ocorrido_em"),)
+    # A trilha só cresce, e a tela a filtra por ação, por autor e por datas
+    # (H89): cada filtro tem o índice dele, com o momento, que é a ordenação. O
+    # último é o alvo dentro do JSON, para o histórico de um cadastro (H90).
+    __table_args__ = (
+        Index("ix_auditoria_ocorrido_em", "ocorrido_em"),
+        Index("ix_auditoria_acao", "acao", "ocorrido_em"),
+        Index("ix_auditoria_usuario", "usuario_id", "ocorrido_em"),
+        Index("ix_auditoria_alvo", text("(detalhes->>'alvo')")),
+    )
 
 
 
