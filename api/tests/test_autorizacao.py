@@ -79,6 +79,10 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("GET", "/api/painel/series"): {Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/painel/segmentos"): {Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/painel/mobilidade"): {Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/painel/recortes"): {Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA},
+    # A previsão e a campanha dentro do painel (H83): o Administrador lê o painel,
+    # mas não a previsão por parceiro nem a campanha, e o bloco é a soma das duas.
+    ("GET", "/api/painel/decisao"): {Perfil.GESTOR, Perfil.ANALISTA},
     # RF21 — Configuração da segmentação: só Administrador. É a única rota que
     # muda como todo o resto classifica; o Gestor decide campanha, o
     # Administrador decide a régua.
