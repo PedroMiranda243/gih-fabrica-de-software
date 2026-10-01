@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 2.0 — 16/09/2026
+**Versão:** 2.1 — 01/10/2026 · o UC15, da Sprint 07 acadêmica (2.0 — 16/09/2026)
 
 ---
 
@@ -26,6 +26,9 @@
 
 ![Diagrama de casos de uso do GIH](diagramas/casos-de-uso.svg)
 
+> O diagrama é o da Sprint 1, com os quatorze casos de então, e é a figura que foi entregue. O UC15 —
+> consultar e exportar relatórios —, da Sprint 07 da disciplina, está na tabela e na especificação abaixo.
+
 ---
 
 ## 3. Visão geral dos casos de uso
@@ -33,19 +36,20 @@
 | ID | Caso de uso | Ator principal | Requisitos cobertos |
 |---|---|---|---|
 | **UC01** | Autenticar no sistema | Todos | RF01, RF02, RF07 |
-| **UC02** | Gerenciar usuários e perfis | Administrador | RF03, RF04, RF05 |
+| **UC02** | Gerenciar usuários e perfis | Administrador | RF03, RF04, RF05, RF52 |
 | **UC03** | Importar relatório de desempenho | Analista, Gestor | RF09, RF10, RF11, RF12, RF13 |
-| **UC04** | Gerenciar parceiros e categorias | Analista, Gestor | RF14, RF15, RF16 |
+| **UC04** | Gerenciar parceiros e categorias | Analista, Gestor | RF14, RF15, RF16, RF50 |
 | **UC05** | Consultar painel e ranking | Gestor, Analista | RF17, RF18, RF19, RF20, RF23, RF24, RF25 |
 | **UC06** | Analisar mobilidade do Top N | Gestor, Analista | RF22 |
 | **UC07** | Treinar modelo de previsão | Administrador, Gestor | RF27, RF28 |
-| **UC08** | Configurar e executar otimização de campanha | Gestor | RF29, RF30, RF31, RF35 |
-| **UC09** | Comparar desempenho serial, paralelo e GPU | Gestor, Administrador | RF32, RF33, RF34 |
+| **UC08** | Configurar e executar otimização de campanha | Gestor | RF29, RF30, RF31, RF35, RF53 |
+| **UC09** | Comparar desempenho serial, paralelo e GPU | Gestor, Administrador | RF32, RF33, RF34, RF51 |
 | **UC10** | Gerar mensagens por segmento | Analista, Gestor | RF36, RF37 |
 | **UC11** | Aprovar ou rejeitar mensagem | Gestor | RF38, RF39, RF40 |
 | **UC12** | Consultar assistente analítico | Gestor, Analista | RF41, RF42, RF43 |
 | **UC13** | Consultar meu desempenho | Parceiro | RF19, RF26 |
-| **UC14** | Auditar ações do sistema | Administrador | RF06, RF08 |
+| **UC14** | Auditar ações do sistema | Administrador | RF06, RF08, RF49 |
+| **UC15** | Consultar e exportar relatórios | Gestor, Analista, Administrador | RF44, RF45, RF46, RF47, RF48 |
 
 ### Matriz de permissões
 
@@ -65,6 +69,7 @@
 | UC12 Assistente | — | ● | ● | — |
 | UC13 Meu desempenho | — | — | — | ● |
 | UC14 Auditoria | ● | — | — | — |
+| UC15 Relatórios | ○ | ● | ● | — |
 
 ● executa · ○ somente leitura · — sem acesso
 
@@ -77,11 +82,14 @@ do otimizador**: quem calculou, quando, com que parâmetros, em que modo, em qua
 resultado. O plano de cada execução, parceiro a parceiro, continua sendo da campanha, e só o Gestor e o
 Analista o abrem. Decisão de 26/09/2026, na H58.
 
+No UC15, o Administrador abre só o **relatório de operações**, que sai da trilha de auditoria dele (UC14). Os
+de desempenho, de risco e de campanha mostram dados de parceiros, e são do Gestor e do Analista.
+
 ---
 
 ## 4. Especificação detalhada
 
-Os **quatorze** casos de uso, cada um com ator principal, objetivo, pré e pós-condições, requisitos
+Os **quinze** casos de uso, cada um com ator principal, objetivo, pré e pós-condições, requisitos
 cobertos, fluxo principal, fluxos alternativos e exceções.
 
 Os fluxos alternativos e as exceções recebem o mesmo peso do fluxo principal, e por um motivo prático: é
@@ -826,14 +834,17 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 | **Objetivo** | Investigar o que foi feito, por quem e quando |
 | **Pré-condições** | Usuário autenticado com perfil Administrador |
 | **Pós-condições** | Nenhuma alteração de estado — consulta |
-| **Requisitos** | RF06, RF08 |
+| **Requisitos** | RF06, RF08, RF49 |
 
 **Fluxo principal**
 
 1. O Administrador abre a trilha de auditoria.
 2. O sistema exibe os eventos do mais recente para o mais antigo, paginados.
-3. O Administrador filtra por autor, tipo de ação e intervalo de datas.
-4. O sistema exibe cada evento com autor, ação, parâmetros, origem e momento.
+3. O Administrador filtra por autor, tipo de ação e intervalo de datas, e busca por texto — o nome de um
+   parceiro, um login.
+4. O sistema exibe cada evento com autor, ação, um resumo do que aconteceu, origem e momento; a linha abre os
+   parâmetros gravados.
+5. O Administrador exporta em CSV o recorte que está vendo.
 
 **Fluxos alternativos**
 
@@ -879,3 +890,45 @@ fluxo principal, fluxos alternativos e exceções.
 
 Nenhum requisito funcional ficou órfão de caso de uso, e nenhum caso de uso existe sem requisito que o
 justifique.
+
+---
+
+### UC15 — Consultar e exportar relatórios
+
+| | |
+|---|---|
+| **Ator principal** | Gestor, Analista; Administrador, no relatório de operações |
+| **Objetivo** | Apresentar, de forma organizada, como a rede foi, quem está em risco, onde a verba da campanha foi e o que foi feito no sistema |
+| **Pré-condições** | Usuário autenticado; base com ao menos um período importado |
+| **Pós-condições** | Nenhuma alteração de estado — consulta |
+| **Requisitos** | RF44, RF45, RF46, RF47, RF48 |
+
+**Fluxo principal**
+
+1. O usuário abre Relatórios e escolhe um deles: desempenho por período, parceiros em risco, campanha ou
+   operações.
+2. O sistema exibe o relatório do recorte padrão — o período mais recente, o último plano, os últimos trinta
+   dias —, com os totais.
+3. O usuário ajusta os filtros do relatório: período, categoria e segmento; risco mínimo; execução; datas,
+   autor e tipo de ação.
+4. O sistema refaz o relatório, e o recorte fica no endereço da página.
+5. O usuário exporta em CSV, ou imprime e salva em PDF: a página impressa traz o título, o recorte aplicado, a
+   data e quem gerou.
+
+**Fluxos alternativos**
+
+- **A1 — Sem previsão.** No relatório de risco, parceiro sem previsão aparece com o motivo, e não com zero
+  (RN09). Sem modelo treinado, o relatório diz o que falta.
+- **A2 — Sem plano.** Sem plano de campanha calculado, o relatório da campanha leva à tela da Campanha.
+- **A3 — Estimativa.** Faturamento previsto, risco e ganho esperado aparecem marcados como estimativa, com a
+  versão do modelo e até quando ela tem dados (RN09, RN10).
+
+**Exceções**
+
+- **E1 — Recorte sem dado.** O sistema diz que não há registro no recorte, em vez de exibir uma tabela vazia.
+- **E2 — Perfil sem acesso.** O Administrador que abre um relatório de parceiros, ou o Gestor que abre o de
+  operações, é recusado pelo servidor.
+
+> **Os relatórios não calculam regra nova.** Eles leem o que os outros módulos gravam, pelas mesmas consultas
+> do painel, da previsão e do plano: o total do relatório de desempenho é o do painel no mesmo período, o
+> risco é o da previsão, e o custo é o do plano. O ticket médio continua derivado das parcelas (RN04).
