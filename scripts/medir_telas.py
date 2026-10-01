@@ -1,6 +1,6 @@
 """Mede as telas num navegador de verdade — a largura e a acessibilidade, H76.
 
-Cada uma das vinte telas, aberta pelo perfil que a usa, a **768 e a 1440 px**:
+Cada tela, aberta pelo perfil que a usa, a **768 e a 1440 px**:
 
 - **sem rolagem horizontal da página** (RNF21), e **sem conteúdo cortado** por
   uma caixa que esconde o que passa dela. A tabela larga que rola na própria
@@ -241,6 +241,7 @@ def telas(ids: dict) -> list[Tela]:
         Tela("Usuários", "/usuarios", "ADMINISTRADOR", "usuarios"),
         Tela("Novo usuário", "/usuarios/novo", "ADMINISTRADOR", "usuario-novo"),
         Tela("Conta do usuário", f"/usuarios/{ids['usuario']}", "ADMINISTRADOR", "usuario"),
+        Tela("Auditoria", "/auditoria", "ADMINISTRADOR", "auditoria"),
         Tela("Limiares", "/configuracao", "ADMINISTRADOR", "configuracao"),
         Tela("Meu desempenho", "/meu-desempenho", "PARCEIRO", "meu-desempenho"),
     ]
