@@ -1,0 +1,207 @@
+Registro das revisões dos Pull Requests — gerado do GitHub
+https://github.com/PedroMiranda243/gih-fabrica-de-software
+PRs incorporados depois do #112; gerado em 01/10/2026 00:39 por scripts/registrar_revisoes.py
+
+#114  25/09  A conclusão do treino é gravada quando ele termina
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ninguém
+      revisões:   nenhuma registrada no GitHub
+
+#116  25/09  O reset recria o administrador e reinicia a API
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#124  25/09  RN10 e RN11, a formalização do otimizador e a ADR-011
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#125  25/09  O otimizador serial em Python e a recusa de campanha inviável
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao
+      revisões:   nenhuma registrada no GitHub
+
+#126  25/09  A campanha na API: catálogo, cálculo do plano e recusa com o que falta
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, joaopfranca04
+      revisões:   nenhuma registrada no GitHub
+
+#127  25/09  A medição do otimizador serial: contra o guloso, o teto e a enumeração
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#128  25/09  A tela de campanha: restrições, plano recomendado e catálogo
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob
+      revisões:   nenhuma registrada no GitHub
+
+#129  25/09  A campanha nos documentos vivos: dados, classes, casos de uso e telas
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#130  26/09  Spike: o núcleo C++/CUDA dentro da imagem da API, com a GPU (ADR-012)
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#137  26/09  H53a: o genético em C++, idêntico ao Python, chamado por processo
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#138  26/09  H53b: o genético com OpenMP, com o mesmo plano da versão serial
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#139  26/09  H55: a campanha escolhe o modo de execução, e o automático é o mais rápido
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, ingrydaraujob, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#140  26/09  H58: o histórico de execuções do otimizador
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#147  26/09  H54a: as estruturas de dados na GPU e a transferência, conferida
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#148  26/09  H56: sem GPU o sistema funciona igual, e diz por quê
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#149  26/09  H54b: o kernel CUDA que avalia a população, igual à CPU
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#150  26/09  H54c: o genético inteiro na GPU, com o mesmo plano
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#151  27/09  H57: o benchmark na tela, com as quatro colunas
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#152  27/09  H70: testes de segurança derivados da aplicação, e dois vetores fechados
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, ingrydaraujob, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#153  27/09  H59: dois planos lado a lado, com o que mudou
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#169  27/09  ADR-013: o modelo de linguagem local, o redator e a guarda numérica
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#170  27/09  H60 (API): gerar mensagens, com o modelo fixo quando o modelo falha
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#171  27/09  H60 (tela): gerar mensagens, com a prévia e as mensagens chegando uma a uma
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#172  27/09  H61–H63 (API): a fila de aprovação, e a decisão só do gestor
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#173  27/09  H61–H63 (tela): a fila de aprovação, com a decisão do gestor
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#174  27/09  H64: o histórico das mensagens decididas, e a exportação das aprovadas
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, ingrydaraujob, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#175  27/09  H39: o portal do Parceiro, só com o próprio histórico
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#176  27/09  H65: o assistente com o catálogo fechado de perguntas
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#177  28/09  H66, H67, H68: a fonte, a guarda e a abstenção do assistente
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#178  28/09  H65 a H68: a tela do assistente
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#179  28/09  H76: a acessibilidade e a responsividade medidas
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#180  28/09  H72: o README que um avaliador segue sozinho
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#181  28/09  H73: a documentação técnica final consolidada, e o cronograma real
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#186  30/09  H79: a navegação por módulo, o título de cada aba e a página "não encontrada"
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#187  30/09  H80: o risco de queda na lista de parceiros, ordenável e no CSV
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#188  30/09  H81: os módulos ligados pelos próprios dados — do painel ao cadastro, do…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#191  30/09  Evidências da Sprint 06: o terceiro módulo, a integração e a navegação, e dois…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#193  01/10  A 768 px, a página não rola mais na horizontal (#192)
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+Resumo
+  PRs incorporados                                 38
+  com aprovação de um colega                        0
+  com revisão de um colega, sem aprovação           0
+  sem revisão registrada no GitHub                 38
+
+Por colega convidado
+  mihaeldatoman            convidado em  34 · aprovou   0 · pediu mudanças  0 · comentou  0
+  ThiagojFalcao            convidado em  22 · aprovou   0 · pediu mudanças  0 · comentou  0
+  ingrydaraujob            convidado em  17 · aprovou   0 · pediu mudanças  0 · comentou  0
+  joaopfranca04            convidado em  14 · aprovou   0 · pediu mudanças  0 · comentou  0
+
+Resultado: 38 PRs incorporados, 0 com aprovação registrada de um colega, 38 sem revisão registrada.
