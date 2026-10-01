@@ -1,0 +1,544 @@
+[
+  {
+    "numero": 114,
+    "titulo": "A conclusão do treino é gravada quando ele termina",
+    "mesclado_em": "2026-09-25T04:33-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 116,
+    "titulo": "O reset recria o administrador e reinicia a API",
+    "mesclado_em": "2026-09-25T05:20-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 124,
+    "titulo": "RN10 e RN11, a formalização do otimizador e a ADR-011",
+    "mesclado_em": "2026-09-25T20:30-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 125,
+    "titulo": "O otimizador serial em Python e a recusa de campanha inviável",
+    "mesclado_em": "2026-09-25T20:31-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 126,
+    "titulo": "A campanha na API: catálogo, cálculo do plano e recusa com o que falta",
+    "mesclado_em": "2026-09-25T21:22-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "joaopfranca04"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 127,
+    "titulo": "A medição do otimizador serial: contra o guloso, o teto e a enumeração",
+    "mesclado_em": "2026-09-25T21:52-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 128,
+    "titulo": "A tela de campanha: restrições, plano recomendado e catálogo",
+    "mesclado_em": "2026-09-25T21:53-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 129,
+    "titulo": "A campanha nos documentos vivos: dados, classes, casos de uso e telas",
+    "mesclado_em": "2026-09-25T21:53-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 130,
+    "titulo": "Spike: o núcleo C++/CUDA dentro da imagem da API, com a GPU (ADR-012)",
+    "mesclado_em": "2026-09-26T03:25-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 137,
+    "titulo": "H53a: o genético em C++, idêntico ao Python, chamado por processo",
+    "mesclado_em": "2026-09-26T03:47-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 138,
+    "titulo": "H53b: o genético com OpenMP, com o mesmo plano da versão serial",
+    "mesclado_em": "2026-09-26T04:29-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 139,
+    "titulo": "H55: a campanha escolhe o modo de execução, e o automático é o mais rápido",
+    "mesclado_em": "2026-09-26T05:14-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "ingrydaraujob",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 140,
+    "titulo": "H58: o histórico de execuções do otimizador",
+    "mesclado_em": "2026-09-26T14:41-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 147,
+    "titulo": "H54a: as estruturas de dados na GPU e a transferência, conferida",
+    "mesclado_em": "2026-09-26T15:12-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 148,
+    "titulo": "H56: sem GPU o sistema funciona igual, e diz por quê",
+    "mesclado_em": "2026-09-26T15:34-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 149,
+    "titulo": "H54b: o kernel CUDA que avalia a população, igual à CPU",
+    "mesclado_em": "2026-09-26T15:58-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 150,
+    "titulo": "H54c: o genético inteiro na GPU, com o mesmo plano",
+    "mesclado_em": "2026-09-26T20:01-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 151,
+    "titulo": "H57: o benchmark na tela, com as quatro colunas",
+    "mesclado_em": "2026-09-27T00:33-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 152,
+    "titulo": "H70: testes de segurança derivados da aplicação, e dois vetores fechados",
+    "mesclado_em": "2026-09-27T01:01-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "ingrydaraujob",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 153,
+    "titulo": "H59: dois planos lado a lado, com o que mudou",
+    "mesclado_em": "2026-09-27T03:20-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 169,
+    "titulo": "ADR-013: o modelo de linguagem local, o redator e a guarda numérica",
+    "mesclado_em": "2026-09-27T05:15-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 170,
+    "titulo": "H60 (API): gerar mensagens, com o modelo fixo quando o modelo falha",
+    "mesclado_em": "2026-09-27T06:12-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 171,
+    "titulo": "H60 (tela): gerar mensagens, com a prévia e as mensagens chegando uma a uma",
+    "mesclado_em": "2026-09-27T15:16-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 172,
+    "titulo": "H61–H63 (API): a fila de aprovação, e a decisão só do gestor",
+    "mesclado_em": "2026-09-27T15:45-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 173,
+    "titulo": "H61–H63 (tela): a fila de aprovação, com a decisão do gestor",
+    "mesclado_em": "2026-09-27T16:06-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 174,
+    "titulo": "H64: o histórico das mensagens decididas, e a exportação das aprovadas",
+    "mesclado_em": "2026-09-27T17:05-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "ingrydaraujob",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 175,
+    "titulo": "H39: o portal do Parceiro, só com o próprio histórico",
+    "mesclado_em": "2026-09-27T17:45-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 176,
+    "titulo": "H65: o assistente com o catálogo fechado de perguntas",
+    "mesclado_em": "2026-09-27T21:25-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 177,
+    "titulo": "H66, H67, H68: a fonte, a guarda e a abstenção do assistente",
+    "mesclado_em": "2026-09-28T01:23-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 178,
+    "titulo": "H65 a H68: a tela do assistente",
+    "mesclado_em": "2026-09-28T02:50-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 179,
+    "titulo": "H76: a acessibilidade e a responsividade medidas",
+    "mesclado_em": "2026-09-28T03:29-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 180,
+    "titulo": "H72: o README que um avaliador segue sozinho",
+    "mesclado_em": "2026-09-28T04:36-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 181,
+    "titulo": "H73: a documentação técnica final consolidada, e o cronograma real",
+    "mesclado_em": "2026-09-28T05:24-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 186,
+    "titulo": "H79: a navegação por módulo, o título de cada aba e a página \"não encontrada\"",
+    "mesclado_em": "2026-09-30T05:46-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 187,
+    "titulo": "H80: o risco de queda na lista de parceiros, ordenável e no CSV",
+    "mesclado_em": "2026-09-30T17:29-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 188,
+    "titulo": "H81: os módulos ligados pelos próprios dados — do painel ao cadastro, do cadastro ao plano",
+    "mesclado_em": "2026-09-30T17:59-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 191,
+    "titulo": "Evidências da Sprint 06: o terceiro módulo, a integração e a navegação, e dois defeitos achados no caminho",
+    "mesclado_em": "2026-09-30T23:10-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 193,
+    "titulo": "A 768 px, a página não rola mais na horizontal (#192)",
+    "mesclado_em": "2026-10-01T00:38-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  }
+]

@@ -1,7 +1,7 @@
 # 07 — Arquitetura
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Versão:** 2.0 — 28/09/2026, o sistema construído (1.0 — 03/09/2026, a arquitetura preliminar da Sprint 1)
+**Versão:** 2.1 — 30/09/2026, o dado entre os módulos (2.0 — 28/09/2026, o sistema construído; 1.0 — 03/09/2026, a arquitetura preliminar da Sprint 1)
 
 > **O sistema como está, e as decisões que o trouxeram até aqui.** Este documento começou como a arquitetura
 > preliminar da Sprint 1. Cada decisão tomada na construção entrou como uma ADR, na seção 5, com a data e o
@@ -72,6 +72,66 @@ Duas consequências práticas dessa divisão:
 - A interface pode ser reescrita sem tocar no restante do sistema.
 - O núcleo em C++/CUDA é testável isoladamente, por linha de comando, sem subir a API — o que torna o
   benchmark reproduzível e independente do resto.
+
+### O dado de um módulo para o outro
+
+Os três módulos não se chamam: cada um grava no banco o que produz, e o seguinte lê dali. A importação grava as
+métricas do período, e a segmentação e o ranking saem delas. O treino aprende com o histórico e grava a
+previsão de cada parceiro, com a versão que a produziu. A campanha lê a previsão da versão em uso — o ganho de
+cada ação sai dela (RN10) — e a posição no ranking, que separa o Top N da cauda longa (RN11), e grava o plano.
+
+Nenhum módulo recalcula o que o anterior gravou. Por isso o risco da lista de parceiros, o do cadastro e o que
+entra no ganho da campanha são o mesmo número — e a transcrição da campanha da Sprint 06 confere isso contra a
+aplicação no ar.
+
+<!-- diagrama: fluxo-entre-modulos -->
+```mermaid
+flowchart TB
+    REL["Relatório do período<br/>CSV ou planilha"]
+
+    subgraph M1["Análise"]
+        direction LR
+        IMP["Importação<br/>métricas do período · RN03"]
+        SEG["Segmentação e ranking<br/>segmento e posição · RN01, RN02"]
+    end
+
+    subgraph M2["Previsão"]
+        direction LR
+        TRE["Treino<br/>a versão em uso · UC07"]
+        PREV["Previsão<br/>faturamento e risco · RN09"]
+    end
+
+    subgraph M3["Campanha"]
+        direction LR
+        ELE["Elegíveis<br/>ativos e com previsão · RN11"]
+        OTI["Otimizador<br/>serial · OpenMP · GPU"]
+        PLANO["Plano<br/>a ação de cada parceiro · RN10"]
+    end
+
+    subgraph TELAS["Onde os três se encontram, na interface"]
+        direction LR
+        PAINEL["Painel"]
+        LISTA["Lista de parceiros<br/>com o risco · H80"]
+        CAD["Cadastro do parceiro<br/>medido · previsto · ação · H81"]
+    end
+
+    REL --> IMP --> SEG
+    IMP -->|histórico| TRE --> PREV
+    PREV -->|ganho e risco| ELE
+    SEG -->|Top N ou cauda longa| ELE
+    ELE --> OTI --> PLANO
+
+    SEG --> PAINEL
+    PREV --> LISTA
+    PLANO --> CAD
+    PAINEL -.->|segmento ou nome| LISTA
+    LISTA -.-> CAD
+    CAD -.->|Abrir o plano| PLANO
+```
+
+As linhas cheias são dado gravado e lido; as tracejadas, os caminhos de clique entre as telas (H81). O
+cadastro do parceiro é onde os três módulos aparecem lado a lado: o desempenho medido, a previsão e a ação que
+o último plano reservou.
 
 ---
 

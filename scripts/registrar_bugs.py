@@ -9,9 +9,17 @@ Pendência é a issue ainda aberta.
 Escrever a lista à mão no documento teria o defeito de sempre: ela diverge do
 que aconteceu no primeiro bug que alguém esquecer de copiar.
 
+**A janela começa no dia do PDF da entrega anterior, menos o que o registro
+dela já tem** (`--anterior`). Uma data só não basta: no dia do PDF da Sprint 05
+foram abertas as issues registradas nele e, depois do PDF, outras duas que ele
+não tem. Cortar no dia seguinte perderia as duas; cortar no próprio dia
+repetiria as doze.
+
 Precisa do `gh` autenticado. Uso, da raiz do projeto:
 
-    python scripts/registrar_bugs.py --desde 2026-09-26 --saida docs/entrega/evidencias/sprint06
+    python scripts/registrar_bugs.py --desde 2026-09-25 \\
+        --anterior docs/entrega/evidencias/sprint05/bugs.json \\
+        --saida docs/entrega/evidencias/sprint06
 """
 from __future__ import annotations
 
@@ -82,9 +90,11 @@ def prs_da_correcao(issue: dict) -> list[int]:
     return []
 
 
-def registro(desde: str) -> list[dict]:
+def registro(desde: str, ja_registradas: frozenset[int] = frozenset()) -> list[dict]:
     itens = []
     for issue in issues(desde):
+        if issue["number"] in ja_registradas:
+            continue
         partes = secoes(issue["body"])
         faltando = {"apareceu", "causa", "correcao", "encontrado"} - partes.keys()
         if faltando:
@@ -109,15 +119,17 @@ def _quantos(n: int, um: str, varios: str) -> str:
     return f"{n} {um if n == 1 else varios}"
 
 
-def texto(itens: list[dict], desde: str) -> str:
+def texto(itens: list[dict], desde: str, anterior: str | None = None) -> str:
     corrigidos = [i for i in itens if i["situacao"] == "corrigido"]
     pendentes = [i for i in itens if i["situacao"] == "pendente"]
     linhas = [
         "Registro de bugs — gerado das issues com o rótulo `fix`",
         f"Abertas desde {desde[8:10]}/{desde[5:7]}/{desde[:4]}; gerado em "
         f"{datetime.now():%d/%m/%Y %H:%M} por scripts/registrar_bugs.py",
-        "",
     ]
+    if anterior:
+        linhas.append(f"Fora as que o registro da entrega anterior já tem ({anterior})")
+    linhas.append("")
     for item in itens:
         prs = ", ".join(f"#{p}" for p in item["prs"])
         marca = f"corrigido em {prs}" if item["situacao"] == "corrigido" else "PENDENTE"
@@ -142,17 +154,23 @@ def texto(itens: list[dict], desde: str) -> str:
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--desde", required=True, help="data de abertura mínima, AAAA-MM-DD")
+    p.add_argument("--anterior", help="o bugs.json da entrega anterior: as issues dele ficam de fora")
     p.add_argument("--saida", required=True, help="pasta das evidências da entrega")
     a = p.parse_args()
 
-    itens = registro(a.desde)
+    ja_registradas: frozenset[int] = frozenset()
+    if a.anterior:
+        anterior = json.loads((RAIZ / a.anterior).read_text(encoding="utf-8"))
+        ja_registradas = frozenset(item["numero"] for item in anterior)
+    itens = registro(a.desde, ja_registradas)
     destino = RAIZ / a.saida
     destino.mkdir(parents=True, exist_ok=True)
     (destino / "bugs.json").write_text(
         json.dumps(itens, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
-    (destino / "bugs.txt").write_text(texto(itens, a.desde), encoding="utf-8")
-    print(texto(itens, a.desde).splitlines()[-1])
+    registro_em_texto = texto(itens, a.desde, a.anterior)
+    (destino / "bugs.txt").write_text(registro_em_texto, encoding="utf-8")
+    print(registro_em_texto.splitlines()[-1])
 
 
 if __name__ == "__main__":

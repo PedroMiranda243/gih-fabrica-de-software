@@ -1,7 +1,7 @@
 # 05 — Cronograma
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Versão:** 3.0 — 28/09/2026 · o calendário real (2.1 — 16/09/2026, o plano em sprints semanais)
+**Versão:** 3.1 — 30/09/2026 · a Sprint 06 da disciplina (3.0 — 28/09/2026, o calendário real; 2.1 — 16/09/2026, o plano em sprints semanais)
 **Datas oficiais da disciplina:** entrega da Sprint 1 em **05/09/2026** · entrega final em **05/12/2026**
 
 ---
@@ -19,7 +19,8 @@ desenvolvimento da equipe, não a terceira entrega avaliada.
 | **Sprint 03** — estrutura inicial funcionando | 19/09/2026 | 6 | Login, cadastro de usuários, perfis, CRUD de parceiros, importação, painel, interface web, deploy local |
 | **Sprint 04** — primeiro módulo completo | 26/09/2026 | 7 | Ingestão + BI: segmentação, mobilidade do Top N, limiares configuráveis, filtros, exportação, cadastro de parceiro na tela |
 | **Sprint 05** — segundo módulo funcionando | 03/10/2026 | 8, e a H45 da 9 | Previsão: variáveis, referências, rede com risco calibrado, treino pela tela com versão em uso, previsão e risco no cadastro do parceiro |
-| Sprint 06 em diante | conforme os enunciados | 9 a 13 | O otimizador em CPU e GPU, o benchmark, a comunicação e o assistente — já construídos |
+| **Sprint 06** — aprimoramento do sistema | 17/10/2026 | 9 a 11, e as H79 a H81 | Campanha e otimizador: Python, C++, OpenMP e GPU com o mesmo plano, histórico, comparação e benchmark; os módulos ligados pelos dados e pela tela; navegação por módulo e risco na lista de parceiros; as correções da Pré-Banca |
+| Sprint 07 em diante | conforme os enunciados | 12 e 13 | A comunicação e o assistente — já construídos |
 
 A numeração semanal é a que aparece nas *issues*, nos *milestones* e nos commits do GitHub, e por isso não
 foi renumerada: mudá-la desalinharia o histórico do repositório, que é justamente onde a disciplina pede
@@ -34,6 +35,11 @@ entregas da disciplina, na ordem em que os enunciados saírem.
 disciplina. Sem ela, o módulo de previsão não teria fluxo de uso: o usuário só leria números prontos, e o
 enunciado pede um módulo funcionando, com fluxo real. A Sprint 9 fica com as outras cinco histórias do
 otimizador.
+
+**A Sprint 06 da disciplina trouxe três histórias novas**, H79 a H81 (13 pontos, `docs/04`): a navegação por
+módulo, o risco de queda na lista de parceiros e os módulos ligados pela tela. O enunciado pediu melhorias de
+interface, ajustes de navegação e a integração entre os módulos, e elas entraram no backlog com critério de
+aceite antes do código — o escopo passou de 389 para 402 pontos. As três entraram em 30/09.
 
 **A segunda entrega cobre quatro das nossas sprints, e não uma.** A equipe está adiantada em relação ao
 calendário da disciplina: na data da entrega de arquitetura e modelagem, o banco já está criado e migrado,

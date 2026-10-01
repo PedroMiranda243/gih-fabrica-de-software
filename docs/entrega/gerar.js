@@ -30,6 +30,7 @@ const sprint02 = require('./secoes/sprint02');
 const sprint03 = require('./secoes/sprint03');
 const sprint04 = require('./secoes/sprint04');
 const sprint05 = require('./secoes/sprint05');
+const sprint06 = require('./secoes/sprint06');
 
 const GRUPO = '18';
 const PROJETO = 'GROWTH INTELLIGENCE HUB (GIH)';
@@ -38,9 +39,9 @@ const PROJETO = 'GROWTH INTELLIGENCE HUB (GIH)';
 // as anteriores e a atual, então acrescentar uma sprint é acrescentar um módulo
 // em `secoes/` e uma linha aqui.
 const SPRINT = {
-  numero: '05',
-  titulo: 'SEGUNDO MÓDULO FUNCIONANDO',
-  anteriores: 'Documento acumulado: inclui as Sprints 01, 02, 03 e 04',
+  numero: '06',
+  titulo: 'APRIMORAMENTO DO SISTEMA',
+  anteriores: 'Documento acumulado: inclui as Sprints 01, 02, 03, 04 e 05',
 };
 const SAIDA = path.join(
   __dirname, '..', 'entregas', `GRUPO-${GRUPO}-GIH-SPRINT-${SPRINT.numero}.docx`,
@@ -134,6 +135,15 @@ function sumario() {
     '10. Ajustes no planejamento, na arquitetura e na modelagem', '11. Próximos passos',
   ].forEach((t) => c.push(p(t, { size: 20, after: 70, indent: { left: 280 } })));
 
+  c.push(p('PARTE VI — SPRINT 06 · APRIMORAMENTO DO SISTEMA', { bold: true, size: 21, color: '2C5B8F', before: 260, after: 100 }));
+  [
+    '1. Correções apontadas na Pré-Banca', '2. O terceiro módulo: Campanha e otimizador',
+    '3. O módulo funcionando', '4. A integração entre os módulos', '5. Melhorias na interface',
+    '6. Ajustes de navegação', '7. Testes e bugs', '8. Repositório, commits e revisões',
+    '9. Execução e roteiro de demonstração', '10. Dificuldades encontradas',
+    '11. Ajustes no planejamento, na arquitetura e na modelagem', '12. Próximos passos',
+  ].forEach((t) => c.push(p(t, { size: 20, after: 70, indent: { left: 280 } })));
+
   c.push(espaco(300));
   c.push(rich([
     { t: 'Documentação completa e versionada em: ', s: 19, c: '5A6B7E' },
@@ -152,6 +162,7 @@ function main() {
     ...sprint03.montar(),
     ...sprint04.montar(),
     ...sprint05.montar(),
+    ...sprint06.montar(),
   ];
 
   const doc = new Document({
