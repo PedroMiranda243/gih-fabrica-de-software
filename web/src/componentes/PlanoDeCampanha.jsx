@@ -122,7 +122,8 @@ export default function PlanoDeCampanha({ execucao, origem = "Plano" }) {
         </dl>
         <Cotas cotas={execucao.cotas} />
         {geraMensagens && execucao.itens?.length > 0 && (
-          <div>
+          /* O caminho para as mensagens é da tela: não vai para a folha impressa. */
+          <div className="nao-imprime">
             <Link className="botao botao--secundario" to={`/mensagens?plano=${execucao.id}`}>
               Gerar mensagens para este plano
             </Link>

@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { ContextoSessao } from "../api/contextoSessao";
 import { simularApi } from "../testes/preparar";
@@ -159,6 +159,90 @@ describe("histórico de execuções", () => {
   });
 });
 
+describe("filtros do histórico (H91)", () => {
+  const AUTORES = [
+    { id: 3, nome: "Gestora" },
+    { id: 8, nome: "Outra Gestora" },
+  ];
+
+  function comPedidos(total = 3) {
+    const pedidos = [];
+    simularApi({
+      "GET /api/otimizacoes": (url) => {
+        pedidos.push(new URL(url, "http://x").searchParams);
+        return {
+          corpo: { itens: total ? HISTORICO : [], total, pagina: 1, tamanho: 20, autores: AUTORES },
+        };
+      },
+    });
+    return pedidos;
+  }
+
+  it("oferece os resultados, os modos e quem já calculou, que vem na resposta da lista", async () => {
+    comPedidos();
+    renderizar(GESTOR);
+    await screen.findByRole("table", { name: /Execuções do otimizador/ });
+
+    const nomes = (rotulo) =>
+      within(screen.getByLabelText(rotulo)).getAllByRole("option").map((o) => o.textContent);
+    expect(nomes("Resultado")).toEqual(["Todos os resultados", "Com plano", "Sem solução viável", "Falhou"]);
+    expect(nomes("Modo em que rodou")).toEqual(["Todos os modos", "Serial", "CPU paralelo", "GPU"]);
+    expect(nomes("Quem calculou")).toEqual(["Todas as pessoas", "Gestora", "Outra Gestora"]);
+  });
+
+  it("cada filtro vai para a API, e mudar o filtro volta para a primeira página", async () => {
+    const pedidos = comPedidos();
+    const usuario = userEvent.setup();
+    renderizar(GESTOR, "/execucoes?pagina=3");
+    await screen.findByRole("table", { name: /Execuções do otimizador/ });
+    expect(pedidos.at(-1).get("pagina")).toBe("3");
+
+    await usuario.selectOptions(screen.getByLabelText("Resultado"), "INVIAVEL");
+    await usuario.selectOptions(screen.getByLabelText("Modo em que rodou"), "GPU");
+    await usuario.selectOptions(screen.getByLabelText("Quem calculou"), "8");
+    await screen.findByText("3 nesse recorte");
+
+    const ultimo = Object.fromEntries(pedidos.at(-1));
+    expect(ultimo).toEqual({ resultado: "INVIAVEL", modo: "GPU", autor: "8", pagina: "1", tamanho: "20" });
+  });
+
+  it("o recorte do endereço abre o histórico já filtrado, com as datas", async () => {
+    const pedidos = comPedidos();
+    renderizar(GESTOR, "/execucoes?resultado=FALHOU&de=2026-09-01&ate=2026-09-30");
+    await screen.findByRole("table", { name: /Execuções do otimizador/ });
+
+    expect(Object.fromEntries(pedidos.at(-1))).toMatchObject({
+      resultado: "FALHOU",
+      de: "2026-09-01",
+      ate: "2026-09-30",
+    });
+    expect(screen.getByLabelText("Resultado")).toHaveValue("FALHOU");
+    expect(screen.getByLabelText("De")).toHaveValue("2026-09-01");
+  });
+
+  it("recorte sem execução diz isso, e não que nunca houve execução", async () => {
+    comPedidos(0);
+    renderizar(GESTOR, "/execucoes?modo=GPU");
+
+    expect(await screen.findByText("Nenhuma execução nesse recorte")).toBeVisible();
+    expect(screen.queryByText("Nenhuma execução ainda")).toBeNull();
+    /* Os filtros continuam na tela, para a pessoa sair do recorte vazio. */
+    expect(screen.getByLabelText("Modo em que rodou")).toHaveValue("GPU");
+  });
+
+  it("o Administrador filtra o histórico como os outros", async () => {
+    const pedidos = comPedidos();
+    const usuario = userEvent.setup();
+    renderizar(ADMINISTRADOR);
+    await screen.findByRole("table", { name: /Execuções do otimizador/ });
+
+    await usuario.selectOptions(screen.getByLabelText("Quem calculou"), "3");
+    await screen.findByText("3 nesse recorte");
+
+    expect(pedidos.at(-1).get("autor")).toBe("3");
+  });
+});
+
 describe("execução aberta pelo histórico", () => {
   it("mostra o que foi pedido e o plano que saiu", async () => {
     const itens = [
@@ -188,6 +272,39 @@ describe("execução aberta pelo histórico", () => {
     expect(plano).toHaveTextContent("CPU paralelo, 8 threads · 62 ms");
     expect(within(plano).getByRole("link", { name: "Villa da Praça" })).toHaveAttribute("href", "/parceiros/16");
     expect(screen.getByRole("link", { name: "Execuções" })).toHaveAttribute("href", "/execucoes");
+  });
+
+  it("o plano sai em CSV e pela impressão, e o que é da tela não vai para a folha (H91)", async () => {
+    const itens = [
+      { parceiro_id: 5, parceiro: "Comércio Alfa", segmento: "TOP", categoria: "Pizzaria", cauda_longa: false,
+        acao_id: 1, acao: "Visita de relacionamento", custo: "90.00", ganho: "210.50" },
+    ];
+    simularApi({ "GET /api/otimizacoes/7": { corpo: execucao({ itens }) } });
+    const imprimir = vi.spyOn(window, "print").mockImplementation(() => {});
+    const usuario = userEvent.setup();
+    renderizar(GESTOR, "/execucoes/7");
+
+    const csv = await screen.findByRole("link", { name: "Exportar CSV" });
+    expect(csv).toHaveAttribute("href", "/api/otimizacoes/7/exportacao.csv");
+    await usuario.click(screen.getByRole("button", { name: "Imprimir ou salvar em PDF" }));
+    expect(imprimir).toHaveBeenCalledTimes(1);
+
+    expect(screen.getByRole("navigation", { name: "Você está em" })).toHaveClass("nao-imprime");
+    expect(csv.parentElement).toHaveClass("nao-imprime");
+    /* O título da folha, que na tela é a trilha. */
+    expect(screen.getByText("Plano de campanha").parentElement).toHaveClass("so-impressao");
+  });
+
+  it("execução sem itens não oferece o CSV: não há o que exportar", async () => {
+    simularApi({
+      "GET /api/otimizacoes/7": {
+        corpo: execucao({ viavel: false, restricao_violada: "orcamento", motivo: "Faltam R$ 80,00.", itens: [] }),
+      },
+    });
+    renderizar(GESTOR, "/execucoes/7");
+
+    expect(await screen.findByRole("button", { name: "Imprimir ou salvar em PDF" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Exportar CSV" })).toBeNull();
   });
 
   it("execução que não existe", async () => {

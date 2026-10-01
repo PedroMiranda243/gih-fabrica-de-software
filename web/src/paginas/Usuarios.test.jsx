@@ -50,6 +50,44 @@ describe("lista de usuários", () => {
     expect(pedidos.at(-1)).toContain("ativo=false");
   });
 
+  it("a busca por nome ou login vai para o servidor, e fica no endereço (H91)", async () => {
+    const pedidos = [];
+    simularApi({
+      "GET /api/usuarios": (url) => {
+        pedidos.push(new URL(url, "http://x").searchParams);
+        return { corpo: USUARIOS.slice(0, 1) };
+      },
+    });
+    const usuario = userEvent.setup();
+    renderizar("/usuarios?perfil=ADMINISTRADOR");
+    await screen.findByRole("table");
+
+    await usuario.type(screen.getByLabelText("Buscar por nome ou login"), "admin");
+
+    await screen.findByText("1 encontrados");
+    /* Quem compara é a API: a tela manda o termo, com os outros filtros. */
+    expect(Object.fromEntries(pedidos.at(-1))).toEqual({
+      busca: "admin",
+      perfil: "ADMINISTRADOR",
+      ativo: "true",
+    });
+  });
+
+  it("a busca do endereço abre a lista já filtrada", async () => {
+    const pedidos = [];
+    simularApi({
+      "GET /api/usuarios": (url) => {
+        pedidos.push(new URL(url, "http://x").searchParams);
+        return { corpo: [] };
+      },
+    });
+    renderizar("/usuarios?busca=ninguem");
+
+    expect(await screen.findByText("Nenhum usuário neste recorte")).toBeVisible();
+    expect(screen.getByLabelText("Buscar por nome ou login")).toHaveValue("ninguem");
+    expect(pedidos.at(-1).get("busca")).toBe("ninguem");
+  });
+
   it("recorte sem ninguém diz o que fazer", async () => {
     simularApi({ "GET /api/usuarios": { corpo: [] } });
     renderizar("/usuarios?perfil=PARCEIRO");
