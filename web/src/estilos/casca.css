@@ -101,7 +101,11 @@
     grid-template-rows: auto 1fr;
   }
 
+  /* `position: relative` prende ao trilho os títulos de grupo escondidos
+     abaixo, que são `position: absolute`. Sem ele, o título se posicionava em
+     relação à página, e o do último grupo, além da largura, a fazia rolar (#192). */
   .trilho {
+    position: relative;
     flex-direction: row;
     align-items: center;
     gap: var(--esp-12);

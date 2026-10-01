@@ -321,7 +321,12 @@
 
 /* ---------------------------------------------------------------- tabela */
 /* A tabela rola no **próprio container**. A página nunca rola na horizontal. */
+/* `position: relative` pelo mesmo motivo do trilho: o texto só para leitor de
+   tela (`.so-leitor`) é `position: absolute`, e sem um ancestral posicionado
+   ele escapa da caixa que rola e alarga a página. Na lista de parceiros, o
+   "sem previsão" da coluna de risco, a última, fazia a página rolar a 768 px (#192). */
 .tabela-rolagem {
+  position: relative;
   overflow-x: auto;
 }
 
