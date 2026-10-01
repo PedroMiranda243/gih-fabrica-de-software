@@ -72,6 +72,7 @@ SENHA_PADRAO = "senha-de-teste-123"
 
 # A rede de parceiros da campanha e das mensagens, como fixture de todos os testes.
 from tests.rede import base  # noqa: E402, F401
+from tests.semeadura import semear  # noqa: E402, F401
 
 
 def _criar_banco_se_faltar() -> None:

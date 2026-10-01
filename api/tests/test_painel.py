@@ -5,30 +5,20 @@ Requisitos: RF17, RF18, RF19; regras RN02 e RN04; caso de uso UC05, com os fluxo
 alternativos A1 (base vazia), A2 (período único) e A4 (outro período, ou uma categoria).
 
 O cenário é montado direto no banco, e não pela API de importação: um defeito na
-ingestão reprovaria testes que não têm nada a ver com ela.
+ingestão reprovaria testes que não têm nada a ver com ela. A fábrica (`semear`) e
+os dois apoios estão em `tests/semeadura.py`, que os relatórios também usam.
 """
 from __future__ import annotations
 
-from datetime import date, timedelta
-from decimal import Decimal
+from datetime import date
 
 import pytest
 from sqlalchemy import event, select
 from sqlalchemy.engine import Engine
 
 from app.db import Sessao
-from app.modelos import (
-    Categoria,
-    Importacao,
-    Metrica,
-    OrigemCategoria,
-    OrigemImportacao,
-    Parceiro,
-    Perfil,
-    Periodo,
-)
-
-PRIMEIRA_SEMANA = date(2026, 3, 2)
+from app.modelos import Categoria, OrigemCategoria, Parceiro, Perfil
+from tests.semeadura import categorizar, segmentar
 
 
 @pytest.fixture
@@ -37,67 +27,6 @@ def gestor(criar_usuario, autenticar, cliente):
     criar_usuario(login="gestora", perfil=Perfil.GESTOR)
     autenticar("gestora")
     return cliente
-
-
-@pytest.fixture
-def semear(criar_usuario):
-    """Monta períodos, parceiros e métricas.
-
-    Cada semana é um dicionário `{nome do parceiro: (faturamento, pedidos)}`.
-    Parceiro ausente numa semana simplesmente não recebe métrica ali — é assim
-    que se produz a lacuna que a H32 precisa mostrar.
-
-    Devolve os ids dos períodos, na ordem em que foram passados.
-    """
-    autor_id = criar_usuario(login="semeador", perfil=Perfil.ANALISTA)
-
-    def montar(*semanas: dict[str, tuple[str, int]], inicio: date = PRIMEIRA_SEMANA) -> list[int]:
-        ids = []
-        s = Sessao()
-        try:
-            # Parceiro já existente é reaproveitado, como a importação real faz:
-            # o nome é único no banco, e chamar esta fábrica duas vezes no mesmo
-            # teste tentaria recriá-lo.
-            parceiros: dict[str, Parceiro] = {p.nome: p for p in s.query(Parceiro)}
-            for indice, semana in enumerate(semanas):
-                comeco = inicio + timedelta(days=7 * indice)
-                periodo = Periodo(data_inicio=comeco, data_fim=comeco + timedelta(days=6))
-                s.add(periodo)
-                s.flush()
-
-                # A métrica exige a importação que a trouxe: é o que amarra o
-                # dado à sua origem, e o modelo não deixa gravar sem ela.
-                importacao = Importacao(
-                    periodo_id=periodo.id,
-                    usuario_id=autor_id,
-                    origem=OrigemImportacao.TEXTO,
-                    total_gravado=len(semana),
-                    total_rejeitado=0,
-                )
-                s.add(importacao)
-                s.flush()
-
-                for nome, (faturamento, pedidos) in semana.items():
-                    if nome not in parceiros:
-                        parceiros[nome] = Parceiro(nome=nome)
-                        s.add(parceiros[nome])
-                        s.flush()
-                    s.add(
-                        Metrica(
-                            parceiro_id=parceiros[nome].id,
-                            periodo_id=periodo.id,
-                            importacao_id=importacao.id,
-                            faturamento=Decimal(faturamento),
-                            pedidos=pedidos,
-                        )
-                    )
-                ids.append(periodo.id)
-            s.commit()
-            return ids
-        finally:
-            s.close()
-
-    return montar
 
 
 # ====================================================== H30 · indicadores
@@ -449,23 +378,6 @@ def test_o_ranking_nao_faz_uma_consulta_por_linha(gestor, semear, quantos):
 
 
 # ============================== H33 · distribuição por segmento no painel
-def _segmentar(limiares=None):
-    """Roda a segmentação sobre tudo que `semear` colocou no banco.
-
-    `semear` escreve direto no banco, sem passar pela importação — que é o que
-    torna os testes independentes da ingestão, mas também o que deixa os
-    períodos sem segmento até isto rodar.
-    """
-    from app.servico_segmentacao import PADRAO, reprocessar_tudo
-
-    s = Sessao()
-    try:
-        reprocessar_tudo(s, limiares or PADRAO)
-        s.commit()
-    finally:
-        s.close()
-
-
 def test_sem_segmentacao_calculada_a_distribuicao_vem_vazia(gestor, semear):
     """Vazio, e não seis zeros.
 
@@ -486,7 +398,7 @@ def test_distribuicao_conta_os_parceiros_por_segmento(gestor, semear):
         {"Subindo": ("200.00", 1), "Caindo": ("900.00", 1), "Parado": ("500.00", 1)},
         {"Subindo": ("300.00", 1), "Caindo": ("800.00", 1), "Parado": ("500.00", 1)},
     )
-    _segmentar()
+    segmentar()
 
     corpo = gestor.get("/api/painel/segmentos").json()
 
@@ -503,7 +415,7 @@ def test_a_distribuicao_vem_do_maior_para_o_menor(gestor, semear):
         {f"P{i}": ("1000.00", 1) for i in range(4)},
         {f"P{i}": (f"{1000 - i}.00", 1) for i in range(4)},
     )
-    _segmentar()
+    segmentar()
 
     totais = [i["total"] for i in gestor.get("/api/painel/segmentos").json()["itens"]]
 
@@ -512,7 +424,7 @@ def test_a_distribuicao_vem_do_maior_para_o_menor(gestor, semear):
 
 def test_o_ranking_traz_o_segmento_de_cada_linha(gestor, semear):
     semear({"Alfa": ("1000.00", 10)}, {"Alfa": ("2000.00", 20)})
-    _segmentar()
+    segmentar()
 
     linha = gestor.get("/api/painel/ranking").json()["itens"][0]
 
@@ -547,7 +459,7 @@ def test_em_risco_traz_a_diferenca_absoluta_contra_o_periodo_anterior(gestor, se
         {"Alfa": ("900.00", 1), "Beta": ("900.00", 1)},
         {"Alfa": ("800.00", 1), "Beta": ("800.00", 1)},
     )
-    _segmentar()
+    segmentar()
 
     em_risco = gestor.get("/api/painel/indicadores").json()["em_risco"]
 
@@ -643,7 +555,7 @@ def test_top_em_queda_nao_aparece_como_saida(gestor, semear):
         {"Lider": ("1000.00", 1), "Segundo": ("10.00", 1)},  # uma queda só: TOP
         {"Lider": ("900.00", 1), "Segundo": ("10.00", 1)},  # a segunda: EM_RISCO
     )
-    _segmentar()
+    segmentar()
 
     ranking = gestor.get("/api/painel/ranking").json()["itens"]
     lider = next(i for i in ranking if i["nome"] == "Lider")
@@ -679,25 +591,6 @@ def _id_do_parceiro(nome: str) -> int:
 
 
 # ============================== H82 · o recorte por período e por categoria
-def _categorizar(**categorias: list[str]) -> dict[str, int]:
-    """Cria as categorias e põe cada parceiro na sua. Devolve o id de cada uma."""
-    s = Sessao()
-    try:
-        ids = {}
-        for nome, parceiros in categorias.items():
-            categoria = Categoria(nome=nome)
-            s.add(categoria)
-            s.flush()
-            ids[nome] = categoria.id
-            for parceiro in s.query(Parceiro).filter(Parceiro.nome.in_(parceiros)):
-                parceiro.categoria_id = categoria.id
-                parceiro.origem_categoria = OrigemCategoria.MANUAL
-        s.commit()
-        return ids
-    finally:
-        s.close()
-
-
 @pytest.fixture
 def rede(semear):
     """Duas semanas, quatro parceiros, duas categorias — e o Gama sem categoria.
@@ -712,7 +605,7 @@ def rede(semear):
         {"Alfa": ("900.00", 9), "Beta": ("880.00", 8), "Gama": ("300.00", 5),
          "Delta": ("500.00", 5)},
     )
-    categorias = _categorizar(Padaria=["Beta", "Delta"], Mercado=["Alfa"])
+    categorias = categorizar(Padaria=["Beta", "Delta"], Mercado=["Alfa"])
     return {"periodos": periodos, **categorias}
 
 
@@ -781,7 +674,7 @@ def test_categoria_sem_movimento_no_periodo_e_zero_com_centavos_e_ranking_vazio(
     primeiro, _segundo = semear(
         {"Alfa": ("100.00", 1)}, {"Alfa": ("150.00", 1), "Beta": ("9.00", 1)}
     )
-    categorias = _categorizar(Padaria=["Beta"])
+    categorias = categorizar(Padaria=["Beta"])
     recorte = {"periodo_id": primeiro, "categoria_id": categorias["Padaria"]}
 
     corpo = gestor.get("/api/painel/indicadores", params=recorte).json()
@@ -816,7 +709,7 @@ def test_a_pagina_do_ranking_da_categoria_conta_so_a_categoria(gestor, rede):
 
 
 def test_a_distribuicao_da_categoria_conta_so_a_categoria(gestor, rede):
-    _segmentar()
+    segmentar()
 
     rede_inteira = gestor.get("/api/painel/segmentos").json()
     padaria = gestor.get("/api/painel/segmentos", params={"categoria_id": rede["Padaria"]}).json()
@@ -834,8 +727,8 @@ def test_categoria_sem_ninguem_em_risco_e_zero_e_nao_segmentacao_por_calcular(ge
         {"Caindo": ("900.00", 1), "Parado": ("500.00", 1)},
         {"Caindo": ("800.00", 1), "Parado": ("500.00", 1)},
     )
-    categorias = _categorizar(Tranquila=["Parado"], Agitada=["Caindo"])
-    _segmentar()
+    categorias = categorizar(Tranquila=["Parado"], Agitada=["Caindo"])
+    segmentar()
 
     def em_risco(categoria):
         return gestor.get(
@@ -852,7 +745,7 @@ def test_a_serie_da_categoria_soma_a_categoria_e_mostra_a_lacuna(gestor, semear)
         {"Alfa": ("300.00", 3)},  # a Padaria não vendeu: lacuna, e não zero
         {"Alfa": ("300.00", 3), "Beta": ("250.00", 5)},
     )
-    categorias = _categorizar(Padaria=["Beta"])
+    categorias = categorizar(Padaria=["Beta"])
 
     corpo = gestor.get("/api/painel/series", params={"categoria_id": categorias["Padaria"]}).json()
 
@@ -899,7 +792,7 @@ def test_categoria_que_nao_existe_e_404_e_nao_a_rede_inteira(gestor, rede, rota)
 def test_o_ranking_da_categoria_tambem_nao_faz_uma_consulta_por_linha(gestor, semear):
     semana = {f"P{i:03d}": (f"{1000 - i}.00", 1) for i in range(40)}
     semear(semana, semana)
-    categorias = _categorizar(Padaria=[f"P{i:03d}" for i in range(0, 40, 2)])
+    categorias = categorizar(Padaria=[f"P{i:03d}" for i in range(0, 40, 2)])
 
     consultas: list[str] = []
 
