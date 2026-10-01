@@ -1,4 +1,5 @@
-"""Mede o tempo de resposta do painel com base grande — histórias H40, H82 e H83.
+"""Mede o tempo de resposta do painel e dos relatórios com base grande — histórias H40,
+H82 a H86.
 
 O RNF03 fixa 2 s e o RNF04 fixa 10.000 parceiros; a H40 cobra o painel
 respondendo em até 2 s com 5.000. Este script produz o número, e produz de um
@@ -169,6 +170,25 @@ MEDICOES = (
         caminho="/api/painel/decisao",
         proposito="A previsão e a campanha no painel, com uma previsão por parceiro (H83).",
         sem_seq_scan_em=("previsao",),
+    ),
+    # Os relatórios (H84 a H86): o que resume a rede inteira, sem filtro.
+    Medicao(
+        nome="relatorio-desempenho",
+        caminho="/api/relatorios/desempenho",
+        proposito="O desempenho do período por categoria e por segmento (H84).",
+        sem_seq_scan_em=("metrica",),
+    ),
+    Medicao(
+        nome="relatorio-risco",
+        caminho="/api/relatorios/risco",
+        proposito="A primeira página do relatório de risco, com o resumo do recorte (H85).",
+        sem_seq_scan_em=("previsao",),
+    ),
+    Medicao(
+        nome="relatorio-campanha",
+        caminho="/api/relatorios/campanha",
+        proposito="O último plano por ação, por categoria e por segmento (H86).",
+        sem_seq_scan_em=("item_plano",),
     ),
     Medicao(
         nome="busca",
@@ -692,7 +712,7 @@ def montar_relatorio(
     linhas: list[str] = []
     a = linhas.append
 
-    a(f"# Medição do painel com {_mil(parceiros)} parceiros — H40, H82 e H83")
+    a(f"# Medição do painel e dos relatórios com {_mil(parceiros)} parceiros — H40, H82 a H86")
     a("")
     a(
         "> Gerado por `scripts/medir_painel.py`. **Não edite à mão**: número escrito à mão não "
