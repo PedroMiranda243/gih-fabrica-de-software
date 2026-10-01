@@ -12,7 +12,7 @@
  *
  * Uso:
  *   git fetch origin
- *   node docs/entrega/registrar_commits.js > docs/entrega/evidencias/sprint06/commits.txt
+ *   node docs/entrega/registrar_commits.js > docs/entrega/evidencias/sprint07/commits.txt
  *   node docs/entrega/registrar_commits.js outra-ref      # outra referência
  */
 const { execFileSync } = require('child_process');
@@ -29,12 +29,15 @@ const REPOSITORIO = 'https://github.com/PedroMiranda243/gih-fabrica-de-software'
    depois do PDF, entraram as correções achadas no ensaio (#114, #116) e o
    começo do otimizador (#124 a #127), que são trabalho da Sprint 06. Até a
    geração da Sprint 06, ela fechava em 03/10 e levava esse trabalho junto. */
+/* A da Sprint 06 fecha do mesmo jeito, no PR do PDF dela (#195): o prazo era
+   17/10, e o trabalho da Sprint 07 começou em 01/10, no mesmo dia do PDF. */
 const JANELAS = [
   { rotulo: 'Sprint 01 — até 05/09', ate: '2026-09-05' },
   { rotulo: 'Sprints 02 e 03 — 06/09 a 19/09', ate: '2026-09-19' },
   { rotulo: 'Sprint 04 — 20/09 a 21/09, data do PDF', ate: '2026-09-21' },
   { rotulo: 'Sprint 05 — 22/09 a 25/09, até o PR do PDF (#112)', atePr: 112 },
-  { rotulo: 'Sprint 06 — 25/09, depois do PDF, a 17/10', ate: '2026-10-17' },
+  { rotulo: 'Sprint 06 — 25/09, depois do PDF, a 01/10, até o PR do PDF (#195)', atePr: 195 },
+  { rotulo: 'Sprint 07 — 01/10, depois do PDF, a 24/10', ate: '2026-10-24' },
 ];
 
 // Separadores de controle: nenhum deles aparece em mensagem de commit.
