@@ -1092,11 +1092,37 @@ class ExecucaoResposta(BaseModel):
     itens: list[ItemPlanoResposta] | None = None
 
 
+class ResultadoDaExecucao(enum.StrEnum):
+    """Como uma execução terminou — o filtro do histórico (RF51, H91).
+
+    Não é coluna: é a leitura de duas (`situacao` e `viavel`), que a tela não
+    precisa conhecer. Em andamento não é resultado, e não entra aqui.
+    """
+
+    VIAVEL = "VIAVEL"
+    INVIAVEL = "INVIAVEL"
+    FALHOU = "FALHOU"
+
+
+class AutorDeExecucao(BaseModel):
+    """Quem já calculou um plano — a opção do filtro por autor (RF51)."""
+
+    id: int
+    nome: str
+
+
 class PaginaExecucoes(BaseModel):
     itens: list[ExecucaoResposta]
     total: int
     pagina: int
     tamanho: int
+    autores: list[AutorDeExecucao] = Field(
+        default=[],
+        description=(
+            "Quem tem execução no histórico, para o filtro por autor. O Gestor e o Analista "
+            "não listam os usuários do sistema, e é daqui que a tela tira as opções."
+        ),
+    )
 
 
 class SituacaoNaComparacao(enum.StrEnum):

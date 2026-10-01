@@ -9,7 +9,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.exceptions import RequestValidationError
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -20,6 +20,7 @@ from app.esquemas import EdicaoUsuario, NovoUsuario, UsuarioResposta
 from app.modelos import Perfil, Usuario
 from app.seguranca import SenhaFraca
 from app.sessoes import Motivo
+from app.texto import para_busca
 
 router = APIRouter(
     prefix="/api/usuarios",
@@ -28,17 +29,48 @@ router = APIRouter(
 )
 
 
+# As vogais acentuadas e o cê-cedilha do português, para a busca ignorar o
+# acento do que está **gravado**. O parceiro tem uma coluna normalizada para
+# isso, com índice (RNF04: são dez mil); os usuários são dezenas, e traduzir na
+# consulta dispensa a coluna e a migração.
+_COM_ACENTO = "áàâãäéèêëíìîïóòôõöúùûüçñ"
+_SEM_ACENTO = "aaaaaeeeeiiiiooooouuuucn"
+
+
+def _para_comparar(coluna):
+    return func.translate(func.lower(coluna), _COM_ACENTO, _SEM_ACENTO)
+
+
 @router.get("", response_model=list[UsuarioResposta])
 def listar(
     s: Banco,
     ativo: Annotated[bool | None, Query(description="Filtra por situação.")] = None,
     perfil: Annotated[Perfil | None, Query()] = None,
+    busca: Annotated[
+        str | None,
+        Query(max_length=120, description="Trecho do nome ou do login, sem maiúscula nem acento."),
+    ] = None,
 ) -> list[Usuario]:
+    """A lista, filtrada por situação e perfil, e com busca por nome ou login (RF52, H91).
+
+    A busca normaliza o termo pela mesma regra da de parceiros (`para_busca`):
+    sem maiúscula, sem acento, e com `%` e `_` tratados como texto, e não como
+    curinga.
+    """
     consulta = select(Usuario).order_by(Usuario.nome)
     if ativo is not None:
         consulta = consulta.where(Usuario.ativo.is_(ativo))
     if perfil is not None:
         consulta = consulta.where(Usuario.perfil == perfil)
+    termo = (busca or "").strip()
+    if termo:
+        padrao = f"%{para_busca(termo)}%"
+        consulta = consulta.where(
+            or_(
+                _para_comparar(Usuario.nome).like(padrao, escape="\\"),
+                _para_comparar(Usuario.login).like(padrao, escape="\\"),
+            )
+        )
     return list(s.scalars(consulta))
 
 
