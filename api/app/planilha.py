@@ -1,14 +1,15 @@
 """O CSV que vai para a planilha — o formato e a proteção contra fórmula, num lugar só.
 
-Duas exportações usam isto: a lista de parceiros (RF25, H38) e as mensagens
-aprovadas (RF40, H64). Duas cópias da proteção contra fórmula divergiriam, e a
-exportação que esquecesse de uma letra seria a porta aberta (H70).
+Todas as exportações usam isto: a lista de parceiros (RF25, H38), as mensagens
+aprovadas (RF40, H64), a trilha de auditoria (RF49) e os relatórios (RF48). Duas
+cópias da proteção contra fórmula divergiriam, e a exportação que esquecesse de
+uma letra seria a porta aberta (H70).
 """
 from __future__ import annotations
 
 import csv
 import io
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 
 from app.db import Sessao
 
@@ -79,3 +80,17 @@ def gerar(cabecalho: Sequence[str], consulta, linha: Callable[[object], Sequence
             yield despejar()
     finally:
         s.close()
+
+
+def de_linhas(cabecalho: Sequence[str], linhas: Iterable[Sequence]) -> Iterator[str]:
+    """O arquivo de um relatório já montado — poucas linhas, que não vêm de uma consulta.
+
+    Os relatórios agregados (RF44, RF46, RF47) têm dezenas de linhas, calculadas
+    antes de a resposta começar; não há o que ler do banco em fluxo. O formato é
+    o mesmo de `gerar`: o separador, o fim de linha e o BOM.
+    """
+    buffer = io.StringIO()
+    escritor = csv.writer(buffer, delimiter=SEPARADOR_CSV, lineterminator="\r\n")
+    escritor.writerow(cabecalho)
+    escritor.writerows(linhas)
+    yield "\ufeff" + buffer.getvalue()

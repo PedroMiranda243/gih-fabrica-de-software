@@ -131,6 +131,10 @@ TELAS: dict[str, tuple[str, str]] = {
     "aprovacao": ("GET", "/api/mensagens"),
     # Não é tela: é a capacidade de decidir, que a fila usa para mostrar os botões.
     "decidir_mensagens": ("POST", "/api/mensagens/{mensagem_id}/aprovacao"),
+    # Os relatórios (UC15): os três da rede são do Gestor e do Analista, e o de
+    # operações, do Administrador. O menu mostra a cada um o que ele abre.
+    "relatorios": ("GET", "/api/relatorios/desempenho"),
+    "relatorio_operacoes": ("GET", "/api/relatorios/operacoes"),
     "meu_desempenho": ("GET", "/api/meu-desempenho"),
     "assistente": ("GET", "/api/assistente"),
 }
