@@ -203,7 +203,7 @@ Tela vazia sem explicação é defeito. Os três previstos:
 |---|---|---|
 | O contraste de cada par de tinta e fundo, nos dois temas, lido do `tokens.css`; e toda cor de texto, anel de foco e borda de campo da CSS conferidos contra esses pares | `web/src/estilos/contraste.test.js` | A cada PR |
 | Rótulos, papéis e nomes acessíveis, pelo axe-core, no fim de **todo** teste da interface — cada estado que a suíte monta é um estado verificado | `web/src/testes/preparar.js` | A cada PR |
-| Cada uma das vinte telas a 768 e a 1440 px: sem rolagem horizontal da página, sem conteúdo cortado, o axe com o contraste do que está desenhado, e a captura | `scripts/medir_telas.py` → [`docs/medicoes/acessibilidade.md`](medicoes/acessibilidade.md) | Ao mudar a interface |
+| Cada tela a 768 e a 1440 px: sem rolagem horizontal da página, sem conteúdo cortado, o axe com o contraste do que está desenhado, e a captura | `scripts/medir_telas.py` → [`docs/medicoes/acessibilidade.md`](medicoes/acessibilidade.md) | Ao mudar a interface |
 
 A medição corrigiu duas coisas que a validação da paleta não pegava, porque não são texto — e o AA pede 3:1
 também para o que identifica um controle (WCAG 1.4.11):
@@ -243,7 +243,7 @@ Aprovação registrada na issue **#8**. Só depois disso começa o CSS em `web/`
 
 ## 9. Telas e navegação
 
-Vinte e duas telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
+Vinte e sete telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
 passo, um recorte filtrado precisa poder ser mandado por link, e um cadastro precisa poder ser aberto
 direto — tudo isso depende de a tela estar na URL, e não num estado escondido da página.
 
@@ -262,6 +262,9 @@ flowchart TD
     NovoUsuario["Novo usuário<br/>/usuarios/novo"]
     Conta["Conta do usuário<br/>/usuarios/:id"]
     Auditoria["Auditoria<br/>/auditoria"]
+    Relatorios["Relatórios<br/>/relatorios"]
+    DaRede["Desempenho · Risco · Campanha<br/>/relatorios/…"]
+    Operacoes["Operações do sistema<br/>/relatorios/operacoes"]
     Configuracao["Limiares<br/>/configuracao"]
     Modelo["Modelo preditivo<br/>/modelo"]
     Campanha["Campanha<br/>/campanha"]
@@ -282,6 +285,8 @@ flowchart TD
     Menu -. "gestor e analista" .-> Parceiros
     Menu -. "administrador" .-> Usuarios
     Menu -. "administrador" .-> Auditoria
+    Menu -. "administrador" .-> Operacoes
+    Menu -. "gestor e analista" .-> Relatorios
     Menu -. "administrador" .-> Configuracao
     Menu -. "administrador e gestor" .-> Modelo
     Menu -. "gestor e analista" .-> Campanha
@@ -304,6 +309,12 @@ flowchart TD
     Parceiros -- "exportar" --> CSV
     Aprovacao -- "aprovadas: exportar" --> CSV
     Auditoria -- "o recorte: exportar" --> CSV
+    Relatorios -- "abrir" --> DaRede
+    DaRede -- "o recorte: exportar" --> CSV
+    DaRede -- "risco: o parceiro" --> Cadastro
+    DaRede -- "campanha: o plano" --> Execucao
+    Operacoes -- "o recorte: exportar" --> CSV
+    Operacoes -- "ver na trilha" --> Auditoria
     Novo -- "cadastrar" --> Cadastro
     Cadastro -- "nome em uso:<br/>abrir o existente" --> Cadastro
     Cadastro -- "voltar, com o<br/>mesmo filtro" --> Parceiros
@@ -339,8 +350,8 @@ saía em grupos soltos, sem mostrar como se vai do painel à lista de parceiros.
 caminhos que **a própria tela** oferece.
 
 **O menu se agrupa pelos módulos do produto, na ordem do fluxo** (H79): **Análise** (Painel, Importação,
-Parceiros, Assistente), **Previsão** (Modelo), **Otimização** (Campanha, Execuções, Benchmark),
-**Comunicação** (Mensagens, Aprovação) e, por último e à parte, **Administração** (Usuários, Auditoria,
+Parceiros, Assistente, Relatórios), **Previsão** (Modelo), **Otimização** (Campanha, Execuções, Benchmark),
+**Comunicação** (Mensagens, Aprovação) e, por último e à parte, **Administração** (Usuários, Auditoria, Operações,
 Limiares). Até a
 Sprint 06 eram itens soltos, na ordem em que foram construídos, e a pessoa precisava conhecer o sistema para
 achar o módulo. O título do grupo é rótulo, e não item: não responde a clique e não usa a cor de ação. Abaixo
@@ -381,6 +392,24 @@ Os comportamentos que o desenho não mostra, e que valem para todas as telas:
   o plano. O previsto é o único número em peso alto do bloco, e a etiqueta "Estimativa" o separa do que o
   painel mede. Não é gráfico novo: são três números e uma tabela curta. Sem modelo treinado ou sem plano,
   o bloco diz o que falta; o Administrador, que não abre a campanha, não o vê.
+- **O relatório é o que se leva para fora, e diz de que recorte é** (H84 a H88). São quatro — desempenho
+  por período, parceiros em risco, campanha e operações do sistema —, e resumem o que as outras telas
+  mostram: o total do desempenho é o indicador do painel, o risco é o do cadastro do parceiro, e as
+  operações são as da trilha. Cada um escreve o recorte aplicado logo abaixo do título, a partir do que a
+  API devolveu, porque quem lê a folha não tem os filtros na frente. O título vem antes dos filtros:
+  primeiro o que é, depois o que se pode mudar nele. O resumo fica antes das tabelas, com um número só em
+  peso alto, e toda tabela de grupos fecha com o total.
+- **O PDF é a impressão do navegador, e a folha não é a tela.** "Imprimir ou salvar em PDF" não usa
+  biblioteca nenhuma: a folha de impressão (`web/src/estilos/impressao.css`) tira o menu, o cabeçalho, os
+  filtros e os botões, solta as tabelas da rolagem, repete o cabeçalho da tabela em cada página, não corta
+  linha entre duas páginas e mostra a linha de emissão — quando foi gerado, e por quem —, que na tela não
+  aparece. A folha sai sempre no tema claro: o escuro é para a tela, e no papel o texto claro some. Vale
+  para quem imprime pelo atalho do teclado também.
+- **Barra e número, e não só barra.** No relatório de operações, cada grupo tem a barra, que dá a proporção
+  de relance, e a contagem em texto ao lado. A barra usa a primeira cor da rampa dos gráficos — é
+  quantidade, e não categoria —, fica fora da leitura de quem usa leitor de tela, e a folha continua
+  legível sem ela. Na tela vêm as quinze pessoas que mais fizeram e, numa linha, a soma das outras; o
+  arquivo traz todas.
 - **O cadastro volta para de onde a pessoa veio.** Aberto do painel, a trilha diz "Painel" e o botão, "Voltar
   para o painel"; aberto de um plano ou da comparação, volta para eles — e não para a lista, que a pessoa
   nem tinha aberto.
