@@ -1,0 +1,29 @@
+Trilha de auditoria e histórico do cadastro — o que a tela e a API responderam
+
+A trilha, buscando pela marca desta captura
+  endereço    /auditoria?busca=t20439
+  na API      11 registros
+              Parceiro reativado · Gestora da Captura · Empório Central t20439
+              Parceiro desativado · Gestora da Captura · Empório Central t20439
+              Categoria de parceiro alterada · Gestora da Captura · Empório Central t20439:
+              categoria de Açaí e sorvetes para Bebidas
+              Cadastro de parceiro editado · Gestora da Captura · Empório Central t20439: nome
+              de Empório t20439 para Empório Central t20439; contato alterado
+              Parceiro cadastrado · Gestora da Captura · Empório t20439
+              Entrada no sistema · Administradora da Captura · —
+              Entrada no sistema · Analista da Captura · —
+              Entrada no sistema · Gestora da Captura · —
+              Usuário criado · Administrador · t20439.administrador, perfil ADMINISTRADOR
+              Usuário criado · Administrador · t20439.analista, perfil ANALISTA
+              Usuário criado · Administrador · t20439.gestor, perfil GESTOR
+
+O histórico, no cadastro do parceiro
+  endereço    /parceiros/645
+  na API      5 eventos, do mais recente ao mais antigo
+              Parceiro reativado · por Gestora da Captura
+              Parceiro desativado · por Gestora da Captura
+              Categoria de parceiro alterada · por Gestora da Captura · categoria de Açaí e
+              sorvetes para Bebidas
+              Cadastro de parceiro editado · por Gestora da Captura · nome de Empório t20439
+              para Empório Central t20439; contato alterado
+              Parceiro cadastrado · por Gestora da Captura
