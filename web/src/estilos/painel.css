@@ -1,0 +1,98 @@
+/* O recorte do painel (H82) e o bloco da previsão e da campanha (H83). */
+
+/* ------------------------------------------------------------- o recorte */
+/* Os dois seletores e, à direita, contra o que o período se compara. Os campos
+   têm largura de conteúdo: esticados pela linha inteira, dois seletores
+   pareceriam um formulário, e não o cabeçalho do que se está vendo. */
+.recorte {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--esp-12) var(--esp-16);
+  padding: var(--esp-16);
+}
+
+.recorte .campo {
+  flex: 0 1 17rem;
+  min-width: 13rem;
+}
+
+.recorte__nota {
+  flex: 1 1 16rem;
+  margin: 0;
+  /* Na altura do texto do seletor, e não colada na base do painel. */
+  padding-bottom: var(--esp-12);
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+  line-height: 1.5;
+}
+
+@media (max-width: 560px) {
+  .recorte .campo {
+    flex-basis: 100%;
+  }
+
+  .recorte__nota {
+    padding-bottom: 0;
+  }
+}
+
+/* --------------------------------------------- a previsão e a campanha */
+/* Três números lado a lado: o previsto, que é a notícia, e os dois que o
+   explicam. Cada um com o rótulo em cima, como nos indicadores do topo — mas
+   sem a caixa, porque já estão dentro de um painel. */
+.decisao__numeros {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--esp-16);
+  margin: 0;
+  padding: var(--esp-16);
+}
+
+.decisao__numeros > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-6);
+  min-width: 0;
+}
+
+.decisao__numeros dt {
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+}
+
+.decisao__numeros dd {
+  margin: 0;
+  font-size: var(--txt-14);
+}
+
+/* O previsto é o único em peso alto: é ele que o bloco existe para mostrar. */
+.decisao__numeros .decisao__principal {
+  font-size: var(--txt-19);
+  font-weight: var(--peso-nome);
+}
+
+.decisao__subtitulo {
+  margin: 0;
+  padding: var(--esp-12) var(--esp-16);
+  border-top: 1px solid var(--border);
+  font-size: var(--txt-13);
+  font-weight: var(--peso-nome);
+}
+
+.decisao__caminho {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0 var(--esp-16) var(--esp-8);
+  color: var(--acao-ink);
+  font-size: var(--txt-13);
+  font-weight: var(--peso-rotulo);
+}
+
+@media (max-width: 640px) {
+  .decisao__numeros {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--esp-12);
+  }
+}
