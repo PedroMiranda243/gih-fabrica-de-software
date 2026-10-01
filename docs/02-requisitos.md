@@ -105,7 +105,7 @@ leem o que os módulos 1 a 4 já gravam.
 | **RF47** | O sistema deve gerar o relatório das operações registradas na trilha de auditoria, por tipo de ação, por usuário e por dia, num intervalo de datas. | S | ADM |
 | **RF48** | O sistema deve permitir exportar cada relatório em CSV, com o recorte aplicado, e imprimi-lo ou salvá-lo em PDF. | M | GES, ANL, ADM |
 | **RF49** | O sistema deve permitir buscar por texto na trilha de auditoria e exportá-la em CSV, com o recorte aplicado. | S | ADM |
-| **RF50** | O sistema deve exibir, no cadastro do parceiro, o histórico das alterações do próprio cadastro, com autor e data. | S | GES, ANL |
+| **RF50** | O sistema deve exibir, no cadastro do parceiro, o histórico das alterações do próprio cadastro, com autor e data. O histórico diz o que mudou: o nome e o status com o valor de antes e o de depois, e a categoria pelo nome que tinha na hora. O contato entra como alterado, sem o valor — é dado de uma pessoa, e a trilha não se apaga. | S | GES, ANL |
 | **RF51** | O sistema deve permitir filtrar o histórico de execuções do otimizador por modo, resultado, autor e data. | S | GES, ANL, ADM |
 | **RF52** | O sistema deve permitir buscar usuário por nome ou login. | S | ADM |
 | **RF53** | O sistema deve permitir exportar em CSV os itens de um plano de campanha. | S | GES, ANL |
