@@ -567,7 +567,7 @@ function montar() {
   ));
   c.push(evidencia('sprint06/antes-parceiros-lista'));
   c.push(legenda('Antes: a lista de parceiros sem o risco.'));
-  c.push(espaco(60));
+  c.push(quebra());
   c.push(evidencia('sprint06/depois-parceiros-lista'));
   c.push(legenda('Depois: a lista ordenada pelo risco de queda, do maior para o menor, com a nota da estimativa.'));
 
@@ -668,8 +668,15 @@ function montar() {
   c.push(evidencia('sprint06/depois-trilha-do-painel', 240));
   c.push(legenda('O cadastro aberto pelo ranking do painel: a trilha volta para o painel.'));
 
+  c.push(quebra());
   c.push(h2('6.5 O mapa de navegação'));
-  c.push(diagrama('navegacao-telas', 560, PARTE_VI));
+  c.push(p(
+    'O mapa completo, com todas as telas, os grupos do menu e os caminhos entre os módulos. Ele é largo demais '
+    + 'para ser lido impresso numa página: a imagem está em alta resolução, para ampliar no PDF, e a versão '
+    + 'vetorial está no repositório, em docs/09-sistema-visual.md.',
+    { size: 19 },
+  ));
+  c.push(diagrama('navegacao-telas', undefined, PARTE_VI));
   c.push(legenda('O mapa de navegação, com os grupos do menu e os caminhos entre os módulos.'));
 
   // ============================================ 7. TESTES E BUGS
@@ -748,6 +755,7 @@ function montar() {
     c.push(espaco(60));
   };
   detalhe(190);
+  c.push(quebra());
   detalhe(192);
   detalhe(189);
 

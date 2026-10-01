@@ -1,5 +1,5 @@
 O módulo de campanha pela tela — o que as capturas não mostram
-Gerado por docs/entrega/capturar_sprint06.js em 30/09/2026, 18:46:54,
+Gerado por docs/entrega/capturar_sprint06.js em 01/10/2026, 01:13:36,
 na interface em http://localhost:5173.
 
 Modos desta instalação: GPU disponível · CPU_PARALELO disponível · SERIAL disponível
@@ -7,14 +7,14 @@ O automático escolhe: GPU
 
 O mesmo pedido, calculado pela tela em dois modos — orçamento de R$ 5.000,00, até
 30 ações, 30% delas na cauda longa:
-  Serial (Python)   execução #102 · 23 ações · custo R$ 5000.00 · ganho R$ 114527.81 · 6329 ms
-  Automático (GPU)  execução #103 · 23 ações · custo R$ 5000.00 · ganho R$ 114527.81 · 273 ms
+  Serial (Python)   execução #120 · 23 ações · custo R$ 5000.00 · ganho R$ 114527.81 · 7116 ms
+  Automático (GPU)  execução #121 · 23 ações · custo R$ 5000.00 · ganho R$ 114527.81 · 312 ms
   o mesmo plano, parceiro a parceiro e ação a ação: sim
 
 Orçamento de R$ 100,00: sem solução viável
   restrição: orcamento — As cotas mínimas exigem pelo menos R$ 810,00, acima do orçamento de
     R$ 100,00: faltam R$ 710,00.
 
-Benchmark #22: 2000 parceiros, 5 ações, 3 repetições;
+Benchmark #24: 2000 parceiros, 5 ações, 3 repetições;
   colunas medidas: PYTHON, CPP_SERIAL, OPENMP, GPU
   placa: NVIDIA GeForce RTX 4060

@@ -140,8 +140,13 @@ function recorte(caixa, margem) {
  * `altura` corta o que passa dela: numa lista, as primeiras linhas já mostram as colunas.
  */
 async function fotografarElemento(pagina, nome, seletor, margem = 16, altura = Infinity) {
+  await pagina.$eval(seletor, (el) => el.scrollIntoView({ block: 'start' }));
+  // A caixa é medida depois de a página assentar. Medida antes, um elemento que
+  // some acima dela — a confirmação do cálculo, por exemplo — a desloca, e o
+  // recorte pega o vizinho: foi o que estragou o andamento na primeira versão.
+  await pagina.mouse.move(0, 0);
+  await esperar(600);
   const caixa = await pagina.$eval(seletor, (el) => {
-    el.scrollIntoView({ block: 'start' });
     const r = el.getBoundingClientRect();
     return { x: r.x + window.scrollX, y: r.y + window.scrollY, width: r.width, height: r.height };
   });
@@ -419,6 +424,7 @@ async function calcularPelaTela(pagina, { orcamento, modo = '' }, andamento) {
   await pagina.click('.confirmacao button.botao:not(.botao--secundario)');
   if (andamento) {
     await pagina.waitForSelector('.campanha__andamento', { timeout: 15000 });
+    await pagina.waitForFunction(() => !document.querySelector('.confirmacao'), { timeout: 15000 });
     await fotografarElemento(pagina, andamento, '.campanha__andamento');
   }
   let execucao;
