@@ -77,9 +77,17 @@
     break-inside: avoid;
   }
 
+  /* A tabela de oito colunas do relatório de risco não cabia na largura útil da
+     folha: o navegador encolhia a página inteira para ela caber, e aquele PDF
+     saía com a letra menor que a dos outros. Um passo abaixo na escala e menos
+     respiro entre as colunas fazem ela caber sem encolher nada. */
+  .tabela {
+    font-size: var(--txt-115);
+  }
+
   .tabela th,
   .tabela td {
-    padding: var(--esp-6) var(--esp-8);
+    padding: var(--esp-6);
     white-space: normal;
   }
 
@@ -87,6 +95,14 @@
      linhas, uma palavra em cada, foi o que saiu no primeiro PDF. */
   .tabela td.numerica {
     white-space: nowrap;
+  }
+
+  /* Na tela, o nome reserva 20 caracteres para as linhas terem a mesma altura
+     enquanto a lista rola. Na folha, essa reserva era a largura que faltava às
+     outras sete colunas: a tabela passava da borda do bloco. Aqui o nome ocupa
+     o que ele tem. */
+  .tabela .nome {
+    min-width: 0;
   }
 
   /* O título de um bloco não fica sozinho no pé da página, sem a tabela dele. */
