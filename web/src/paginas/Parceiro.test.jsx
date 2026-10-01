@@ -475,3 +475,75 @@ describe("Parceiro — de onde a pessoa veio (H81)", () => {
     expect(await screen.findByText("lista:/")).toBeVisible();
   });
 });
+
+describe("Parceiro — histórico do cadastro (H90)", () => {
+  const HISTORICO = [
+    {
+      acao: "PARCEIRO_EDITADO",
+      rotulo: "Cadastro de parceiro editado",
+      resumo: "nome de Casa Anil para Casa Azul",
+      autor: "Ana Analista",
+      ocorrido_em: "2026-10-01T12:30:00Z",
+    },
+    {
+      acao: "PARCEIRO_CRIADO",
+      rotulo: "Parceiro cadastrado",
+      resumo: "",
+      autor: "Ana Analista",
+      ocorrido_em: "2026-09-20T09:00:00Z",
+    },
+  ];
+
+  it("mostra o que mudou, quando e por quem, com a frase que a API manda", async () => {
+    simularApi(rotasDoCadastro({ "GET /api/parceiros/7/historico": { corpo: HISTORICO } }));
+    renderizar("/parceiros/7");
+
+    const secao = await screen.findByRole("region", { name: "Histórico do cadastro" });
+    const eventos = within(secao).getAllByRole("listitem");
+    expect(eventos).toHaveLength(2);
+    expect(eventos[0]).toHaveTextContent("Cadastro de parceiro editado");
+    expect(eventos[0]).toHaveTextContent("por Ana Analista");
+    expect(eventos[0]).toHaveTextContent("nome de Casa Anil para Casa Azul");
+    // Evento sem o que detalhar termina em quem fez, sem separador sobrando.
+    expect(eventos[1]).toHaveTextContent(/Parceiro cadastrado · por Ana Analista$/);
+    expect(within(secao).getByText("2 registros")).toBeInTheDocument();
+    // O código da ação não aparece na tela.
+    expect(secao).not.toHaveTextContent("PARCEIRO_EDITADO");
+  });
+
+  it("cadastro que veio de importação e nunca foi editado diz isso", async () => {
+    simularApi(rotasDoCadastro({ "GET /api/parceiros/7/historico": { corpo: [] } }));
+    renderizar("/parceiros/7");
+
+    const secao = await screen.findByRole("region", { name: "Histórico do cadastro" });
+    expect(within(secao).getByText(/Nenhuma alteração registrada/)).toBeInTheDocument();
+  });
+
+  it("salvar busca o histórico de novo, para mostrar o que acabou de mudar", async () => {
+    let consultas = 0;
+    simularApi(
+      rotasDoCadastro({
+        "GET /api/parceiros/7/historico": () => {
+          consultas += 1;
+          return { corpo: consultas === 1 ? HISTORICO.slice(1) : HISTORICO };
+        },
+        "PATCH /api/parceiros/7": { corpo: CASA_AZUL },
+      }),
+    );
+    renderizar("/parceiros/7");
+    const secao = await screen.findByRole("region", { name: "Histórico do cadastro" });
+    expect(within(secao).getAllByRole("listitem")).toHaveLength(1);
+
+    await userEvent.click(screen.getByRole("button", { name: "Salvar alterações" }));
+
+    await waitFor(() => expect(within(secao).getAllByRole("listitem")).toHaveLength(2));
+  });
+
+  it("se o histórico falhar, o cadastro continua editável e o bloco não aparece", async () => {
+    simularApi(rotasDoCadastro());
+    renderizar("/parceiros/7");
+
+    expect(await screen.findByLabelText(/Nome/)).toHaveValue("Casa Azul");
+    expect(screen.queryByRole("region", { name: "Histórico do cadastro" })).toBeNull();
+  });
+});

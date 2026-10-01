@@ -26,6 +26,7 @@ import { ContextoTituloDaAba, tituloDaAba } from "./tituloDaAba";
 import {
   IconeAprovacao,
   IconeAssistente,
+  IconeAuditoria,
   IconeBenchmark,
   IconeCampanha,
   IconeConfiguracao,
@@ -93,6 +94,8 @@ const GRUPOS = [
     titulo: "Administração",
     itens: [
       { para: "/usuarios", rotulo: "Usuários", Icone: IconeUsuarios, exige: ["usuarios"] },
+      /* A trilha do que foi feito (UC14): só o Administrador a abre. */
+      { para: "/auditoria", rotulo: "Auditoria", Icone: IconeAuditoria, exige: ["auditoria"] },
       {
         para: "/configuracao",
         rotulo: "Configuração",

@@ -48,6 +48,7 @@ import {
   sentidoDa,
   TRACO,
 } from "../formato";
+import "../estilos/auditoria.css";
 import "../estilos/parceiros.css";
 
 const VAZIO = { nome: "", categoria_id: "", status: "ATIVO", contato: "" };
@@ -110,6 +111,9 @@ function Cadastro({ id }) {
   /* A categoria que a regra da RN05 aponta pelo nome (H27). A API decide; a
      tela só oferece — usar, trocar ou ignorar é da pessoa. */
   const [sugestao, setSugestao] = useState(null);
+  /* Cresce a cada alteração salva: é o que faz o histórico do cadastro buscar
+     de novo e mostrar o evento que acabou de acontecer. */
+  const [alteracoes, setAlteracoes] = useState(0);
 
   const refNome = useRef(null);
   const refCategoria = useRef(null);
@@ -186,6 +190,7 @@ function Cadastro({ id }) {
       setParceiro((atual) => ({ ...atual, ...salvo }));
       setForm(paraFormulario(salvo));
       setSucesso("Alterações salvas.");
+      setAlteracoes((n) => n + 1);
     } catch (e) {
       setErro(e);
       /* O foco vai para o primeiro campo recusado. Sem isso, quem usa teclado
@@ -210,6 +215,7 @@ function Cadastro({ id }) {
     try {
       const salvo = await api.patch(`/api/parceiros/${id}`, { ativo });
       setParceiro((atual) => ({ ...atual, ...salvo }));
+      setAlteracoes((n) => n + 1);
       setAvisoSituacao({
         tipo: "sucesso",
         texto: ativo
@@ -534,7 +540,67 @@ function Cadastro({ id }) {
           </div>
         </section>
       )}
+
+      {!novo && <HistoricoDoCadastro id={id} alteracoes={alteracoes} />}
     </>
+  );
+}
+
+/**
+ * O que mudou no cadastro, quando e por quem (RF50, H90).
+ *
+ * Sai da trilha de auditoria, mas só os eventos deste parceiro, e só a frase: a
+ * trilha inteira, com a origem e os parâmetros, é do Administrador. O rótulo e o
+ * resumo vêm prontos da API. É complemento do cadastro: se a consulta falhar, o
+ * bloco não aparece, e o cadastro continua editável.
+ */
+function HistoricoDoCadastro({ id, alteracoes }) {
+  const [eventos, setEventos] = useState(null);
+
+  useEffect(() => {
+    let vivo = true;
+    api
+      .get(`/api/parceiros/${id}/historico`)
+      .then((lista) => vivo && setEventos(lista))
+      .catch(() => vivo && setEventos(null));
+    return () => {
+      vivo = false;
+    };
+  }, [id, alteracoes]);
+
+  if (!eventos) return null;
+
+  return (
+    <section className="painel" aria-labelledby="titulo-historico-cadastro">
+      <div className="painel__cabecalho">
+        <h2 className="painel__titulo" id="titulo-historico-cadastro">
+          Histórico do cadastro
+        </h2>
+        <span className="painel__nota">
+          {eventos.length} {eventos.length === 1 ? "registro" : "registros"}
+        </span>
+      </div>
+      {eventos.length === 0 ? (
+        <p className="previsao__nota">
+          Nenhuma alteração registrada: o cadastro veio de uma importação e não foi editado.
+        </p>
+      ) : (
+        <ol className="historico-cadastro">
+          {eventos.map((evento) => (
+            <li key={`${evento.acao}-${evento.ocorrido_em}`} className="historico-cadastro__evento">
+              <span className="historico-cadastro__quando">{comoDataHora(evento.ocorrido_em)}</span>
+              <span>
+                <span className="historico-cadastro__acao">{evento.rotulo}</span>
+                <span className="historico-cadastro__detalhe">
+                  {evento.autor ? ` · por ${evento.autor}` : ""}
+                  {evento.resumo ? ` · ${evento.resumo}` : ""}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
   );
 }
 

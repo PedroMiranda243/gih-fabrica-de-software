@@ -12,6 +12,7 @@ import Casca from "./componentes/Casca";
 import Carregando from "./componentes/Carregando";
 import Aprovacao from "./paginas/Aprovacao";
 import Assistente from "./paginas/Assistente";
+import Auditoria from "./paginas/Auditoria";
 import Benchmark from "./paginas/Benchmark";
 import Campanha from "./paginas/Campanha";
 import Comparacao from "./paginas/Comparacao";
@@ -118,6 +119,16 @@ export default function App() {
         <Route path="/usuarios" element={<Usuarios />} />
         <Route path="/usuarios/novo" element={<Usuario />} />
         <Route path="/usuarios/:id" element={<Usuario />} />
+      </Route>
+
+      <Route
+        element={
+          <Protegido>
+            <Casca titulo="Auditoria" />
+          </Protegido>
+        }
+      >
+        <Route path="/auditoria" element={<Auditoria />} />
       </Route>
 
       <Route
