@@ -1,7 +1,7 @@
 # 05 — Cronograma
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Versão:** 3.1 — 30/09/2026 · a Sprint 06 da disciplina (3.0 — 28/09/2026, o calendário real; 2.1 — 16/09/2026, o plano em sprints semanais)
+**Versão:** 3.2 — 01/10/2026 · a Sprint 07 da disciplina (3.1 — 30/09/2026, a Sprint 06; 3.0 — 28/09/2026, o calendário real; 2.1 — 16/09/2026, o plano em sprints semanais)
 **Datas oficiais da disciplina:** entrega da Sprint 1 em **05/09/2026** · entrega final em **05/12/2026**
 
 ---
@@ -20,7 +20,8 @@ desenvolvimento da equipe, não a terceira entrega avaliada.
 | **Sprint 04** — primeiro módulo completo | 26/09/2026 | 7 | Ingestão + BI: segmentação, mobilidade do Top N, limiares configuráveis, filtros, exportação, cadastro de parceiro na tela |
 | **Sprint 05** — segundo módulo funcionando | 03/10/2026 | 8, e a H45 da 9 | Previsão: variáveis, referências, rede com risco calibrado, treino pela tela com versão em uso, previsão e risco no cadastro do parceiro |
 | **Sprint 06** — aprimoramento do sistema | 17/10/2026 | 9 a 11, e as H79 a H81 | Campanha e otimizador: Python, C++, OpenMP e GPU com o mesmo plano, histórico, comparação e benchmark; os módulos ligados pelos dados e pela tela; navegação por módulo e risco na lista de parceiros; as correções da Pré-Banca |
-| Sprint 07 em diante | conforme os enunciados | 12 e 13 | A comunicação e o assistente — já construídos |
+| **Sprint 07** — sistema quase completo | 24/10/2026 | as H82 a H91 | Painel com período e categoria, e com a previsão e a campanha; quatro relatórios, com CSV e PDF pela impressão; busca e filtros nas listas que não tinham; a trilha de auditoria na tela e o histórico no cadastro do parceiro |
+| Sprint 08 em diante | conforme os enunciados | 12 e 13 | A comunicação e o assistente — já construídos |
 
 A numeração semanal é a que aparece nas *issues*, nos *milestones* e nos commits do GitHub, e por isso não
 foi renumerada: mudá-la desalinharia o histórico do repositório, que é justamente onde a disciplina pede
@@ -40,6 +41,13 @@ otimizador.
 módulo, o risco de queda na lista de parceiros e os módulos ligados pela tela. O enunciado pediu melhorias de
 interface, ajustes de navegação e a integração entre os módulos, e elas entraram no backlog com critério de
 aceite antes do código — o escopo passou de 389 para 402 pontos. As três entraram em 30/09.
+
+**A Sprint 07 da disciplina trouxe dez histórias novas**, H82 a H91 (38 pontos, `docs/04`). O enunciado pediu
+painel, relatórios, pesquisas, filtros, exportação e histórico de operações, e ela não corresponde a nenhuma
+das nossas sprints semanais: o painel abria só no período mais recente, não havia relatório, e a trilha de
+auditoria — que existe desde a nossa Sprint 4 — nunca tinha ganhado tela. O que faltava de cada item virou história
+com critério de aceite, e os requisitos RF44 a RF53 e o UC15 entraram em `docs/02` e `docs/03` antes do
+código. O escopo passou de 402 para 440 pontos.
 
 **A segunda entrega cobre quatro das nossas sprints, e não uma.** A equipe está adiantada em relação ao
 calendário da disciplina: na data da entrega de arquitetura e modelagem, o banco já está criado e migrado,
