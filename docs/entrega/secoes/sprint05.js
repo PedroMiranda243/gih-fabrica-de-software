@@ -26,7 +26,6 @@ const { diagrama, evidencia, legenda } = require('../comum/figuras');
 const { todas, trecho, json } = require('../comum/evidencias');
 
 const REPO = 'github.com/PedroMiranda243/gih-fabrica-de-software';
-const RAIZ = path.join(__dirname, '..', '..', '..');
 
 /*
  * Os poucos números que não saem de um arquivo de evidência, com a origem de
@@ -73,12 +72,18 @@ function suites() {
 }
 
 /**
- * O resumo da medição do modelo, lido de `docs/medicoes/modelo.md` — o arquivo
- * que o script de medição escreve. Cada tamanho de rede tem a sua seção.
+ * O resumo da medição do modelo, lido do arquivo que o script de medição
+ * escreve. Cada tamanho de rede tem a sua seção.
+ *
+ * **Da cópia congelada em `evidencias/sprint05/medicoes/`**, e não de
+ * `docs/medicoes/`: a medição viva é refeita nas entregas seguintes, e esta
+ * parte já foi entregue. Ler a viva fez a Parte VI mudar sozinha na geração da
+ * Sprint 07 — passou a dizer 26 telas onde o PDF entregue diz 20.
  */
 function medicaoDoModelo() {
-  const texto = fs.readFileSync(path.join(RAIZ, 'docs', 'medicoes', 'modelo.md'), 'utf8')
-    .replace(/\r\n/g, '\n');
+  const texto = fs.readFileSync(
+    path.join(__dirname, '..', 'evidencias', 'sprint05', 'medicoes', 'modelo.md'), 'utf8',
+  ).replace(/\r\n/g, '\n');
   const secoes = {};
   for (const bloco of texto.split(/^## /m).slice(1)) {
     const titulo = bloco.split('\n')[0].trim();

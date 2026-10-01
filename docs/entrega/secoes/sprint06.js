@@ -32,7 +32,6 @@ const { diagrama, evidencia, legenda } = require('../comum/figuras');
 const { todas, trecho, json } = require('../comum/evidencias');
 
 const REPO = 'github.com/PedroMiranda243/gih-fabrica-de-software';
-const RAIZ = path.join(__dirname, '..', '..', '..');
 const EVIDENCIAS = path.join(__dirname, '..', 'evidencias');
 const PARTE_VI = 'parte-vi';
 
@@ -103,8 +102,14 @@ function suites() {
 }
 
 // ------------------------------------------------------- as medições
+/*
+ * As medições como estavam no PDF entregue, em `evidencias/sprint06/medicoes/`,
+ * e não as vivas de `docs/medicoes/`: a das telas é refeita a cada tela nova, e
+ * ler a viva fez esta parte mudar sozinha na geração da Sprint 07 — passou a
+ * dizer 26 telas onde o PDF entregue diz 20. A parte entregue é retrato.
+ */
 function medicao(nome) {
-  return fs.readFileSync(path.join(RAIZ, 'docs', 'medicoes', nome), 'utf8').replace(/\r\n/g, '\n');
+  return fs.readFileSync(path.join(EVIDENCIAS, 'sprint06', 'medicoes', nome), 'utf8').replace(/\r\n/g, '\n');
 }
 
 function achar(texto, regex, onde) {
