@@ -125,9 +125,10 @@ def serie_historica(
     *,
     de: date | None = None,
     ate: date | None = None,
+    categoria_id: int | None = None,
 ) -> list[PontoSerie]:
-    """A série por período, da rede ou de um parceiro (RF19, H32) — o painel e o portal
-    do Parceiro (H39) leem a mesma.
+    """A série por período, da rede, de uma categoria ou de um parceiro (RF19, H32, H82) —
+    o painel e o portal do Parceiro (H39) leem a mesma.
 
     **A consulta parte dos períodos, não das métricas.** É o que faz a lacuna
     aparecer: período sem medição para aquele parceiro vem com os três valores
@@ -140,6 +141,13 @@ def serie_historica(
     juncao = [Metrica.periodo_id == Periodo.id]
     if parceiro_id is not None:
         juncao.append(Metrica.parceiro_id == parceiro_id)
+    if categoria_id is not None:
+        # Na junção pelo mesmo motivo: período em que a categoria não vendeu é lacuna.
+        juncao.append(
+            Metrica.parceiro_id.in_(
+                select(Parceiro.id).where(Parceiro.categoria_id == categoria_id)
+            )
+        )
 
     consulta = (
         select(
