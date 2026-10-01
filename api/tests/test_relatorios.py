@@ -690,6 +690,22 @@ def test_sem_escolha_vale_o_ultimo_plano_viavel_e_da_para_escolher_outro(analist
     assert escolhido["total"]["custo"] == "90.00"
 
 
+def test_os_planos_para_escolher_sao_so_os_viaveis_do_mais_recente(analista, base):
+    rede = _rede_com_previsao(base)
+    primeiro = _plano(rede, [("Alto Risco", VISITA, "90.00", "210.50")])
+    segundo = _plano(rede, [("Baixo Risco", VITRINE, "260.00", "300.00")], minutos=10)
+    _plano(rede, [], viavel=False, minutos=20)
+    _plano(rede, [], situacao=SituacaoExecucao.EM_ANDAMENTO, minutos=30)
+
+    planos = analista.get("/api/relatorios/campanha/planos").json()
+
+    assert [p["execucao_id"] for p in planos] == [segundo, primeiro]
+    assert planos[0]["aplicacao_inicio"] == "2026-07-13"
+    # O primeiro da lista é o que o relatório abre sem escolha.
+    padrao = analista.get("/api/relatorios/campanha").json()
+    assert padrao["plano"] == planos[0]
+
+
 def test_sem_plano_calculado_o_relatorio_da_campanha_diz_isso(analista, base):
     _rede_com_previsao(base)
 
@@ -862,6 +878,7 @@ def test_o_csv_das_operacoes_traz_os_tres_agrupamentos_e_o_total(trilha):
 
 # ------------------------------------------------------------ quem abre o quê
 DA_REDE = [
+    "/api/relatorios/campanha/planos",
     "/api/relatorios/desempenho",
     "/api/relatorios/desempenho/exportacao.csv",
     "/api/relatorios/risco",

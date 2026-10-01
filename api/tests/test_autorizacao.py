@@ -155,6 +155,7 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("GET", "/api/relatorios/risco/exportacao.csv"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/relatorios/campanha"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/relatorios/campanha/exportacao.csv"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/relatorios/campanha/planos"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/relatorios/operacoes"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/relatorios/operacoes/exportacao.csv"): {Perfil.ADMINISTRADOR},
 }

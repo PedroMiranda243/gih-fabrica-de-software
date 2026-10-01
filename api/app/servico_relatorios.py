@@ -562,6 +562,36 @@ def _plano_do_relatorio(
     return execucao, plano
 
 
+# Quantos planos o relatório oferece para escolher. Os mais antigos continuam
+# abertos pelo endereço da execução, no histórico.
+PLANOS_PARA_ESCOLHER = 50
+
+
+def planos(s: Session) -> list[PlanoResumido]:
+    """Os planos de que dá para tirar relatório: execução concluída **e** viável,
+    do mais recente para o mais antigo — o mesmo critério do "último plano"."""
+    linhas = s.execute(
+        select(ExecucaoOtimizador, PlanoCampanha)
+        .join(PlanoCampanha, PlanoCampanha.execucao_id == ExecucaoOtimizador.id)
+        .where(
+            ExecucaoOtimizador.situacao == SituacaoExecucao.CONCLUIDA,
+            ExecucaoOtimizador.viavel.is_(True),
+        )
+        .order_by(ExecucaoOtimizador.concluida_em.desc(), ExecucaoOtimizador.id.desc())
+        .limit(PLANOS_PARA_ESCOLHER)
+    ).all()
+    return [
+        PlanoResumido(
+            execucao_id=execucao.id,
+            concluida_em=execucao.concluida_em,
+            aplicacao_inicio=plano.aplicacao_inicio,
+            aplicacao_fim=plano.aplicacao_fim,
+            modelo_versao=execucao.modelo_versao,
+        )
+        for execucao, plano in linhas
+    ]
+
+
 def _campanha_agrupada(s: Session, plano: PlanoCampanha, base_id: int, grupo) -> list:
     return s.execute(
         select(

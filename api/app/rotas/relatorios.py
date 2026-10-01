@@ -27,6 +27,7 @@ from app.auditoria import Acao
 from app.dependencias import Banco, exigir
 from app.desempenho import ROTULO_SEGMENTO
 from app.esquemas import (
+    PlanoResumido,
     RelatorioCampanha,
     RelatorioDesempenho,
     RelatorioOperacoes,
@@ -228,6 +229,16 @@ def _ler_campanha(s, execucao_id) -> RelatorioCampanha:
 def campanha(s: Banco, execucao_id: ExecucaoId = None) -> RelatorioCampanha:
     """Onde a verba de um plano foi, por ação, por categoria e por segmento (RF46, H86)."""
     return _ler_campanha(s, execucao_id)
+
+
+@router.get("/campanha/planos", response_model=list[PlanoResumido], dependencies=DA_REDE)
+def planos_da_campanha(s: Banco) -> list[PlanoResumido]:
+    """Os planos que o relatório oferece para escolher, do mais recente ao mais antigo.
+
+    Quem decide que execução tem plano é a API, e não a tela: a lista traz só as
+    concluídas e viáveis (RN07).
+    """
+    return servico_relatorios.planos(s)
 
 
 CABECALHO_CAMPANHA = ("Agrupamento", "Grupo", "Parceiros", "Custo", "Ganho esperado")
