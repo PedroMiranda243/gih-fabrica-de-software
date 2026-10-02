@@ -9,9 +9,19 @@ import {
   comoProbabilidade,
   lerReais,
   paraFracao,
+  ROTULO_SEGMENTO,
   sentidoDa,
   TRACO,
 } from "./formato";
+
+describe("rótulos", () => {
+  it("nenhum rótulo de segmento traz o número do limiar", () => {
+    /* O tamanho do Top é configurável (RF21). "Top 15", fixo, continuava dizendo 15
+       com o limiar em 10 (#229): o número vem da API, onde ele importa. */
+    expect(Object.values(ROTULO_SEGMENTO).filter((rotulo) => /\d/.test(rotulo))).toEqual([]);
+    expect(ROTULO_SEGMENTO.TOP).toBe("Top");
+  });
+});
 
 describe("formatação", () => {
   it("variação nula vira travessão, e nunca zero", () => {

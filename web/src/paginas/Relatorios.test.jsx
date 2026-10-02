@@ -119,7 +119,7 @@ const DESEMPENHO = {
   ],
   por_segmento: [
     linha("EM_RISCO", "Em risco", { variacao_percentual: "-11.11" }),
-    linha("TOP", "Top 15", { faturamento: "1200.00" }),
+    linha("TOP", "Top", { faturamento: "1200.00" }),
   ],
 };
 
@@ -444,7 +444,7 @@ const CAMPANHA = {
   total: grupo(null, "Total", { parceiros: 3, custo: "440.00", ganho_esperado: "550.50" }),
   por_acao: [grupo("Destaque na vitrine", "Destaque na vitrine"), grupo("Visita", "Visita")],
   por_categoria: [grupo("4", "Padaria"), grupo(null, "Sem categoria")],
-  por_segmento: [grupo("EM_RISCO", "Em risco"), grupo("TOP", "Top 15")],
+  por_segmento: [grupo("EM_RISCO", "Em risco"), grupo("TOP", "Top")],
 };
 
 const PLANOS = [
