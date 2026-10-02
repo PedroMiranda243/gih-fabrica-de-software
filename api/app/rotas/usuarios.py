@@ -8,7 +8,6 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
-from fastapi.exceptions import RequestValidationError
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -16,6 +15,7 @@ from sqlalchemy.orm import Session
 from app import auditoria, seguranca, sessoes
 from app.auditoria import Acao
 from app.dependencias import Banco, UsuarioAtual, exigir
+from app.erros import erro_do_campo as _erro_do_campo
 from app.esquemas import (
     EdicaoUsuario,
     NovoUsuario,
@@ -302,19 +302,6 @@ def _e_do_login(erro: IntegrityError) -> bool:
     """A violação é a do login único? O nome da restrição vem do próprio banco."""
     restricao = getattr(getattr(erro.orig, "diag", None), "constraint_name", None) or ""
     return "login" in restricao
-
-
-def _erro_do_campo(campo: str, mensagem: str, entrada) -> RequestValidationError:
-    """Recusa que pertence a um campo sai como os outros erros de campo.
-
-    Mesmo arranjo de `_categoria_existe` em `rotas/parceiros.py`: passando pelo
-    tradutor de `app/erros.py`, a tela recebe o formato de sempre e marca o
-    campo certo, em vez de um aviso solto no topo.
-    """
-    return RequestValidationError(
-        [{"type": "value_error", "loc": ("body", campo), "msg": f"Value error, {mensagem}",
-          "input": entrada}]
-    )
 
 
 def _login_em_uso(s: Session, login: str) -> HTTPException:
