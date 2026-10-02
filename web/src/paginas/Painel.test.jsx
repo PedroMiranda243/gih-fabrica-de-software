@@ -438,7 +438,10 @@ describe("o recorte do painel (H82)", () => {
 
     const distribuicao = await screen.findByRole("region", { name: "Distribuição por segmento" });
     expect(within(distribuicao).getByText("Top 15")).toBeVisible();
-    expect(within(distribuicao).queryByRole("link")).toBeNull();
+    // O único link que sobra no bloco é o da ajuda, que não depende do período.
+    expect(within(distribuicao).getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual([
+      "/ajuda#segmentos",
+    ]);
     expect(screen.queryByRole("link", { name: "Ver quem está em risco" })).toBeNull();
   });
 

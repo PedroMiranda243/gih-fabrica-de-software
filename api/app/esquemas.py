@@ -766,6 +766,35 @@ class LimiaresSegmentacao(BaseModel):
     )
 
 
+class PrevisaoNaAjuda(BaseModel):
+    """O que a ajuda diz da previsão (RN09): o que está em uso e quanto histórico ela pede."""
+
+    versao_em_uso: str | None = Field(
+        description="Nulo enquanto nenhum treino foi concluído: a ajuda diz que não há modelo."
+    )
+    origem: str | None = Field(description="MODELO ou REFERENCIA.")
+    periodos_minimos_do_treino: int = Field(
+        description="Períodos importados que o treino exige (RN09, item 2)."
+    )
+    periodos_minimos_do_parceiro: int = Field(
+        description="Com menos períodos que isto, o parceiro não recebe previsão (RN09, item 3)."
+    )
+
+
+class RegrasDaAjuda(BaseModel):
+    """Os números das regras que a tela de ajuda cita — RF55, UC16.
+
+    Em vigor, e não escritos na tela: mudar um limiar na configuração (RF21)
+    muda o que a ajuda diz.
+    """
+
+    segmentos: list[Segmento] = Field(description="Na ordem de precedência da RN01.")
+    top_n: int
+    periodos_tendencia: int
+    periodos_novato: int
+    previsao: PrevisaoNaAjuda
+
+
 class ConfiguracaoSegmentacaoResposta(LimiaresSegmentacao):
     atualizado_em: datetime
     atualizado_por: str | None = Field(

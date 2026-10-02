@@ -12,6 +12,7 @@ import { useSessao } from "./api/contextoSessao";
 import Casca from "./componentes/Casca";
 import Carregando from "./componentes/Carregando";
 import { EXIGE, abre } from "./navegacao/telas";
+import Ajuda from "./paginas/Ajuda";
 import Aprovacao from "./paginas/Aprovacao";
 import Assistente from "./paginas/Assistente";
 import Auditoria from "./paginas/Auditoria";
@@ -106,14 +107,17 @@ function Inicio() {
  * Fora das rotas, e depois delas, para o efeito rodar com a tela nova já montada.
  */
 function FocoNaTroca() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   const anterior = useRef(pathname);
 
   useEffect(() => {
     if (anterior.current === pathname) return;
     anterior.current = pathname;
+    /* Quem seguiu um link para um bloco da tela — "o que é cada segmento?" —
+       pediu o bloco, e é a tela que leva o foco até ele (H95). */
+    if (hash) return;
     document.getElementById("titulo-da-tela")?.focus();
-  }, [pathname]);
+  }, [pathname, hash]);
 
   return null;
 }
@@ -212,6 +216,18 @@ function Rotas() {
         }
       >
         <Route path="/conta" element={<MinhaConta />} />
+      </Route>
+
+      {/* A ajuda (H95), também de todos os perfis: o que ela mostra a cada um sai
+          das telas da sessão. */}
+      <Route
+        element={
+          <Protegido>
+            <Casca titulo="Ajuda" />
+          </Protegido>
+        }
+      >
+        <Route path="/ajuda" element={<Ajuda />} />
       </Route>
 
       <Route

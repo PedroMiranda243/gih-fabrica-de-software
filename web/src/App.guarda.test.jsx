@@ -96,6 +96,15 @@ describe("a guarda das rotas pelo perfil", () => {
     expect(screen.getByRole("heading", { name: "Trocar a senha" })).toBeInTheDocument();
   });
 
+  it("a Ajuda é de todos os perfis, e a do parceiro não pede nada à API", () => {
+    const espia = abrir(PARCEIRO, "/ajuda");
+
+    expect(semAcesso()).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Ajuda" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "O seu portal" })).toBeInTheDocument();
+    expect(espia).not.toHaveBeenCalled();
+  });
+
   it.each([
     ["do analista", ANALISTA],
     ["do administrador", ADMINISTRADOR],

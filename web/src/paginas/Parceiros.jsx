@@ -390,7 +390,10 @@ function OrigemDoRisco({ risco }) {
       <p className="previsao__nota">
         <span className="etiqueta-estimativa">Estimativa</span> O risco de queda é a chance de o
         parceiro fechar o próximo período em risco, pelo modelo {risco.modelo_versao}, com dados
-        até {comoData(risco.periodo_base.data_fim)}.
+        até {comoData(risco.periodo_base.data_fim)}.{" "}
+        <Link className="ajuda-link" to="/ajuda#estimativa">
+          O que é estimativa?
+        </Link>
       </p>
       {risco.desatualizada && (
         <p className="previsao__nota previsao__nota--alerta">

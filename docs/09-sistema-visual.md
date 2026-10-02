@@ -243,7 +243,7 @@ Aprovação registrada na issue **#8**. Só depois disso começa o CSS em `web/`
 
 ## 9. Telas e navegação
 
-Vinte e nove telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
+Trinta telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
 passo, um recorte filtrado precisa poder ser mandado por link, e um cadastro precisa poder ser aberto
 direto — tudo isso depende de a tela estar na URL, e não num estado escondido da página.
 
@@ -277,6 +277,7 @@ flowchart TD
     Assistente["Assistente<br/>/assistente"]
     MeuDesempenho["Meu desempenho<br/>/meu-desempenho"]
     MinhaConta["Minha conta<br/>/conta"]
+    Ajuda["Ajuda<br/>/ajuda"]
     Inexistente(["endereço que não existe"])
     NaoEncontrada["Página não encontrada"]
     DeOutroPerfil(["endereço de uma tela<br/>que o perfil não abre"])
@@ -300,6 +301,11 @@ flowchart TD
     Menu -. "gestor e analista" .-> Assistente
     Menu -. "parceiro" .-> MeuDesempenho
     Menu -. "todos: o nome,<br/>no cabeçalho" .-> MinhaConta
+    Menu -. "todos: o botão,<br/>no cabeçalho" .-> Ajuda
+    Painel -- "o que é cada<br/>segmento?" --> Ajuda
+    Parceiros -- "o que é<br/>estimativa?" --> Ajuda
+    Cadastro -- "o que é<br/>estimativa?" --> Ajuda
+    Execucao -- "como se chega ao<br/>ganho esperado?" --> Ajuda
     Painel -- "parceiro: a página<br/>inicial é o portal" --> MeuDesempenho
     Painel -- "base vazia:<br/>importar um relatório" --> Importacao
     Importacao -- "importação concluída:<br/>ver no painel" --> Painel
@@ -470,6 +476,19 @@ Os comportamentos que o desenho não mostra, e que valem para todas as telas:
   de ações e o texto ou o motivo digitado na fila de aprovação; sem alteração, nada pergunta. **O botão
   voltar do navegador e "Encerrar sessão" não avisam**: bloquear a navegação inteira exigiria trocar o
   roteador da aplicação, e o que se intercepta é o clique no link, que é por onde se sai de um formulário.
+- **Os termos têm onde ser explicados** (H95). A Ajuda fica no cabeçalho, ao lado da conta, para os quatro
+  perfis. Diz o que o perfil de quem lê faz — a partir das telas que o servidor deu na sessão, as mesmas do
+  menu —, o que é cada segmento, o que é estimativa e como se chega ao ganho esperado. É a única tela de
+  texto corrido: a linha fica perto de 70 caracteres, e o que distingue o termo da explicação é o peso, e não
+  a cor.
+- **A ajuda não escreve número de regra.** O tamanho do Top, os períodos de tendência e de recém-chegado e o
+  histórico que o modelo pede vêm da API, como estão valendo; mudar um limiar muda a ajuda. A ordem dos
+  segmentos também vem de lá, e é numerada porque é informação: é a precedência da RN01, com Em risco antes
+  do Top. O Parceiro lê só a ajuda do portal dele, e a tela nem pede as regras da rede (RF26).
+- **Do termo até a explicação, um link** (H95). "O que é cada segmento?" na distribuição do painel, "O que é
+  estimativa?" na lista e no cadastro do parceiro e "Como se chega ao ganho esperado?" no plano levam ao
+  bloco da ajuda, que recebe o foco. São links, na tinta da ação, e não a etiqueta "Estimativa" clicável: a
+  etiqueta é rótulo, e rótulo não responde a clique.
 - **Cada aba diz onde está** (H79). O título vai do mais específico ao mais geral — "Ponto Azul 2 · Parceiros
   · GIH" —, que é o que aparece com a aba estreita e no histórico do botão voltar. Antes, toda aba dizia
   "Growth Intelligence Hub".

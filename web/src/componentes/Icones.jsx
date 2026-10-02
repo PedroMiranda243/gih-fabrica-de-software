@@ -197,6 +197,16 @@ export function IconeAprovacao(props) {
   );
 }
 
+export function IconeAjuda(props) {
+  return (
+    <svg {...comuns} {...props}>
+      <circle cx="8" cy="8" r="6.25" />
+      <path d="M6.2 6.3a1.9 1.9 0 1 1 2.8 1.7c-.6.3-1 .8-1 1.4v.2" />
+      <path d="M8 11.7v.01" />
+    </svg>
+  );
+}
+
 export function IconeSair(props) {
   return (
     <svg {...comuns} {...props}>

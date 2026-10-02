@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { Link, MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
 import { ContextoSessao } from "./api/contextoSessao";
@@ -72,6 +72,46 @@ describe("o teclado", () => {
 
     expect(busca).toHaveFocus();
     expect(busca).toHaveValue("ana");
+  });
+
+  it("o link para um bloco da ajuda leva o foco ao bloco, e não ao título da tela (H95)", async () => {
+    simularApi({
+      "GET /api/ajuda/regras": {
+        corpo: {
+          segmentos: ["EM_RISCO", "TOP"],
+          top_n: 15,
+          periodos_tendencia: 2,
+          periodos_novato: 3,
+          previsao: {
+            versao_em_uso: null,
+            origem: null,
+            periodos_minimos_do_treino: 8,
+            periodos_minimos_do_parceiro: 4,
+          },
+        },
+      },
+    });
+    const usuario = userEvent.setup();
+    // O link de uma tela qualquer para um bloco da ajuda, como o "O que é estimativa?" do cadastro.
+    render(
+      <ContextoSessao.Provider
+        value={{
+          usuario: { ...ADMINISTRADOR, telas: [...ADMINISTRADOR.telas, "ajuda_regras"] },
+          conferindo: false,
+          sair: () => {},
+        }}
+      >
+        <MemoryRouter initialEntries={["/conta"]}>
+          <App />
+          <Link to="/ajuda#ganho">Como se chega ao ganho esperado?</Link>
+        </MemoryRouter>
+      </ContextoSessao.Provider>,
+    );
+
+    await usuario.click(screen.getByRole("link", { name: "Como se chega ao ganho esperado?" }));
+
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Ganho esperado" })).toHaveFocus());
+    expect(screen.getByRole("heading", { level: 1, name: "Ajuda" })).not.toHaveFocus();
   });
 
   it("ao abrir a aplicação, o foco não é tomado: só a troca de tela o move", () => {

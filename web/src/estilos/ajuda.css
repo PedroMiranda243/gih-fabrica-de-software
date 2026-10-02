@@ -1,0 +1,123 @@
+/* A ajuda (H95). É a única tela do sistema que é texto corrido: a medida da
+   linha fica perto de 70 caracteres, e a hierarquia vem do peso do termo, e não
+   de cor — a cor de ação fica só no que responde ao clique (regra 1.1). */
+.ajuda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-20);
+}
+
+.ajuda__texto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-12);
+  max-width: 72ch;
+  padding: var(--esp-16);
+}
+
+.ajuda__texto p {
+  margin: 0;
+}
+
+.ajuda__nota {
+  color: var(--ink-2);
+  font-size: var(--txt-12);
+}
+
+.ajuda__nota a,
+.ajuda__area {
+  color: var(--acao-ink);
+  font-weight: var(--peso-rotulo);
+}
+
+/* O nome da área numa coluna, o que se faz nela na outra: dá para descer os
+   olhos só pelos nomes. */
+.ajuda__areas,
+.ajuda__segmentos {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ajuda__areas > li,
+.ajuda__segmentos > li {
+  display: grid;
+  grid-template-columns: 10.5rem minmax(0, 60ch);
+  gap: var(--esp-4) var(--esp-16);
+  padding: var(--esp-12) var(--esp-16);
+  border-top: 1px solid var(--border);
+}
+
+.ajuda__areas > li:first-child {
+  border-top: none;
+}
+
+/* A ordem dos segmentos é a precedência da regra: o número é informação, e não
+   enfeite. Entra pelo contador, para o leitor de tela ler a lista como lista. */
+.ajuda__segmentos {
+  counter-reset: precedencia;
+}
+
+.ajuda__segmentos > li {
+  grid-template-columns: 1.25rem 9.25rem minmax(0, 60ch);
+  counter-increment: precedencia;
+}
+
+.ajuda__segmentos > li::before {
+  content: counter(precedencia);
+  color: var(--ink-2);
+  font-family: var(--fonte-dados);
+  font-variant-numeric: tabular-nums;
+}
+
+.ajuda__segmento {
+  align-self: start;
+  font-weight: var(--peso-nome);
+}
+
+.ajuda__termos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-12);
+  margin: 0;
+}
+
+.ajuda__termos dt {
+  font-weight: var(--peso-nome);
+}
+
+.ajuda__termos dd {
+  margin: var(--esp-4) 0 0;
+}
+
+.ajuda__formula {
+  padding: var(--esp-12) var(--esp-15);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-controle);
+  background: var(--surface-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Quem chega por "o que é isto?" cai no bloco, com uma folga em cima: sem ela,
+   o título encostava na borda da janela. */
+.ajuda .painel__titulo {
+  scroll-margin-top: var(--esp-24);
+}
+
+@media (max-width: 600px) {
+  .ajuda__areas > li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* O número e o nome numa linha, o critério embaixo, na largura toda. */
+  .ajuda__segmentos > li {
+    grid-template-columns: 1.25rem minmax(0, 1fr);
+  }
+
+  .ajuda__segmentos > li > :last-child {
+    grid-column: 1 / -1;
+  }
+}

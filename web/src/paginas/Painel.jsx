@@ -20,7 +20,7 @@
  * Administrador lê o painel e não abre a campanha, e não vê o bloco.
  */
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { useSessao } from "../api/contextoSessao";
@@ -321,7 +321,10 @@ function Conteudo({ dados, semSeletores, noMaisRecente, decisao }) {
               Distribuição por segmento
             </h2>
             <span className="painel__nota">
-              {segmentos.total ? `${comoInteiro(segmentos.total)} parceiros` : ""}
+              {segmentos.total ? `${comoInteiro(segmentos.total)} parceiros · ` : ""}
+              <Link className="ajuda-link nao-imprime" to="/ajuda#segmentos">
+                O que é cada segmento?
+              </Link>
             </span>
           </div>
           <DistribuicaoSegmentos

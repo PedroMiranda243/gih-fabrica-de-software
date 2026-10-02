@@ -121,6 +121,9 @@ TELAS: dict[str, tuple[str, str]] = {
     "configuracao": ("GET", "/api/configuracao/segmentacao"),
     "modelo": ("GET", "/api/modelo"),
     "campanha": ("GET", "/api/campanha"),
+    # Não é tela: é a capacidade de calcular o plano, que o Analista não tem
+    # (UC08). A ajuda a usa para dizer a cada perfil o que ele faz (RF55).
+    "calcular_campanha": ("POST", "/api/otimizacoes"),
     # O histórico das execuções (RF34), e abrir o plano de uma delas: o
     # Administrador tem a primeira e não a segunda, e a tela desenha a linha com
     # ou sem o link a partir daqui.
@@ -137,6 +140,9 @@ TELAS: dict[str, tuple[str, str]] = {
     "relatorio_operacoes": ("GET", "/api/relatorios/operacoes"),
     "meu_desempenho": ("GET", "/api/meu-desempenho"),
     "assistente": ("GET", "/api/assistente"),
+    # Não é tela: a ajuda (RF55) é de todos, mas os segmentos e os limiares da
+    # rede não vão para o Parceiro (RF26). A tela só pede as regras a quem as tem.
+    "ajuda_regras": ("GET", "/api/ajuda/regras"),
 }
 
 
