@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 1.2 — 02/10/2026 · o módulo 8, da Sprint 08 acadêmica (1.1 — 01/10/2026, o módulo 7; 1.0 — 03/09/2026)
+**Versão:** 1.3 — 02/10/2026 · a coluna Perfis conferida contra as rotas, na H98 (1.2 — 02/10/2026, o módulo 8; 1.1 — 01/10/2026, o módulo 7; 1.0 — 03/09/2026)
 
 ---
 
@@ -11,8 +11,14 @@
 - **RF** — Requisito Funcional: o que o sistema faz.
 - **RNF** — Requisito Não Funcional: como o sistema se comporta (desempenho, segurança, usabilidade).
 - **Prioridade** segue MoSCoW: **M** *Must* (indispensável), **S** *Should* (importante), **C** *Could* (desejável).
-- A coluna **Perfis** indica quais perfis acessam o requisito:
-  **ADM** Administrador, **GES** Gestor, **ANL** Analista, **PAR** Parceiro.
+- A coluna **Perfis** indica quais perfis acessam o requisito, **para executar ou só para ler**:
+  **ADM** Administrador, **GES** Gestor, **ANL** Analista, **PAR** Parceiro. Quem executa e quem só lê, em
+  cada caso de uso, está na matriz de permissões de [03 — Casos de uso](03-casos-de-uso.md).
+- A coluna é **conferida por teste** contra as rotas da API, pela matriz de
+  [11 — Rastreabilidade](11-rastreabilidade.md). A primeira conferência, em 02/10/2026, achou sete requisitos
+  em que a coluna dizia menos do que a matriz de permissões e a API: o Administrador lê o painel desde a
+  Sprint 1 (RF17, RF18, RF19, RF20 e RF22), e o Analista consulta o histórico das execuções e compara planos
+  (RF34 e RF35). A coluna foi corrigida; nenhuma permissão mudou.
 
 ---
 
@@ -48,12 +54,12 @@
 
 | ID | Requisito | Prioridade | Perfis |
 |---|---|---|---|
-| **RF17** | O sistema deve exibir um painel com os indicadores consolidados do período selecionado, da rede inteira ou de uma categoria: faturamento total, número de pedidos, ticket médio, parceiros ativos e variação em relação ao período anterior. | M | GES, ANL |
-| **RF18** | O sistema deve exibir o ranking de parceiros por faturamento, com a posição atual, a posição no período anterior e a variação percentual. | M | GES, ANL |
-| **RF19** | O sistema deve exibir a série histórica em gráfico, tanto para a unidade quanto para um parceiro individual. | M | GES, ANL, PAR |
-| **RF20** | O sistema deve classificar cada parceiro em exatamente um segmento (Top, Em Ascensão, Em Risco, Recém-chegado, Prospecção ou Estável) aplicando regra determinística com ordem de precedência explícita. | M | GES, ANL |
+| **RF17** | O sistema deve exibir um painel com os indicadores consolidados do período selecionado, da rede inteira ou de uma categoria: faturamento total, número de pedidos, ticket médio, parceiros ativos e variação em relação ao período anterior. | M | GES, ANL, ADM |
+| **RF18** | O sistema deve exibir o ranking de parceiros por faturamento, com a posição atual, a posição no período anterior e a variação percentual. | M | GES, ANL, ADM |
+| **RF19** | O sistema deve exibir a série histórica em gráfico, tanto para a unidade quanto para um parceiro individual. | M | GES, ANL, ADM, PAR |
+| **RF20** | O sistema deve classificar cada parceiro em exatamente um segmento (Top, Em Ascensão, Em Risco, Recém-chegado, Prospecção ou Estável) aplicando regra determinística com ordem de precedência explícita. | M | GES, ANL, ADM |
 | **RF21** | O sistema deve permitir configurar os limiares da segmentação (tamanho do Top N, número de períodos de queda para caracterizar risco, número de períodos para caracterizar novo parceiro) sem alteração de código. | S | ADM |
-| **RF22** | O sistema deve exibir a mobilidade do ranking entre dois períodos, listando quem entrou e quem saiu do Top N. | M | GES, ANL |
+| **RF22** | O sistema deve exibir a mobilidade do ranking entre dois períodos, listando quem entrou e quem saiu do Top N. | M | GES, ANL, ADM |
 | **RF23** | O sistema deve permitir filtrar e ordenar a lista de parceiros por categoria, segmento, faturamento, número de pedidos, ticket médio, variação e risco estimado de queda (H80). | M | GES, ANL |
 | **RF24** | O sistema deve permitir buscar parceiro por nome, com correspondência parcial. | M | GES, ANL |
 | **RF25** | O sistema deve permitir exportar em CSV a visão atualmente filtrada da lista de parceiros. | S | GES, ANL |
@@ -70,8 +76,8 @@
 | **RF31** | O sistema deve garantir que todo plano retornado respeite integralmente as restrições configuradas, e sinalizar explicitamente quando não existir solução viável. | M | GES |
 | **RF32** | O sistema deve permitir escolher o modo de execução do otimizador entre serial, CPU paralelo e GPU, e deve selecionar automaticamente o modo disponível mais rápido quando o usuário não especificar. | M | GES, ADM |
 | **RF33** | O sistema deve exibir o benchmark comparativo entre os modos de execução, apresentando tempo decorrido, *speedup* em relação ao baseline serial e qualidade da solução obtida. | M | GES, ADM |
-| **RF34** | O sistema deve registrar o histórico das execuções do otimizador com autor, data, parâmetros, modo de execução, tempo e resultado. | S | GES, ADM |
-| **RF35** | O sistema deve permitir comparar lado a lado dois planos de campanha gerados com parâmetros diferentes. | C | GES |
+| **RF34** | O sistema deve registrar o histórico das execuções do otimizador com autor, data, parâmetros, modo de execução, tempo e resultado. | S | GES, ANL, ADM |
+| **RF35** | O sistema deve permitir comparar lado a lado dois planos de campanha gerados com parâmetros diferentes. | C | GES, ANL |
 
 ### Módulo 5 — Central de comunicação
 
@@ -200,7 +206,8 @@ própria senha — já existia e ganha a tela nesta sprint, sem mudar de texto.
 ## Parte III — Rastreabilidade
 
 Cada requisito funcional está vinculado ao objetivo que atende, ao sub-problema que endereça e ao caso de uso
-que o exercita. Casos de uso detalhados em [03 — Casos de uso](03-casos-de-uso.md).
+que o exercita. Casos de uso detalhados em [03 — Casos de uso](03-casos-de-uso.md). A matriz que segue até a
+rota, a tela e o teste de cada requisito está em [11 — Rastreabilidade](11-rastreabilidade.md).
 
 | Requisitos | Objetivo | Sub-problema | Casos de uso |
 |---|---|---|---|
