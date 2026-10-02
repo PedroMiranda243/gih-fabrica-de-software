@@ -18,7 +18,9 @@
  * **O PDF é o da impressão do navegador** (RF48): a etapa `relatorios` chama
  * `page.pdf()`, que imprime a página com a folha `web/src/estilos/impressao.css`,
  * como o "Imprimir ou salvar em PDF" da tela. O arquivo fica em
- * `evidencias/sprint07/`, e a captura `…-folha.png` mostra a primeira página dele.
+ * `evidencias/sprint07/`, e a captura `…-folha.png` mostra a folha: a tela na
+ * mídia de impressão, numa janela do tamanho do papel. Ela não pagina — o que
+ * diz onde a página quebra é o PDF.
  *
  * O que é comum a todo roteiro — as três pessoas descartáveis, a foto depois de
  * a página assentar, a limpeza no fim — está em `comum/captura.js`.

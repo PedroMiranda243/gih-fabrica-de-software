@@ -423,7 +423,9 @@ function montar() {
   ));
   c.push(evidencia('sprint07/relatorio-risco'));
   c.push(legenda('Os parceiros com chance de queda a partir de 90%, com o medido, o previsto e a ação no último plano.'));
-  c.push(espaco(40));
+  // A frase e a figura dela na mesma página: soltas, a frase ficava no pé de
+  // uma e a figura sozinha na seguinte.
+  c.push(quebra());
   c.push(p('Quem não tem previsão aparece com o motivo, e não com zero — zero seria lido como "sem risco" (RN09):', { size: 19 }));
   c.push(evidencia('sprint07/relatorio-risco-sem-previsao'));
   c.push(legenda('Os recém-chegados no relatório de risco: sem previsão, com o motivo que o cadastro deles também mostra.'));
@@ -544,13 +546,14 @@ function montar() {
     + 'cabeçalho, os filtros e os botões, e entram o título, o recorte aplicado por extenso — quem lê a folha '
     + 'não tem os filtros na frente — e a linha de quem gerou e quando. A tabela não é cortada entre duas '
     + 'páginas, o cabeçalho dela se repete em cada uma, e a folha sai sempre no tema claro, mesmo com a tela no '
-    + 'escuro. As figuras abaixo são a primeira página de dois dos PDFs que a captura gerou.',
+    + 'escuro. As figuras abaixo são a folha de dois relatórios, com a tela na mídia de impressão; os PDFs que '
+    + 'a captura gerou estão no repositório.',
   ));
   c.push(evidencia('sprint07/relatorio-desempenho-folha', 400));
-  c.push(legenda('A primeira página do PDF do relatório de desempenho.'));
+  c.push(legenda('A folha do relatório de desempenho: sem o menu e os filtros, com o recorte por extenso e a linha de quem gerou.'));
   c.push(quebra());
   c.push(evidencia('sprint07/relatorio-risco-folha', 400));
-  c.push(legenda('O PDF do relatório de parceiros em risco: as oito colunas na largura da folha.'));
+  c.push(legenda('A folha do relatório de parceiros em risco: as oito colunas na largura do papel.'));
   c.push(espaco(60));
   c.push(p('O endereço, o recorte que a folha diz, as páginas do PDF e o CSV de cada um:', { size: 19 }));
   c.push(espaco(40));
@@ -682,7 +685,6 @@ function montar() {
   c.push(espaco(40));
   c.push(...mono(trecho('sprint07/testes.txt', 'Fluxos principais', 'Por arquivo')));
 
-  c.push(quebra());
   c.push(h2('7.3 As validações negativas desta entrega'));
   c.push(p(
     'Provocadas contra a aplicação no ar, com o esperado de cada uma conferido contra o que voltou. Um link '
@@ -840,7 +842,7 @@ function montar() {
     + 'página inteira, e aquele PDF saía com a letra menor que a dos outros.',
     'a folha troca para o tema claro antes de imprimir e o devolve depois; os blocos curtos não se dividem; e, '
     + 'na folha, a tabela usa letra um passo menor e não reserva largura para o nome. A evidência é o PDF que a '
-    + 'captura gera, olhado página a página, e a captura da primeira página de cada um.',
+    + 'captura gera, olhado página a página, e a captura da folha de cada um.',
   );
   dificuldade(
     '10.3 Um relatório com centenas de linhas iguais',
