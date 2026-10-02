@@ -243,7 +243,7 @@ Aprovação registrada na issue **#8**. Só depois disso começa o CSS em `web/`
 
 ## 9. Telas e navegação
 
-Vinte e oito telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
+Vinte e nove telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
 passo, um recorte filtrado precisa poder ser mandado por link, e um cadastro precisa poder ser aberto
 direto — tudo isso depende de a tela estar na URL, e não num estado escondido da página.
 
@@ -279,6 +279,8 @@ flowchart TD
     MinhaConta["Minha conta<br/>/conta"]
     Inexistente(["endereço que não existe"])
     NaoEncontrada["Página não encontrada"]
+    DeOutroPerfil(["endereço de uma tela<br/>que o perfil não abre"])
+    SemAcesso["Sem acesso"]
 
     Login -- "entrar" --> Menu
     Menu -. "todos" .-> Painel
@@ -345,6 +347,8 @@ flowchart TD
     Aprovacao -- "fila vazia:<br/>gerar mensagens" --> Mensagens
     Inexistente --> NaoEncontrada
     NaoEncontrada -- "ir para o início" --> Painel
+    DeOutroPerfil --> SemAcesso
+    SemAcesso -- "ir para o início" --> Painel
 ```
 
 **O menu lateral aparece como um nó só**, com setas tracejadas: ele fica visível em todas as telas depois do
@@ -369,12 +373,15 @@ Previsão, Otimização e Comunicação inteiros; o Analista, os mesmos menos a 
 previsão no cadastro do parceiro (RF28) e consulta o plano, mas não treina o modelo (UC07) nem calcula a
 campanha (UC08), e vê a fila de aprovação sem os botões de decidir (RN06). Dentro da tela, o botão de calcular,
 o de editar o catálogo e os de aprovar, editar e rejeitar seguem a mesma regra: a API diz a quem pergunta se ele pode, lendo a permissão da própria rota. Esconder o item não é controle de acesso: quem abre o
-endereço direto recebe a recusa da rota.
+endereço direto vê a página "Sem acesso", e quem chama a rota recebe a recusa da API, que é quem decide.
 
 Os comportamentos que o desenho não mostra, e que valem para todas as telas:
 
 - **Sessão encerrada leva ao login, e o login devolve ao lugar de antes.** Quem abre um link direto sem
-  estar autenticado entra e cai na tela que pediu, e não no painel genérico.
+  estar autenticado entra e cai na tela que pediu, e não no painel genérico. Quando é o servidor que encerra
+  a sessão com a tela aberta — ela expirou, ou a senha foi redefinida —, o login diz "A sua sessão terminou"
+  (H96): sem isso, a pessoa era jogada na tela de entrada sem saber se tinha errado alguma coisa. Quem saiu
+  de propósito, e quem ainda não tinha entrado, não vê o aviso.
 - **O que foi feito tem tela** (H89, H90). A trilha de auditoria — quem fez o quê, e quando — é do
   Administrador: filtra por pessoa, ação e datas, busca por texto e exporta o recorte. A frase de cada
   operação vem do servidor, e é a mesma na tela, no arquivo e no cadastro do parceiro, que mostra o
@@ -444,6 +451,25 @@ Os comportamentos que o desenho não mostra, e que valem para todas as telas:
 - **Endereço que não existe diz que não existe** (H79). A página "não encontrada" mostra o endereço pedido,
   mantém o menu e oferece a volta ao início. Antes, ele era redirecionado ao painel sem aviso, e o endereço
   sumia da barra.
+- **A tela que o perfil não abre diz isso** (H94). O endereço de uma tela de outro perfil mostra a página
+  "Sem acesso": o perfil de quem está usando, o endereço pedido e a volta ao início, com o menu ao lado.
+  Antes, a tela era montada assim mesmo — os filtros, o título e, no meio, a recusa da API —, e não dava para
+  saber se era defeito ou falta de permissão. O menu e a guarda das rotas leem a mesma tabela
+  (`web/src/navegacao/telas.js`): o item que o menu esconde é a tela que o endereço não monta. Não é controle
+  de acesso; é a interface deixando de pedir o que ela já sabe que vai ser recusado.
+- **O teclado chega ao conteúdo sem atravessar o menu** (H96). O primeiro Tab de toda tela é "Pular para o
+  conteúdo", que só aparece ao receber o foco. Ao trocar de tela, o foco vai para o título dela: o leitor de
+  tela anuncia onde a pessoa chegou, e o Tab seguinte já está no conteúdo. Mudar um filtro não é trocar de
+  tela — o endereço muda, o foco fica no campo.
+- **A senha se confere antes de enviar** (H96). Todo campo de senha tem "Mostrar" e "Ocultar", que dizem ao
+  leitor de tela de que senha se trata. O botão não envia o formulário.
+- **Formulário alterado avisa antes de perder** (H97). Com um campo mudado e não salvo, o clique num link
+  que leva a outra tela — o menu, a trilha, o "Voltar" — para numa confirmação na própria página, que recebe
+  o foco: "Sair sem salvar" ou "Continuar editando". Fechar a aba ou recarregar passa pelo aviso do próprio
+  navegador. Vale para o cadastro do parceiro, a conta de usuário, os limiares, a linha em edição do catálogo
+  de ações e o texto ou o motivo digitado na fila de aprovação; sem alteração, nada pergunta. **O botão
+  voltar do navegador e "Encerrar sessão" não avisam**: bloquear a navegação inteira exigiria trocar o
+  roteador da aplicação, e o que se intercepta é o clique no link, que é por onde se sai de um formulário.
 - **Cada aba diz onde está** (H79). O título vai do mais específico ao mais geral — "Ponto Azul 2 · Parceiros
   · GIH" —, que é o que aparece com a aba estreita e no histórico do botão voltar. Antes, toda aba dizia
   "Growth Intelligence Hub".
