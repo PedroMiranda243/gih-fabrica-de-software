@@ -125,6 +125,8 @@ def _corrigir(
 
     - **O resumo da rede com um parceiro citado é o desempenho dele.** "Como foi o
       Quintal do Norte nesta semana?" saiu como o resumo da rede.
+    - **A semana dita pelo nome, o código lê**, mesmo que o modelo tenha trazido
+      outra: "na última semana" saiu como a semana anterior à mais recente (#235).
     - **A data que o modelo não trouxe, o código lê**: o mês, o ano, "o mês que
       vem". "Em 2019" e "em dezembro" chegaram sem data.
     - **O desempenho de várias semanas é a evolução**, semana a semana, em vez da
@@ -137,6 +139,11 @@ def _corrigir(
         and resolucao.citado(extracao.parceiro, pergunta)
     ):
         tipo = TipoPergunta.DESEMPENHO_DO_PARCEIRO
+    semana = resolucao.semana_dita(s, pergunta)
+    if semana is not None and CATALOGO[tipo].periodo is not UsoDoPeriodo.NENHUM:
+        extracao = extracao.model_copy(
+            update={"inicio": semana[0].isoformat(), "fim": semana[1].isoformat()}
+        )
     if extracao.inicio is None and extracao.fim is None:
         fim_dos_dados = s.scalar(select(func.max(Periodo.data_fim)))
         futuro = CATALOGO[tipo].periodo is UsoDoPeriodo.NENHUM

@@ -263,6 +263,47 @@ def datas_da_pergunta(
     return min(i[0] for i in intervalos), max(i[1] for i in intervalos)
 
 
+# A semana que a pergunta diz pelo nome, contada da mais recente: 0 é ela, 1 a
+# anterior. "Período anterior" e "semana anterior" ficam de fora: costumam ser a
+# comparação ("em relação ao período anterior"), e não a semana perguntada.
+_SEMANAS = {
+    re.compile(r"\b(?:n?esta|n?essa|ultima|atual) semana\b|\bsemana (?:atual|mais recente)\b"): 0,
+    re.compile(r"\bsemana passada\b|\bpenultima semana\b"): 1,
+}
+
+
+def semana_dita(s: Session, pergunta: str) -> tuple[date, date] | None:
+    """A semana que a pergunta diz pelo nome — "na última semana", "na semana
+    passada" —, lida das datas da base.
+
+    Vale mesmo quando o modelo trouxe outra data. Na evidência da Sprint 08 (#235),
+    "Como foi a rede na última semana?" saiu com a semana anterior à mais recente:
+    a instrução traz o exemplo com as datas, e o modelo às vezes troca as duas. O
+    código sabe qual é qual.
+
+    Não vale se a pergunta cita mês, ano ou data — "a última semana de agosto" é
+    outra semana. Com as duas expressões, vale a mais recente: "nesta semana, em
+    relação à semana passada" pergunta desta.
+    """
+    texto = normalizar(pergunta)
+    if (
+        _DATA_ESCRITA.search(texto)
+        or _MES.search(texto)
+        or _ANO.search(texto)
+        or any(expressao in texto for expressao in RELATIVOS)
+    ):
+        return None
+    citadas = [atras for expressao, atras in _SEMANAS.items() if expressao.search(texto)]
+    if not citadas:
+        return None
+    atras = min(citadas)
+    recentes = _recentes(s, atras + 1)
+    if len(recentes) <= atras:
+        return None
+    semana = recentes[0]
+    return semana.data_inicio, semana.data_fim
+
+
 def _recentes(s: Session, quantos: int) -> list[Periodo]:
     recentes = s.scalars(
         select(Periodo).order_by(Periodo.data_inicio.desc(), Periodo.id.desc()).limit(quantos)
