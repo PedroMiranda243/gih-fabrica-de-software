@@ -1,7 +1,8 @@
-"""Testes do painel — histórias H30 (indicadores), H31 (ranking) e H32 (séries).
+"""Testes do painel — histórias H30 (indicadores), H31 (ranking), H32 (séries) e
+H82 (o recorte por período e por categoria).
 
-Requisitos: RF17, RF18, RF19; regra RN04; caso de uso UC05, com os fluxos
-alternativos A1 (base vazia) e A2 (período único).
+Requisitos: RF17, RF18, RF19; regras RN02 e RN04; caso de uso UC05, com os fluxos
+alternativos A1 (base vazia), A2 (período único) e A4 (outro período, ou uma categoria).
 
 O cenário é montado direto no banco, e não pela API de importação: um defeito na
 ingestão reprovaria testes que não têm nada a ver com ela.
@@ -675,3 +676,243 @@ def _id_do_parceiro(nome: str) -> int:
         return s.query(Parceiro).filter_by(nome=nome).one().id
     finally:
         s.close()
+
+
+# ============================== H82 · o recorte por período e por categoria
+def _categorizar(**categorias: list[str]) -> dict[str, int]:
+    """Cria as categorias e põe cada parceiro na sua. Devolve o id de cada uma."""
+    s = Sessao()
+    try:
+        ids = {}
+        for nome, parceiros in categorias.items():
+            categoria = Categoria(nome=nome)
+            s.add(categoria)
+            s.flush()
+            ids[nome] = categoria.id
+            for parceiro in s.query(Parceiro).filter(Parceiro.nome.in_(parceiros)):
+                parceiro.categoria_id = categoria.id
+                parceiro.origem_categoria = OrigemCategoria.MANUAL
+        s.commit()
+        return ids
+    finally:
+        s.close()
+
+
+@pytest.fixture
+def rede(semear):
+    """Duas semanas, quatro parceiros, duas categorias — e o Gama sem categoria.
+
+    Na segunda semana, a da rede inteira: Alfa (1º), Beta (2º), Delta (3º), Gama (4º).
+    A Padaria é Beta e Delta: nem a primeira nem a última, que é o que mostra se a
+    posição foi renumerada.
+    """
+    periodos = semear(
+        {"Alfa": ("1000.00", 10), "Beta": ("800.00", 8), "Gama": ("600.00", 6),
+         "Delta": ("400.00", 4)},
+        {"Alfa": ("900.00", 9), "Beta": ("880.00", 8), "Gama": ("300.00", 5),
+         "Delta": ("500.00", 5)},
+    )
+    categorias = _categorizar(Padaria=["Beta", "Delta"], Mercado=["Alfa"])
+    return {"periodos": periodos, **categorias}
+
+
+def test_os_recortes_listam_os_periodos_do_mais_recente_e_as_categorias_com_parceiro(
+    gestor, rede
+):
+    s = Sessao()
+    try:
+        s.add(Categoria(nome="Bebidas"))  # sem parceiro: abriria um painel em branco
+        s.commit()
+    finally:
+        s.close()
+
+    corpo = gestor.get("/api/painel/recortes").json()
+
+    assert [p["id"] for p in corpo["periodos"]] == rede["periodos"][::-1]
+    assert corpo["periodos"][0]["data_inicio"] > corpo["periodos"][1]["data_inicio"]
+    assert [c["nome"] for c in corpo["categorias"]] == ["Mercado", "Padaria"]
+
+
+def test_o_administrador_le_os_recortes_do_painel(cliente, criar_usuario, autenticar, rede):
+    """Ele lê o painel e não abre o cadastro de parceiros, de onde as categorias viriam."""
+    criar_usuario(login="chefia", perfil=Perfil.ADMINISTRADOR)
+    autenticar("chefia")
+
+    assert cliente.get("/api/painel/recortes").status_code == 200
+    assert cliente.get("/api/categorias").status_code == 403
+
+
+def test_os_indicadores_da_categoria_somam_so_a_categoria(gestor, rede):
+    corpo = gestor.get("/api/painel/indicadores", params={"categoria_id": rede["Padaria"]}).json()
+
+    assert corpo["categoria"]["nome"] == "Padaria"
+    assert corpo["faturamento"] == "1380.00"  # Beta 880 + Delta 500
+    assert corpo["pedidos"] == 13
+    assert corpo["parceiros_ativos"] == 2
+    assert corpo["ticket_medio"] == "106.15"
+    # Contra a mesma categoria no período anterior (800 + 400), e não contra a rede.
+    assert corpo["variacao"]["faturamento"] == "15.00"
+    assert corpo["variacao"]["parceiros_ativos"] == "0.00"
+
+
+def test_sem_categoria_os_indicadores_sao_da_rede_e_dizem_isso(gestor, rede):
+    corpo = gestor.get("/api/painel/indicadores").json()
+
+    assert corpo["categoria"] is None
+    assert corpo["faturamento"] == "2580.00"
+
+
+def test_o_periodo_escolhido_e_o_que_se_compara_com_o_anterior_a_ele(gestor, semear):
+    primeiro, segundo, _terceiro = semear(
+        {"Alfa": ("100.00", 1)}, {"Alfa": ("150.00", 1)}, {"Alfa": ("900.00", 1)}
+    )
+
+    corpo = gestor.get("/api/painel/indicadores", params={"periodo_id": segundo}).json()
+
+    assert corpo["periodo"]["id"] == segundo
+    assert corpo["periodo_anterior"]["id"] == primeiro
+    assert corpo["faturamento"] == "150.00"
+    assert corpo["variacao"]["faturamento"] == "50.00"
+
+
+def test_categoria_sem_movimento_no_periodo_e_zero_com_centavos_e_ranking_vazio(gestor, semear):
+    """A categoria existe, mas não vendeu naquele período: zero, e não erro — e
+    com os centavos, como todo valor em reais da API."""
+    primeiro, _segundo = semear(
+        {"Alfa": ("100.00", 1)}, {"Alfa": ("150.00", 1), "Beta": ("9.00", 1)}
+    )
+    categorias = _categorizar(Padaria=["Beta"])
+    recorte = {"periodo_id": primeiro, "categoria_id": categorias["Padaria"]}
+
+    corpo = gestor.get("/api/painel/indicadores", params=recorte).json()
+    ranking = gestor.get("/api/painel/ranking", params=recorte).json()
+
+    assert corpo["faturamento"] == "0.00"
+    assert corpo["parceiros_ativos"] == 0
+    assert corpo["ticket_medio"] is None
+    assert ranking["itens"] == [] and ranking["total"] == 0
+
+
+def test_no_ranking_da_categoria_a_posicao_continua_a_da_rede(gestor, rede):
+    """RN02: a categoria escolhe quem aparece, e não renumera. Renumerado, o Beta
+    viraria o 1º — e a tabela discordaria do cadastro dele e da mobilidade."""
+    corpo = gestor.get("/api/painel/ranking", params={"categoria_id": rede["Padaria"]}).json()
+
+    assert corpo["categoria"]["nome"] == "Padaria"
+    assert corpo["total"] == 2
+    assert [(i["nome"], i["posicao"], i["posicao_anterior"]) for i in corpo["itens"]] == [
+        ("Beta", 2, 2),
+        ("Delta", 3, 4),
+    ]
+
+
+def test_a_pagina_do_ranking_da_categoria_conta_so_a_categoria(gestor, rede):
+    corpo = gestor.get(
+        "/api/painel/ranking", params={"categoria_id": rede["Padaria"], "tamanho": 1, "pagina": 2}
+    ).json()
+
+    assert corpo["total"] == 2
+    assert [i["nome"] for i in corpo["itens"]] == ["Delta"]
+
+
+def test_a_distribuicao_da_categoria_conta_so_a_categoria(gestor, rede):
+    _segmentar()
+
+    rede_inteira = gestor.get("/api/painel/segmentos").json()
+    padaria = gestor.get("/api/painel/segmentos", params={"categoria_id": rede["Padaria"]}).json()
+
+    assert rede_inteira["total"] == 4
+    assert padaria["total"] == 2
+    assert padaria["categoria"]["nome"] == "Padaria"
+
+
+def test_categoria_sem_ninguem_em_risco_e_zero_e_nao_segmentacao_por_calcular(gestor, semear):
+    """O "ainda não calculei" é do período. Com a segmentação feita, a categoria
+    em que ninguém cai responde zero — nulo diria que falta calcular."""
+    semear(
+        {"Caindo": ("1000.00", 1), "Parado": ("500.00", 1)},
+        {"Caindo": ("900.00", 1), "Parado": ("500.00", 1)},
+        {"Caindo": ("800.00", 1), "Parado": ("500.00", 1)},
+    )
+    categorias = _categorizar(Tranquila=["Parado"], Agitada=["Caindo"])
+    _segmentar()
+
+    def em_risco(categoria):
+        return gestor.get(
+            "/api/painel/indicadores", params={"categoria_id": categorias[categoria]}
+        ).json()["em_risco"]
+
+    assert em_risco("Tranquila")["total"] == 0
+    assert em_risco("Agitada")["total"] == 1
+
+
+def test_a_serie_da_categoria_soma_a_categoria_e_mostra_a_lacuna(gestor, semear):
+    semear(
+        {"Alfa": ("100.00", 1), "Beta": ("200.00", 2)},
+        {"Alfa": ("300.00", 3)},  # a Padaria não vendeu: lacuna, e não zero
+        {"Alfa": ("300.00", 3), "Beta": ("250.00", 5)},
+    )
+    categorias = _categorizar(Padaria=["Beta"])
+
+    corpo = gestor.get("/api/painel/series", params={"categoria_id": categorias["Padaria"]}).json()
+
+    assert corpo["escopo"] == "categoria"
+    assert corpo["categoria"]["nome"] == "Padaria"
+    assert [p["faturamento"] for p in corpo["pontos"]] == ["200.00", None, "250.00"]
+
+
+def test_a_serie_termina_no_periodo_escolhido(gestor, semear):
+    _primeiro, segundo, _terceiro = semear(
+        {"Alfa": ("100.00", 1)}, {"Alfa": ("150.00", 1)}, {"Alfa": ("900.00", 1)}
+    )
+
+    corpo = gestor.get("/api/painel/series", params={"periodo_id": segundo}).json()
+
+    assert [p["faturamento"] for p in corpo["pontos"]] == ["100.00", "150.00"]
+    assert corpo["pontos"][-1]["periodo"]["id"] == segundo
+
+
+def test_a_serie_e_de_um_parceiro_ou_de_uma_categoria_e_nao_dos_dois(gestor, rede):
+    s = Sessao()
+    try:
+        beta = s.query(Parceiro).filter_by(nome="Beta").one().id
+    finally:
+        s.close()
+
+    r = gestor.get(
+        "/api/painel/series", params={"parceiro_id": beta, "categoria_id": rede["Padaria"]}
+    )
+
+    assert r.status_code == 422
+    assert "parceiro ou de uma categoria" in r.text
+
+
+@pytest.mark.parametrize("rota", ["indicadores", "ranking", "segmentos", "series", "decisao"])
+def test_categoria_que_nao_existe_e_404_e_nao_a_rede_inteira(gestor, rede, rota):
+    """Pedir um recorte e receber a rede inteira seria pior que receber o erro."""
+    r = gestor.get(f"/api/painel/{rota}", params={"categoria_id": 999999})
+
+    assert r.status_code == 404
+    assert "999999" in r.text
+
+
+def test_o_ranking_da_categoria_tambem_nao_faz_uma_consulta_por_linha(gestor, semear):
+    semana = {f"P{i:03d}": (f"{1000 - i}.00", 1) for i in range(40)}
+    semear(semana, semana)
+    categorias = _categorizar(Padaria=[f"P{i:03d}" for i in range(0, 40, 2)])
+
+    consultas: list[str] = []
+
+    def anotar(conn, cursor, texto, parametros, contexto, muitos):  # noqa: ANN001
+        consultas.append(texto)
+
+    event.listen(Engine, "before_cursor_execute", anotar)
+    try:
+        r = gestor.get("/api/painel/ranking", params={"categoria_id": categorias["Padaria"]})
+    finally:
+        event.remove(Engine, "before_cursor_execute", anotar)
+
+    assert len(r.json()["itens"]) == 20
+    # As cinco de sempre e a da categoria — fixas, com 20 linhas ou com 2.000.
+    do_painel = [c for c in consultas if "metrica" in c.lower() or "periodo" in c.lower()]
+    assert len(do_painel) <= 6, f"{len(do_painel)} consultas para 20 linhas"

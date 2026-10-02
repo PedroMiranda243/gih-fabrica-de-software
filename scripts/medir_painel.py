@@ -1,4 +1,4 @@
-"""Mede o tempo de resposta do painel com base grande — história H40.
+"""Mede o tempo de resposta do painel com base grande — histórias H40, H82 e H83.
 
 O RNF03 fixa 2 s e o RNF04 fixa 10.000 parceiros; a H40 cobra o painel
 respondendo em até 2 s com 5.000. Este script produz o número, e produz de um
@@ -49,7 +49,7 @@ import statistics
 import subprocess
 import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
@@ -135,6 +135,40 @@ MEDICOES = (
         caminho="/api/painel/mobilidade",
         proposito="Quem entrou e quem saiu do Top N (H35).",
         sem_seq_scan_em=("metrica",),
+    ),
+    # O recorte por categoria (H82), na categoria com mais parceiros: o pior caso.
+    Medicao(
+        nome="indicadores-categoria",
+        caminho="/api/painel/indicadores?categoria_id={categoria}",
+        proposito="Os indicadores no recorte de uma categoria (H82).",
+        sem_seq_scan_em=("metrica",),
+    ),
+    Medicao(
+        nome="ranking-categoria",
+        caminho="/api/painel/ranking?tamanho=25&categoria_id={categoria}",
+        proposito="O ranking da categoria, com a posição da rede inteira (H82, RN02).",
+        sem_seq_scan_em=("metrica",),
+    ),
+    Medicao(
+        nome="serie-categoria",
+        caminho="/api/painel/series?categoria_id={categoria}",
+        proposito="A série histórica da categoria (H82).",
+        varredura_esperada=(
+            "Como a da rede: a série agrega todos os períodos, e a categoria só escolhe "
+            "de quais parceiros."
+        ),
+    ),
+    Medicao(
+        nome="segmentos-categoria",
+        caminho="/api/painel/segmentos?categoria_id={categoria}",
+        proposito="A distribuição por segmento da categoria (H82).",
+        sem_seq_scan_em=("historico_segmento",),
+    ),
+    Medicao(
+        nome="decisao",
+        caminho="/api/painel/decisao",
+        proposito="A previsão e a campanha no painel, com uma previsão por parceiro (H83).",
+        sem_seq_scan_em=("previsao",),
     ),
     Medicao(
         nome="busca",
@@ -237,6 +271,141 @@ def _segmentar() -> None:
         s.close()
 
 
+ACOES_DO_PLANO = 30
+
+
+def _prever_e_planejar() -> None:
+    """Uma previsão por parceiro e um plano, para o bloco do painel ter o que somar (H83).
+
+    **São linhas postas à mão, e não o modelo treinado.** O que se mede aqui é a
+    consulta do painel sobre uma tabela de previsões do tamanho da rede — treinar
+    a rede neural com 10.000 parceiros levaria minutos e mediria outra coisa. O
+    previsto repete o medido, e a chance de queda sai do identificador: os
+    valores não significam nada, e o relatório diz isso.
+
+    Não refaz o que já existe: com `--reusar`, a base de uma medição anterior à
+    H83 ganha as previsões, e a de uma posterior fica como está.
+    """
+    from datetime import UTC, date, datetime
+    from decimal import Decimal
+
+    from sqlalchemy import insert, select
+
+    from app.db import Sessao
+    from app.modelos import (
+        AcaoComercial,
+        ExecucaoOtimizador,
+        ItemPlano,
+        Metrica,
+        ModoExecucao,
+        Periodo,
+        PlanoCampanha,
+        Previsao,
+        SituacaoExecucao,
+        SituacaoTreino,
+        TreinoModelo,
+    )
+
+    s = Sessao()
+    try:
+        if s.scalar(select(TreinoModelo.id).limit(1)) is not None:
+            print("  previsões e plano já existem")
+            return
+        base = s.scalar(select(Periodo).order_by(Periodo.data_inicio.desc(), Periodo.id.desc()))
+        treino = TreinoModelo(
+            situacao=SituacaoTreino.CONCLUIDO,
+            periodo_base_id=base.id,
+            semente=42,
+            promovido=True,
+            versao_em_uso="",
+        )
+        s.add(treino)
+        s.flush()
+        treino.versao_em_uso = f"rede-{treino.id}"
+
+        metricas = s.execute(
+            select(Metrica.parceiro_id, Metrica.faturamento).where(Metrica.periodo_id == base.id)
+        ).all()
+        s.execute(
+            insert(Previsao),
+            [
+                {
+                    "parceiro_id": parceiro_id,
+                    "periodo_base_id": base.id,
+                    "faturamento_previsto": faturamento,
+                    "probabilidade_queda": (parceiro_id % 100) / 100,
+                    "modelo_versao": treino.versao_em_uso,
+                }
+                for parceiro_id, faturamento in metricas
+            ],
+        )
+
+        acao = s.scalar(select(AcaoComercial).limit(1))
+        if acao is None:
+            acao = AcaoComercial(
+                nome="Ação da medição",
+                custo_unitario=Decimal("90.00"),
+                efeito_crescimento=Decimal("0.06"),
+                efeito_retencao=Decimal("0.30"),
+            )
+            s.add(acao)
+            s.flush()
+        agora = datetime.now(UTC)
+        execucao = ExecucaoOtimizador(
+            situacao=SituacaoExecucao.CONCLUIDA,
+            modo=ModoExecucao.SERIAL,
+            parametros={"orcamento": "5000.00", "maximo_acoes": ACOES_DO_PLANO},
+            periodo_base_id=base.id,
+            modelo_versao=treino.versao_em_uso,
+            semente=42,
+            iniciada_em=agora,
+            concluida_em=agora,
+            viavel=True,
+            tempo_ms=0,
+        )
+        s.add(execucao)
+        s.flush()
+        plano = PlanoCampanha(
+            execucao_id=execucao.id, aplicacao_inicio=date.today(), aplicacao_fim=date.today()
+        )
+        s.add(plano)
+        s.flush()
+        for parceiro_id, _ in metricas[:ACOES_DO_PLANO]:
+            s.add(
+                ItemPlano(
+                    plano_id=plano.id,
+                    parceiro_id=parceiro_id,
+                    acao_id=acao.id,
+                    custo=acao.custo_unitario,
+                    uplift_esperado=Decimal("100.00"),
+                )
+            )
+        s.commit()
+        print(f"  {len(metricas)} previsões e um plano de {ACOES_DO_PLANO} ações, postos à mão")
+    finally:
+        s.close()
+
+
+def _maior_categoria() -> int:
+    """A categoria com mais parceiros: o recorte que mais custa (H82)."""
+    from sqlalchemy import func, select
+
+    from app.db import Sessao
+    from app.modelos import Parceiro
+
+    s = Sessao()
+    try:
+        return s.scalar(
+            select(Parceiro.categoria_id)
+            .where(Parceiro.categoria_id.is_not(None))
+            .group_by(Parceiro.categoria_id)
+            .order_by(func.count().desc(), Parceiro.categoria_id)
+            .limit(1)
+        )
+    finally:
+        s.close()
+
+
 def _analisar(url: str) -> None:
     from sqlalchemy import create_engine, text
 
@@ -275,6 +444,7 @@ def preparar(url: str, parceiros: int, periodos: int, semente: int) -> None:
     # escolheria planos que não são os de um banco em regime. Medir plano
     # escolhido a partir de estatística velha é medir outro sistema.
     _segmentar()
+    _prever_e_planejar()
     _analisar(url)
     print("  estatísticas atualizadas (ANALYZE)")
 
@@ -522,7 +692,7 @@ def montar_relatorio(
     linhas: list[str] = []
     a = linhas.append
 
-    a(f"# Medição do painel com {_mil(parceiros)} parceiros — H40")
+    a(f"# Medição do painel com {_mil(parceiros)} parceiros — H40, H82 e H83")
     a("")
     a(
         "> Gerado por `scripts/medir_painel.py`. **Não edite à mão**: número escrito à mão não "
@@ -550,6 +720,14 @@ def montar_relatorio(
     a(
         "A medição chama a aplicação em processo, pelo `TestClient`: cobre roteamento, "
         "autorização, consulta e serialização — tudo que o navegador espera, menos a rede."
+    )
+    a("")
+    a(
+        "As consultas `-categoria` (H82) usam a categoria com mais parceiros, que é o recorte "
+        "que mais custa. A `decisao` (H83) lê uma previsão por parceiro e um plano de "
+        f"{ACOES_DO_PLANO} ações **postos à mão** pela medição, e não pelo modelo treinado: o "
+        "que se mede é a consulta sobre uma tabela de previsões do tamanho da rede, e os "
+        "valores dela não significam nada."
     )
     a("")
 
@@ -694,6 +872,11 @@ def main() -> None:
 
     if args.reusar:
         print("reusando a massa já existente no banco de medição")
+        # A massa de uma medição anterior à H83 não tem previsão nem plano, e
+        # pode ser de antes da última migração.
+        _rodar([sys.executable, "-m", "alembic", "upgrade", "head"], RAIZ_API, url)
+        _prever_e_planejar()
+        _analisar(url)
     else:
         preparar(url, args.parceiros, args.periodos, args.semente)
 
@@ -725,7 +908,9 @@ def main() -> None:
         if r.status_code != 201:
             raise SystemExit(f"A autenticação respondeu {r.status_code}.")
 
+        categoria = _maior_categoria()
         for medicao in MEDICOES:
+            medicao = replace(medicao, caminho=medicao.caminho.format(categoria=categoria))
             print(f"medindo {medicao.nome} ... ", end="", flush=True)
             resultado = medir(cliente, medicao, args.alvo_ms)
             resultado.planos = planos_de(engine, cliente, medicao)

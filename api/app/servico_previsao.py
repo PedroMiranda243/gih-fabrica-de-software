@@ -452,6 +452,13 @@ def recuperar_interrompidos(s: Session) -> int:
 
 
 # ------------------------------------------------------------ a leitura
+# O motivo e a ajuda de quem ainda não treinou: os mesmos no cadastro do parceiro e no painel.
+SEM_TREINO = (
+    "O modelo ainda não foi treinado.",
+    "Um administrador ou gestor treina o modelo na tela Modelo.",
+)
+
+
 @dataclass(frozen=True)
 class PrevisaoLida:
     """A previsão de um parceiro, ou o porquê de não haver (RN09, H44)."""
@@ -467,13 +474,7 @@ class PrevisaoLida:
 def previsao_do_parceiro(s: Session, parceiro_id: int) -> PrevisaoLida:
     concluido = ultimo_concluido(s)
     if concluido is None:
-        return PrevisaoLida(
-            None,
-            None,
-            None,
-            motivo="O modelo ainda não foi treinado.",
-            ajuda="Um administrador ou gestor treina o modelo na tela Modelo.",
-        )
+        return PrevisaoLida(None, None, None, motivo=SEM_TREINO[0], ajuda=SEM_TREINO[1])
 
     base = s.get(Periodo, concluido.periodo_base_id)
     versao = concluido.versao_em_uso

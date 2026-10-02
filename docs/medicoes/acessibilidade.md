@@ -12,7 +12,7 @@ Três verificações, em três lugares:
 
 | Item | Valor |
 |---|---|
-| Data | 01/10/2026 06:17 |
+| Data | 01/10/2026 06:49 |
 | Navegador | Microsoft Edge 154.0.4258.37, sem cabeça, pelo Playwright |
 | axe-core | 4.13.0 |
 | Dados | a base de trabalho, com a massa do gerador; dois planos calculados para a medição e apagados depois |
@@ -66,15 +66,15 @@ api/.venv/Scripts/python scripts/medir_telas.py
 | Assistente | `/assistente` | gestor | ok | ok | 0 | 0 |
 | Campanha | `/campanha` | gestor | ok | ok | 0 | 0 |
 | Execuções | `/execucoes` | gestor | ok | ok | 0 | 0 |
-| Execução | `/execucoes/128` | gestor | ok | ok | 0 | 0 |
-| Comparação | `/execucoes/comparar?a=128&b=129` | gestor | ok | ok | 0 | 0 |
+| Execução | `/execucoes/131` | gestor | ok | ok | 0 | 0 |
+| Comparação | `/execucoes/comparar?a=131&b=132` | gestor | ok | ok | 0 | 0 |
 | Mensagens | `/mensagens` | gestor | ok | ok | 0 | 0 |
 | Aprovação | `/aprovacao` | gestor | ok | ok | 0 | 0 |
 | Benchmark | `/benchmark` | gestor | ok | ok | 0 | 0 |
 | Modelo | `/modelo` | gestor | ok | ok | 0 | 0 |
 | Usuários | `/usuarios` | administrador | ok | ok | 0 | 0 |
 | Novo usuário | `/usuarios/novo` | administrador | ok | ok | 0 | 0 |
-| Conta do usuário | `/usuarios/167` | administrador | ok | ok | 0 | 0 |
+| Conta do usuário | `/usuarios/173` | administrador | ok | ok | 0 | 0 |
 | Auditoria | `/auditoria` | administrador | ok | ok | 0 | 0 |
 | Limiares | `/configuracao` | administrador | ok | ok | 0 | 0 |
 | Meu desempenho | `/meu-desempenho` | parceiro | ok | ok | 0 | 0 |

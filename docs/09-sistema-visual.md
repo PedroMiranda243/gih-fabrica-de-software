@@ -295,7 +295,8 @@ flowchart TD
     Painel -- "base vazia:<br/>importar um relatório" --> Importacao
     Importacao -- "importação concluída:<br/>ver no painel" --> Painel
     Painel -- "nome no ranking" --> Cadastro
-    Painel -- "segmento ou Em risco:<br/>a lista filtrada" --> Parceiros
+    Painel -- "segmento, Em risco<br/>ou maior risco: a lista" --> Parceiros
+    Painel -- "última campanha:<br/>abrir o plano" --> Execucao
     Cadastro -- "na campanha:<br/>abrir o plano" --> Execucao
     Cadastro -- "sem plano:<br/>ir para a Campanha" --> Campanha
     Parceiros -- "nome do parceiro" --> Cadastro
@@ -368,6 +369,18 @@ Os comportamentos que o desenho não mostra, e que valem para todas as telas:
   parceiro; cada segmento da distribuição, e o indicador de Em risco, abrem a lista filtrada; o cadastro
   mostra a ação do parceiro no último plano de campanha, com o link para o plano, e a lista mostra o risco
   estimado de cada um (H80). Seguir um parceiro do painel até a campanha não passa pelo menu.
+- **O painel tem recorte, e diz o que o recorte não muda** (H82). O período e a categoria ficam no topo, e
+  no endereço: recarregar ou mandar o link abre o mesmo painel. A categoria escolhe quem entra, e não
+  renumera — a posição do ranking e a mobilidade do Top N continuam as da rede inteira (RN02), e a tela
+  escreve "na rede inteira" onde as duas aparecem. Em outro período que não o mais recente, o segmento e o
+  Em risco deixam de levar à lista de parceiros, que mostra o segmento do período mais recente: o número
+  do painel não seria o que a lista encontra.
+- **Os três módulos num lugar só** (H83). Entre o gráfico e o ranking, o Gestor e o Analista veem o que o
+  modelo prevê — o previsto ao lado do medido nos mesmos parceiros, e os cinco de maior risco de queda — e
+  o que a última campanha decidiu, com o caminho para o cadastro, para a lista ordenada pelo risco e para
+  o plano. O previsto é o único número em peso alto do bloco, e a etiqueta "Estimativa" o separa do que o
+  painel mede. Não é gráfico novo: são três números e uma tabela curta. Sem modelo treinado ou sem plano,
+  o bloco diz o que falta; o Administrador, que não abre a campanha, não o vê.
 - **O cadastro volta para de onde a pessoa veio.** Aberto do painel, a trilha diz "Painel" e o botão, "Voltar
   para o painel"; aberto de um plano ou da comparação, volta para eles — e não para a lista, que a pessoa
   nem tinha aberto.

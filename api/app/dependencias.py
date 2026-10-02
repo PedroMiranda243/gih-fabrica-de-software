@@ -110,6 +110,9 @@ def exigir(*perfis: Perfil):
 # autorização, só pergunta a ela (regras 2.4 e 2.5).
 TELAS: dict[str, tuple[str, str]] = {
     "painel": ("GET", "/api/painel/indicadores"),
+    # Não é tela: é o bloco da previsão e da campanha dentro do painel (H83), que o
+    # Administrador não vê.
+    "painel_decisao": ("GET", "/api/painel/decisao"),
     "importar": ("POST", "/api/importacoes"),
     "historico_importacoes": ("GET", "/api/importacoes"),
     "parceiros": ("GET", "/api/parceiros"),

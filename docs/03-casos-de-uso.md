@@ -275,7 +275,7 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 | **Objetivo** | Entender o desempenho da rede no período e identificar quem merece atenção |
 | **Pré-condições** | Usuário autenticado; existe ao menos um período importado |
 | **Pós-condições** | Nenhuma alteração de estado — caso de uso de consulta |
-| **Requisitos** | RF17, RF18, RF19, RF20, RF23, RF24, RF25; regras RN01, RN04 |
+| **Requisitos** | RF17, RF18, RF19, RF20, RF23, RF24, RF25, RF28, RF30; regras RN01, RN02, RN04 |
 
 **Fluxo principal**
 
@@ -297,6 +297,20 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
   absolutos e informa que variação e segmentação por tendência exigem histórico.
 - **A3 — Exportação.** No passo 6, o usuário solicita a exportação e o sistema gera um CSV contendo
   exatamente a visão filtrada em tela (RF25).
+- **A4 — Outro período, ou uma categoria.** No passo 2, o usuário escolhe um período entre os importados,
+  uma categoria, ou os dois. Os indicadores, a série, a distribuição por segmento e o ranking passam a ser
+  os do recorte, e a variação é contra o período anterior ao escolhido, dentro da mesma categoria. A série
+  vai até o período escolhido. **A posição no ranking continua a da rede inteira** — a categoria escolhe
+  quem aparece, e não renumera —, e a mobilidade do Top N não se filtra por categoria (RN02): o painel diz
+  as duas coisas. O recorte fica no endereço da página. Fora do período mais recente, o segmento e o
+  indicador de Em risco não levam à lista de parceiros, que mostra o segmento do período mais recente.
+- **A5 — A previsão e a campanha no painel.** Para o Gestor e o Analista, o painel traz também o que os
+  outros dois módulos dizem: o faturamento previsto para o próximo período ao lado do medido nos mesmos
+  parceiros, marcado como estimativa (RF28); os parceiros de maior risco de queda, que é uma ordenação e
+  não um limiar; e o resumo do último plano de campanha viável — ações, custo e ganho esperado (RF30) —,
+  com o caminho para o cadastro e para o plano. A previsão parte do período em que o modelo foi treinado,
+  e não acompanha o período escolhido no A4; a categoria, sim. Sem modelo treinado ou sem plano, o bloco
+  diz o que falta. O Administrador, que não abre a campanha, não o vê.
 
 **Exceções**
 

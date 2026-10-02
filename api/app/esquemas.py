@@ -532,6 +532,10 @@ class IndicadoresPainel(BaseModel):
 
     periodo: PeriodoResposta | None
     periodo_anterior: PeriodoResposta | None
+    categoria: CategoriaResposta | None = Field(
+        default=None,
+        description="A categoria do recorte (H82). Nula quando os números são da rede inteira.",
+    )
     faturamento: Decimal
     pedidos: int
     ticket_medio: Decimal | None
@@ -589,8 +593,12 @@ class LinhaRanking(BaseModel):
 
 
 class PaginaRanking(BaseModel):
+    """O ranking do período. Com `categoria`, vêm só os parceiros dela — e a
+    posição de cada um continua a da rede inteira (RN02, H82)."""
+
     periodo: PeriodoResposta | None
     periodo_anterior: PeriodoResposta | None
+    categoria: CategoriaResposta | None = None
     itens: list[LinhaRanking]
     total: int
     pagina: int
@@ -611,8 +619,71 @@ class DistribuicaoSegmentos(BaseModel):
     """
 
     periodo: PeriodoResposta | None
+    categoria: CategoriaResposta | None = None
     total: int
     itens: list[FatiaSegmento]
+
+
+class RecortesPainel(BaseModel):
+    """O que o painel oferece para escolher (H82): os períodos importados, do
+    mais recente ao mais antigo, e as categorias que têm parceiro."""
+
+    periodos: list[PeriodoResposta]
+    categorias: list[CategoriaResposta]
+
+
+class ParceiroEmRisco(BaseModel):
+    """Um parceiro entre os de maior chance de queda, com o medido e o previsto (H83)."""
+
+    parceiro_id: int
+    nome: str
+    categoria: str | None
+    probabilidade_queda: float
+    faturamento: Decimal = Field(description="O medido no período de onde a previsão parte.")
+    faturamento_previsto: Decimal
+
+
+class PrevisaoNoPainel(BaseModel):
+    """O próximo período, pelo modelo, somado no recorte (RF28, H83).
+
+    **O medido é o dos mesmos parceiros.** Somar a previsão de quem tem previsão
+    contra o faturamento da rede inteira compararia dois conjuntos diferentes, e a
+    diferença pareceria queda. `parceiros` diz quantos entram nas duas somas.
+
+    Sem previsão, `disponivel` é falso e `motivo` e `ajuda` dizem o que falta.
+    """
+
+    disponivel: bool = False
+    motivo: str | None = None
+    ajuda: str | None = None
+    periodo_base: PeriodoResposta | None = None
+    modelo_versao: str | None = None
+    origem: str | None = Field(default=None, description='"MODELO" ou "REFERENCIA".')
+    desatualizada: bool = Field(
+        default=False, description="Há período importado depois do treino que gerou a previsão."
+    )
+    parceiros: int = 0
+    faturamento_previsto: Decimal | None = None
+    faturamento_medido: Decimal | None = None
+    variacao_percentual: Decimal | None = None
+    maior_risco: list[ParceiroEmRisco] = []
+
+
+class CampanhaNoPainel(BaseModel):
+    """O último plano viável, resumido no recorte (RF30, H83). `plano` nulo: nenhum plano ainda."""
+
+    plano: PlanoResumido | None = None
+    acoes: int = 0
+    custo: Decimal | None = None
+    ganho_esperado: Decimal | None = None
+
+
+class DecisaoPainel(BaseModel):
+    """O que a previsão e a campanha dizem, dentro do painel (H83, UC05-A5)."""
+
+    categoria: CategoriaResposta | None = None
+    previsao: PrevisaoNoPainel
+    campanha: CampanhaNoPainel
 
 
 class MovimentoTopN(BaseModel):
@@ -700,9 +771,10 @@ class PontoSerie(BaseModel):
 
 
 class SerieHistorica(BaseModel):
-    escopo: str = Field(description='"rede" ou "parceiro".')
+    escopo: str = Field(description='"rede", "categoria" ou "parceiro".')
     parceiro_id: int | None
     parceiro_nome: str | None
+    categoria: CategoriaResposta | None = None
     pontos: list[PontoSerie]
 
 

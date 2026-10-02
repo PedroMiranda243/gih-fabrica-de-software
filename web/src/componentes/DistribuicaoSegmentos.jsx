@@ -23,11 +23,14 @@ import EstadoVazio from "./EstadoVazio";
  * aparece em texto ao lado, nada aqui depende só de cor (RNF22).
  *
  * **Cada segmento leva à lista filtrada por ele** (H81): o painel responde
- * "quantos", e a lista, "quem". O painel mostra sempre o período mais recente,
- * que é o mesmo de onde a lista tira o segmento — por isso o número daqui é o
- * total que a lista encontra.
+ * "quantos", e a lista, "quem". A lista tira o segmento do período mais
+ * recente — por isso o caminho só existe quando o painel mostra esse período
+ * (`para`), e some quando a pessoa escolhe outro (H82): o número daqui deixaria
+ * de ser o total que a lista encontra.
  */
-export default function DistribuicaoSegmentos({ itens, total }) {
+const NA_LISTA = (segmento) => `/parceiros?segmento=${segmento}`;
+
+export default function DistribuicaoSegmentos({ itens, total, para = NA_LISTA }) {
   if (!itens.length) {
     return (
       <EstadoVazio
@@ -46,13 +49,16 @@ export default function DistribuicaoSegmentos({ itens, total }) {
     <ul className="distribuicao">
       {itens.map((item) => (
         <li className="distribuicao__linha" key={item.segmento}>
-          <Link
-            className="distribuicao__rotulo distribuicao__link"
-            to={`/parceiros?segmento=${item.segmento}`}
-          >
-            {ROTULO_SEGMENTO[item.segmento] ?? item.segmento}
-            <span className="so-leitor">: ver os parceiros na lista</span>
-          </Link>
+          {para ? (
+            <Link className="distribuicao__rotulo distribuicao__link" to={para(item.segmento)}>
+              {ROTULO_SEGMENTO[item.segmento] ?? item.segmento}
+              <span className="so-leitor">: ver os parceiros na lista</span>
+            </Link>
+          ) : (
+            <span className="distribuicao__rotulo">
+              {ROTULO_SEGMENTO[item.segmento] ?? item.segmento}
+            </span>
+          )}
           <span className="distribuicao__trilho">
             <span
               className={`distribuicao__barra distribuicao__barra--${item.segmento.toLowerCase()}`}
