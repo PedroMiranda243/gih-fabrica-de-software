@@ -164,6 +164,9 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("GET", "/api/relatorios/campanha/planos"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("GET", "/api/relatorios/operacoes"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/relatorios/operacoes/exportacao.csv"): {Perfil.ADMINISTRADOR},
+    # UC16 — A ajuda é de todos, e a tela não pede nada à API para o Parceiro: os
+    # segmentos e os limiares da rede são da operação interna (RF26, UC16-A1).
+    ("GET", "/api/ajuda/regras"): {Perfil.ADMINISTRADOR, Perfil.GESTOR, Perfil.ANALISTA},
 }
 
 # Rotas que o FastAPI cria sozinho e que não são superfície da aplicação.

@@ -190,6 +190,35 @@ def test_sem_posicao_nao_e_top():
     )
 
 
+def test_a_ordem_do_enum_e_a_ordem_em_que_a_regra_decide():
+    """`list(Segmento)` é a precedência da RN01 — e é o que a ajuda mostra (RF55).
+
+    Cada caso satisfaz o critério do próprio segmento **e os de todos os que vêm
+    depois dele**: se a regra decidisse em outra ordem, um dos de trás ganharia.
+    A ajuda lista os segmentos por `list(Segmento)`; este teste é o que impede a
+    lista de ensinar uma ordem que a classificação não segue.
+    """
+    caindo = _v("100", "200", "300")
+    subindo = _v("300", "200", "100")
+    parado = _v("5", "5", "5")
+    casos = [
+        # Prospecção, com histórico curto, em queda e no topo do ranking.
+        {"status": StatusComercial.PROSPECCAO, "periodos": 1, "faturamentos": caindo, "posicao": 1},
+        # Recém-chegado, em queda e no topo.
+        {"status": StatusComercial.ATIVO, "periodos": 2, "faturamentos": caindo, "posicao": 1},
+        # Em queda e no topo: Em Risco vence Top.
+        {"status": StatusComercial.ATIVO, "periodos": 12, "faturamentos": caindo, "posicao": 1},
+        # No topo e crescendo: Top vence Em Ascensão.
+        {"status": StatusComercial.ATIVO, "periodos": 12, "faturamentos": subindo, "posicao": 1},
+        # Crescendo, fora do topo.
+        {"status": StatusComercial.ATIVO, "periodos": 12, "faturamentos": subindo, "posicao": 99},
+        # Nenhum critério.
+        {"status": StatusComercial.ATIVO, "periodos": 12, "faturamentos": parado, "posicao": 99},
+    ]
+
+    assert [classificar(**caso) for caso in casos] == list(Segmento)
+
+
 # ================================================= o reprocessamento (banco)
 @pytest.fixture
 def semear(criar_usuario):
