@@ -256,6 +256,10 @@ def telas(ids: dict) -> list[Tela]:
         Tela("Minha conta", "/conta", "PARCEIRO", "minha-conta"),
         # A tela que o perfil não abre (H94): o Parceiro no endereço dos parceiros da rede.
         Tela("Sem acesso", "/parceiros", "PARCEIRO", "sem-acesso"),
+        # A ajuda (H95) é de todos, e tem dois conteúdos: o da rede, com os segmentos
+        # e a estimativa, e o do portal do Parceiro, que não recebe as regras.
+        Tela("Ajuda", "/ajuda", "GESTOR", "ajuda"),
+        Tela("Ajuda do parceiro", "/ajuda", "PARCEIRO", "ajuda-parceiro"),
     ]
     return lista
 
