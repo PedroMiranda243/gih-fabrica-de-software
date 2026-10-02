@@ -1,0 +1,52 @@
+Registro das revisões dos Pull Requests — gerado do GitHub
+https://github.com/PedroMiranda243/gih-fabrica-de-software
+PRs incorporados depois do #195; gerado em 01/10/2026 23:57 por scripts/registrar_revisoes.py
+
+#207  01/10  A trilha de auditoria na tela e o histórico do cadastro do parceiro (H89, H90)
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#209  01/10  O painel com período e categoria, e a previsão e a campanha dentro dele (H82…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#210  01/10  Os relatórios de desempenho, de risco, da campanha e das operações na API, com…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#211  01/10  Os relatórios na tela, com o CSV e a impressão em PDF (H84 a H88)
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#212  01/10  Filtros no histórico de execuções, busca nos usuários e o plano em CSV e em…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#213  01/10  Evidências da Sprint 07: o painel, os relatórios, os filtros, a exportação e a…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#214  01/10  As Partes V e VI leem a medição como foi entregue, e não a viva (#208)
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+Resumo
+  PRs incorporados                                  7
+  com aprovação de um colega                        0
+  com revisão de um colega, sem aprovação           0
+  sem revisão registrada no GitHub                  7
+
+Por colega convidado
+  mihaeldatoman            convidado em   7 · aprovou   0 · pediu mudanças  0 · comentou  0
+  joaopfranca04            convidado em   6 · aprovou   0 · pediu mudanças  0 · comentou  0
+  ingrydaraujob            convidado em   4 · aprovou   0 · pediu mudanças  0 · comentou  0
+  ThiagojFalcao            convidado em   1 · aprovou   0 · pediu mudanças  0 · comentou  0
+
+Resultado: 7 PRs incorporados, 0 com aprovação registrada de um colega, 7 sem revisão registrada.

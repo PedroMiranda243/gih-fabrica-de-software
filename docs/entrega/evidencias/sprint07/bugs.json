@@ -1,0 +1,14 @@
+[
+  {
+    "numero": 208,
+    "titulo": "A Parte VI, já entregue, mudava ao gerar o documento da Sprint 07: lia a medição viva das telas",
+    "situacao": "corrigido",
+    "prs": [
+      214
+    ],
+    "apareceu": "Ao gerar o documento da Sprint 07, a **Parte VI**, que já foi entregue, saiu diferente do PDF da Sprint 06 em duas frases: onde o PDF entregue diz \"as 20 telas medidas no navegador\", em 40 medidas, de 30/09, o documento novo passou a dizer 26 telas, 52 medidas, de 01/10. Nenhum erro, nenhum aviso: a parte entregue mudou sozinha.",
+    "causa": "`docs/entrega/secoes/sprint06.js` lê os números das medições direto de `docs/medicoes/` — `acessibilidade.md`, `nucleo.md` e `otimizador.md` —, que são arquivos vivos: a medição das telas é refeita a cada tela nova, e a Sprint 07 acrescentou seis. As evidências de execução de cada entrega já ficam congeladas na pasta dela (`evidencias/sprint06/`), e as figuras, em `diagramas/parte-vi/`; as medições tinham ficado de fora. A Parte V tem o mesmo desenho, com `modelo.md`, que só não mudou porque a medição do modelo não foi refeita.",
+    "correcao": "As medições de cada entrega passam a ter a cópia dela — `evidencias/sprint05/medicoes/`, `evidencias/sprint06/medicoes/` e `evidencias/sprint07/medicoes/` —, e cada parte lê a sua. As da Sprint 06 são as do commit do PDF entregue. Com isso, o texto e as figuras das Partes I a VI voltam a ser os do documento da Sprint 06, parágrafo a parágrafo.",
+    "encontrado": "01/10, comparando o texto das Partes I a VI do documento novo com o do documento entregue na Sprint 06, antes de exportar o PDF — a conferência que a entrega anterior deixou como regra."
+  }
+]

@@ -1,0 +1,154 @@
+Registro de testes — as quatro suítes, rodadas de verdade
+Gerado em 01/10/2026 23:31 por scripts/registrar_testes.py, no commit aeefa77
+O otimizador rodou na imagem do núcleo, compilado com CUDA. GPU: NVIDIA GeForce RTX 4060 (capacidade 8.9, 8187 MB)
+
+Suítes
+  API (pytest, Postgres)        1426 testes  1421 passaram   0 falharam   5 pulados   493 s
+  Modelo preditivo (pytest)       31 testes    31 passaram   0 falharam   0 pulados     6 s
+  Otimizador (pytest, com GPU)   277 testes   277 passaram   0 falharam   0 pulados   129 s
+  Interface (Vitest)             324 testes   324 passaram   0 falharam   0 pulados    17 s
+
+Os quatro tipos que o enunciado pede — exemplos, com o resultado desta execução
+
+  Fluxos principais
+    ok    no painel filtrado por categoria, a posição continua a da rede (H82, RN02)
+          api · test_painel.py · test_no_ranking_da_categoria_a_posicao_continua_a_da_rede
+    ok    o painel traz o previsto ao lado do medido, nos mesmos parceiros (H83)
+          api · test_painel_decisao.py · test_o_previsto_e_o_medido_somam_os_mesmos_parceiros
+    ok    o total do relatório de desempenho é o indicador do painel (RF44)
+          api · test_relatorios.py · test_o_total_do_relatorio_e_o_indicador_do_painel
+    ok    o risco do relatório é o da previsão no cadastro, e diz de que modelo (RF45)
+          api · test_relatorios.py · test_o_risco_do_relatorio_e_o_do_cadastro_e_diz_de_que_modelo
+    ok    o cadastro do parceiro conta o que mudou, quando e por quem (RF50)
+          api · test_parceiros_historico.py · test_o_historico_conta_o_que_mudou_quando_e_por_quem
+    ok    os filtros do relatório vão para a tela e para o arquivo exportado
+          interface · Relatorios.test.jsx · os filtros vão para a API e para o CSV, que é a mesma consulta
+    ok    a trilha de auditoria na tela, com a ação em português (H89)
+          interface · Auditoria.test.jsx · mostra quando, quem, a ação em português e o que aconteceu
+
+  Operações com o banco
+    ok    o relatório da campanha soma o plano gravado (RF46)
+          api · test_relatorios.py · test_o_relatorio_da_campanha_soma_o_plano_gravado
+    ok    o relatório de operações soma a trilha no mesmo recorte (RF47)
+          api · test_relatorios.py · test_as_operacoes_somam_a_trilha_no_mesmo_recorte
+    ok    o relatório de desempenho não faz uma consulta por parceiro (RNF03)
+          api · test_relatorios.py · test_o_desempenho_nao_faz_uma_consulta_por_parceiro
+    ok    a busca na trilha procura no que foi gravado e em quem fez (RF49)
+          api · test_auditoria.py · test_busca_no_que_foi_gravado_e_em_quem_fez
+    ok    os filtros do histórico de execuções se combinam (RF51)
+          api · test_campanha.py · test_os_filtros_do_historico_se_combinam_e_o_total_e_o_do_recorte
+    ok    a busca de usuários ignora maiúscula e acento (RF52)
+          api · test_usuarios.py · test_a_busca_ignora_maiuscula_e_acento_dos_dois_lados
+
+  Validações
+    ok    a busca de usuários trata o curinga digitado como texto
+          api · test_usuarios.py · test_a_busca_trata_curinga_como_texto
+    ok    datas invertidas são recusadas, em vez de virar um relatório vazio
+          api · test_relatorios.py · test_datas_invertidas_sao_recusa_e_nao_um_relatorio_vazio
+    ok    a série é de um parceiro ou de uma categoria, e não dos dois
+          api · test_painel.py · test_a_serie_e_de_um_parceiro_ou_de_uma_categoria_e_nao_dos_dois
+    ok    texto com cara de fórmula não vira fórmula no arquivo exportado
+          api · test_relatorios.py · test_categoria_com_nome_de_formula_nao_vira_formula_na_planilha
+    ok    o contato entra na trilha como alterado, sem o valor
+          api · test_parceiros_historico.py · test_o_contato_entra_como_alterado_e_o_valor_fica_fora_da_trilha
+
+  Situações de erro
+    ok    o relatório de uma execução sem plano é recusado, com o porquê
+          api · test_relatorios.py · test_execucao_sem_plano_e_recusada_com_o_porque
+    ok    sem modelo treinado, o relatório de risco diz o que falta
+          api · test_relatorios.py · test_sem_modelo_treinado_o_relatorio_de_risco_diz_o_que_falta
+    ok    a exportação da trilha de auditoria é só do administrador (RF08)
+          api · test_auditoria.py · test_a_exportacao_e_so_do_administrador
+    ok    a execução sem plano não tem o que exportar, e a resposta diz por quê (RF53)
+          api · test_campanha.py · test_execucao_sem_plano_nao_tem_csv_e_a_resposta_diz_por_que
+    ok    a tela no tema escuro imprime no claro, e volta ao escuro depois (RF48)
+          interface · impressao.test.js · quem escolheu o escuro imprime no claro, e volta ao escuro depois
+    ok    o recorte que a API recusa mostra o erro, e deixa escolher outro
+          interface · Painel.test.jsx · recorte que a API recusa mostra o erro e deixa escolher outro
+
+Por arquivo
+
+  API (pytest, Postgres)
+    test_aprovacao.py                              30
+    test_assistente.py                            156
+    test_auditoria.py                              36
+    test_autenticacao.py                           16
+    test_autorizacao.py                           387
+    test_benchmark.py                              23
+    test_campanha.py                               65
+    test_cli.py                                    27
+    test_configuracao.py                           14
+    test_erros.py                                  16
+    test_guarda_numerica.py                        99
+    test_health.py                                  3
+    test_importacao.py                             39
+    test_leitor_relatorio.py                       27
+    test_limpeza_da_verificacao.py                 15
+    test_mensagens.py                              60
+    test_meu_desempenho.py                         15
+    test_painel.py                                 58
+    test_painel_decisao.py                         17
+    test_parceiros.py                              49
+    test_parceiros_campanha.py                      7
+    test_parceiros_historico.py                     6
+    test_parceiros_recorte.py                      25
+    test_parceiros_risco.py                        11
+    test_previsao.py                               25
+    test_redator.py                                26
+    test_relatorios.py                             64
+    test_segmentacao.py                            24
+    test_seguranca.py                              26
+    test_senha.py                                  13
+    test_sugestao_categoria.py                     21
+    test_usuarios.py                               26
+
+  Modelo preditivo (pytest)
+    test_baselines.py                               7
+    test_treino.py                                 10
+    test_variaveis.py                              14
+
+  Otimizador (pytest, com GPU)
+    test_aleatorio.py                               5
+    test_cenario.py                                18
+    test_gpu.py                                    72
+    test_nativo.py                                110
+    test_otimizador.py                             48
+    test_problema.py                               15
+    test_viabilidade.py                             9
+
+  Interface (Vitest)
+    App.acessibilidade.test.jsx                     2
+    Aprovacao.test.jsx                             14
+    Assistente.test.jsx                            12
+    Auditoria.test.jsx                              9
+    Benchmark.test.jsx                              9
+    Campanha.test.jsx                              10
+    Casca.test.jsx                                 18
+    Comparacao.test.jsx                             7
+    ComparacaoReferencias.test.jsx                  2
+    Configuracao.test.jsx                           5
+    Execucoes.test.jsx                             13
+    Importacao.test.jsx                             5
+    Login.test.jsx                                  3
+    Mensagens.test.jsx                             14
+    MeuDesempenho.test.jsx                          5
+    Modelo.test.jsx                                 8
+    NaoEncontrada.test.jsx                          4
+    Painel.test.jsx                                32
+    Parceiro.test.jsx                              23
+    Parceiros.test.jsx                             18
+    PlanoDeCampanha.test.jsx                        3
+    Relatorios.test.jsx                            32
+    SerieHistorica.test.jsx                         5
+    Usuario.test.jsx                                7
+    Usuarios.test.jsx                               6
+    acessibilidade.test.jsx                         2
+    contraste.test.js                               9
+    escalaLog.test.js                               7
+    escalaSerie.test.js                            19
+    formato.test.js                                10
+    impressao.test.js                               3
+    seguranca.test.jsx                              7
+    tokens.test.js                                  1
+
+Resultado: 2058 testes, 2053 passaram, 0 falharam, 5 pulados.
