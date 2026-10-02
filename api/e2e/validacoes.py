@@ -6,7 +6,8 @@ do segundo módulo — o de previsão, que tem seção própria desde então. A 
 ganha a seção do terceiro módulo, a campanha: quem calcula, o que o pedido
 precisa ter, e o plano que não cabe — a Pré-Banca pediu as validações negativas
 ampliadas (Sprint 03). A sétima ganha a dos relatórios, do painel e dos filtros:
-quem abre cada um, o recorte que não existe, e o que não tem o que exportar.
+quem abre cada um, o recorte que não existe, e o que não tem o que exportar. A oitava
+ganha a da conta, da senha e do vínculo do parceiro, em que o erro volta no campo.
 Aqui cada regra é provocada contra a API no ar, e a troca inteira vai para a
 transcrição: o que foi enviado, o código que voltou e a mensagem que a tela
 mostra ao usuário.
@@ -29,7 +30,7 @@ Como a transcrição do CRUD, não deixa resíduo (ver `e2e/limpeza.py`).
 
 Uso, da pasta `api/`:
     GIH_ADMIN_SENHA=... python e2e/validacoes.py \
-        > ../docs/entrega/evidencias/sprint07/validacoes.txt
+        > ../docs/entrega/evidencias/sprint08/validacoes.txt
 """
 from __future__ import annotations
 
@@ -160,13 +161,14 @@ def transcrever(url: str, admin: httpx.Client, marca: str, confere: Conferencias
         limiares(admin, confere)
         acesso(url, c, analista, confere)
         modelo(url, c, gestor, confere)
+        conta(url, admin, c, marca, confere)
         if falha:
             falha_inesperada(url, c, confere)
 
 
 # ------------------------------------------------------------------ importação
 def importacao(c: httpx.Client, periodo: dict, marca: str, confere: Conferencias) -> None:
-    titulo("[3/9] Importação de relatório (UC03)")
+    titulo("[3/10] Importação de relatório (UC03)")
     texto = "Parceiro;Faturamento;Pedidos\nComércio Alfa;12500,40;312\n"
 
     print("\nRN03 — sem o período, a importação é recusada e diz por quê:")
@@ -221,7 +223,7 @@ def importacao(c: httpx.Client, periodo: dict, marca: str, confere: Conferencias
 
 # -------------------------------------------------------------------- cadastro
 def cadastro(c: httpx.Client, marca: str, comhist: dict, confere: Conferencias) -> None:
-    titulo("[4/9] Cadastro de parceiro (UC04)")
+    titulo("[4/10] Cadastro de parceiro (UC04)")
 
     print("\nNome vazio — a mensagem diz que é obrigatório e quanto falta:")
     confere("nome vazio", troca(c, "POST", "/api/parceiros", {"nome": ""}),
@@ -258,7 +260,7 @@ def cadastro(c: httpx.Client, marca: str, comhist: dict, confere: Conferencias) 
 
 # ----------------------------------------------------------------------- lista
 def lista(c: httpx.Client, confere: Conferencias) -> None:
-    titulo("[5/9] Lista de parceiros — filtros e ordenação vêm da URL")
+    titulo("[5/10] Lista de parceiros — filtros e ordenação vêm da URL")
     print("\nUm link editado à mão chega aqui. A recusa diz o que vale:")
     confere("ordenação desconhecida", troca(c, "GET", "/api/parceiros?ordenar_por=idade"),
             422, "Escolha uma destas opções")
@@ -270,7 +272,7 @@ def lista(c: httpx.Client, confere: Conferencias) -> None:
 
 # -------------------------------------------------------------------- limiares
 def limiares(admin: httpx.Client, confere: Conferencias) -> None:
-    titulo("[6/9] Limiares da segmentação (RF21) — só o administrador")
+    titulo("[6/10] Limiares da segmentação (RF21) — só o administrador")
     print("\nTop 0 esvaziaria o segmento Top da rede inteira. Nada é gravado:")
     confere("Top N zero", troca(admin, "PUT", "/api/configuracao/segmentacao", {
         "top_n": 0, "periodos_tendencia": 2, "periodos_novato": 3,
@@ -279,7 +281,7 @@ def limiares(admin: httpx.Client, confere: Conferencias) -> None:
 
 # ---------------------------------------------------------------------- acesso
 def acesso(url: str, c: httpx.Client, analista: str, confere: Conferencias) -> None:
-    titulo("[7/9] Acesso (RF01, RF03, RNF11)")
+    titulo("[7/10] Acesso (RF01, RF03, RNF11)")
     with httpx.Client(base_url=url, timeout=30) as anonimo:
         print("\nSenha errada, e depois um login que não existe. RNF11: as duas respostas são")
         print("iguais — duas mensagens diferentes entregariam a lista de logins válidos.")
@@ -301,9 +303,62 @@ def acesso(url: str, c: httpx.Client, analista: str, confere: Conferencias) -> N
             403, "Seu perfil não permite esta operação.")
 
 
+# ---------------------------------------------------------------------- conta
+def conta(
+    url: str, admin: httpx.Client, analista: httpx.Client, marca: str, confere: Conferencias
+) -> None:
+    titulo("[9/10] Conta, senha e vínculo do parceiro (RF07, RF54, RF56) — o erro no campo")
+    login = f"{marca}.conta"
+    criada = troca(admin, "POST", "/api/usuarios", {
+        "login": login, "nome": "Conta da Evidência", "senha": SENHA, "perfil": "ANALISTA",
+    }).json()
+
+    with httpx.Client(base_url=url, timeout=30) as c:
+        c.post("/api/sessao", json={"login": login, "senha": SENHA})
+        print("\nA pessoa troca a própria senha, e erra a atual. O erro volta no campo, e não")
+        print("como uma frase solta: é embaixo dele que a tela o mostra.")
+        confere("senha atual errada", troca(c, "POST", "/api/sessao/senha", {
+            "senha_atual": "nao-e-esta", "senha_nova": "uma-senha-nova-bem-longa",
+        }), 422, "senha_atual", "A senha atual está incorreta.")
+        print("\nAcerta a atual, e escolhe uma nova curta demais:")
+        confere("senha nova fraca", troca(c, "POST", "/api/sessao/senha", {
+            "senha_atual": SENHA, "senha_nova": "curta",
+        }), 422, "senha_nova", "A senha precisa ter pelo menos")
+
+    print("\nO administrador redefine a senha de quem a esqueceu — com uma fraca:")
+    confere("redefinição com senha fraca", troca(
+        admin, "POST", f"/api/usuarios/{criada['id']}/senha", {"senha_nova": "curta"},
+    ), 422, "senha_nova", "A senha precisa ter pelo menos")
+    eu = admin.get("/api/sessao/atual").json()["id"]
+    print("\nE tenta redefinir a própria. A dele se troca na Minha conta, que pede a atual:")
+    confere("redefinir a própria senha", troca(
+        admin, "POST", f"/api/usuarios/{eu}/senha", {"senha_nova": "uma-senha-nova-bem-longa"},
+    ), 409, "Troque a sua senha em Minha conta")
+    print("\nO analista, que não gerencia usuários, tenta redefinir a senha de alguém:")
+    confere("redefinição sem permissão", troca(
+        analista, "POST", f"/api/usuarios/{criada['id']}/senha",
+        {"senha_nova": "uma-senha-nova-bem-longa"},
+    ), 403, "Seu perfil não permite esta operação.")
+
+    print("\nA conta de perfil Parceiro precisa do parceiro dela. Sem nenhum:")
+    confere("perfil Parceiro sem parceiro", troca(admin, "POST", "/api/usuarios", {
+        "login": f"{marca}.semvinculo", "nome": "Sem Vínculo", "senha": SENHA,
+        "perfil": "PARCEIRO",
+    }), 422, "O perfil Parceiro exige um parceiro vinculado.")
+    print("\nCom um parceiro que não existe. Antes da Sprint 08, a resposta era \"já existe um")
+    print("usuário com o login\" — com um login que ninguém usava (#227):")
+    confere("parceiro que não existe", troca(admin, "POST", "/api/usuarios", {
+        "login": f"{marca}.orfa", "nome": "Conta Órfã", "senha": SENHA,
+        "perfil": "PARCEIRO", "parceiro_id": 2000000000,
+    }), 422, "parceiro_id", "Parceiro não encontrado.")
+    print("\nE a busca do parceiro pelo nome, com uma letra só — ela devolveria a rede inteira:")
+    confere("busca curta demais", troca(admin, "GET", "/api/usuarios/parceiros?busca=a"),
+            422, "busca")
+
+
 # ------------------------------------------------------------------- modelo
 def modelo(url: str, c: httpx.Client, gestor: str, confere: Conferencias) -> None:
-    titulo("[8/9] Modelo preditivo (UC07, RN09) — quem treina, e um por vez")
+    titulo("[8/10] Modelo preditivo (UC07, RN09) — quem treina, e um por vez")
     print("\nO analista lê a previsão no cadastro (RF28), mas não troca o modelo que toda a")
     print("equipe usa (UC07):")
     confere("analista não treina", troca(c, "POST", "/api/modelo/treinos"),
@@ -357,7 +412,7 @@ PEDIDO = {
 def campanha(url: str, c: httpx.Client, gestor: str, confere: Conferencias) -> int | None:
     """Devolve a execução inviável, que a seção dos relatórios usa."""
     inviavel = None
-    titulo("[1/9] Campanha (UC08, RN07, RF31) — quem calcula, o que vale, e o plano que não cabe")
+    titulo("[1/10] Campanha (UC08, RN07, RF31) — quem calcula, o que vale, e o plano que não cabe")
     print("\nO analista consulta a campanha, mas não decide onde vai a verba (UC08):")
     confere("analista não calcula o plano", troca(c, "POST", "/api/otimizacoes", PEDIDO),
             403, "Seu perfil não permite esta operação.")
@@ -410,7 +465,7 @@ def campanha(url: str, c: httpx.Client, gestor: str, confere: Conferencias) -> i
 def relatorios(
     c: httpx.Client, admin: httpx.Client, inviavel: int | None, confere: Conferencias
 ) -> None:
-    titulo("[2/9] Relatórios, painel e filtros (UC15, UC05, RF51) — quem abre, e o recorte"
+    titulo("[2/10] Relatórios, painel e filtros (UC15, UC05, RF51) — quem abre, e o recorte"
            " que não existe")
     negado = "Seu perfil não permite esta operação."
 
@@ -481,7 +536,7 @@ def relatorios(
 
 # ----------------------------------------------------------- falha inesperada
 def falha_inesperada(url: str, c: httpx.Client, confere: Conferencias) -> None:
-    titulo("[9/9] Falha inesperada (RNF18, RNF19) — o banco fora do ar")
+    titulo("[10/10] Falha inesperada (RNF18, RNF19) — o banco fora do ar")
     print("\nPara ver o que o usuário vê quando algo quebra de verdade, o banco é parado")
     print("por alguns segundos.")
     desde = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
