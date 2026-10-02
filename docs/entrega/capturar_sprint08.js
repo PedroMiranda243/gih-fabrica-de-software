@@ -375,7 +375,7 @@ async function permissoes({ gestor, analista, administrador, admin, outraPessoa,
   linhas.push(`sendo o servidor, a cada requisição. A trilha tem ${trilha.total} acessos negados registrados,`);
   linhas.push('de quem chamou a rota — a transcrição das permissões os provoca e os conta.');
 
-  gravar('permissoes.txt', caber(linhas));
+  gravar('permissoes-na-tela.txt', caber(linhas));
 }
 
 /**
