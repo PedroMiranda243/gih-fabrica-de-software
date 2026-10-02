@@ -251,6 +251,9 @@ def telas(ids: dict) -> list[Tela]:
         ),
         Tela("Limiares", "/configuracao", "ADMINISTRADOR", "configuracao"),
         Tela("Meu desempenho", "/meu-desempenho", "PARCEIRO", "meu-desempenho"),
+        # A conta de quem está usando (H92) é de todos os perfis; medida com o
+        # Parceiro, que tem o menu mais curto — e é quem menos telas tem para errar.
+        Tela("Minha conta", "/conta", "PARCEIRO", "minha-conta"),
     ]
     return lista
 
