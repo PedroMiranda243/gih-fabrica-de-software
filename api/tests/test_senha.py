@@ -46,7 +46,11 @@ def test_exige_a_senha_atual(cliente, criar_usuario, autenticar):
         "/api/sessao/senha", json={"senha_atual": "chute-errado-1", "senha_nova": NOVA}
     )
 
-    assert r.status_code == 400
+    # Erro do campo, para a tela da conta mostrá-lo embaixo da senha atual (H92).
+    assert r.status_code == 422
+    [erro] = r.json()["campos"]
+    assert (erro["campo"], erro["mensagem"]) == ("senha_atual", "A senha atual está incorreta.")
+    assert "chute-errado-1" not in r.text
 
 
 def test_recusa_senha_fraca_explicando_a_regra(cliente, criar_usuario, autenticar):
@@ -55,10 +59,12 @@ def test_recusa_senha_fraca_explicando_a_regra(cliente, criar_usuario, autentica
 
     r = cliente.post("/api/sessao/senha", json={"senha_atual": SENHA_PADRAO, "senha_nova": "curta"})
 
-    assert r.status_code == 400
+    assert r.status_code == 422
+    [erro] = r.json()["campos"]
+    assert erro["campo"] == "senha_nova"
     # A mensagem precisa dizer o que fazer. "Senha inválida" obriga o usuário a
     # adivinhar a regra tentativa por tentativa.
-    assert str(config.senha_tamanho_minimo) in r.json()["detail"]
+    assert str(config.senha_tamanho_minimo) in erro["mensagem"]
 
 
 def test_troca_derruba_as_outras_sessoes_e_mantem_a_atual(cliente, criar_usuario, autenticar):

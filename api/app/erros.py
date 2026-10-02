@@ -111,6 +111,20 @@ def mensagem_de(erro: dict) -> str:
     return MENSAGENS.get(tipo, GENERICA)
 
 
+def erro_do_campo(campo: str, mensagem: str, entrada) -> RequestValidationError:
+    """Uma recusa que pertence a um campo, no formato dos outros erros de campo.
+
+    Para a regra que o esquema não alcança — o parceiro que não existe, a senha
+    atual que não confere. Levantada como erro de validação, ela passa pelo
+    tradutor daqui, e a tela recebe o formato de sempre e marca o campo certo,
+    em vez de um aviso solto no topo.
+    """
+    return RequestValidationError(
+        [{"type": "value_error", "loc": ("body", campo), "msg": f"Value error, {mensagem}",
+          "input": entrada}]
+    )
+
+
 def nome_do_campo(loc: tuple) -> str:
     """O último trecho utilizável do caminho do erro.
 

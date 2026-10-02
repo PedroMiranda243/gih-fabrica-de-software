@@ -14,6 +14,7 @@ from app import auditoria, bloqueio, seguranca, sessoes
 from app.auditoria import Acao
 from app.config import config
 from app.dependencias import Banco, SessaoAtual, UsuarioAtual, telas_de
+from app.erros import erro_do_campo
 from app.esquemas import (
     Credenciais,
     SessaoResposta,
@@ -183,18 +184,17 @@ def trocar_senha(
     usuario: UsuarioAtual,
 ) -> Response:
     """Troca a própria senha, exigindo a atual (RF07, H19)."""
+    # As duas recusas saem como erro **do campo**, e não como um 400 solto: a
+    # tela da conta (H92) mostra cada uma embaixo do campo a que pertence.
     if not seguranca.conferir_senha(dados.senha_atual, usuario.senha_hash):
         # Aqui não há o que esconder — o usuário já está autenticado, então
         # dizer que a senha atual está errada não entrega informação a ninguém.
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A senha atual está incorreta.",
-        )
+        raise erro_do_campo("senha_atual", "A senha atual está incorreta.", "********")
 
     try:
         seguranca.validar_forca(dados.senha_nova, usuario.login)
     except SenhaFraca as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+        raise erro_do_campo("senha_nova", str(e), "********") from e
 
     usuario.senha_hash = seguranca.gerar_hash(dados.senha_nova)
 

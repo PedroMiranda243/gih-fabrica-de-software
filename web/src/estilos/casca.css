@@ -185,11 +185,28 @@
   gap: var(--esp-12);
 }
 
+/* O nome leva à conta de quem está usando (H92). É link, e parece link só ao
+   passar por ele: no cabeçalho de toda tela, um sublinhado fixo competiria com o
+   título. O foco continua com o anel de sempre. */
 .cabecalho__quem {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   line-height: 1.3;
+  padding: var(--esp-4) var(--esp-8);
+  border-radius: var(--raio-controle);
+  color: inherit;
+  text-decoration: none;
+  transition: background var(--transicao);
+}
+
+.cabecalho__quem:hover,
+.cabecalho__quem.active {
+  background: var(--surface-2);
+}
+
+.cabecalho__quem:hover .cabecalho__nome {
+  text-decoration: underline;
 }
 
 .cabecalho__nome {

@@ -46,6 +46,11 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("POST", "/api/usuarios"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/usuarios/{usuario_id}"): {Perfil.ADMINISTRADOR},
     ("PATCH", "/api/usuarios/{usuario_id}"): {Perfil.ADMINISTRADOR},
+    # RF54 — redefinir a senha de outra conta: quem gerencia usuários.
+    ("POST", "/api/usuarios/{usuario_id}/senha"): {Perfil.ADMINISTRADOR},
+    # RF56 — achar o parceiro pelo nome, para o vínculo da conta Parceiro. É a
+    # única janela do Administrador para os parceiros: só o nome e a situação.
+    ("GET", "/api/usuarios/parceiros"): {Perfil.ADMINISTRADOR},
     # UC04 — Gerenciar parceiros e categorias: Gestor e Analista
     ("GET", "/api/parceiros"): {Perfil.GESTOR, Perfil.ANALISTA},
     ("POST", "/api/parceiros"): {Perfil.GESTOR, Perfil.ANALISTA},

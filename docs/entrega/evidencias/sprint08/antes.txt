@@ -1,0 +1,19 @@
+O antes da Sprint 08 — o que a tela dizia em cada endereço
+
+O cabeçalho, de qualquer tela
+  na tela     Gestora da Captura · GESTOR — e dois botões: o tema e a saída
+
+O analista abre /auditoria pelo endereço
+  título      Auditoria · GIH
+  na tela     Buscar na trilha · Ação · Todas as ações · Quem fez · Todas as pessoas · De ·
+              Até · Seu perfil não permite esta operação. · Trilha de auditoria · carregando…
+              · Exportar CSV
+
+O administrador cria um usuário
+  endereço    /usuarios/novo
+  perfis      Administrador, Gestor, Analista
+
+O administrador abre a conta de um usuário
+  endereço    /usuarios/{id}
+  blocos      Conta · Situação
+

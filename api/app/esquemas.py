@@ -60,6 +60,26 @@ class UsuarioResposta(BaseModel):
     criado_em: datetime
 
 
+class ParceiroDoVinculo(BaseModel):
+    """O parceiro, como o Administrador o vê: o que basta para vincular uma conta (RF56).
+
+    Só o nome e a situação. O desempenho, o segmento, a categoria e o contato
+    são do cadastro, que continua do Gestor e do Analista.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    nome: str
+    ativo: bool
+
+
+class UsuarioDetalhe(UsuarioResposta):
+    """A conta aberta na tela: com o parceiro do vínculo pelo nome (H101)."""
+
+    parceiro: ParceiroDoVinculo | None = None
+
+
 class UsuarioAtualResposta(UsuarioResposta):
     """Quem está autenticado, e o que o perfil dele abre.
 
@@ -115,9 +135,9 @@ class NovoUsuario(_PerfilComParceiro):
 class EdicaoUsuario(_PerfilComParceiro):
     """Tudo opcional: o que não vier fica como está.
 
-    `senha` não está aqui de propósito. Administrador trocar senha alheia é
-    outra operação, com outra consequência para a auditoria, e não foi pedida em
-    nenhuma história — a troca de senha é sempre a própria (RF07, H19).
+    `senha` não está aqui de propósito. Administrador redefinir a senha alheia é
+    outra operação, com outra consequência para as sessões e para a auditoria,
+    e tem rota própria (RF54, H93). A troca da própria é a do RF07 (H19).
     """
 
     nome: str | None = Field(default=None, min_length=2, max_length=120)
@@ -137,6 +157,12 @@ class EdicaoUsuario(_PerfilComParceiro):
 
 class TrocaSenha(BaseModel):
     senha_atual: str = Field(min_length=1, max_length=SENHA_MAXIMA)
+    senha_nova: str = Field(min_length=1, max_length=SENHA_MAXIMA)
+
+
+class RedefinicaoSenha(BaseModel):
+    """A senha nova que o Administrador dá a outra conta (RF54). Sem a atual: ele não a sabe."""
+
     senha_nova: str = Field(min_length=1, max_length=SENHA_MAXIMA)
 
 

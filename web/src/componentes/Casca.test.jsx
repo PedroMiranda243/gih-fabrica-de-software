@@ -20,6 +20,15 @@ function menu(usuario) {
     .map((a) => a.textContent.trim());
 }
 
+describe("cabeçalho", () => {
+  it("o nome de quem está usando leva à conta dele, em qualquer perfil (H92)", () => {
+    menu({ nome: "Comércio do Vale", perfil: "PARCEIRO", telas: ["meu_desempenho"] });
+
+    const conta = screen.getByRole("link", { name: "Minha conta: Comércio do Vale PARCEIRO" });
+    expect(conta).toHaveAttribute("href", "/conta");
+  });
+});
+
 describe("menu lateral", () => {
   it("os relatórios da rede ficam na Análise, e o de operações, ao lado da Auditoria (UC15)", () => {
     const daGestora = menu({

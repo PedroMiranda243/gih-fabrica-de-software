@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 1.1 — 01/10/2026 · o módulo 7, da Sprint 07 acadêmica (1.0 — 03/09/2026)
+**Versão:** 1.2 — 02/10/2026 · o módulo 8, da Sprint 08 acadêmica (1.1 — 01/10/2026, o módulo 7; 1.0 — 03/09/2026)
 
 ---
 
@@ -110,7 +110,20 @@ leem o que os módulos 1 a 4 já gravam.
 | **RF52** | O sistema deve permitir buscar usuário por nome ou login. | S | ADM |
 | **RF53** | O sistema deve permitir exportar em CSV os itens de um plano de campanha. | S | GES, ANL |
 
-> **Total: 53 requisitos funcionais** — 35 *Must*, 15 *Should*, 3 *Could*.
+### Módulo 8 — Conta, ajuda e vínculo do parceiro
+
+Acrescentado em 02/10/2026, para a Sprint 08 da disciplina, que pede todas as funcionalidades implementadas. O
+levantamento achou três coisas que faltavam para o sistema ser usado sem a API na mão: quem esquecia a senha não
+tinha como voltar, a conta de perfil Parceiro só se criava pela API, e não havia ajuda. O RF07 — trocar a
+própria senha — já existia e ganha a tela nesta sprint, sem mudar de texto.
+
+| ID | Requisito | Prioridade | Perfis |
+|---|---|---|---|
+| **RF54** | O sistema deve permitir ao Administrador redefinir a senha de outro usuário. A senha nova passa pela mesma validação de força da criação; todas as sessões abertas da conta são encerradas na hora; e o evento entra na trilha de auditoria, sem a senha. A própria senha, o Administrador troca pelo RF07, que exige a atual. | M | ADM |
+| **RF55** | O sistema deve oferecer uma tela de ajuda com o significado dos termos que usa — os segmentos, na ordem de precedência da RN01, a estimativa e o ganho esperado — e com o que o perfil de quem lê pode fazer. Os valores das regras exibidos vêm da configuração em vigor. O perfil Parceiro recebe só a ajuda do próprio portal, sem a classificação da rede (RF26). | S | todos |
+| **RF56** | O sistema deve permitir ao Administrador localizar um parceiro pelo nome para vinculá-lo a uma conta de perfil Parceiro (RF04). A busca devolve apenas o nome e a situação do parceiro — nada de desempenho, segmento, categoria ou contato —, e não lhe dá o cadastro nem a lista de parceiros, que continuam do Gestor e do Analista. | M | ADM |
+
+> **Total: 56 requisitos funcionais** — 37 *Must*, 16 *Should*, 3 *Could*.
 
 ---
 
@@ -207,6 +220,8 @@ que o exercita. Casos de uso detalhados em [03 — Casos de uso](03-casos-de-uso
 | RF49, RF52 | O8 | transversal | UC14, UC02 |
 | RF50 | O1 | P1 | UC04 |
 | RF51, RF53 | O5, O6 | **P4** | UC08, UC09 |
+| RF54, RF56 | O8 | transversal | UC02 |
+| RF55 | O8 | transversal | UC16 |
 
 ### Cobertura inversa: de objetivo para requisito
 
@@ -219,7 +234,7 @@ que o exercita. Casos de uso detalhados em [03 — Casos de uso](03-casos-de-uso
 | O5 — Otimizar | RF29, RF30, RF31, RF35, RF46, RF53 |
 | O6 — Acelerar | RF32, RF33, RF34, RF51 |
 | O7 — Comunicar com aprovação | RF36, RF37, RF38, RF39, RF40 |
-| O8 — Controlar acesso | RF01, RF02, RF03, RF04, RF05, RF06, RF07, RF08, RF47, RF49, RF52 |
+| O8 — Controlar acesso | RF01, RF02, RF03, RF04, RF05, RF06, RF07, RF08, RF47, RF49, RF52, RF54, RF55, RF56 |
 
 Nenhum objetivo está sem requisito, e nenhum requisito funcional está órfão de objetivo.
 

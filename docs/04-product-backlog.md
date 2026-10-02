@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 2.2 — 01/10/2026 · as histórias da Sprint 07 acadêmica (2.1 — 30/09/2026, as da Sprint 06; 2.0 — 15/09/2026, sprints semanais)
+**Versão:** 2.3 — 02/10/2026 · as histórias da Sprint 08 acadêmica (2.2 — 01/10/2026, as da Sprint 07; 2.1 — 30/09/2026, as da Sprint 06; 2.0 — 15/09/2026, sprints semanais)
 
 ---
 
@@ -35,15 +35,15 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | Épico | Título | Pontos | Sprints |
 |---|---|---:|---|
 | **E1** | Fundação, planejamento e ambiente | 47 | 1–3 |
-| **E2** | Autenticação, perfis e auditoria | 47 | 4–5, S07 |
+| **E2** | Autenticação, perfis e auditoria | 62 | 4–5, S07, S08 |
 | **E3** | Ingestão e modelo de dados | 49 | 2–6, S07 |
 | **E4** | Inteligência de negócio e segmentação | 70 | 6–9, S06, S07 |
 | **E5** | Núcleo preditivo | 40 | 8–9, S06, S07 |
 | **E6** | Otimização, paralelismo e GPU | 88 | 3–11, S07 |
 | **E7** | Central de comunicação | 26 | 12 |
 | **E8** | Assistente analítico | 21 | 12–13 |
-| **E9** | Qualidade, documentação e entrega | 52 | 2–13, S06 |
-| | **Total** | **440** | |
+| **E9** | Qualidade, documentação e entrega | 70 | 2–13, S06, S08 |
+| | **Total** | **473** | |
 
 ---
 
@@ -77,6 +77,11 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H19** | Como usuário, quero alterar minha senha, para manter minha conta segura. | S | 3 | 4 | RF07; exige a senha atual; nova senha validada quanto à força mínima |
 | **H87** | Como administrador, quero um relatório do que foi feito no sistema, por tipo de ação, por usuário e por dia, para acompanhar o uso e achar o que foge do comum. | S | 3 | S07 | RF47; contagens num intervalo de datas, com filtro por autor e ação; os totais são os da trilha no mesmo recorte |
 | **H89** | Como administrador, quero consultar a trilha de auditoria numa tela, filtrando, buscando e exportando, para investigar o que foi feito sem depender da API. | M | 5 | S07 | RF08, RF49; autor, ação em português e resumo de cada operação; filtros, busca por texto, paginação e CSV do recorte — a interface do UC14, que a H18 deixou só na API |
+| **H92** | Como usuário de qualquer perfil, quero ver os dados da minha conta e trocar a minha senha pela tela, para manter a conta segura sem depender de ninguém. | M | 3 | S08 | RF07; tela "Minha conta", pelo nome no cabeçalho; a troca exige a senha atual, e a tela diz que as outras sessões foram encerradas |
+| **H93** | Como administrador, quero redefinir a senha de um usuário que a esqueceu, para que a pessoa volte a entrar sem que eu crie outra conta. | M | 3 | S08 | RF54; a senha nova passa pela mesma validação de força; todas as sessões da conta caem; o evento entra na trilha, sem a senha |
+| **H94** | Como usuário, quero uma explicação quando abro pelo endereço uma tela que o meu perfil não tem, para entender o que aconteceu. | M | 3 | S08 | RF05, RNF14, RNF20; página "Sem acesso" com o que o perfil abre e a volta; a API continua decidindo; o menu e a guarda leem a mesma tabela |
+| **H100** | Como equipe, quero demonstrar o controle de permissões com os quatro perfis, para mostrar acessos permitidos e negados conforme as regras. | M | 3 | S08 | RF05, RF26, RN06, RNF14; transcrição contra a aplicação no ar: a matriz do código exercitada, o acesso por objeto, por capacidade e a sessão |
+| **H101** | Como administrador, quero criar pela tela a conta de perfil Parceiro, achando o parceiro pelo nome, para dar ao parceiro o acesso ao portal dele. | M | 3 | S08 | RF04, RF56; a busca devolve só o nome e a situação; a tela oferece o perfil Parceiro, com o parceiro obrigatório |
 
 ## E3 — Ingestão e modelo de dados
 
@@ -187,6 +192,11 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H75** | Como equipe, quero produzir o vídeo vertical de divulgação, para cumprir a entrega final. | M | 5 | 13 | Formato 9:16, publicado, com as marcações exigidas |
 | **H76** | Como equipe, quero validar acessibilidade e responsividade, para atender aos requisitos de interface. | S | 4 | 13 | RNF21, RNF22; contraste conferido por ferramenta; layout funcional a partir de 768 px |
 | **H79** | Como gestor ou analista, quero o menu organizado pelos módulos do produto e caminhos claros entre as telas, para chegar ao que preciso sem me perder. | S | 5 | S06 | RNF20; menu agrupado na ordem do fluxo, sem grupo vazio para o perfil; título da aba por tela; página "não encontrada" com a volta, em vez de cair no painel sem aviso |
+| **H95** | Como usuário novo, quero uma tela de ajuda que explique os termos do sistema e o que o meu perfil faz, para operar sem treinamento. | S | 3 | S08 | RNF20, RF55; os segmentos na ordem da RN01, o que é estimativa e o que é o ganho esperado; os números das regras vêm da API; o Parceiro recebe só a ajuda do portal dele |
+| **H96** | Como usuário que navega pelo teclado ou com leitor de tela, quero chegar ao conteúdo sem atravessar o menu e saber quando a sessão terminou, para usar o sistema com a mesma facilidade de quem usa o mouse. | S | 3 | S08 | RNF20, RNF22; "pular para o conteúdo"; foco no título ao trocar de tela; o login diz que a sessão terminou; mostrar e ocultar a senha |
+| **H97** | Como usuário, quero ser avisado antes de sair de um formulário com alterações que não salvei, para não perder o que digitei. | C | 2 | S08 | RNF20; cadastro de parceiro e de usuário, limiares e catálogo de ações; sem alteração, nada pergunta |
+| **H98** | Como equipe, quero uma matriz que diga, requisito a requisito, onde ele está e como é testado, para afirmar com evidência que as funcionalidades previstas estão implementadas. | M | 5 | S08 | RF01 a RF56 e RNF01 a RNF29; `docs/11-rastreabilidade.md`; teste que reprova se faltar um RF, se uma rota ou um teste citado não existir, ou se os perfis divergirem |
+| **H99** | Como equipe, quero revisar cada regra de negócio contra o que o sistema faz, para corrigir o que estiver incoerente antes da entrega final. | M | 5 | S08 | RN01 a RN11; roteiro executável regra a regra; `docs/02` diz onde cada regra está e como é conferida; os limiares de fábrica na RN01 (#59) |
 
 ---
 
@@ -212,7 +222,8 @@ Detalhamento e datas em [05 — Cronograma](05-cronograma.md).
 | **13** | Assistente e fechamento | H65, H66, H67, H68, H72, H73, H74, H75, H76 | 48 |
 | **S06** | Sprint 06 acadêmica — navegação, risco na lista e integração | H79, H80, H81 | 13 |
 | **S07** | Sprint 07 acadêmica — painel, relatórios, pesquisa, filtros, exportação e histórico | H82, H83, H84, H85, H86, H87, H88, H89, H90, H91 | 38 |
-| | | **Total** | **440** |
+| **S08** | Sprint 08 acadêmica — conta, permissões, usabilidade e revisão das regras | H92, H93, H94, H95, H96, H97, H98, H99, H100, H101 | 33 |
+| | | **Total** | **473** |
 
 > A média é de **30,2 pontos por semana**, contra uma capacidade nominal de ~40. A folga é pequena, e a
 > Sprint 13 está deliberadamente acima da média — ver a seção *A semana que não fecha* no cronograma.
@@ -226,6 +237,14 @@ Detalhamento e datas em [05 — Cronograma](05-cronograma.md).
 > de parceiros, o CSV, a trilha de auditoria na API — e o que faltava: os relatórios, a tela da auditoria e
 > os filtros do painel. As dez histórias novas, H82 a H91, entram com critério de aceite antes do código, e o
 > escopo passa de 402 para 440 pontos.
+
+> **Sprint 08 da disciplina, 02/10/2026.** O enunciado pede todas as funcionalidades implementadas, controle de
+> permissões, melhorias de usabilidade e revisão das regras de negócio. O levantamento achou três
+> funcionalidades previstas que tinham ficado sem tela — trocar a própria senha (RF07, só na API desde a
+> Sprint 4), criar a conta de perfil Parceiro (RF04, que a tela não oferecia) — e uma que faltava de fato: quem
+> esquecia a senha não tinha como voltar. As dez histórias novas, H92 a H101, cobrem essas lacunas, a página
+> "Sem acesso", a ajuda, e as três revisões — rastreabilidade, permissões e regras. O escopo passa de 440 para
+> 473 pontos.
 
 ## Primeiro corte, se o prazo apertar
 

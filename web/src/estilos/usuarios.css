@@ -17,6 +17,93 @@
   gap: var(--esp-8);
 }
 
+/* O aviso do formulário ocupa a largura dele, e não uma das duas colunas. */
+.conta__aviso {
+  grid-column: 1 / -1;
+}
+
+/* A troca da própria senha: três campos que se leem de cima para baixo, numa
+   coluna só — em duas, a confirmação ficaria longe da senha que ela confirma. */
+.conta--coluna {
+  grid-template-columns: minmax(0, 28rem);
+}
+
+/* Os dados de quem está usando o sistema: rótulo em cima, valor embaixo. */
+.conta-dados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-16) var(--esp-24);
+  margin: 0;
+  padding: var(--esp-16);
+}
+
+.conta-dados dt {
+  font-size: var(--txt-12);
+  color: var(--ink-2);
+}
+
+.conta-dados dd {
+  margin: var(--esp-4) 0 0;
+  font-weight: var(--peso-nome);
+}
+
+/* O parceiro de uma conta de perfil Parceiro (H101): a busca, o que ela achou e
+   o que está escolhido. Ocupa as duas colunas do formulário. */
+.vinculo {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-8);
+}
+
+.vinculo__achados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vinculo__achado {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--esp-8);
+  min-height: 44px;
+  padding: var(--esp-8) var(--esp-12);
+  border: 1px solid var(--borda-controle);
+  border-radius: var(--raio-controle);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.vinculo__achado:hover {
+  background: var(--surface-2);
+}
+
+.vinculo__nome {
+  font-weight: var(--peso-nome);
+}
+
+.vinculo__situacao,
+.vinculo__nota,
+.vinculo__escolhido {
+  font-size: var(--txt-13);
+  color: var(--ink-2);
+}
+
+.vinculo__nota,
+.vinculo__escolhido {
+  margin: 0;
+}
+
+.vinculo__escolhido strong {
+  color: var(--ink);
+  font-weight: var(--peso-nome);
+}
+
 @media (max-width: 560px) {
   .conta {
     grid-template-columns: minmax(0, 1fr);
