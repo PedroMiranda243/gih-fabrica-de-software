@@ -1,0 +1,1338 @@
+Painel, relatórios, pesquisas, exportação e trilha · http://localhost:8000
+Dados sintéticos; nenhum nome real de empresa ou pessoa.
+
+==============================================================================
+Preparação — um gestor, que calcula a campanha, e um analista, que consulta e cadastra
+==============================================================================
+
+$ POST /api/usuarios
+  > {
+  >   "login": "t45740.gestor",
+  >   "nome": "Gestor da Evidência",
+  >   "senha": "********",
+  >   "perfil": "GESTOR"
+  > }
+  201 Created
+  < {
+  <   "id": 196,
+  <   "login": "t45740.gestor",
+  <   "nome": "Gestor da Evidência",
+  <   "perfil": "GESTOR",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-10-01T21:34:10.558873Z"
+  < }
+
+$ POST /api/usuarios
+  > {
+  >   "login": "t45740.analista",
+  >   "nome": "Analista da Evidência",
+  >   "senha": "********",
+  >   "perfil": "ANALISTA"
+  > }
+  201 Created
+  < {
+  <   "id": 197,
+  <   "login": "t45740.analista",
+  <   "nome": "Analista da Evidência",
+  <   "perfil": "ANALISTA",
+  <   "ativo": true,
+  <   "parceiro_id": null,
+  <   "criado_em": "2026-10-01T21:34:10.618477Z"
+  < }
+
+O gestor calcula um plano de campanha: é dele que o painel e os relatórios vão
+falar. A busca roda fora da requisição (ADR-011):
+
+$ POST /api/otimizacoes
+  > {
+  >   "orcamento": "5000.00",
+  >   "maximo_acoes": 30,
+  >   "cota_cauda_longa": "0.3",
+  >   "aplicacao_inicio": "2026-10-05",
+  >   "aplicacao_fim": "2026-10-11"
+  > }
+  202 Accepted
+  < {
+  <   "id": 144,
+  <   "situacao": "EM_ANDAMENTO",
+  <   "autor": "Gestor da Evidência",
+  <   "modo": "CPU_PARALELO",
+  <   "substituicao": null,
+  <   "threads": null,
+  <   "iniciada_em": "2026-10-01T21:34:15.277457Z",
+  <   "concluida_em": null,
+  <   "parametros": {
+  <     "orcamento": "5000.00",
+  <     "maximo_acoes": 30,
+  <     "cota_cauda_longa": "0.3",
+  <     "cotas_categoria": [],
+  <     "aplicacao_inicio": "2026-10-05",
+  <     "aplicacao_fim": "2026-10-11",
+  <     "modo": null
+  <   },
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "modelo_versao": "rede-1",
+  <   "viavel": null,
+  <   "restricao_violada": null,
+  <   "motivo": null,
+  <   "ajuda": null,
+  <   "uplift_total": null,
+  <   "custo_total": null,
+  <   "tempo_ms": null,
+  <   "parcial": null,
+  <   "acoes": null,
+  <   "elegiveis": null,
+  <   "excluidos": null,
+  <   "cotas": [],
+  <   "folga_orcamento": null,
+  <   "folga_acoes": null,
+  <   "ganho_guloso": null,
+  <   "itens": null
+  < }
+
+  ... 2 consulta(s) a GET /api/otimizacoes/144 até a situação mudar (1.1 s)
+  ok    o plano terminou viável
+
+==============================================================================
+[1/6] Dashboard — o painel num recorte, e os três módulos num lugar só (H82, H83)
+==============================================================================
+
+O que o painel oferece para escolher. As listas longas aparecem com os dois
+primeiros registros:
+
+$ GET /api/painel/recortes
+  200 OK
+  < {
+  <   "periodos": [
+  <     {
+  <       "id": 12,
+  <       "data_inicio": "2026-09-14",
+  <       "data_fim": "2026-09-20"
+  <     },
+  <     {
+  <       "id": 11,
+  <       "data_inicio": "2026-09-07",
+  <       "data_fim": "2026-09-13"
+  <     },
+  <     "... mais 10 registros"
+  <   ],
+  <   "categorias": [
+  <     {
+  <       "id": 6,
+  <       "nome": "Açaí e sorvetes",
+  <       "ativa": true
+  <     },
+  <     {
+  <       "id": 8,
+  <       "nome": "Bebidas",
+  <       "ativa": true
+  <     },
+  <     "... mais 8 registros"
+  <   ]
+  < }
+  ok    os períodos vêm do mais recente para o mais antigo
+
+O painel no período de 2026-08-31 a 2026-09-06, só na
+categoria Açaí e sorvetes:
+
+$ GET /api/painel/indicadores?periodo_id=10&categoria_id=6
+  200 OK
+  < {
+  <   "periodo": {
+  <     "id": 10,
+  <     "data_inicio": "2026-08-31",
+  <     "data_fim": "2026-09-06"
+  <   },
+  <   "periodo_anterior": {
+  <     "id": 9,
+  <     "data_inicio": "2026-08-24",
+  <     "data_fim": "2026-08-30"
+  <   },
+  <   "categoria": {
+  <     "id": 6,
+  <     "nome": "Açaí e sorvetes",
+  <     "ativa": true
+  <   },
+  <   "faturamento": "96519.16",
+  <   "pedidos": 3402,
+  <   "ticket_medio": "28.37",
+  <   "parceiros_ativos": 29,
+  <   "variacao": {
+  <     "faturamento": "5.07",
+  <     "pedidos": "4.74",
+  <     "ticket_medio": "0.32",
+  <     "parceiros_ativos": "0.00"
+  <   },
+  <   "em_risco": {
+  <     "total": 5,
+  <     "delta": 1
+  <   }
+  < }
+  ok    a resposta diz o recorte: o período pedido e a categoria
+
+$ SQL, só leitura, no banco da API
+  > SELECT count(*), sum(m.faturamento), sum(m.pedidos)
+  > FROM metrica m JOIN parceiro p ON p.id = m.parceiro_id
+  > WHERE m.periodo_id = :periodo AND p.categoria_id = :categoria
+  < parceiros | faturamento | pedidos
+  < ----------+-------------+--------
+  < 29        | 96519.16    | 3402   
+  ok    os indicadores do recorte são a soma das métricas dele no banco
+
+O ranking da categoria. A posição continua a da rede inteira (RN02): a categoria
+escolhe quem aparece, e não renumera.
+
+$ GET /api/painel/ranking?periodo_id=10&categoria_id=6&tamanho=3
+  200 OK
+  < {
+  <   "periodo": {
+  <     "id": 10,
+  <     "data_inicio": "2026-08-31",
+  <     "data_fim": "2026-09-06"
+  <   },
+  <   "periodo_anterior": {
+  <     "id": 9,
+  <     "data_inicio": "2026-08-24",
+  <     "data_fim": "2026-08-30"
+  <   },
+  <   "categoria": {
+  <     "id": 6,
+  <     "nome": "Açaí e sorvetes",
+  <     "ativa": true
+  <   },
+  <   "itens": [
+  <     {
+  <       "parceiro_id": 484,
+  <       "nome": "Casa Caseiro 2",
+  <       "categoria": "Açaí e sorvetes",
+  <       "segmento": "TOP",
+  <       "posicao": 4,
+  <       "posicao_anterior": 5,
+  <       "faturamento": "29807.71",
+  <       "pedidos": 1004,
+  <       "ticket_medio": "29.69",
+  <       "variacao_percentual": "19.62",
+  <       "estreante": false
+  <     },
+  <     {
+  <       "parceiro_id": 290,
+  <       "nome": "Varanda Bom Prato 2",
+  <       "categoria": "Açaí e sorvetes",
+  <       "segmento": "ESTAVEL",
+  <       "posicao": 21,
+  <       "posicao_anterior": 33,
+  <       "faturamento": "12124.49",
+  <       "pedidos": 391,
+  <       "ticket_medio": "31.01",
+  <       "variacao_percentual": "18.06",
+  <       "estreante": false
+  <     },
+  <     {
+  <       "parceiro_id": 344,
+  <       "nome": "Forno Mineiro 3",
+  <       "categoria": "Açaí e sorvetes",
+  <       "segmento": "EM_ASCENSAO",
+  <       "posicao": 64,
+  <       "posicao_anterior": 76,
+  <       "faturamento": "6751.39",
+  <       "pedidos": 283,
+  <       "ticket_medio": "23.86",
+  <       "variacao_percentual": "7.98",
+  <       "estreante": false
+  <     }
+  <   ],
+  <   "total": 29,
+  <   "pagina": 1,
+  <   "tamanho": 3
+  < }
+
+  Casa Caseiro 2: posição 4 no ranking da categoria, e 4 no da rede.
+  ok    a posição no ranking da categoria é a mesma do ranking da rede (RN02)
+
+A previsão e a campanha, dentro do painel (H83). Não acompanham o período
+escolhido: a previsão parte de onde o modelo foi treinado, e o plano é o último.
+
+$ GET /api/painel/decisao
+  200 OK
+  < {
+  <   "categoria": null,
+  <   "previsao": {
+  <     "disponivel": true,
+  <     "motivo": null,
+  <     "ajuda": null,
+  <     "periodo_base": {
+  <       "id": 12,
+  <       "data_inicio": "2026-09-14",
+  <       "data_fim": "2026-09-20"
+  <     },
+  <     "modelo_versao": "rede-1",
+  <     "origem": "MODELO",
+  <     "desatualizada": false,
+  <     "parceiros": 469,
+  <     "faturamento_previsto": "1753163.98",
+  <     "faturamento_medido": "1753406.48",
+  <     "variacao_percentual": "-0.01",
+  <     "maior_risco": [
+  <       {
+  <         "parceiro_id": 409,
+  <         "nome": "Varanda do Norte 2",
+  <         "categoria": "Padaria",
+  <         "probabilidade_queda": 0.9977954732439632,
+  <         "faturamento": "955.58",
+  <         "faturamento_previsto": "757.18"
+  <       },
+  <       {
+  <         "parceiro_id": 100,
+  <         "nome": "Ponto do Norte",
+  <         "categoria": "Restaurante",
+  <         "probabilidade_queda": 0.9523107461693874,
+  <         "faturamento": "2677.05",
+  <         "faturamento_previsto": "2336.08"
+  <       },
+  <       "... mais 3 registros"
+  <     ]
+  <   },
+  <   "campanha": {
+  <     "plano": {
+  <       "execucao_id": 144,
+  <       "concluida_em": "2026-10-01T21:34:15.390975Z",
+  <       "aplicacao_inicio": "2026-10-05",
+  <       "aplicacao_fim": "2026-10-11",
+  <       "modelo_versao": "rede-1"
+  <     },
+  <     "acoes": 23,
+  <     "custo": "5000.00",
+  <     "ganho_esperado": "114527.81"
+  <   }
+  < }
+  ok    o previsto vem ao lado do medido nos mesmos parceiros, com a versão do modelo
+  ok    o maior risco do painel é o da previsão no cadastro do parceiro
+  ok    a campanha do painel é o plano que o gestor acabou de calcular
+
+O Administrador lê o painel, mas não a previsão por parceiro nem a campanha:
+
+$ GET /api/painel/decisao
+  403 Forbidden
+  < {
+  <   "detail": "Seu perfil não permite esta operação."
+  < }
+  ok    o administrador não recebe o bloco (403)
+
+==============================================================================
+[2/6] Relatórios — cada um conferido contra a tela que ele resume (H84 a H87)
+==============================================================================
+
+Desempenho do período mais recente, por categoria e por segmento:
+
+$ GET /api/relatorios/desempenho
+  200 OK
+  < {
+  <   "periodo": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "periodo_anterior": {
+  <     "id": 11,
+  <     "data_inicio": "2026-09-07",
+  <     "data_fim": "2026-09-13"
+  <   },
+  <   "categoria": null,
+  <   "segmento": null,
+  <   "mesmos_parceiros": false,
+  <   "segmentado": true,
+  <   "total": {
+  <     "chave": null,
+  <     "rotulo": "Total",
+  <     "parceiros": 500,
+  <     "faturamento": "1839707.96",
+  <     "pedidos": 41974,
+  <     "ticket_medio": "43.83",
+  <     "variacao_percentual": "-0.12"
+  <   },
+  <   "por_categoria": [
+  <     {
+  <       "chave": "2",
+  <       "rotulo": "Lanchonete",
+  <       "parceiros": 121,
+  <       "faturamento": "426146.48",
+  <       "pedidos": 13144,
+  <       "ticket_medio": "32.42",
+  <       "variacao_percentual": "-0.04"
+  <     },
+  <     {
+  <       "chave": "1",
+  <       "rotulo": "Restaurante",
+  <       "parceiros": 103,
+  <       "faturamento": "407239.70",
+  <       "pedidos": 8553,
+  <       "ticket_medio": "47.61",
+  <       "variacao_percentual": "-4.19"
+  <     },
+  <     "... mais 8 registros"
+  <   ],
+  <   "por_segmento": [
+  <     {
+  <       "chave": "ESTAVEL",
+  <       "rotulo": "Estável",
+  <       "parceiros": 272,
+  <       "faturamento": "782399.94",
+  <       "pedidos": 18223,
+  <       "ticket_medio": "42.93",
+  <       "variacao_percentual": "-0.48"
+  <     },
+  <     {
+  <       "chave": "EM_RISCO",
+  <       "rotulo": "Em risco",
+  <       "parceiros": 104,
+  <       "faturamento": "344051.45",
+  <       "pedidos": 6961,
+  <       "ticket_medio": "49.43",
+  <       "variacao_percentual": "-12.42"
+  <     },
+  <     "... mais 3 registros"
+  <   ]
+  < }
+  ok    o total do relatório é o indicador do painel no mesmo período
+
+  10 de 10 categorias com o faturamento, os parceiros e a
+  variação iguais aos do painel filtrado por ela.
+  ok    cada categoria do relatório é o painel filtrado por ela (H82)
+  ok    as categorias somam o total
+  ok    cada segmento tem os parceiros que o painel conta nele
+
+  Em risco: 104 parceiros, variação de -12.42% — a dos mesmos parceiros, contra o que
+  eles faturaram no período anterior.
+
+Parceiros em risco: o maior risco primeiro, com a ação no último plano.
+
+$ GET /api/relatorios/risco?tamanho=3
+  200 OK
+  < {
+  <   "disponivel": true,
+  <   "motivo": null,
+  <   "ajuda": null,
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "modelo_versao": "rede-1",
+  <   "origem": "MODELO",
+  <   "desatualizada": false,
+  <   "categoria": null,
+  <   "segmento": null,
+  <   "risco_minimo": null,
+  <   "plano": {
+  <     "execucao_id": 144,
+  <     "concluida_em": "2026-10-01T21:34:15.390975Z",
+  <     "aplicacao_inicio": "2026-10-05",
+  <     "aplicacao_fim": "2026-10-11",
+  <     "modelo_versao": "rede-1"
+  <   },
+  <   "total": 500,
+  <   "com_previsao": 469,
+  <   "faturamento_medido": "1753406.48",
+  <   "faturamento_previsto": "1753163.98",
+  <   "no_plano": 23,
+  <   "itens": [
+  <     {
+  <       "parceiro_id": 409,
+  <       "nome": "Varanda do Norte 2",
+  <       "categoria": "Padaria",
+  <       "segmento": "ESTAVEL",
+  <       "faturamento": "955.58",
+  <       "variacao_percentual": "-9.26",
+  <       "faturamento_previsto": "757.18",
+  <       "probabilidade_queda": 0.9977954732439632,
+  <       "sem_previsao": null,
+  <       "acao": null,
+  <       "custo": null
+  <     },
+  <     {
+  <       "parceiro_id": 100,
+  <       "nome": "Ponto do Norte",
+  <       "categoria": "Restaurante",
+  <       "segmento": "ESTAVEL",
+  <       "faturamento": "2677.05",
+  <       "variacao_percentual": "-3.97",
+  <       "faturamento_previsto": "2336.08",
+  <       "probabilidade_queda": 0.9523107461693874,
+  <       "sem_previsao": null,
+  <       "acao": null,
+  <       "custo": null
+  <     },
+  <     {
+  <       "parceiro_id": 154,
+  <       "nome": "Recanto da Praça",
+  <       "categoria": "Petshop",
+  <       "segmento": "ESTAVEL",
+  <       "faturamento": "1614.27",
+  <       "variacao_percentual": "-12.02",
+  <       "faturamento_previsto": "1489.36",
+  <       "probabilidade_queda": 0.9280407098576984,
+  <       "sem_previsao": null,
+  <       "acao": null,
+  <       "custo": null
+  <     }
+  <   ],
+  <   "pagina": 1,
+  <   "tamanho": 3
+  < }
+  ok    o risco e o previsto do relatório são os da previsão no cadastro
+  ok    o resumo do relatório é o do painel: os mesmos parceiros, medido e previsto
+  ok    o relatório conta as ações do último plano
+
+Quem não tem previsão aparece com o motivo, e não com zero (RN09):
+
+$ GET /api/relatorios/risco?segmento=RECEM_CHEGADO&tamanho=2
+  200 OK
+  < {
+  <   "disponivel": true,
+  <   "motivo": null,
+  <   "ajuda": null,
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "modelo_versao": "rede-1",
+  <   "origem": "MODELO",
+  <   "desatualizada": false,
+  <   "categoria": null,
+  <   "segmento": "RECEM_CHEGADO",
+  <   "risco_minimo": null,
+  <   "plano": {
+  <     "execucao_id": 144,
+  <     "concluida_em": "2026-10-01T21:34:15.390975Z",
+  <     "aplicacao_inicio": "2026-10-05",
+  <     "aplicacao_fim": "2026-10-11",
+  <     "modelo_versao": "rede-1"
+  <   },
+  <   "total": 21,
+  <   "com_previsao": 0,
+  <   "faturamento_medido": null,
+  <   "faturamento_previsto": null,
+  <   "no_plano": 0,
+  <   "itens": [
+  <     {
+  <       "parceiro_id": 212,
+  <       "nome": "Cantina do Sol",
+  <       "categoria": "Pizzaria",
+  <       "segmento": "RECEM_CHEGADO",
+  <       "faturamento": "746.12",
+  <       "variacao_percentual": null,
+  <       "faturamento_previsto": null,
+  <       "probabilidade_queda": null,
+  <       "sem_previsao": "Com 1 período de histórico, ainda não há previsão: são necessários 4.",
+  <       "acao": null,
+  <       "custo": null
+  <     },
+  <     {
+  <       "parceiro_id": 164,
+  <       "nome": "Casa Popular",
+  <       "categoria": "Lanchonete",
+  <       "segmento": "RECEM_CHEGADO",
+  <       "faturamento": "3061.03",
+  <       "variacao_percentual": "-2.03",
+  <       "faturamento_previsto": null,
+  <       "probabilidade_queda": null,
+  <       "sem_previsao": "Com 2 períodos de histórico, ainda não há previsão: são necessários 4.",
+  <       "acao": null,
+  <       "custo": null
+  <     }
+  <   ],
+  <   "pagina": 1,
+  <   "tamanho": 2
+  < }
+  ok    o motivo é o mesmo que o cadastro do parceiro mostra
+
+Campanha: onde a verba do último plano foi.
+
+$ GET /api/relatorios/campanha
+  200 OK
+  < {
+  <   "plano": {
+  <     "execucao_id": 144,
+  <     "concluida_em": "2026-10-01T21:34:15.390975Z",
+  <     "aplicacao_inicio": "2026-10-05",
+  <     "aplicacao_fim": "2026-10-11",
+  <     "modelo_versao": "rede-1"
+  <   },
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "orcamento": "5000.00",
+  <   "total": {
+  <     "chave": null,
+  <     "rotulo": "Total",
+  <     "parceiros": 23,
+  <     "custo": "5000.00",
+  <     "ganho_esperado": "114527.81"
+  <   },
+  <   "por_acao": [
+  <     {
+  <       "chave": "Campanha de categoria",
+  <       "rotulo": "Campanha de categoria",
+  <       "parceiros": 7,
+  <       "custo": "3360.00",
+  <       "ganho_esperado": "66883.81"
+  <     },
+  <     {
+  <       "chave": "Visita de relacionamento",
+  <       "rotulo": "Visita de relacionamento",
+  <       "parceiros": 14,
+  <       "custo": "1260.00",
+  <       "ganho_esperado": "44417.84"
+  <     },
+  <     "... mais 2 registros"
+  <   ],
+  <   "por_categoria": [
+  <     {
+  <       "chave": "1",
+  <       "rotulo": "Restaurante",
+  <       "parceiros": 6,
+  <       "custo": "930.00",
+  <       "ganho_esperado": "34270.27"
+  <     },
+  <     {
+  <       "chave": "2",
+  <       "rotulo": "Lanchonete",
+  <       "parceiros": 6,
+  <       "custo": "1100.00",
+  <       "ganho_esperado": "22245.61"
+  <     },
+  <     "... mais 7 registros"
+  <   ],
+  <   "por_segmento": [
+  <     {
+  <       "chave": "TOP",
+  <       "rotulo": "Top 15",
+  <       "parceiros": 10,
+  <       "custo": "3410.00",
+  <       "ganho_esperado": "66346.86"
+  <     },
+  <     {
+  <       "chave": "ESTAVEL",
+  <       "rotulo": "Estável",
+  <       "parceiros": 10,
+  <       "custo": "900.00",
+  <       "ganho_esperado": "25337.78"
+  <     },
+  <     {
+  <       "chave": "EM_RISCO",
+  <       "rotulo": "Em risco",
+  <       "parceiros": 3,
+  <       "custo": "690.00",
+  <       "ganho_esperado": "22843.17"
+  <     }
+  <   ]
+  < }
+  ok    o relatório é do plano que o gestor calculou, e soma o plano gravado
+  ok    cada agrupamento — ação, categoria e segmento — soma o total
+
+Operações do sistema, do Administrador. Sem datas, os últimos trinta dias:
+
+$ GET /api/relatorios/operacoes
+  200 OK
+  < {
+  <   "de": "2026-09-02",
+  <   "ate": "2026-10-01",
+  <   "autor": null,
+  <   "acao": null,
+  <   "total": 2939,
+  <   "pessoas": 197,
+  <   "por_acao": [
+  <     {
+  <       "chave": "ACESSO_NEGADO",
+  <       "rotulo": "Acesso negado",
+  <       "total": 1190
+  <     },
+  <     {
+  <       "chave": "LOGIN_SUCESSO",
+  <       "rotulo": "Entrada no sistema",
+  <       "total": 645
+  <     },
+  <     "... mais 22 registros"
+  <   ],
+  <   "por_usuario": [
+  <     {
+  <       "chave": "2",
+  <       "rotulo": "Administrador (admin)",
+  <       "total": 592
+  <     },
+  <     {
+  <       "chave": "68",
+  <       "rotulo": "Verificação Analista (e2e26014.analista)",
+  <       "total": 50
+  <     },
+  <     "... mais 13 registros"
+  <   ],
+  <   "outras_pessoas": {
+  <     "chave": null,
+  <     "rotulo": "Outras 182 pessoas",
+  <     "total": 1696
+  <   },
+  <   "por_dia": [
+  <     {
+  <       "chave": "2026-09-26",
+  <       "rotulo": "2026-09-26",
+  <       "total": 608
+  <     },
+  <     {
+  <       "chave": "2026-09-27",
+  <       "rotulo": "2026-09-27",
+  <       "total": 1514
+  <     },
+  <     "... mais 3 registros"
+  <   ]
+  < }
+  ok    o total do relatório é o da trilha de auditoria no mesmo intervalo
+  ok    as ações, as pessoas e os dias somam, cada um, o total
+
+==============================================================================
+[3/6] Pesquisas e filtros — o endereço de cada recorte, e o que voltou
+==============================================================================
+
+Todo recorte está no endereço: é o que deixa recarregar a tela, mandar o link e
+exportar exatamente o que se vê.
+
+Parceiros — a busca ignora maiúscula e acento (RF24):
+
+$ GET /api/parceiros?busca=praca&tamanho=3
+  200 OK
+  < {
+  <   "itens": [
+  <     {
+  <       "id": 166,
+  <       "nome": "Cantina da Praça",
+  <       "categoria": {
+  <         "id": 1,
+  <         "nome": "Restaurante",
+  <         "ativa": true
+  <       },
+  <       "origem_categoria": "MANUAL",
+  <       "status": "ATIVO",
+  <       "contato": null,
+  <       "ativo": true,
+  <       "criado_em": "2026-09-26T06:11:46.003096Z",
+  <       "desempenho": {
+  <         "segmento": "EM_RISCO",
+  <         "faturamento": "1550.94",
+  <         "pedidos": 30,
+  <         "ticket_medio": "51.70",
+  <         "variacao_percentual": "-8.19"
+  <       },
+  <       "risco_queda": 0.4747980753783624
+  <     },
+  <     {
+  <       "id": 222,
+  <       "nome": "Casa da Praça",
+  <       "categoria": {
+  <         "id": 2,
+  <         "nome": "Lanchonete",
+  <         "ativa": true
+  <       },
+  <       "origem_categoria": "MANUAL",
+  <       "status": "ATIVO",
+  <       "contato": null,
+  <       "ativo": true,
+  <       "criado_em": "2026-09-26T06:11:46.003096Z",
+  <       "desempenho": {
+  <         "segmento": "EM_RISCO",
+  <         "faturamento": "373.10",
+  <         "pedidos": 13,
+  <         "ticket_medio": "28.70",
+  <         "variacao_percentual": "-15.24"
+  <       },
+  <       "risco_queda": 0.037093689403178254
+  <     },
+  <     {
+  <       "id": 306,
+  <       "nome": "Casa da Praça 2",
+  <       "categoria": {
+  <         "id": 8,
+  <         "nome": "Bebidas",
+  <         "ativa": true
+  <       },
+  <       "origem_categoria": "MANUAL",
+  <       "status": "ATIVO",
+  <       "contato": null,
+  <       "ativo": true,
+  <       "criado_em": "2026-09-26T06:11:46.003096Z",
+  <       "desempenho": {
+  <         "segmento": "EM_RISCO",
+  <         "faturamento": "3417.61",
+  <         "pedidos": 59,
+  <         "ticket_medio": "57.93",
+  <         "variacao_percentual": "-6.93"
+  <       },
+  <       "risco_queda": 0.02647388608345802
+  <     }
+  <   ],
+  <   "total": 31,
+  <   "pagina": 1,
+  <   "tamanho": 3,
+  <   "risco": {
+  <     "modelo_versao": "rede-1",
+  <     "periodo_base": {
+  <       "id": 12,
+  <       "data_inicio": "2026-09-14",
+  <       "data_fim": "2026-09-20"
+  <     },
+  <     "desatualizada": false
+  <   },
+  <   "periodo": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   }
+  < }
+  ok    "praca" acha os parceiros com "Praça" no nome
+
+Parceiros — em risco, da categoria Açaí e sorvetes, do maior risco para o menor:
+
+$ GET /api/parceiros?segmento=EM_RISCO&categoria_id=6&ordenar_por=risco&descendente=true&tamanho=3
+  200 OK
+  < {
+  <   "itens": [
+  <     {
+  <       "id": 419,
+  <       "nome": "Sabor Dourado 2",
+  <       "categoria": {
+  <         "id": 6,
+  <         "nome": "Açaí e sorvetes",
+  <         "ativa": true
+  <       },
+  <       "origem_categoria": "MANUAL",
+  <       "status": "ATIVO",
+  <       "contato": null,
+  <       "ativo": true,
+  <       "criado_em": "2026-09-26T06:11:46.003096Z",
+  <       "desempenho": {
+  <         "segmento": "EM_RISCO",
+  <         "faturamento": "1301.79",
+  <         "pedidos": 40,
+  <         "ticket_medio": "32.54",
+  <         "variacao_percentual": "-14.07"
+  <       },
+  <       "risco_queda": 0.33507207723444543
+  <     },
+  <     {
+  <       "id": 290,
+  <       "nome": "Varanda Bom Prato 2",
+  <       "categoria": {
+  <         "id": 6,
+  <         "nome": "Açaí e sorvetes",
+  <         "ativa": true
+  <       },
+  <       "origem_categoria": "MANUAL",
+  <       "status": "ATIVO",
+  <       "contato": null,
+  <       "ativo": true,
+  <       "criado_em": "2026-09-26T06:11:46.003096Z",
+  <       "desempenho": {
+  <         "segmento": "EM_RISCO",
+  <         "faturamento": "9897.22",
+  <         "pedidos": 319,
+  <         "ticket_medio": "31.03",
+  <         "variacao_percentual": "-17.71"
+  <       },
+  <       "risco_queda": 0.2750457550002846
+  <     },
+  <     {
+  <       "id": 341,
+  <       "nome": "Espaço do Chef 3",
+  <       "categoria": {
+  <         "id": 6,
+  <         "nome": "Açaí e sorvetes",
+  <         "ativa": true
+  <       },
+  <       "origem_categoria": "MANUAL",
+  <       "status": "ATIVO",
+  <       "contato": null,
+  <       "ativo": true,
+  <       "criado_em": "2026-09-26T06:11:46.003096Z",
+  <       "desempenho": {
+  <         "segmento": "EM_RISCO",
+  <         "faturamento": "4641.72",
+  <         "pedidos": 185,
+  <         "ticket_medio": "25.09",
+  <         "variacao_percentual": "-10.12"
+  <       },
+  <       "risco_queda": 0.14248313355827297
+  <     }
+  <   ],
+  <   "total": 6,
+  <   "pagina": 1,
+  <   "tamanho": 3,
+  <   "risco": {
+  <     "modelo_versao": "rede-1",
+  <     "periodo_base": {
+  <       "id": 12,
+  <       "data_inicio": "2026-09-14",
+  <       "data_fim": "2026-09-20"
+  <     },
+  <     "desatualizada": false
+  <   },
+  <   "periodo": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   }
+  < }
+  ok    os três filtros se combinam, e a ordem é a pedida
+
+Execuções — só as viáveis, calculadas pelo gestor desta transcrição (RF51):
+
+$ GET /api/otimizacoes?resultado=VIAVEL&autor=196
+  200 OK
+  < {
+  <   "itens": [
+  <     {
+  <       "id": 144,
+  <       "situacao": "CONCLUIDA",
+  <       "autor": "Gestor da Evidência",
+  <       "modo": "CPU_PARALELO",
+  <       "substituicao": null,
+  <       "threads": 8,
+  <       "iniciada_em": "2026-10-01T21:34:15.277457Z",
+  <       "concluida_em": "2026-10-01T21:34:15.390975Z",
+  <       "parametros": {
+  <         "orcamento": "5000.00",
+  <         "maximo_acoes": 30,
+  <         "cota_cauda_longa": "0.3",
+  <         "cotas_categoria": [],
+  <         "aplicacao_inicio": "2026-10-05",
+  <         "aplicacao_fim": "2026-10-11",
+  <         "modo": null
+  <       },
+  <       "periodo_base": {
+  <         "id": 12,
+  <         "data_inicio": "2026-09-14",
+  <         "data_fim": "2026-09-20"
+  <       },
+  <       "modelo_versao": "rede-1",
+  <       "viavel": true,
+  <       "restricao_violada": null,
+  <       "motivo": null,
+  <       "ajuda": null,
+  <       "uplift_total": "114527.81",
+  <       "custo_total": "5000.00",
+  <       "tempo_ms": 101,
+  <       "parcial": false,
+  <       "acoes": 23,
+  <       "elegiveis": 469,
+  <       "excluidos": {
+  <         "historico_curto": 31,
+  <         "fora_do_periodo": 0,
+  <         "sem_previsao": 0,
+  <         "inativos": 0,
+  <         "em_prospeccao": 0
+  <       },
+  <       "cotas": [
+  <         {
+  <           "categoria_id": null,
+  <           "nome": "Cauda longa",
+  <           "acoes": 12,
+  <           "minimo": 9,
+  <           "maximo": 30
+  <         }
+  <       ],
+  <       "folga_orcamento": "0",
+  <       "folga_acoes": 7,
+  <       "ganho_guloso": "110496.67",
+  <       "itens": null
+  <     }
+  <   ],
+  <   "total": 1,
+  <   "pagina": 1,
+  <   "tamanho": 10,
+  <   "autores": [
+  <     {
+  <       "id": 196,
+  <       "nome": "Gestor da Evidência"
+  <     }
+  <   ]
+  < }
+  ok    o histórico filtrado traz só o plano dele
+  ok    a resposta oferece quem já calculou, para o filtro por autor
+
+Usuários — busca por nome ou login, sem maiúscula nem acento (RF52):
+
+$ GET /api/usuarios?busca=t45740
+  200 OK
+  < [
+  <   {
+  <     "id": 197,
+  <     "login": "t45740.analista",
+  <     "nome": "Analista da Evidência",
+  <     "perfil": "ANALISTA",
+  <     "ativo": true,
+  <     "parceiro_id": null,
+  <     "criado_em": "2026-10-01T21:34:10.618477Z"
+  <   },
+  <   {
+  <     "id": 196,
+  <     "login": "t45740.gestor",
+  <     "nome": "Gestor da Evidência",
+  <     "perfil": "GESTOR",
+  <     "ativo": true,
+  <     "parceiro_id": null,
+  <     "criado_em": "2026-10-01T21:34:10.558873Z"
+  <   }
+  < ]
+  ok    a busca pelo trecho do login acha os dois usuários desta transcrição
+
+$ GET /api/usuarios?busca=evidencia&ativo=true
+  200 OK
+  < [
+  <   {
+  <     "id": 197,
+  <     "login": "t45740.analista",
+  <     "nome": "Analista da Evidência",
+  <     "perfil": "ANALISTA",
+  <     "ativo": true,
+  <     "parceiro_id": null,
+  <     "criado_em": "2026-10-01T21:34:10.618477Z"
+  <   },
+  <   {
+  <     "id": 196,
+  <     "login": "t45740.gestor",
+  <     "nome": "Gestor da Evidência",
+  <     "perfil": "GESTOR",
+  <     "ativo": true,
+  <     "parceiro_id": null,
+  <     "criado_em": "2026-10-01T21:34:10.558873Z"
+  <   }
+  < ]
+  ok    "evidencia" acha quem se chama "… da Evidência"
+
+Trilha de auditoria — busca por texto, com o filtro de ação (RF49):
+
+$ GET /api/auditoria?busca=t45740&acao=USUARIO_CRIADO
+  200 OK
+  < {
+  <   "itens": [
+  <     {
+  <       "id": 2967,
+  <       "usuario_id": 2,
+  <       "autor": "Administrador",
+  <       "autor_login": "admin",
+  <       "acao": "USUARIO_CRIADO",
+  <       "rotulo": "Usuário criado",
+  <       "resumo": "t45740.analista, perfil ANALISTA",
+  <       "detalhes": {
+  <         "alvo": 197,
+  <         "login": "t45740.analista",
+  <         "perfil": "ANALISTA"
+  <       },
+  <       "origem": "172.19.0.1",
+  <       "ocorrido_em": "2026-10-01T21:34:10.671894Z"
+  <     },
+  <     {
+  <       "id": 2966,
+  <       "usuario_id": 2,
+  <       "autor": "Administrador",
+  <       "autor_login": "admin",
+  <       "acao": "USUARIO_CRIADO",
+  <       "rotulo": "Usuário criado",
+  <       "resumo": "t45740.gestor, perfil GESTOR",
+  <       "detalhes": {
+  <         "alvo": 196,
+  <         "login": "t45740.gestor",
+  <         "perfil": "GESTOR"
+  <       },
+  <       "origem": "172.19.0.1",
+  <       "ocorrido_em": "2026-10-01T21:34:10.612182Z"
+  <     }
+  <   ],
+  <   "total": 2,
+  <   "pagina": 1,
+  <   "tamanho": 50
+  < }
+  ok    a busca acha a criação dos dois usuários, com o autor e a frase
+
+==============================================================================
+[4/6] Exportação — cada arquivo contra a tela de onde ele sai (RF48, RF53)
+==============================================================================
+
+O arquivo é a mesma consulta da tela, em CSV: ponto e vírgula, vírgula decimal e a
+marca de UTF-8 no começo, que é o que a planilha em português abre sem ajuste.
+Os PDFs saem da impressão do navegador, e estão nas capturas.
+
+$ GET /api/relatorios/desempenho/exportacao.csv
+  200 OK
+  < attachment; filename="relatorio-desempenho-2026-09-20.csv"
+  < text/csv; charset=utf-8 · com a marca de UTF-8 no começo · 16 linhas além do cabeçalho
+  < Agrupamento;Grupo;Parceiros;Faturamento;Pedidos;Ticket médio;Variação %
+  < Categoria;Lanchonete;121;426146,48;13144;32,42;-0,04
+  < Categoria;Restaurante;103;407239,70;8553;47,61;-4,19
+  < Categoria;Mercado;43;223125,83;2788;80,03;-5,48
+  < ... mais 13 linhas
+  ok    desempenho: as categorias, os segmentos e o total da tela
+
+$ GET /api/relatorios/risco/exportacao.csv?risco_minimo=0.9
+  200 OK
+  < attachment; filename="relatorio-risco-2026-09-20.csv"
+  < text/csv; charset=utf-8 · com a marca de UTF-8 no começo · 8 linhas além do cabeçalho
+  < Parceiro;Categoria;Segmento;Faturamento;Variação %;Faturamento previsto;Risco de queda;Sem previsão;Ação no último plano;Custo da ação
+  < Varanda do Norte 2;Padaria;Estável;955,58;-9,26;757,18;mais de 99%;;;
+  < Ponto do Norte;Restaurante;Estável;2677,05;-3,97;2336,08;95%;;;
+  < Recanto da Praça;Petshop;Estável;1614,27;-12,02;1489,36;93%;;;
+  < ... mais 5 linhas
+  ok    risco: o recorte inteiro, com o filtro da tela, na mesma ordem
+
+$ GET /api/relatorios/campanha/exportacao.csv
+  200 OK
+  < attachment; filename="relatorio-campanha-execucao-144.csv"
+  < text/csv; charset=utf-8 · com a marca de UTF-8 no começo · 17 linhas além do cabeçalho
+  < Agrupamento;Grupo;Parceiros;Custo;Ganho esperado
+  < Ação;Campanha de categoria;7;3360,00;66883,81
+  < Ação;Visita de relacionamento;14;1260,00;44417,84
+  < Ação;Destaque na vitrine;1;260,00;2621,72
+  < ... mais 14 linhas
+  ok    campanha: os três agrupamentos e o total do plano
+
+$ GET /api/otimizacoes/144/exportacao.csv
+  200 OK
+  < attachment; filename="plano-execucao-144.csv"
+  < text/csv; charset=utf-8 · com a marca de UTF-8 no começo · 24 linhas além do cabeçalho
+  < Parceiro;Categoria;Segmento;Cauda longa;Ação;Custo;Ganho esperado
+  < Ponto Azul 2;Mercado;Em risco;Não;Campanha de categoria;480,00;20258,29
+  < Quintal Verde 2;Restaurante;Top 15;Não;Campanha de categoria;480,00;14950,60
+  < Villa da Praça;Petshop;Top 15;Não;Campanha de categoria;480,00;7673,63
+  < ... mais 21 linhas
+  ok    plano: uma linha por item, na ordem da tela, e o total (RF53)
+
+$ GET /api/relatorios/operacoes/exportacao.csv
+  200 OK
+  < attachment; filename="relatorio-operacoes-2026-09-02-a-2026-10-01.csv"
+  < text/csv; charset=utf-8 · com a marca de UTF-8 no começo · 227 linhas além do cabeçalho
+  < Agrupamento;Grupo;Operações
+  < Ação;Acesso negado;1190
+  < Ação;Entrada no sistema;645
+  < Ação;Usuário criado;195
+  < ... mais 224 linhas
+  ok    operações: todas as pessoas, que a tela resume, e o total
+
+$ GET /api/auditoria/exportacao.csv?busca=t45740
+  200 OK
+  < attachment; filename="auditoria-2026-10-01.csv"
+  < text/csv; charset=utf-8 · com a marca de UTF-8 no começo · 5 linhas além do cabeçalho
+  < Quando;Autor;Login;Ação;O que aconteceu;Origem
+  < 01/10/2026 18:34:15;Gestor da Evidência;t45740.gestor;Campanha calculada;execução 144, modo CPU_PARALELO, plano com custo de R$ 5000;172.19.0.1
+  < 01/10/2026 18:34:15;Analista da Evidência;t45740.analista;Entrada no sistema;;172.19.0.1
+  < 01/10/2026 18:34:13;Gestor da Evidência;t45740.gestor;Entrada no sistema;;172.19.0.1
+  < ... mais 2 linhas
+  ok    trilha: um registro por linha, com o recorte da busca (RF49)
+
+O Administrador não baixa o plano, e o analista não baixa a trilha:
+
+$ GET /api/otimizacoes/144/exportacao.csv
+  403 Forbidden
+  < {
+  <   "detail": "Seu perfil não permite esta operação."
+  < }
+
+$ GET /api/auditoria/exportacao.csv
+  403 Forbidden
+  < {
+  <   "detail": "Seu perfil não permite esta operação."
+  < }
+  ok    a exportação segue a permissão da tela (403 e 403)
+
+==============================================================================
+[5/6] Logs e histórico de operações — o que foi feito, quando e por quem (H89, H90)
+==============================================================================
+
+O analista cadastra um parceiro, corrige o nome e o contato, troca a categoria e o
+desativa. Cada alteração entra na trilha de auditoria:
+
+$ POST /api/parceiros
+  > {
+  >   "nome": "Comércio t45740",
+  >   "categoria_id": 6,
+  >   "contato": "antigo@exemplo.test"
+  > }
+  201 Created
+  < {
+  <   "id": 626,
+  <   "nome": "Comércio t45740",
+  <   "categoria": {
+  <     "id": 6,
+  <     "nome": "Açaí e sorvetes",
+  <     "ativa": true
+  <   },
+  <   "origem_categoria": "MANUAL",
+  <   "status": "ATIVO",
+  <   "contato": "antigo@exemplo.test",
+  <   "ativo": true,
+  <   "criado_em": "2026-10-01T21:34:21.021002Z"
+  < }
+
+  ... três alterações: PATCH com o nome e o contato, PATCH com a categoria,
+  PATCH com a situação.
+
+O histórico, no cadastro do próprio parceiro (H90) — do mais recente ao mais antigo:
+
+$ GET /api/parceiros/626/historico
+  200 OK
+  < [
+  <   {
+  <     "acao": "PARCEIRO_DESATIVADO",
+  <     "rotulo": "Parceiro desativado",
+  <     "resumo": "",
+  <     "autor": "Analista da Evidência",
+  <     "ocorrido_em": "2026-10-01T21:34:21.055279Z"
+  <   },
+  <   {
+  <     "acao": "PARCEIRO_CLASSIFICADO",
+  <     "rotulo": "Categoria de parceiro alterada",
+  <     "resumo": "categoria de Açaí e sorvetes para Bebidas",
+  <     "autor": "Analista da Evidência",
+  <     "ocorrido_em": "2026-10-01T21:34:21.046085Z"
+  <   }
+  < ]
+  < ... mais 2 registros
+  ok    o histórico traz os quatro eventos, com o rótulo em português e o autor
+  ok    a frase diz o que mudou: o nome de antes e o de depois, e a categoria pelo nome
+  ok    o histórico não traz a origem nem os parâmetros crus, que são da auditoria
+
+A mesma história, na trilha de auditoria, que é do Administrador (H89) — o que o
+analista fez, buscando pela marca desta transcrição. O cadastro entrou com o nome
+antigo, e a busca pelo nome novo não o acharia: a trilha guarda o nome da hora.
+
+$ GET /api/auditoria?busca=t45740&autor=197
+  200 OK
+  < {
+  <   "itens": [
+  <     {
+  <       "id": 2977,
+  <       "usuario_id": 197,
+  <       "autor": "Analista da Evidência",
+  <       "autor_login": "t45740.analista",
+  <       "acao": "PARCEIRO_DESATIVADO",
+  <       "rotulo": "Parceiro desativado",
+  <       "resumo": "Comércio Central t45740",
+  <       "detalhes": {
+  <         "alvo": 626,
+  <         "nome": "Comércio Central t45740"
+  <       },
+  <       "origem": "172.19.0.1",
+  <       "ocorrido_em": "2026-10-01T21:34:21.055279Z"
+  <     },
+  <     {
+  <       "id": 2976,
+  <       "usuario_id": 197,
+  <       "autor": "Analista da Evidência",
+  <       "autor_login": "t45740.analista",
+  <       "acao": "PARCEIRO_CLASSIFICADO",
+  <       "rotulo": "Categoria de parceiro alterada",
+  <       "resumo": "Comércio Central t45740: categoria de Açaí e sorvetes para Bebidas",
+  <       "detalhes": {
+  <         "de": 6,
+  <         "alvo": 626,
+  <         "nome": "Comércio Central t45740",
+  <         "para": 8,
+  <         "de_nome": "Açaí e sorvetes",
+  <         "para_nome": "Bebidas"
+  <       },
+  <       "origem": "172.19.0.1",
+  <       "ocorrido_em": "2026-10-01T21:34:21.046085Z"
+  <     },
+  <     "... mais 4 registros"
+  <   ],
+  <   "total": 6,
+  <   "pagina": 1,
+  <   "tamanho": 50
+  < }
+  ok    a trilha traz os mesmos quatro eventos, com quem fez, o login e a origem
+  ok    na trilha, a frase leva o nome do parceiro na frente; no cadastro dele, não
+
+O contato é dado de uma pessoa, e a trilha não se apaga: ela grava que mudou,
+e não o valor.
+
+$ SQL, só leitura, no banco da API
+  > SELECT acao, detalhes::text FROM auditoria
+  > WHERE detalhes->>'alvo' = :alvo ORDER BY id
+  < acao                  | detalhes                                                     
+  < ----------------------+--------------------------------------------------------------
+  < PARCEIRO_CRIADO       | {"alvo": 626, "nome": "Comércio t45740"}                     
+  < PARCEIRO_EDITADO      | {"alvo": 626, "nome": "Comércio Central t45740", "nome_de": …
+  < PARCEIRO_CLASSIFICADO | {"de": 6, "alvo": 626, "nome": "Comércio Central t45740", "p…
+  < PARCEIRO_DESATIVADO   | {"alvo": 626, "nome": "Comércio Central t45740"}             
+  ok    nenhum dos dois contatos está gravado na trilha
+
+Toda ação da trilha tem um rótulo em português, que é o que a tela mostra:
+
+$ GET /api/auditoria/acoes
+  200 OK
+  < [
+  <   {
+  <     "acao": "LOGIN_SUCESSO",
+  <     "rotulo": "Entrada no sistema"
+  <   },
+  <   {
+  <     "acao": "LOGIN_FALHA",
+  <     "rotulo": "Entrada recusada"
+  <   }
+  < ]
+  < ... mais 32 registros
+  ok    nenhuma ação aparece na tela pelo código
+
+A trilha inteira é só do Administrador (RF08):
+
+$ GET /api/auditoria
+  403 Forbidden
+  < {
+  <   "detail": "Seu perfil não permite esta operação."
+  < }
+  ok    o analista não consulta a trilha (403)
+
+==============================================================================
+[6/6] No banco — o que os relatórios somam e o que a trilha gravou
+==============================================================================
+
+$ SQL, só leitura, no banco da API
+  > SELECT c.nome, count(*), sum(m.faturamento), sum(m.pedidos)
+  > FROM metrica m
+  > JOIN parceiro p ON p.id = m.parceiro_id
+  > JOIN categoria c ON c.id = p.categoria_id
+  > WHERE m.periodo_id = :periodo
+  > GROUP BY c.nome ORDER BY sum(m.faturamento) DESC LIMIT 4
+  < categoria   | parceiros | faturamento | pedidos
+  < ------------+-----------+-------------+--------
+  < Lanchonete  | 121       | 426146.48   | 13144  
+  < Restaurante | 103       | 407239.70   | 8553   
+  < Mercado     | 43        | 223125.83   | 2788   
+  < Padaria     | 52        | 168927.36   | 6230   
+  ok    as quatro maiores categorias do relatório são as do banco, com os mesmos números
+
+$ SQL, só leitura, no banco da API
+  > SELECT a.acao, u.login, a.origem IS NOT NULL
+  > FROM auditoria a JOIN usuario u ON u.id = a.usuario_id
+  > WHERE a.detalhes->>'alvo' = :alvo
+  > AND a.acao LIKE 'PARCEIRO_%' ORDER BY a.id
+  < acao                  | login           | tem origem
+  < ----------------------+-----------------+-----------
+  < PARCEIRO_CRIADO       | t45740.analista | True      
+  < PARCEIRO_EDITADO      | t45740.analista | True      
+  < PARCEIRO_CLASSIFICADO | t45740.analista | True      
+  < PARCEIRO_DESATIVADO   | t45740.analista | True      
+  ok    os quatro eventos do parceiro estão gravados, na ordem, com o autor e a origem
+
+==============================================================================
+Depois da limpeza
+==============================================================================
+  ok    o histórico de execuções voltou a ser o de antes da transcrição
+
+==============================================================================
+Resultado: 46 de 46 conferências passaram.

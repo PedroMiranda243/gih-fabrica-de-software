@@ -5,13 +5,16 @@ mensagens de erro; a quinta, os testes das validações e das situações de err
 do segundo módulo — o de previsão, que tem seção própria desde então. A sexta
 ganha a seção do terceiro módulo, a campanha: quem calcula, o que o pedido
 precisa ter, e o plano que não cabe — a Pré-Banca pediu as validações negativas
-ampliadas (Sprint 03). Aqui cada regra é provocada contra a API no ar, e a troca
-inteira vai para a transcrição: o que foi enviado, o código que voltou e a
-mensagem que a tela mostra ao usuário.
+ampliadas (Sprint 03). A sétima ganha a dos relatórios, do painel e dos filtros:
+quem abre cada um, o recorte que não existe, e o que não tem o que exportar.
+Aqui cada regra é provocada contra a API no ar, e a troca inteira vai para a
+transcrição: o que foi enviado, o código que voltou e a mensagem que a tela
+mostra ao usuário.
 
-**A campanha vem primeiro.** Ela usa sempre o período mais recente (RN10), e o
-período que as outras seções importam fica longe no futuro — enquanto ele
-existe, é o mais recente, e nele ninguém tem previsão.
+**A campanha vem primeiro, e os relatórios logo depois.** Ela usa sempre o
+período mais recente (RN10), e o período que as outras seções importam fica
+longe no futuro — enquanto ele existe, é o mais recente, e nele ninguém tem
+previsão. Os relatórios usam a execução inviável que a seção da campanha deixou.
 
 Cada troca vem com o que se esperava dela, e o fim da transcrição conta quantas
 bateram. Uma evidência que só mostra respostas não diz se elas estão certas.
@@ -26,7 +29,7 @@ Como a transcrição do CRUD, não deixa resíduo (ver `e2e/limpeza.py`).
 
 Uso, da pasta `api/`:
     GIH_ADMIN_SENHA=... python e2e/validacoes.py \
-        > ../docs/entrega/evidencias/sprint06/validacoes.txt
+        > ../docs/entrega/evidencias/sprint07/validacoes.txt
 """
 from __future__ import annotations
 
@@ -137,7 +140,8 @@ def transcrever(url: str, admin: httpx.Client, marca: str, confere: Conferencias
     with httpx.Client(base_url=url, timeout=30) as c:
         c.post("/api/sessao", json={"login": analista, "senha": SENHA})
         # Antes do período no futuro: a campanha usa sempre o mais recente (RN10).
-        campanha(url, c, gestor, confere)
+        inviavel = campanha(url, c, gestor, confere)
+        relatorios(c, admin, inviavel, confere)
 
         titulo("Preparação — um parceiro com faturamento importado, num período longe no futuro")
         # Um período que nenhuma base de demonstração tem: a limpeza recusa
@@ -162,7 +166,7 @@ def transcrever(url: str, admin: httpx.Client, marca: str, confere: Conferencias
 
 # ------------------------------------------------------------------ importação
 def importacao(c: httpx.Client, periodo: dict, marca: str, confere: Conferencias) -> None:
-    titulo("[2/8] Importação de relatório (UC03)")
+    titulo("[3/9] Importação de relatório (UC03)")
     texto = "Parceiro;Faturamento;Pedidos\nComércio Alfa;12500,40;312\n"
 
     print("\nRN03 — sem o período, a importação é recusada e diz por quê:")
@@ -217,7 +221,7 @@ def importacao(c: httpx.Client, periodo: dict, marca: str, confere: Conferencias
 
 # -------------------------------------------------------------------- cadastro
 def cadastro(c: httpx.Client, marca: str, comhist: dict, confere: Conferencias) -> None:
-    titulo("[3/8] Cadastro de parceiro (UC04)")
+    titulo("[4/9] Cadastro de parceiro (UC04)")
 
     print("\nNome vazio — a mensagem diz que é obrigatório e quanto falta:")
     confere("nome vazio", troca(c, "POST", "/api/parceiros", {"nome": ""}),
@@ -254,7 +258,7 @@ def cadastro(c: httpx.Client, marca: str, comhist: dict, confere: Conferencias) 
 
 # ----------------------------------------------------------------------- lista
 def lista(c: httpx.Client, confere: Conferencias) -> None:
-    titulo("[4/8] Lista de parceiros — filtros e ordenação vêm da URL")
+    titulo("[5/9] Lista de parceiros — filtros e ordenação vêm da URL")
     print("\nUm link editado à mão chega aqui. A recusa diz o que vale:")
     confere("ordenação desconhecida", troca(c, "GET", "/api/parceiros?ordenar_por=idade"),
             422, "Escolha uma destas opções")
@@ -266,7 +270,7 @@ def lista(c: httpx.Client, confere: Conferencias) -> None:
 
 # -------------------------------------------------------------------- limiares
 def limiares(admin: httpx.Client, confere: Conferencias) -> None:
-    titulo("[5/8] Limiares da segmentação (RF21) — só o administrador")
+    titulo("[6/9] Limiares da segmentação (RF21) — só o administrador")
     print("\nTop 0 esvaziaria o segmento Top da rede inteira. Nada é gravado:")
     confere("Top N zero", troca(admin, "PUT", "/api/configuracao/segmentacao", {
         "top_n": 0, "periodos_tendencia": 2, "periodos_novato": 3,
@@ -275,7 +279,7 @@ def limiares(admin: httpx.Client, confere: Conferencias) -> None:
 
 # ---------------------------------------------------------------------- acesso
 def acesso(url: str, c: httpx.Client, analista: str, confere: Conferencias) -> None:
-    titulo("[6/8] Acesso (RF01, RF03, RNF11)")
+    titulo("[7/9] Acesso (RF01, RF03, RNF11)")
     with httpx.Client(base_url=url, timeout=30) as anonimo:
         print("\nSenha errada, e depois um login que não existe. RNF11: as duas respostas são")
         print("iguais — duas mensagens diferentes entregariam a lista de logins válidos.")
@@ -299,7 +303,7 @@ def acesso(url: str, c: httpx.Client, analista: str, confere: Conferencias) -> N
 
 # ------------------------------------------------------------------- modelo
 def modelo(url: str, c: httpx.Client, gestor: str, confere: Conferencias) -> None:
-    titulo("[7/8] Modelo preditivo (UC07, RN09) — quem treina, e um por vez")
+    titulo("[8/9] Modelo preditivo (UC07, RN09) — quem treina, e um por vez")
     print("\nO analista lê a previsão no cadastro (RF28), mas não troca o modelo que toda a")
     print("equipe usa (UC07):")
     confere("analista não treina", troca(c, "POST", "/api/modelo/treinos"),
@@ -350,8 +354,10 @@ PEDIDO = {
 }
 
 
-def campanha(url: str, c: httpx.Client, gestor: str, confere: Conferencias) -> None:
-    titulo("[1/8] Campanha (UC08, RN07, RF31) — quem calcula, o que vale, e o plano que não cabe")
+def campanha(url: str, c: httpx.Client, gestor: str, confere: Conferencias) -> int | None:
+    """Devolve a execução inviável, que a seção dos relatórios usa."""
+    inviavel = None
+    titulo("[1/9] Campanha (UC08, RN07, RF31) — quem calcula, o que vale, e o plano que não cabe")
     print("\nO analista consulta a campanha, mas não decide onde vai a verba (UC08):")
     confere("analista não calcula o plano", troca(c, "POST", "/api/otimizacoes", PEDIDO),
             403, "Seu perfil não permite esta operação.")
@@ -386,8 +392,9 @@ def campanha(url: str, c: httpx.Client, gestor: str, confere: Conferencias) -> N
             while (g.get(f"/api/otimizacoes/{pedido.json()['id']}").json()["situacao"]
                    == "EM_ANDAMENTO" and time.monotonic() < limite):
                 time.sleep(1)
+            inviavel = pedido.json()["id"]
             confere("campanha inviável, registrada sem plano, com o que falta",
-                    troca(g, "GET", f"/api/otimizacoes/{pedido.json()['id']}"),
+                    troca(g, "GET", f"/api/otimizacoes/{inviavel}"),
                     200, '"viavel":false', '"restricao_violada":"orcamento"', "faltam",
                     '"itens":[]')
         else:
@@ -396,11 +403,85 @@ def campanha(url: str, c: httpx.Client, gestor: str, confere: Conferencias) -> N
         print("\nUma execução que não existe:")
         confere("execução inexistente", troca(g, "GET", "/api/otimizacoes/999999"),
                 404, "Otimização não encontrada.")
+    return inviavel
+
+
+# ---------------------------------------------------------------- relatórios
+def relatorios(
+    c: httpx.Client, admin: httpx.Client, inviavel: int | None, confere: Conferencias
+) -> None:
+    titulo("[2/9] Relatórios, painel e filtros (UC15, UC05, RF51) — quem abre, e o recorte"
+           " que não existe")
+    negado = "Seu perfil não permite esta operação."
+
+    print("\nOs relatórios da rede são do Gestor e do Analista; o de operações, que resume a")
+    print("trilha de auditoria, do Administrador (RF08). Cada um recusa o outro:")
+    confere("o administrador não abre o relatório de desempenho",
+            troca(admin, "GET", "/api/relatorios/desempenho"), 403, negado)
+    confere("o analista não abre o relatório de operações",
+            troca(c, "GET", "/api/relatorios/operacoes"), 403, negado)
+    confere("o analista não exporta a trilha de auditoria",
+            troca(c, "GET", "/api/auditoria/exportacao.csv"), 403, negado)
+    print("\nO Administrador lê o painel, mas não a previsão e a campanha dentro dele (H83):")
+    confere("o administrador não recebe o bloco de previsão e campanha",
+            troca(admin, "GET", "/api/painel/decisao"), 403, negado)
+
+    print("\nUm link editado à mão, ou antigo, chega com um recorte que não existe. A recusa")
+    print("diz o que não existe, em vez de abrir a rede inteira no lugar do que foi pedido:")
+    confere("período que não existe",
+            troca(c, "GET", "/api/relatorios/desempenho?periodo_id=999999"),
+            404, "Não existe período com id 999999.", "Escolha um dos períodos importados.")
+    confere("categoria que não existe, no painel",
+            troca(c, "GET", "/api/painel/indicadores?categoria_id=999999"),
+            404, "Não existe categoria com id 999999.")
+    confere("segmento fora da lista",
+            troca(c, "GET", "/api/relatorios/desempenho?segmento=VIP"),
+            422, "segmento", "Escolha uma destas opções")
+    confere("chance de queda acima de 100%",
+            troca(c, "GET", "/api/relatorios/risco?risco_minimo=1.5"),
+            422, "risco_minimo", "Use um valor até 1.")
+    confere("resultado de execução fora da lista",
+            troca(c, "GET", "/api/otimizacoes?resultado=TALVEZ"),
+            422, "resultado", "Escolha uma destas opções")
+    confere("a série é de um parceiro ou de uma categoria, e não dos dois",
+            troca(c, "GET", "/api/painel/series?parceiro_id=1&categoria_id=1"),
+            422, "A série é de um parceiro ou de uma categoria, e não dos dois.")
+
+    print("\nO relatório da campanha é de um plano calculado. A execução inviável da seção")
+    print("anterior não tem plano, e nem o que exportar:")
+    if inviavel is None:
+        confere.registrar("há uma execução inviável para mostrar", False)
+    else:
+        confere("relatório de execução sem plano",
+                troca(c, "GET", f"/api/relatorios/campanha?execucao_id={inviavel}"),
+                409, f"A execução {inviavel} não tem plano: terminou sem plano viável.",
+                "Escolha uma execução viável.")
+        confere("CSV do plano de execução sem plano",
+                troca(c, "GET", f"/api/otimizacoes/{inviavel}/exportacao.csv"),
+                409, "Esta execução não tem plano para exportar.")
+    confere("relatório de execução que não existe",
+            troca(c, "GET", "/api/relatorios/campanha?execucao_id=999999"),
+            404, "Não existe execução com id 999999.")
+
+    print("\nDatas invertidas não viram um relatório vazio, que a pessoa leria como \"nada")
+    print("aconteceu\":")
+    confere("data inicial depois da final",
+            troca(admin, "GET", "/api/relatorios/operacoes?de=2026-10-10&ate=2026-10-01"),
+            422, "A data inicial é depois da final.", "Troque as datas")
+    confere("data fora do formato",
+            troca(admin, "GET", "/api/relatorios/operacoes?de=10/10/2026"), 422, "AAAA-MM-DD")
+    confere("ação que a trilha não tem",
+            troca(admin, "GET", "/api/auditoria?acao=NADA_DISSO"),
+            422, "acao", "Escolha uma destas opções")
+
+    print("\nO histórico do cadastro de um parceiro que não existe:")
+    confere("histórico de parceiro inexistente",
+            troca(c, "GET", "/api/parceiros/999999/historico"), 404, "Parceiro não encontrado.")
 
 
 # ----------------------------------------------------------- falha inesperada
 def falha_inesperada(url: str, c: httpx.Client, confere: Conferencias) -> None:
-    titulo("[8/8] Falha inesperada (RNF18, RNF19) — o banco fora do ar")
+    titulo("[9/9] Falha inesperada (RNF18, RNF19) — o banco fora do ar")
     print("\nPara ver o que o usuário vê quando algo quebra de verdade, o banco é parado")
     print("por alguns segundos.")
     desde = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")

@@ -1,0 +1,28 @@
+Pesquisas e filtros — o endereço de cada recorte, e o que a tela e a API responderam
+
+Painel — período de 2026-08-24 a 2026-08-30, categoria Padaria
+  endereço    /?periodo=9&categoria=4
+  na tela     Comparado com 17/08/2026 a 23/08/2026, na mesma categoria.
+              ranking: 25 de 48 · posição na rede inteira
+  na API      faturamento 155573.43 · 5815 pedidos · 48 parceiros · categoria Padaria
+
+Execuções — resultado=VIAVEL
+  endereço    /execucoes?resultado=VIAVEL
+  na tela     3 nesse recorte
+  na API      3 execuções; viáveis: 3, inviáveis: 0
+
+Execuções — resultado=INVIAVEL
+  endereço    /execucoes?resultado=INVIAVEL
+  na tela     1 nesse recorte
+  na API      1 execuções; viáveis: 0, inviáveis: 1
+
+Usuários — ativo=false&busca=captura
+  endereço    /usuarios?ativo=false&busca=captura
+  na tela     96 encontrados
+  na API      96 usuários; o primeiro: Administradora da Captura
+
+Usuários — ativo=todas&busca=verificacao
+  endereço    /usuarios?ativo=todas&busca=verificacao
+  na tela     70 encontrados
+  na API      70 usuários; o primeiro: Verificação Administrador
+

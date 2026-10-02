@@ -22,6 +22,11 @@ desligar; depois de religar, o plano volta com os mesmos itens — parceiro, aç
 custo e ganho —, e o cadastro de um parceiro do plano mostra a mesma ação (H81).
 O otimizador roda em segundo plano, e o que ele devolve só vale se foi gravado.
 
+**E o histórico de operações, desde a Sprint 07.** A trilha de auditoria e o
+histórico do cadastro do parceiro são o registro do que foi feito: se sumissem
+ao religar, não seriam registro. Voltam iguais, evento a evento — e os
+relatórios, que só leem o que está gravado, dão os mesmos números.
+
 O cookie é parte da prova: a sessão tem estado no servidor (`sessao_acesso`),
 então ela também é dado persistido, e não algo que só existia na memória do
 processo que acabou de morrer.
@@ -34,7 +39,7 @@ banco e o analista é desativado (ver `e2e/limpeza.py`).
 
 Precisa do Docker Desktop aberto e da aplicação no ar. Uso, da pasta `api/`:
     GIH_ADMIN_SENHA=... python e2e/persistencia.py \
-        > ../docs/entrega/evidencias/sprint06/persistencia.txt
+        > ../docs/entrega/evidencias/sprint07/persistencia.txt
 """
 from __future__ import annotations
 
@@ -117,7 +122,7 @@ def api_responde(url: str) -> bool:
 
 
 def retrato(
-    c: httpx.Client, admin: httpx.Client, alvo: int, maior: int, plano: dict
+    c: httpx.Client, admin: httpx.Client, alvo: int, maior: int, plano: dict, marca: str
 ) -> dict:
     """Tudo o que se compara depois: lido pela API, como a tela lê.
 
@@ -134,6 +139,15 @@ def retrato(
         "previsao": c.get(f"/api/parceiros/{maior}/previsao").json(),
         "plano": c.get(f"/api/otimizacoes/{plano['id']}").json(),
         "na_campanha": c.get(f"/api/parceiros/{plano['parceiro']}/campanha").json(),
+        # O que foi feito (H89, H90): o histórico do cadastro, pela sessão do
+        # analista, e a trilha do parceiro, pela do administrador.
+        "historico": c.get(f"/api/parceiros/{alvo}/historico").json(),
+        "trilha": admin.get(
+            "/api/auditoria", params={"busca": f"Comércio {marca}", "tamanho": 200}
+        ).json(),
+        # Os relatórios (H84, H86): leem o que está gravado, e nada mais.
+        "desempenho": c.get("/api/relatorios/desempenho").json(),
+        "campanha": c.get(f"/api/relatorios/campanha?execucao_id={plano['id']}").json(),
     }
 
 
@@ -177,6 +191,14 @@ def mostrar_retrato(r: dict) -> None:
     if na_campanha.get("no_plano"):
         print(f"  no cadastro        {na_campanha['acao']} · custo R$ {na_campanha['custo']}"
               f" · plano {na_campanha['plano']['execucao_id']}")
+    print(f"  histórico          {len(r['historico'])} eventos no cadastro do parceiro:"
+          f" {', '.join(e['rotulo'] for e in reversed(r['historico']))}")
+    print(f"  trilha             {r['trilha']['total']} registros do parceiro na auditoria,"
+          f" o último em {r['trilha']['itens'][0]['ocorrido_em'] if r['trilha']['itens'] else '—'}")
+    desempenho, campanha = r["desempenho"], r["campanha"]
+    print(f"  relatórios         desempenho: {len(desempenho['por_categoria'])} categorias,"
+          f" total R$ {desempenho['total']['faturamento']} · campanha:"
+          f" {campanha['total']['parceiros']} ações, custo R$ {campanha['total']['custo']}")
 
 
 def mostrar_conteineres(ids: dict[str, str]) -> None:
@@ -277,7 +299,7 @@ def demonstrar(url: str, admin: httpx.Client, marca: str) -> list[tuple[str, boo
 
         print("\nO gestor calcula um plano de campanha, que roda em segundo plano (ADR-011):")
         plano = calcular_plano(url, gestor)
-        antes = retrato(c, admin, alvo, maior, plano)
+        antes = retrato(c, admin, alvo, maior, plano, marca)
         print("\nO estado anotado para comparar depois:")
         mostrar_retrato(antes)
         ids_antes = conteineres()
@@ -317,7 +339,7 @@ def demonstrar(url: str, admin: httpx.Client, marca: str) -> list[tuple[str, boo
         titulo("[4/4] Depois de religar — o mesmo cookie de antes, sem novo login")
         sessao = troca(c, "GET", "/api/sessao/atual")
         troca(c, "GET", f"/api/parceiros/{alvo}")
-        depois = retrato(c, admin, alvo, maior, plano)
+        depois = retrato(c, admin, alvo, maior, plano, marca)
         print("\nO estado lido agora:")
         mostrar_retrato(depois)
 
@@ -351,6 +373,14 @@ def demonstrar(url: str, admin: httpx.Client, marca: str) -> list[tuple[str, boo
         ("o cadastro do parceiro do plano mostra a mesma ação (H81)",
          antes["na_campanha"].get("no_plano") is True
          and depois["na_campanha"] == antes["na_campanha"]),
+        ("o histórico do cadastro voltou igual — o que mudou, quando e por quem (H90)",
+         len(antes["historico"]) >= 2 and depois["historico"] == antes["historico"]),
+        ("a trilha de auditoria do parceiro voltou igual, registro a registro (H89)",
+         antes["trilha"]["total"] >= 2 and depois["trilha"] == antes["trilha"]),
+        ("os relatórios de desempenho e da campanha dão os mesmos números (H84, H86)",
+         antes["desempenho"]["total"] is not None
+         and depois["desempenho"] == antes["desempenho"]
+         and depois["campanha"] == antes["campanha"]),
     ]
     print("\nConferências:")
     for texto, ok in conferencias:

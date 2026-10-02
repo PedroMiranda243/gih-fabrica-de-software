@@ -1,0 +1,41 @@
+Relatórios — o endereço, o recorte que a folha diz, o PDF e o CSV de cada um
+
+Desempenho por período
+  endereço    /relatorios/desempenho
+  recorte     Período de 14/09/2026 a 20/09/2026 · comparado com 07/09/2026 a 13/09/2026 ·
+              todas as categorias · todos os segmentos
+  PDF         relatorio-desempenho.pdf — 2 página(s), 114 kB, pela impressão do navegador
+  CSV         /api/relatorios/desempenho/exportacao.csv
+              200 · attachment; filename="relatorio-desempenho-2026-09-20.csv" · 16 linhas
+              além do cabeçalho
+
+Parceiros em risco
+  endereço    /relatorios/risco?risco_minimo=90
+  recorte     Previsão a partir do período de 14/09/2026 a 20/09/2026 · todas as categorias ·
+              todos os segmentos · chance de queda a partir de 90%
+  PDF         relatorio-risco.pdf — 1 página(s), 82 kB, pela impressão do navegador
+  CSV         /api/relatorios/risco/exportacao.csv?risco_minimo=0.9000
+              200 · attachment; filename="relatorio-risco-2026-09-20.csv" · 8 linhas além do
+              cabeçalho
+
+Campanha
+  endereço    /relatorios/campanha?execucao=169
+  recorte     Plano de 01/10/2026 às 19:01 · aplicação de 05/10/2026 a 11/10/2026 · a partir
+              do período de 14/09/2026 a 20/09/2026 · previsão rede-1
+  PDF         relatorio-campanha.pdf — 2 página(s), 102 kB, pela impressão do navegador
+  CSV         /api/relatorios/campanha/exportacao.csv?execucao_id=169
+              200 · attachment; filename="relatorio-campanha-execucao-169.csv" · 17 linhas
+              além do cabeçalho
+
+Operações do sistema
+  endereço    /relatorios/operacoes
+  recorte     De 02/09/2026 a 01/10/2026 · todas as pessoas · todas as ações
+  PDF         relatorio-operacoes.pdf — 3 página(s), 121 kB, pela impressão do navegador
+  CSV         /api/relatorios/operacoes/exportacao.csv
+              200 · attachment; filename="relatorio-operacoes-2026-09-02-a-2026-10-01.csv" ·
+              278 linhas além do cabeçalho
+
+Plano de campanha, pela execução
+  endereço    /execucoes/169
+  PDF         plano.pdf — 2 página(s), pela impressão do navegador
+  CSV         /api/otimizacoes/169/exportacao.csv — 23 itens e o total
