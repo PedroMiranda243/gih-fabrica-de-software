@@ -459,6 +459,30 @@ SEM_TREINO = (
 )
 
 
+def motivo_sem_previsao(periodos: int, na_base: bool) -> tuple[str, str]:
+    """Por que um parceiro não tem previsão na versão em uso — o motivo e a ajuda (RN09).
+
+    O cadastro do parceiro e o relatório de risco dizem a mesma frase: `periodos`
+    é quantos períodos de histórico ele tem até o do treino, e `na_base`, se ele
+    teve movimento nesse período.
+    """
+    if periodos < JANELA:
+        return (
+            f"Com {_periodos(periodos)} de histórico, ainda não há previsão: "
+            f"são necessários {JANELA}.",
+            "A previsão aparece no primeiro treino depois que o parceiro completar a janela.",
+        )
+    if not na_base:
+        return (
+            "O parceiro não aparece no período mais recente do último treino.",
+            "A previsão parte do período mais recente; sem dado nele, não há de onde partir.",
+        )
+    return (
+        "O parceiro entrou na base depois do último treino.",
+        "Um novo treino inclui o parceiro.",
+    )
+
+
 @dataclass(frozen=True)
 class PrevisaoLida:
     """A previsão de um parceiro, ou o porquê de não haver (RN09, H44)."""
@@ -500,18 +524,7 @@ def previsao_do_parceiro(s: Session, parceiro_id: int) -> PrevisaoLida:
     no_periodo = s.scalar(
         select(exists().where(Metrica.parceiro_id == parceiro_id, Metrica.periodo_id == base.id))
     )
-    if periodos < JANELA:
-        motivo = (
-            f"Com {_periodos(periodos)} de histórico, ainda não há previsão: "
-            f"são necessários {JANELA}."
-        )
-        ajuda = "A previsão aparece no primeiro treino depois que o parceiro completar a janela."
-    elif not no_periodo:
-        motivo = "O parceiro não aparece no período mais recente do último treino."
-        ajuda = "A previsão parte do período mais recente; sem dado nele, não há de onde partir."
-    else:
-        motivo = "O parceiro entrou na base depois do último treino."
-        ajuda = "Um novo treino inclui o parceiro."
+    motivo, ajuda = motivo_sem_previsao(periodos, bool(no_periodo))
     return PrevisaoLida(
         None, base, versao, motivo=motivo, ajuda=ajuda, desatualizada=desatualizada
     )

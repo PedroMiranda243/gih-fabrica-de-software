@@ -30,6 +30,7 @@ from app.rotas import (
     modelo,
     painel,
     parceiros,
+    relatorios,
     usuarios,
 )
 
@@ -127,6 +128,7 @@ app.include_router(mensagens.router)
 app.include_router(meu_desempenho.router)
 app.include_router(assistente.router)
 app.include_router(auditoria.router)
+app.include_router(relatorios.router)
 
 
 # Erro de validacao em portugues, com a explicacao do campo quando ela existe

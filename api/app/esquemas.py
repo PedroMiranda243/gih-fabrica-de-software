@@ -1670,3 +1670,148 @@ class CampanhaDoParceiro(BaseModel):
     uplift_esperado: Decimal | None = Field(
         default=None, description="Ganho esperado da ação, estimado pela previsão do plano (RN10)."
     )
+
+
+# ------------------------------------------------------------------ relatórios
+# Contrato do UC15 (RF44 a RF47). Os relatórios resumem o que as outras telas
+# mostram, e por isso repetem as convenções delas: variação nula não é zero, e
+# o que é estimativa vem com a versão do modelo e o período de onde ela parte.
+class LinhaDesempenho(BaseModel):
+    """Um grupo do relatório de desempenho — uma categoria, um segmento, ou o total."""
+
+    chave: str | None = Field(
+        description="O id da categoria ou o código do segmento. Nula em 'sem categoria' e no total."
+    )
+    rotulo: str
+    parceiros: int
+    faturamento: Decimal
+    pedidos: int
+    ticket_medio: Decimal | None
+    variacao_percentual: Decimal | None = Field(
+        description=(
+            "Do faturamento, contra o período anterior. Nula quando não há com o que "
+            "comparar. De que grupo, ver `RelatorioDesempenho`."
+        )
+    )
+
+
+class RelatorioDesempenho(BaseModel):
+    """O desempenho de um período, por categoria e por segmento (RF44, H84).
+
+    `periodo` nulo é base vazia. `segmentado` falso diz que o período ainda não
+    foi classificado — e `por_segmento` vem vazio, em vez de uma linha só que
+    afirmaria uma classificação que ninguém fez.
+
+    **A variação de `por_segmento` é sempre a dos mesmos parceiros**: quem está
+    no segmento agora, contra o que os mesmos parceiros faturaram antes. A do
+    total e de `por_categoria` é a do painel — o grupo contra ele mesmo —, a não
+    ser com filtro de segmento, quando `mesmos_parceiros` vem verdadeiro e as
+    três passam a ser a dos mesmos parceiros.
+    """
+
+    periodo: PeriodoResposta | None
+    periodo_anterior: PeriodoResposta | None
+    categoria: CategoriaResposta | None
+    segmento: Segmento | None
+    mesmos_parceiros: bool = Field(
+        description="A variação do total e das categorias é a dos mesmos parceiros."
+    )
+    segmentado: bool
+    total: LinhaDesempenho | None
+    por_categoria: list[LinhaDesempenho]
+    por_segmento: list[LinhaDesempenho]
+
+
+class LinhaRisco(BaseModel):
+    """Um parceiro no relatório de risco (RF45, H85)."""
+
+    parceiro_id: int
+    nome: str
+    categoria: str | None
+    segmento: Segmento | None
+    faturamento: Decimal = Field(description="O medido no período de onde a previsão parte.")
+    variacao_percentual: Decimal | None
+    faturamento_previsto: Decimal | None
+    probabilidade_queda: float | None
+    sem_previsao: str | None = Field(
+        default=None, description="Por que não há previsão (RN09). Nulo quando há."
+    )
+    acao: str | None = Field(default=None, description="A ação no último plano viável, se houver.")
+    custo: Decimal | None = None
+
+
+class RelatorioRisco(BaseModel):
+    """Quem está em risco e quem o modelo prevê que caia (RF45, H85).
+
+    Sem modelo treinado, `disponivel` é falso e `motivo` e `ajuda` dizem o que
+    falta. O resumo soma o recorte inteiro, e não a página; o medido e o previsto
+    somam **os mesmos parceiros** — os que têm previsão.
+    """
+
+    disponivel: bool = False
+    motivo: str | None = None
+    ajuda: str | None = None
+    periodo_base: PeriodoResposta | None = None
+    modelo_versao: str | None = None
+    origem: str | None = Field(default=None, description='"MODELO" ou "REFERENCIA".')
+    desatualizada: bool = False
+    categoria: CategoriaResposta | None = None
+    segmento: Segmento | None = None
+    risco_minimo: float | None = None
+    plano: PlanoResumido | None = Field(
+        default=None, description="O último plano viável, de onde vem a ação de cada parceiro."
+    )
+    total: int = 0
+    com_previsao: int = 0
+    faturamento_medido: Decimal | None = None
+    faturamento_previsto: Decimal | None = None
+    no_plano: int = 0
+    itens: list[LinhaRisco] = []
+    pagina: int
+    tamanho: int
+
+
+class LinhaCampanha(BaseModel):
+    """Um grupo do relatório da campanha — uma ação, uma categoria, um segmento, ou o total."""
+
+    chave: str | None
+    rotulo: str
+    parceiros: int
+    custo: Decimal
+    ganho_esperado: Decimal
+
+
+class RelatorioCampanha(BaseModel):
+    """Onde a verba de um plano foi (RF46, H86). `plano` nulo: nenhum plano calculado ainda."""
+
+    plano: PlanoResumido | None = None
+    periodo_base: PeriodoResposta | None = Field(
+        default=None, description="O período de onde o plano partiu: é dele o segmento."
+    )
+    orcamento: Decimal | None = None
+    total: LinhaCampanha | None = None
+    por_acao: list[LinhaCampanha] = []
+    por_categoria: list[LinhaCampanha] = []
+    por_segmento: list[LinhaCampanha] = []
+
+
+class ContagemOperacao(BaseModel):
+    """Quantas operações de um grupo — um tipo de ação, uma pessoa, um dia."""
+
+    chave: str | None = Field(description="O código da ação, o id do usuário ou o dia, em ISO.")
+    rotulo: str
+    total: int
+
+
+class RelatorioOperacoes(BaseModel):
+    """O que foi feito no sistema num intervalo (RF47, H87). `de` e `ate` são as
+    datas que valeram — as pedidas, ou os últimos trinta dias."""
+
+    de: date
+    ate: date
+    autor: int | None
+    acao: str | None
+    total: int
+    por_acao: list[ContagemOperacao]
+    por_usuario: list[ContagemOperacao]
+    por_dia: list[ContagemOperacao]

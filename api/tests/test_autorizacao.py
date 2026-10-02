@@ -147,6 +147,17 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("GET", "/api/auditoria"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/auditoria/acoes"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/auditoria/exportacao.csv"): {Perfil.ADMINISTRADOR},
+    # UC15 — Relatórios: os da rede são do Gestor e do Analista; o de operações,
+    # que resume a trilha de auditoria, é do Administrador (RF08).
+    ("GET", "/api/relatorios/desempenho"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/relatorios/desempenho/exportacao.csv"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/relatorios/risco"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/relatorios/risco/exportacao.csv"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/relatorios/campanha"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/relatorios/campanha/exportacao.csv"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/relatorios/campanha/planos"): {Perfil.GESTOR, Perfil.ANALISTA},
+    ("GET", "/api/relatorios/operacoes"): {Perfil.ADMINISTRADOR},
+    ("GET", "/api/relatorios/operacoes/exportacao.csv"): {Perfil.ADMINISTRADOR},
 }
 
 # Rotas que o FastAPI cria sozinho e que não são superfície da aplicação.
