@@ -25,6 +25,7 @@
  * demonstração e o modelo treinado:
  *   GIH_ADMIN_SENHA=... node docs/entrega/capturar_sprint08.js <etapa>
  */
+const fs = require('fs');
 const path = require('path');
 
 const {
@@ -129,6 +130,35 @@ async function clicar(pagina, seletor, texto) {
     return Boolean(botao);
   }, seletor, texto);
   if (!achou) throw new Error(`Não achei "${texto}" em ${seletor}.`);
+}
+
+/**
+ * Junta capturas numa figura só, lado a lado, cada uma com o rótulo dela, e
+ * apaga as soltas. Quatro menus em quatro figuras ocupariam quatro páginas do
+ * documento para mostrar uma comparação que só se lê com os quatro à vista.
+ */
+async function ladoALado(navegador, nomes, rotulos, destino) {
+  const figuras = nomes.map((nome, i) => {
+    const arquivo = path.join(SAIDA, `${nome}.png`);
+    const dados = fs.readFileSync(arquivo).toString('base64');
+    fs.unlinkSync(arquivo);
+    return `<figure><figcaption>${rotulos[i]}</figcaption><img src="data:image/png;base64,${dados}"></figure>`;
+  });
+  const pagina = await navegador.newPage();
+  await pagina.setViewport({ width: 1100, height: 700, deviceScaleFactor: 2 });
+  await pagina.setContent(`<!doctype html><meta charset="utf-8">
+    <style>
+      body { margin: 0; background: #fff; }
+      main { display: inline-flex; gap: 20px; align-items: flex-start; padding: 16px; }
+      figure { margin: 0; }
+      figcaption { margin-bottom: 8px; font: 600 13px "Segoe UI", Arial, sans-serif; color: #1f3a5f; }
+      img { width: 230px; display: block; border: 1px solid #dde4ec; border-radius: 6px; }
+    </style>
+    <main>${figuras.join('')}</main>`, { waitUntil: 'load' });
+  const caixa = await (await pagina.$('main')).boundingBox();
+  await pagina.screenshot({ path: path.join(SAIDA, `${destino}.png`), clip: caixa });
+  await pagina.close();
+  console.log(`${destino.padEnd(36)} ok`);
 }
 
 /**
@@ -289,14 +319,30 @@ async function permissoes({ gestor, analista, administrador, admin, outraPessoa,
     ['parceiro', parceiro, '/meu-desempenho'],
   ];
   linhas.push('O menu de cada perfil — só o que ele abre');
-  for (const [nome, pagina, inicio] of perfis) {
+  // Todos com a mesma altura — a do menu mais comprido, o do Gestor —, para a
+  // figura mostrar, pelo vazio, quanto cada perfil tem a menos.
+  let altura = 0;
+  for (const [, pagina, inicio] of perfis) {
     await ir(pagina, inicio, 'nav.trilho');
+    altura = Math.max(altura, await pagina.evaluate(() => {
+      const itens = document.querySelectorAll('nav.trilho a.trilho__item');
+      const topo = document.querySelector('nav.trilho').getBoundingClientRect().top;
+      return Math.ceil(itens[itens.length - 1].getBoundingClientRect().bottom - topo) + 16;
+    }));
+  }
+  for (const [nome, pagina] of perfis) {
     await esperar(400);
-    await fotografarElemento(pagina, `permissoes-menu-${nome}`, 'nav.trilho', 0);
+    await fotografarElemento(pagina, `permissoes-menu-${nome}`, 'nav.trilho', 0, altura);
     const itens = await pagina.$$eval('nav.trilho a.trilho__item', (as) => as.map((a) => a.textContent.trim()));
     linhas.push(`  ${nome.padEnd(14)}${itens.join(', ')}`);
   }
   linhas.push('');
+  await ladoALado(
+    gestor.browser(),
+    perfis.map(([nome]) => `permissoes-menu-${nome}`),
+    ['Administrador', 'Gestor', 'Analista', 'Parceiro'],
+    'permissoes-menus',
+  );
 
   // O endereço de uma tela de outro perfil.
   const negados = [

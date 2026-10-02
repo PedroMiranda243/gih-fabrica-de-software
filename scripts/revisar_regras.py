@@ -659,8 +659,8 @@ def rn10_e_rn11(gestor, analista, ids: dict[str, int], categorias: dict[str, int
             maior_chance = p
             exemplo = (f"{item['parceiro']}, {item['acao']}: {previsto} × {crescimento} + "
                        f"{previsto} × {p} × {retencao} = {refeito}")
-    rn10.confere(f"o ganho das {len(itens)} ações do plano, refeito pela fórmula, ao centavo",
-                 {}, diferentes)
+    rn10.confere(f"das {len(itens)} ações do plano, as que diferem do ganho refeito pela fórmula, "
+                 "ao centavo", {}, diferentes)
     soma = sum(Decimal(i["ganho"]) for i in itens)
     rn10.confere("o ganho do plano é a soma dos ganhos das ações",
                  str(soma), execucao["uplift_total"])
