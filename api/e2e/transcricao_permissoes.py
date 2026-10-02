@@ -88,10 +88,12 @@ class Negados:
 
     def __init__(self) -> None:
         self.total = 0
+        self.mensagens: set[str] = set()
 
     def __call__(self, resposta: httpx.Response) -> httpx.Response:
         if resposta.status_code == 403:
             self.total += 1
+            self.mensagens.add(recusa(resposta))
         return resposta
 
 
@@ -208,7 +210,10 @@ def matriz(
 def linha(
     tipo: str, perfil: Perfil, metodo: str, caminho: str, r: httpx.Response, nota: str
 ) -> None:
-    print(f"  {tipo:<9} {SIGLA[perfil]}  {metodo:<5} {caminho:<44} {r.status_code}  {nota}")
+    """Uma tentativa. A nota vai na linha de baixo: a transcrição cabe em 96 colunas."""
+    print(f"  {tipo:<9} {SIGLA[perfil]}  {metodo:<5} {caminho:<44} {r.status_code}")
+    if nota and tipo != "negado":
+        print(f"                 {nota}")
 
 
 def recusa(r: httpx.Response) -> str:
@@ -458,7 +463,7 @@ def por_objeto(
         respostas = []
         for caminho in tentativas:
             r = negados(a.get(caminho))
-            print(f"  GET {caminho:<46} {r.status_code}  {recusa(r)}")
+            print(f"  GET {caminho:<46} {r.status_code}")
             respostas.append(r.status_code)
         confere(
             "o cadastro, a série e a previsão do outro, e os dados da rede, são recusados",
@@ -560,6 +565,9 @@ def trilha(marca: str, confere: Conferencias, negados: Negados) -> None:
           "registros de acesso negado.")
     confere("cada 403 desta execução virou um registro na trilha, com o perfil de quem tentou",
             na_trilha == negados.total)
+    print("\n  A mensagem de todas as recusas por perfil: " + " · ".join(sorted(negados.mensagens)))
+    confere("a recusa é sempre a mesma frase: ela não diz o que existe por trás da rota",
+            len(negados.mensagens) == 1)
 
 
 # ------------------------------------------------------------------------ main
