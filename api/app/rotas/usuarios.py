@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
@@ -16,8 +16,15 @@ from sqlalchemy.orm import Session
 from app import auditoria, seguranca, sessoes
 from app.auditoria import Acao
 from app.dependencias import Banco, UsuarioAtual, exigir
-from app.esquemas import EdicaoUsuario, NovoUsuario, UsuarioResposta
-from app.modelos import Perfil, Usuario
+from app.esquemas import (
+    EdicaoUsuario,
+    NovoUsuario,
+    ParceiroDoVinculo,
+    RedefinicaoSenha,
+    UsuarioDetalhe,
+    UsuarioResposta,
+)
+from app.modelos import Parceiro, Perfil, Usuario
 from app.seguranca import SenhaFraca
 from app.sessoes import Motivo
 from app.texto import para_busca
@@ -74,9 +81,47 @@ def listar(
     return list(s.scalars(consulta))
 
 
-@router.get("/{usuario_id}", response_model=UsuarioResposta)
-def obter(usuario_id: int, s: Banco) -> Usuario:
-    return _buscar(s, usuario_id)
+# Quantos parceiros a busca do vínculo devolve. É para achar um pelo nome, e não
+# para percorrer a rede: quem digita mais, acha.
+PARCEIROS_NA_BUSCA = 20
+
+
+@router.get("/parceiros", response_model=list[ParceiroDoVinculo])
+def parceiros_para_o_vinculo(
+    s: Banco,
+    busca: Annotated[
+        str,
+        Query(min_length=2, max_length=120, description="Trecho do nome do parceiro."),
+    ],
+) -> list[Parceiro]:
+    """Acha um parceiro pelo nome, para vinculá-lo a uma conta de perfil Parceiro (RF56, H101).
+
+    **Não é a lista de parceiros**, que a matriz não dá ao Administrador (UC04):
+    a busca é obrigatória, devolve só o nome e a situação, e para em
+    `PARCEIROS_NA_BUSCA`. Sem ela, a conta do parceiro só se criava pela API.
+
+    Declarada antes de `/{usuario_id}`: depois dela, "parceiros" seria lido como
+    o identificador de um usuário.
+    """
+    padrao = f"%{para_busca(busca.strip())}%"
+    return list(
+        s.scalars(
+            select(Parceiro)
+            .where(Parceiro.nome_normalizado.like(padrao, escape="\\"))
+            .order_by(Parceiro.nome)
+            .limit(PARCEIROS_NA_BUSCA)
+        )
+    )
+
+
+@router.get("/{usuario_id}", response_model=UsuarioDetalhe)
+def obter(usuario_id: int, s: Banco) -> UsuarioDetalhe:
+    usuario = _buscar(s, usuario_id)
+    parceiro = s.get(Parceiro, usuario.parceiro_id) if usuario.parceiro_id else None
+    return UsuarioDetalhe(
+        **UsuarioResposta.model_validate(usuario).model_dump(),
+        parceiro=ParceiroDoVinculo.model_validate(parceiro) if parceiro else None,
+    )
 
 
 @router.post("", response_model=UsuarioResposta, status_code=status.HTTP_201_CREATED)
@@ -90,6 +135,7 @@ def criar(
         seguranca.validar_forca(dados.senha, dados.login)
     except SenhaFraca as e:
         raise _erro_do_campo("senha", str(e), "********") from e
+    parceiro = _parceiro_do_vinculo(s, dados.parceiro_id)
 
     usuario = Usuario(
         login=dados.login,
@@ -108,12 +154,20 @@ def criar(
         # janela entre a conferência e a gravação — deixar o banco recusar é o
         # único jeito sem corrida.
         s.rollback()
+        # Só a restrição do login vira "login em uso". Até a #227, toda violação
+        # virava: um parceiro inexistente no vínculo respondia que o login já
+        # existia, e a pessoa trocava um login que estava certo.
+        if not _e_do_login(e):
+            raise
         raise _login_em_uso(s, dados.login) from e
 
+    detalhes = {"alvo": usuario.id, "login": usuario.login, "perfil": str(usuario.perfil)}
+    if parceiro is not None:
+        detalhes["parceiro"] = parceiro.nome
     auditoria.registrar(
         Acao.USUARIO_CRIADO,
         usuario_id=autor.id,
-        detalhes={"alvo": usuario.id, "login": usuario.login, "perfil": str(usuario.perfil)},
+        detalhes=detalhes,
         origem=auditoria.origem_de(request),
     )
     return usuario
@@ -142,9 +196,15 @@ def editar(
         "ativo": usuario.ativo,
     }
 
+    # O nome do parceiro de antes, lido agora: depois da troca, a trilha não
+    # teria mais de onde tirar o que era (RF06).
+    antes = s.get(Parceiro, usuario.parceiro_id) if usuario.parceiro_id else None
+    anterior["parceiro_nome"] = antes.nome if antes else None
+
     perfil_novo = dados.perfil if dados.perfil is not None else usuario.perfil
     ativo_novo = dados.ativo if dados.ativo is not None else usuario.ativo
     _proteger_ultimo_administrador(s, usuario, perfil_novo, ativo_novo)
+    _parceiro_do_vinculo(s, dados.parceiro_id)
 
     if dados.nome is not None:
         usuario.nome = dados.nome
@@ -171,8 +231,77 @@ def editar(
     if anterior["ativo"] and not usuario.ativo:
         sessoes.revogar_do_usuario(s, usuario.id, Motivo.USUARIO_DESATIVADO)
 
-    _auditar_edicao(usuario, anterior, autor_id=autor.id, origem=origem)
+    depois = s.get(Parceiro, usuario.parceiro_id) if usuario.parceiro_id else None
+    _auditar_edicao(
+        usuario, anterior, autor_id=autor.id, origem=origem,
+        parceiro_nome=depois.nome if depois else None,
+    )
     return usuario
+
+
+@router.post("/{usuario_id}/senha", status_code=status.HTTP_204_NO_CONTENT)
+def redefinir_senha(
+    usuario_id: int,
+    dados: RedefinicaoSenha,
+    request: Request,
+    s: Banco,
+    autor: UsuarioAtual,
+) -> Response:
+    """O Administrador dá uma senha nova a outra conta (RF54, H93).
+
+    É a volta de quem esqueceu a senha: antes desta rota, a única saída era
+    criar outra conta para a mesma pessoa. A senha passa pela mesma validação de
+    força da criação, e **todas** as sessões da conta caem — diferente da troca
+    da própria senha, que preserva a sessão de quem trocou: aqui quem está
+    fazendo a operação não é o dono da conta.
+    """
+    usuario = _buscar(s, usuario_id)
+    if usuario.id == autor.id:
+        # A própria senha tem o caminho dela, que exige a atual. Aceitar aqui
+        # faria de uma sessão esquecida aberta o bastante para tomar a conta.
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "erro": "Esta é a sua própria conta.",
+                "ajuda": "Troque a sua senha em Minha conta, que pede a senha atual.",
+            },
+        )
+
+    try:
+        seguranca.validar_forca(dados.senha_nova, usuario.login)
+    except SenhaFraca as e:
+        raise _erro_do_campo("senha_nova", str(e), "********") from e
+
+    usuario.senha_hash = seguranca.gerar_hash(dados.senha_nova)
+    derrubadas = sessoes.revogar_do_usuario(s, usuario.id, Motivo.SENHA_REDEFINIDA)
+
+    auditoria.registrar(
+        Acao.SENHA_REDEFINIDA,
+        usuario_id=autor.id,
+        detalhes={"alvo": usuario.id, "login": usuario.login, "sessoes_encerradas": derrubadas},
+        origem=auditoria.origem_de(request),
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+def _parceiro_do_vinculo(s: Session, parceiro_id: int | None) -> Parceiro | None:
+    """O parceiro que a conta vai apontar — ou a recusa, no campo, se ele não existe.
+
+    Sem esta conferência o banco recusava pela chave estrangeira, e a recusa
+    saía como "login em uso" na criação e como erro 500 na edição (#227).
+    """
+    if parceiro_id is None:
+        return None
+    parceiro = s.get(Parceiro, parceiro_id)
+    if parceiro is None:
+        raise _erro_do_campo("parceiro_id", "Parceiro não encontrado.", parceiro_id)
+    return parceiro
+
+
+def _e_do_login(erro: IntegrityError) -> bool:
+    """A violação é a do login único? O nome da restrição vem do próprio banco."""
+    restricao = getattr(getattr(erro.orig, "diag", None), "constraint_name", None) or ""
+    return "login" in restricao
 
 
 def _erro_do_campo(campo: str, mensagem: str, entrada) -> RequestValidationError:
@@ -261,7 +390,7 @@ def _proteger_ultimo_administrador(
 
 
 def _auditar_edicao(
-    usuario: Usuario, anterior: dict, *, autor_id: int, origem: str
+    usuario: Usuario, anterior: dict, *, autor_id: int, origem: str, parceiro_nome: str | None
 ) -> None:
     """Uma ação por tipo de mudança, para o filtro da H18 ser útil.
 
@@ -293,6 +422,10 @@ def _auditar_edicao(
                 "nome_para": usuario.nome,
                 "parceiro_de": anterior["parceiro_id"],
                 "parceiro_para": usuario.parceiro_id,
+                # O nome de antes e o de depois, e não só os identificadores: a
+                # trilha diz de quem a conta era sem depender do cadastro de hoje.
+                "parceiro_de_nome": anterior["parceiro_nome"],
+                "parceiro_para_nome": parceiro_nome,
             },
             origem=origem,
         )

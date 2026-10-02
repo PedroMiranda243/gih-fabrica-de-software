@@ -26,6 +26,7 @@ ROTULOS: dict[Acao, str] = {
     Acao.LOGIN_BLOQUEADO: "Login bloqueado",
     Acao.LOGOUT: "Saída do sistema",
     Acao.SENHA_ALTERADA: "Senha alterada",
+    Acao.SENHA_REDEFINIDA: "Senha redefinida pelo administrador",
     Acao.IMPORTACAO_REALIZADA: "Importação de relatório",
     Acao.IMPORTACAO_SUBSTITUIDA: "Importação que substituiu um período",
     Acao.PARCEIRO_CRIADO: "Parceiro cadastrado",
@@ -153,6 +154,29 @@ def _cadastro_editado(d: dict) -> str:
     )
 
 
+def _senha_redefinida(d: dict) -> str:
+    """De quem é a conta, e quantas sessões caíram. A senha não entra na trilha."""
+    caiu = (
+        f"{d['sessoes_encerradas']} sessão(ões) encerrada(s)" if "sessoes_encerradas" in d else ""
+    )
+    return ": ".join(p for p in (_valor(d.get("login")), caiu) if p)
+
+
+def _usuario_editado(d: dict) -> str:
+    """O login, e o que mudou na conta: o nome e o parceiro do vínculo, pelo nome dele.
+
+    Os registros de antes da H101 guardam só o identificador do parceiro; neles
+    a frase fica com o nome, e o identificador segue no que foi gravado.
+    """
+    mudou = "; ".join(
+        m for m in (
+            _mudanca(d, "nome_de", "nome_para", "nome"),
+            _mudanca(d, "parceiro_de_nome", "parceiro_para_nome", "parceiro"),
+        ) if m
+    )
+    return ": ".join(p for p in (_valor(d.get("login")), mudou) if p)
+
+
 # O que mudou num cadastro de parceiro, sem o nome dele. Cadastrar, desativar e
 # reativar não têm mais o que dizer: o rótulo já é a frase inteira.
 _MUDANCAS_DO_PARCEIRO = {
@@ -193,10 +217,11 @@ _FORMATADORES = {
     Acao.PARCEIRO_EDITADO: _do_parceiro(Acao.PARCEIRO_EDITADO),
     Acao.CATEGORIA_CRIADA: lambda d: _valor(d.get("nome")),
     Acao.SEGMENTACAO_CONFIGURADA: _limiares,
-    Acao.USUARIO_CRIADO: lambda d: f"{d.get('login')}, perfil {d.get('perfil')}",
-    Acao.USUARIO_EDITADO: lambda d: ": ".join(
-        p for p in (_valor(d.get("login")), _mudanca(d, "nome_de", "nome_para", "nome")) if p
+    Acao.SENHA_REDEFINIDA: _senha_redefinida,
+    Acao.USUARIO_CRIADO: lambda d: f"{d.get('login')}, perfil {d.get('perfil')}" + (
+        f", do parceiro {d['parceiro']}" if d.get("parceiro") else ""
     ),
+    Acao.USUARIO_EDITADO: _usuario_editado,
     Acao.USUARIO_DESATIVADO: lambda d: _valor(d.get("login")),
     Acao.USUARIO_REATIVADO: lambda d: _valor(d.get("login")),
     Acao.PERFIL_ALTERADO: lambda d: f"{d.get('login')}: de {d.get('de')} para {d.get('para')}",

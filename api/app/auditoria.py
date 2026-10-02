@@ -31,6 +31,10 @@ class Acao(enum.StrEnum):
     LOGIN_BLOQUEADO = "LOGIN_BLOQUEADO"
     LOGOUT = "LOGOUT"
     SENHA_ALTERADA = "SENHA_ALTERADA"
+    # Ação própria, e não a mesma da troca: aqui quem escolheu a senha não é o
+    # dono da conta (RF54). "Quem mexeu na senha de fulano?" precisa ter resposta
+    # no filtro, sem abrir cada registro para ver se o autor é o próprio.
+    SENHA_REDEFINIDA = "SENHA_REDEFINIDA"
     IMPORTACAO_REALIZADA = "IMPORTACAO_REALIZADA"
     # Ação própria, e não uma importação comum: substituir apaga dado que outros
     # períodos já podem ter lido. Se as duas ficassem sob o mesmo nome, a
