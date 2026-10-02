@@ -162,7 +162,7 @@ def relatorio_da_semana(semana: int) -> str:
 def _texto(valor: object) -> str:
     if isinstance(valor, bool):
         return "sim" if valor else "não"
-    if isinstance(valor, (list, tuple)):
+    if isinstance(valor, list | tuple):
         return ", ".join(_texto(v) for v in valor) or "nenhum"
     if isinstance(valor, dict):
         return "; ".join(f"{k}: {_texto(v)}" for k, v in valor.items()) or "nenhum"
@@ -417,8 +417,9 @@ def rn02(gestor) -> Regra:
 
 
 def rn04(gestor) -> Regra:
-    from app.db import Sessao
     from sqlalchemy import text
+
+    from app.db import Sessao
 
     r = Regra(
         "RN04", "Ticket médio é derivado, nunca importado",
@@ -885,7 +886,8 @@ def main() -> int:
         for cliente, perfil in ((gestor, "GESTOR"), (analista, "ANALISTA"),
                                 (administrador, "ADMINISTRADOR")):
             login, senha = contas[perfil]
-            if cliente.post("/api/sessao", json={"login": login, "senha": senha}).status_code != 201:
+            entrada = cliente.post("/api/sessao", json={"login": login, "senha": senha})
+            if entrada.status_code != 201:
                 raise SystemExit(f"A conta {login} não entrou.")
 
         print("\nRN03 — antes de qualquer importação")
