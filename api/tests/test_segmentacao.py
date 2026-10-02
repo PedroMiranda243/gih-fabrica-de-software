@@ -219,6 +219,16 @@ def test_a_ordem_do_enum_e_a_ordem_em_que_a_regra_decide():
     assert [classificar(**caso) for caso in casos] == list(Segmento)
 
 
+def test_nenhum_rotulo_de_segmento_traz_o_numero_do_limiar():
+    """O tamanho do Top é configurável (RF21): o rótulo que trouxesse o 15 escrito
+    continuaria dizendo 15 com o limiar em 10 — e trouxe, até a Sprint 08 (#229)."""
+    from app.desempenho import ROTULO_SEGMENTO
+
+    assert set(ROTULO_SEGMENTO) == set(Segmento)
+    com_numero = [r for r in ROTULO_SEGMENTO.values() if any(c.isdigit() for c in r)]
+    assert not com_numero
+
+
 # ================================================= o reprocessamento (banco)
 @pytest.fixture
 def semear(criar_usuario):
