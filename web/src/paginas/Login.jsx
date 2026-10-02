@@ -13,10 +13,11 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { useSessao } from "../api/contextoSessao";
+import EntradaDeSenha from "../componentes/EntradaDeSenha";
 import "../estilos/login.css";
 
 export default function Login() {
-  const { usuario, entrar } = useSessao();
+  const { usuario, entrar, encerrada } = useSessao();
   const navegar = useNavigate();
   const lugar = useLocation();
 
@@ -59,6 +60,16 @@ export default function Login() {
           </p>
         </div>
 
+        {/* Quem estava dentro e voltou para cá precisa saber por quê (H96): sem o
+            aviso, a tela de login no meio do trabalho parece defeito. Depois de
+            entrar, a pessoa volta para onde estava. */}
+        {encerrada && !erro && (
+          <div className="aviso aviso--informativo" role="status">
+            <p className="aviso__titulo">A sua sessão terminou.</p>
+            <p className="aviso__ajuda">Entre de novo para continuar de onde parou.</p>
+          </div>
+        )}
+
         {erro && (
           <div className="aviso" role="alert">
             <p className="aviso__titulo">{erro.message}</p>
@@ -81,10 +92,9 @@ export default function Login() {
 
         <div className="campo">
           <label htmlFor="senha">Senha</label>
-          <input
+          <EntradaDeSenha
             id="senha"
             name="senha"
-            type="password"
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
             autoComplete="current-password"

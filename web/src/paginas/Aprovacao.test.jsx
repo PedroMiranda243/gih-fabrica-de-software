@@ -4,7 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
 import { ContextoSessao } from "../api/contextoSessao";
-import { simularApi } from "../testes/preparar";
+import { avisariaAoFechar, simularApi } from "../testes/preparar";
 import Aprovacao from "./Aprovacao";
 
 const GESTOR = ["painel", "mensagens", "aprovacao", "decidir_mensagens"];
@@ -319,5 +319,42 @@ describe("histórico das mensagens decididas (RF40, H64)", () => {
     renderizar({ endereco: "/aprovacao?estado=REJEITADA" });
     expect(await screen.findByText("Nenhuma mensagem rejeitada neste recorte.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ver as pendentes" })).toHaveAttribute("href", "/aprovacao");
+  });
+});
+
+describe("fila de aprovação — alterações não salvas (H97)", () => {
+  it("o texto reescrito e ainda não salvo é alteração; salvo, deixa de ser", async () => {
+    simularApi({
+      "GET /api/mensagens": { corpo: FILA },
+      "POST /api/mensagens/1/edicao": {
+        corpo: mensagem(1, "Beta", { texto: "Olá, Beta! Estamos aqui para ajudar. Conte com a gente.", editada: true }),
+      },
+    });
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByRole("heading", { name: "Beta" });
+
+    await usuario.click(within(cartao("Beta")).getByRole("button", { name: "Editar" }));
+    expect(avisariaAoFechar()).toBe(false);
+
+    await usuario.type(screen.getByLabelText("Texto da mensagem para Beta"), " Conte com a gente.");
+    expect(avisariaAoFechar()).toBe(true);
+
+    await usuario.click(screen.getByRole("button", { name: "Salvar o texto" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("Ela continua na fila");
+    expect(avisariaAoFechar()).toBe(false);
+  });
+
+  it("o motivo da rejeição digitado e não enviado também", async () => {
+    simularApi({ "GET /api/mensagens": { corpo: FILA } });
+    const usuario = userEvent.setup();
+    renderizar();
+    await screen.findByRole("heading", { name: "Gama" });
+
+    await usuario.click(within(cartao("Gama")).getByRole("button", { name: "Rejeitar" }));
+    expect(avisariaAoFechar()).toBe(false);
+
+    await usuario.type(screen.getByLabelText("Motivo da rejeição (opcional)"), "Tom errado");
+    expect(avisariaAoFechar()).toBe(true);
   });
 });

@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
-import { simularApi } from "../testes/preparar";
+import { avisariaAoFechar, simularApi } from "../testes/preparar";
 import Campanha, { INTERVALO_MS } from "./Campanha";
 
 const BASE = { id: 12, data_inicio: "2026-09-14", data_fim: "2026-09-20" };
@@ -389,5 +389,24 @@ describe("tela da campanha", () => {
       efeito_retencao: "0.2500",
       ativa: true,
     });
+  });
+});
+
+describe("catálogo de ações — alterações não salvas (H97)", () => {
+  it("abrir a edição não é alterar; mudar um valor é, e cancelar desfaz", async () => {
+    simularApi({ "GET /api/campanha": { corpo: estado() } });
+    const usuario = userEvent.setup();
+    renderizar();
+
+    await usuario.click(await screen.findByRole("button", { name: "Editar Visita de relacionamento" }));
+    expect(avisariaAoFechar()).toBe(false);
+
+    const retencao = screen.getByLabelText("Efeito de retenção, em %");
+    await usuario.clear(retencao);
+    await usuario.type(retencao, "25");
+    expect(avisariaAoFechar()).toBe(true);
+
+    await usuario.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(avisariaAoFechar()).toBe(false);
   });
 });

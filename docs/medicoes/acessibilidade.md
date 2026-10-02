@@ -12,7 +12,7 @@ Três verificações, em três lugares:
 
 | Item | Valor |
 |---|---|
-| Data | 02/10/2026 01:40 |
+| Data | 02/10/2026 02:13 |
 | Navegador | Microsoft Edge 154.0.4258.48, sem cabeça, pelo Playwright |
 | axe-core | 4.13.0 |
 | Dados | a base de trabalho, com a massa do gerador; dois planos calculados para a medição e apagados depois |
@@ -53,7 +53,7 @@ api/.venv/Scripts/python scripts/medir_telas.py
 
 ## As telas
 
-**27 telas. Com a página rolando na horizontal ou conteúdo cortado: 0 das 54 medidas. Com violação do axe no navegador: 0 das 54 auditorias** (cada tela, nos dois temas).
+**28 telas. Com a página rolando na horizontal ou conteúdo cortado: 0 das 56 medidas. Com violação do axe no navegador: 0 das 56 auditorias** (cada tela, nos dois temas).
 
 | Tela | Rota | Perfil | 768 px | 1440 px | axe, claro | axe, escuro |
 |---|---|---|---|---|--:|--:|
@@ -66,8 +66,8 @@ api/.venv/Scripts/python scripts/medir_telas.py
 | Assistente | `/assistente` | gestor | ok | ok | 0 | 0 |
 | Campanha | `/campanha` | gestor | ok | ok | 0 | 0 |
 | Execuções | `/execucoes` | gestor | ok | ok | 0 | 0 |
-| Execução | `/execucoes/170` | gestor | ok | ok | 0 | 0 |
-| Comparação | `/execucoes/comparar?a=170&b=171` | gestor | ok | ok | 0 | 0 |
+| Execução | `/execucoes/175` | gestor | ok | ok | 0 | 0 |
+| Comparação | `/execucoes/comparar?a=175&b=176` | gestor | ok | ok | 0 | 0 |
 | Mensagens | `/mensagens` | gestor | ok | ok | 0 | 0 |
 | Aprovação | `/aprovacao` | gestor | ok | ok | 0 | 0 |
 | Benchmark | `/benchmark` | gestor | ok | ok | 0 | 0 |
@@ -78,12 +78,13 @@ api/.venv/Scripts/python scripts/medir_telas.py
 | Relatório da campanha | `/relatorios/campanha` | gestor | ok | ok | 0 | 0 |
 | Usuários | `/usuarios` | administrador | ok | ok | 0 | 0 |
 | Novo usuário | `/usuarios/novo` | administrador | ok | ok | 0 | 0 |
-| Conta do usuário | `/usuarios/266` | administrador | ok | ok | 0 | 0 |
+| Conta do usuário | `/usuarios/279` | administrador | ok | ok | 0 | 0 |
 | Auditoria | `/auditoria` | administrador | ok | ok | 0 | 0 |
 | Relatório de operações | `/relatorios/operacoes` | administrador | ok | ok | 0 | 0 |
 | Limiares | `/configuracao` | administrador | ok | ok | 0 | 0 |
 | Meu desempenho | `/meu-desempenho` | parceiro | ok | ok | 0 | 0 |
 | Minha conta | `/conta` | parceiro | ok | ok | 0 | 0 |
+| Sem acesso | `/parceiros` | parceiro | ok | ok | 0 | 0 |
 
 **O que rola na própria caixa** — e a página fica no lugar: a tabela larga e, a 768 px, o menu, que vira uma faixa no topo.
 
@@ -225,3 +226,7 @@ Tema claro. À esquerda, 768 px; à direita, 1440 px.
 ### Minha conta
 
 <img src="telas/minha-conta-768.jpg" width="280" alt="Minha conta a 768 px"> <img src="telas/minha-conta-1440.jpg" width="480" alt="Minha conta a 1440 px">
+
+### Sem acesso
+
+<img src="telas/sem-acesso-768.jpg" width="280" alt="Sem acesso a 768 px"> <img src="telas/sem-acesso-1440.jpg" width="480" alt="Sem acesso a 1440 px">

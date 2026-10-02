@@ -50,3 +50,14 @@ export function simularApi(rotas) {
     return new Response(status === 204 ? null : JSON.stringify(corpo), { status });
   });
 }
+
+/**
+ * O navegador avisaria antes de fechar a aba? É o que a tela pede enquanto há
+ * alteração não salva (H97) — e serve de prova, em cada tela, de que ela ligou
+ * o aviso ao que de fato está alterado.
+ */
+export function avisariaAoFechar() {
+  const evento = new Event("beforeunload", { cancelable: true });
+  window.dispatchEvent(evento);
+  return evento.defaultPrevented;
+}

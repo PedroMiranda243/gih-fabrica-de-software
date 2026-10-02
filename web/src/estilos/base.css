@@ -120,7 +120,8 @@ h3 {
 
 .campo > input,
 .campo > select,
-.campo > textarea {
+.campo > textarea,
+.senha > input {
   min-height: 44px;
   padding: var(--esp-8) var(--esp-12);
   border: 1px solid var(--borda-controle);
@@ -142,8 +143,27 @@ h3 {
 /* Mais escuro que a borda no claro, e mais claro no escuro: nos dois, o campo
    ganha contraste ao receber o ponteiro, e não perde. */
 .campo > input:hover,
-.campo > textarea:hover {
+.campo > textarea:hover,
+.senha > input:hover {
   border-color: var(--ink-2);
+}
+
+/* O campo de senha com o botão de mostrar (H96): o campo ocupa o que sobra, e o
+   botão fica do tamanho da palavra, para "Mostrar" e "Ocultar" não empurrarem
+   o campo de um lado para o outro. */
+.senha {
+  display: flex;
+  gap: var(--esp-8);
+}
+
+.senha > input {
+  flex: 1;
+  min-width: 0;
+}
+
+.senha__botao {
+  flex: none;
+  min-width: 5.5rem;
 }
 
 /* ---------------------------------------------------------------- painéis */
@@ -229,7 +249,8 @@ h3 {
   color: var(--ink-2);
 }
 
-.campo > [aria-invalid="true"] {
+.campo > [aria-invalid="true"],
+.senha > [aria-invalid="true"] {
   border-color: var(--seg-risco);
 }
 

@@ -27,6 +27,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { api } from "../api/cliente";
+import AlteracoesNaoSalvas from "../componentes/AlteracoesNaoSalvas";
 import { Esqueleto } from "../componentes/Carregando";
 import Campo from "../componentes/Campo";
 import Confirmacao from "../componentes/Confirmacao";
@@ -297,6 +298,11 @@ function Cadastro({ id }) {
   }
   const detalhe = erro?.corpo?.detail;
   const existente = typeof detalhe === "object" ? detalhe?.existente : null;
+  /* O que está nos campos é diferente do que está salvo? É o que decide o
+     aviso de alterações não salvas (H97). Enviando, não: a criação leva à
+     ficha do parceiro novo, e essa saída é a do próprio formulário. */
+  const gravado = parceiro ? paraFormulario(parceiro) : VAZIO;
+  const alterado = !enviando && Object.keys(VAZIO).some((campo) => form[campo] !== gravado[campo]);
   const erroSituacao = avisoSituacao?.tipo === "erro" ? avisoSituacao.erro : null;
   const recusouExclusao = erroSituacao?.status === 409 && Boolean(erroSituacao.corpo?.detail?.vinculos);
 
@@ -307,6 +313,8 @@ function Cadastro({ id }) {
         <span aria-hidden="true">›</span>
         <span aria-current="page">{novo ? "Novo parceiro" : parceiro.nome}</span>
       </nav>
+
+      <AlteracoesNaoSalvas quando={alterado} />
 
       {sucesso && (
         <div className="aviso aviso--sucesso" role="status">

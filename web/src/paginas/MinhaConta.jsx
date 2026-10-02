@@ -13,6 +13,7 @@ import { useState } from "react";
 import { api } from "../api/cliente";
 import { useSessao } from "../api/contextoSessao";
 import Campo from "../componentes/Campo";
+import EntradaDeSenha from "../componentes/EntradaDeSenha";
 import { ROTULO_PERFIL } from "../formato";
 import "../estilos/usuarios.css";
 
@@ -120,9 +121,9 @@ export default function MinhaConta() {
             erro={erroDoCampo.senha_atual}
             ajuda="A senha com que você entrou."
           >
-            <input
+            <EntradaDeSenha
               id="campo-senha_atual"
-              type="password"
+              de="a senha atual"
               autoComplete="current-password"
               value={form.senha_atual}
               onChange={(e) => mudar("senha_atual", e.target.value)}
@@ -136,9 +137,9 @@ export default function MinhaConta() {
             erro={erroDoCampo.senha_nova}
             ajuda="O servidor confere a força; depois de salva, ninguém a vê."
           >
-            <input
+            <EntradaDeSenha
               id="campo-senha_nova"
-              type="password"
+              de="a senha nova"
               autoComplete="new-password"
               value={form.senha_nova}
               onChange={(e) => mudar("senha_nova", e.target.value)}
@@ -152,9 +153,9 @@ export default function MinhaConta() {
             erro={erroDoCampo.confirmacao}
             ajuda="Para pegar o erro de digitação antes de ele trancar a sua conta."
           >
-            <input
+            <EntradaDeSenha
               id="campo-confirmacao"
-              type="password"
+              de="a senha nova, de novo"
               autoComplete="new-password"
               value={form.confirmacao}
               onChange={(e) => mudar("confirmacao", e.target.value)}

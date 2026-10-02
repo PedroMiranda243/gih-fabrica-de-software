@@ -1,6 +1,6 @@
 /** Confirmação na própria página, e não num `window.confirm`: dá para ler,
     dá para testar, e não trava a tela inteira do navegador. */
-export default function Confirmacao({ texto, acao, ocupado, aoConfirmar, aoCancelar }) {
+export default function Confirmacao({ texto, acao, cancelar = "Cancelar", ocupado, aoConfirmar, aoCancelar }) {
   return (
     <div className="confirmacao" role="group" aria-label="Confirmação">
       <p className="confirmacao__texto">{texto}</p>
@@ -9,7 +9,7 @@ export default function Confirmacao({ texto, acao, ocupado, aoConfirmar, aoCance
           {acao}
         </button>
         <button type="button" className="botao botao--secundario" onClick={aoCancelar}>
-          Cancelar
+          {cancelar}
         </button>
       </div>
     </div>

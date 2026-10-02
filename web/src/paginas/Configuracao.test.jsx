@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
-import { simularApi } from "../testes/preparar";
+import { avisariaAoFechar, simularApi } from "../testes/preparar";
 import Configuracao from "./Configuracao";
 
 const ATUAL = {
@@ -111,5 +111,24 @@ describe("limiares da segmentação", () => {
 
     expect(await screen.findByRole("status")).toHaveTextContent("não há período importado");
     expect(screen.queryByText(/reprocessar-segmentos/)).not.toBeInTheDocument();
+  });
+});
+
+describe("limiares da segmentação — alterações não salvas (H97)", () => {
+  it("o limiar mudado e não salvo é alteração; de volta ao valor em vigor, não é mais", async () => {
+    simularApi({ "GET /api/configuracao/segmentacao": { corpo: ATUAL } });
+    const usuario = userEvent.setup();
+    renderizar();
+
+    const top = await screen.findByLabelText(/Tamanho do Top/);
+    expect(avisariaAoFechar()).toBe(false);
+
+    await usuario.clear(top);
+    await usuario.type(top, "10");
+    expect(avisariaAoFechar()).toBe(true);
+
+    await usuario.clear(top);
+    await usuario.type(top, "15");
+    expect(avisariaAoFechar()).toBe(false);
   });
 });
