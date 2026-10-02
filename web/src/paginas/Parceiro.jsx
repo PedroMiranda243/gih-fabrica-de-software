@@ -706,7 +706,10 @@ function Previsao({ previsao }) {
           </dl>
           <p className="previsao__nota">
             Estimativa do modelo, e não medição. A chance é a de o parceiro fechar o próximo
-            período em risco — em queda seguida, pela mesma regra da segmentação (RN09).
+            período em risco — em queda seguida, pela mesma regra da segmentação (RN09).{" "}
+            <Link className="ajuda-link" to="/ajuda#estimativa">
+              O que é estimativa?
+            </Link>
           </p>
           {previsao.desatualizada && (
             <p className="previsao__nota previsao__nota--alerta">

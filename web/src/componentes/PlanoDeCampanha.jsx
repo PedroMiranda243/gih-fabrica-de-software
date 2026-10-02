@@ -96,6 +96,12 @@ export default function PlanoDeCampanha({ execucao, origem = "Plano" }) {
           <dt>Previsões</dt>
           <dd>
             {execucao.modelo_versao}, com dados até {comoPeriodo(execucao.periodo_base)}
+            <span className="nao-imprime">
+              {" · "}
+              <Link className="ajuda-link" to="/ajuda#ganho">
+                Como se chega ao ganho esperado?
+              </Link>
+            </span>
           </dd>
           <dt>Aplicação</dt>
           <dd>{comoPeriodo({ data_inicio: p.aplicacao_inicio, data_fim: p.aplicacao_fim })}</dd>

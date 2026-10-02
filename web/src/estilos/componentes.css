@@ -568,6 +568,13 @@
 /* Neutra de propósito, e compartilhada pelo cadastro do parceiro e pelo plano de
    campanha: não é alerta nem segmento, é a natureza do número. Em
    caixa alta pequena, como os rótulos de coluna. */
+/* O caminho de um termo até a explicação dele, na ajuda (H95). Responde ao
+   clique, e por isso leva a tinta da ação; não vai para a folha impressa. */
+.ajuda-link {
+  color: var(--acao-ink);
+  font-weight: var(--peso-rotulo);
+}
+
 .etiqueta-estimativa {
   padding: 2px var(--esp-6);
   border: 1px solid var(--border);

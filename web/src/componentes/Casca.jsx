@@ -25,6 +25,7 @@ import { EXIGE } from "../navegacao/telas";
 import { useTema } from "../temas/useTema";
 import { ContextoTituloDaAba, tituloDaAba } from "./tituloDaAba";
 import {
+  IconeAjuda,
   IconeAprovacao,
   IconeAssistente,
   IconeAuditoria,
@@ -197,6 +198,12 @@ export default function Casca({ titulo }) {
                 <span className="cabecalho__perfil">{usuario.perfil}</span>
               </NavLink>
             )}
+
+            {/* A ajuda é de todos os perfis, como a conta, e por isso também fica
+                aqui e não no menu (H95). */}
+            <NavLink to="/ajuda" className="icone-botao" aria-label="Ajuda">
+              <IconeAjuda />
+            </NavLink>
 
             <button
               type="button"

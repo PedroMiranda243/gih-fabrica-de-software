@@ -27,6 +27,13 @@ describe("cabeçalho", () => {
     const conta = screen.getByRole("link", { name: "Minha conta: Comércio do Vale PARCEIRO" });
     expect(conta).toHaveAttribute("href", "/conta");
   });
+
+  it("a ajuda fica no cabeçalho, em qualquer perfil, e não no menu (H95)", () => {
+    const itens = menu({ nome: "Comércio do Vale", perfil: "PARCEIRO", telas: ["meu_desempenho"] });
+
+    expect(screen.getByRole("link", { name: "Ajuda" })).toHaveAttribute("href", "/ajuda");
+    expect(itens).not.toContain("Ajuda");
+  });
 });
 
 describe("menu lateral", () => {
