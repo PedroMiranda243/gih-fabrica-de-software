@@ -8,7 +8,7 @@
  * sessão ativa depois de a senha ser trocada em outro lugar, que é exatamente
  * o cenário que a revogação no servidor existe para cobrir.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { aoEncerrarSessao, api } from "./cliente";
 import { ContextoSessao } from "./contextoSessao";
@@ -31,13 +31,30 @@ export function ProvedorDeSessao({ children }) {
     };
   }, []);
 
+  /* A sessão terminou com a tela aberta? (H96) Só vale para quem estava dentro:
+     o 401 da primeira conferência, de quem ainda não entrou, não é "a sua
+     sessão terminou" — é só "você não entrou". */
+  const [encerrada, setEncerrada] = useState(false);
+  const dentro = useRef(false);
+  useEffect(() => {
+    dentro.current = Boolean(usuario);
+  }, [usuario]);
+
   /* Qualquer 401 vindo de qualquer requisição derruba o usuário local. A
      sessão pode ter expirado ou sido revogada enquanto a aba estava aberta, e
-     a tela precisa acompanhar. */
-  useEffect(() => aoEncerrarSessao(() => setUsuario(null)), []);
+     a tela precisa acompanhar — e dizer por que a pessoa voltou ao login. */
+  useEffect(
+    () =>
+      aoEncerrarSessao(() => {
+        if (dentro.current) setEncerrada(true);
+        setUsuario(null);
+      }),
+    [],
+  );
 
   const entrar = useCallback(async (login, senha) => {
     const sessao = await api.post("/api/sessao", { login, senha });
+    setEncerrada(false);
     setUsuario(sessao.usuario);
     return sessao.usuario;
   }, []);
@@ -47,14 +64,17 @@ export function ProvedorDeSessao({ children }) {
       await api.delete("/api/sessao");
     } finally {
       /* Mesmo que a chamada falhe, o usuário pediu para sair: a tela obedece.
-         O servidor já invalidou, ou invalidará na expiração. */
+         O servidor já invalidou, ou invalidará na expiração. Sair de propósito
+         não é "a sessão terminou". */
+      dentro.current = false;
+      setEncerrada(false);
       setUsuario(null);
     }
   }, []);
 
   const valor = useMemo(
-    () => ({ usuario, conferindo, entrar, sair }),
-    [usuario, conferindo, entrar, sair],
+    () => ({ usuario, conferindo, encerrada, entrar, sair }),
+    [usuario, conferindo, encerrada, entrar, sair],
   );
 
   return <ContextoSessao.Provider value={valor}>{children}</ContextoSessao.Provider>;

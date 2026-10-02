@@ -185,6 +185,27 @@
   gap: var(--esp-12);
 }
 
+/* "Pular para o conteúdo" (H96): fora da tela até receber o foco, e então no
+   canto de cima, por cima do menu. Não é `display: none` — escondido assim, ele
+   sairia da ordem do Tab, que é exatamente onde ele precisa estar. */
+.pular {
+  position: absolute;
+  top: var(--esp-8);
+  left: var(--esp-8);
+  z-index: 10;
+  padding: var(--esp-8) var(--esp-12);
+  border: 1px solid var(--borda-controle);
+  border-radius: var(--raio-controle);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: var(--peso-nome);
+  transform: translateY(-200%);
+}
+
+.pular:focus {
+  transform: none;
+}
+
 /* O nome leva à conta de quem está usando (H92). É link, e parece link só ao
    passar por ele: no cabeçalho de toda tela, um sublinhado fixo competiria com o
    título. O foco continua com o anel de sempre. */

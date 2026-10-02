@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
 import { useSessao } from "../api/contextoSessao";
+import { EXIGE } from "../navegacao/telas";
 import { useTema } from "../temas/useTema";
 import { ContextoTituloDaAba, tituloDaAba } from "./tituloDaAba";
 import {
@@ -44,34 +45,34 @@ import {
   IconeTemaEscuro,
 } from "./Icones";
 
-/* `exige`: as telas do servidor que sustentam o item — basta uma. A Importação
-   aparece para quem importa **ou** só lê o histórico, que é o caso do
-   Administrador (RF13). */
+/* `exige`: as telas do servidor que sustentam o item — basta uma. Vem de
+   `navegacao/telas.js`, a mesma tabela que a guarda das rotas lê (H94): o item
+   que o menu esconde é a tela que o endereço não monta. */
 const GRUPOS = [
   {
     chave: "analise",
     titulo: "Análise",
     itens: [
-      { para: "/", rotulo: "Painel", Icone: IconePainel, fim: true, exige: ["painel"] },
+      { para: "/", rotulo: "Painel", Icone: IconePainel, fim: true, exige: EXIGE.painel },
       /* O Parceiro tem só esta: o histórico dele, e nada da rede (RF26, H39). */
-      { para: "/meu-desempenho", rotulo: "Meu desempenho", Icone: IconePainel, exige: ["meu_desempenho"] },
+      { para: "/meu-desempenho", rotulo: "Meu desempenho", Icone: IconePainel, exige: EXIGE.meuDesempenho },
       {
         para: "/importacao",
         rotulo: "Importação",
         Icone: IconeImportar,
-        exige: ["importar", "historico_importacoes"],
+        exige: EXIGE.importacao,
       },
-      { para: "/parceiros", rotulo: "Parceiros", Icone: IconeParceiros, exige: ["parceiros"] },
+      { para: "/parceiros", rotulo: "Parceiros", Icone: IconeParceiros, exige: EXIGE.parceiros },
       /* Consulta, como o painel e a lista de parceiros: por isso junto deles (UC12). */
-      { para: "/assistente", rotulo: "Assistente", Icone: IconeAssistente, exige: ["assistente"] },
+      { para: "/assistente", rotulo: "Assistente", Icone: IconeAssistente, exige: EXIGE.assistente },
       /* Os três relatórios da rede (UC15), que resumem o que este grupo mostra. */
-      { para: "/relatorios", rotulo: "Relatórios", Icone: IconeRelatorios, exige: ["relatorios"] },
+      { para: "/relatorios", rotulo: "Relatórios", Icone: IconeRelatorios, exige: EXIGE.relatorios },
     ],
   },
   {
     chave: "previsao",
     titulo: "Previsão",
-    itens: [{ para: "/modelo", rotulo: "Modelo", Icone: IconeModelo, exige: ["modelo"] }],
+    itens: [{ para: "/modelo", rotulo: "Modelo", Icone: IconeModelo, exige: EXIGE.modelo }],
   },
   {
     /* "Otimização", e não "Campanha": o grupo leva o nome do módulo, e o item
@@ -79,39 +80,39 @@ const GRUPOS = [
     chave: "otimizacao",
     titulo: "Otimização",
     itens: [
-      { para: "/campanha", rotulo: "Campanha", Icone: IconeCampanha, exige: ["campanha"] },
+      { para: "/campanha", rotulo: "Campanha", Icone: IconeCampanha, exige: EXIGE.campanha },
       /* O histórico (RF34) é também do Administrador, que não tem a Campanha. */
-      { para: "/execucoes", rotulo: "Execuções", Icone: IconeExecucoes, exige: ["execucoes"] },
-      { para: "/benchmark", rotulo: "Benchmark", Icone: IconeBenchmark, exige: ["benchmark"] },
+      { para: "/execucoes", rotulo: "Execuções", Icone: IconeExecucoes, exige: EXIGE.execucoes },
+      { para: "/benchmark", rotulo: "Benchmark", Icone: IconeBenchmark, exige: EXIGE.benchmark },
     ],
   },
   {
     chave: "comunicacao",
     titulo: "Comunicação",
     itens: [
-      { para: "/mensagens", rotulo: "Mensagens", Icone: IconeMensagens, exige: ["mensagens"] },
-      { para: "/aprovacao", rotulo: "Aprovação", Icone: IconeAprovacao, exige: ["aprovacao"] },
+      { para: "/mensagens", rotulo: "Mensagens", Icone: IconeMensagens, exige: EXIGE.mensagens },
+      { para: "/aprovacao", rotulo: "Aprovação", Icone: IconeAprovacao, exige: EXIGE.aprovacao },
     ],
   },
   {
     chave: "administracao",
     titulo: "Administração",
     itens: [
-      { para: "/usuarios", rotulo: "Usuários", Icone: IconeUsuarios, exige: ["usuarios"] },
+      { para: "/usuarios", rotulo: "Usuários", Icone: IconeUsuarios, exige: EXIGE.usuarios },
       /* A trilha do que foi feito (UC14): só o Administrador a abre. */
-      { para: "/auditoria", rotulo: "Auditoria", Icone: IconeAuditoria, exige: ["auditoria"] },
+      { para: "/auditoria", rotulo: "Auditoria", Icone: IconeAuditoria, exige: EXIGE.auditoria },
       /* O relatório das operações resume a trilha, e fica ao lado dela (RF47). */
       {
         para: "/relatorios/operacoes",
         rotulo: "Operações",
         Icone: IconeOperacoes,
-        exige: ["relatorio_operacoes"],
+        exige: EXIGE.operacoes,
       },
       {
         para: "/configuracao",
         rotulo: "Configuração",
         Icone: IconeConfiguracao,
-        exige: ["configuracao"],
+        exige: EXIGE.configuracao,
       },
     ],
   },
@@ -145,6 +146,12 @@ export default function Casca({ titulo }) {
 
   return (
     <div className="casca">
+      {/* O primeiro foco da página (H96): quem navega pelo teclado chega ao
+          conteúdo sem atravessar o menu a cada tela. Só aparece ao receber o foco. */}
+      <a className="pular" href="#conteudo">
+        Pular para o conteúdo
+      </a>
+
       <nav className="trilho" aria-label="Seções do sistema">
         <div className="trilho__marca">
           <span className="trilho__sigla">GIH</span>
@@ -170,7 +177,11 @@ export default function Casca({ titulo }) {
 
       <div className="conteudo">
         <header className="cabecalho">
-          <h1 className="cabecalho__titulo">{titulo}</h1>
+          {/* Recebe o foco quando a tela troca (`FocoNaTroca`, em App.jsx): é o que
+              o leitor de tela anuncia, e de onde o Tab seguinte parte. */}
+          <h1 className="cabecalho__titulo" id="titulo-da-tela" tabIndex={-1}>
+            {titulo}
+          </h1>
 
           <div className="cabecalho__direita">
             {/* O nome é o caminho para a conta de quem está usando (H92): é onde a
@@ -205,7 +216,7 @@ export default function Casca({ titulo }) {
           </div>
         </header>
 
-        <main className="pagina">
+        <main className="pagina" id="conteudo" tabIndex={-1}>
           <ContextoTituloDaAba.Provider value={setDetalhe}>
             <Outlet />
           </ContextoTituloDaAba.Provider>

@@ -22,6 +22,7 @@ import { useSessao } from "../api/contextoSessao";
 import Campo from "../componentes/Campo";
 import { Esqueleto } from "../componentes/Carregando";
 import Confirmacao from "../componentes/Confirmacao";
+import EntradaDeSenha from "../componentes/EntradaDeSenha";
 import EscolhaDoParceiro from "../componentes/EscolhaDoParceiro";
 import EstadoVazio from "../componentes/EstadoVazio";
 import { useTituloDaAba } from "../componentes/tituloDaAba";
@@ -281,9 +282,9 @@ function Conta({ id }) {
               erro={erroDoCampo.senha}
               ajuda="A senha do primeiro acesso. O servidor confere a força; depois de salva, ninguém a vê."
             >
-              <input
+              <EntradaDeSenha
                 id="campo-senha"
-                type="password"
+                de="a senha inicial"
                 autoComplete="new-password"
                 value={form.senha}
                 onChange={(e) => mudar("senha", e.target.value)}
@@ -492,9 +493,9 @@ function Senha({ conta, souEu }) {
             erro={erroDoCampo}
             ajuda="O servidor confere a força. Depois de salva, ninguém a vê — nem aqui."
           >
-            <input
+            <EntradaDeSenha
               id="campo-senha_nova"
-              type="password"
+              de="a senha nova"
               autoComplete="new-password"
               value={senha}
               onChange={(e) => {

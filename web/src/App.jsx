@@ -5,11 +5,13 @@
  * funcionar, e um painel filtrado precisa poder ser mandado para outra pessoa
  * por link. Roteador à mão erraria exatamente esses dois pontos.
  */
+import { useEffect, useRef } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { useSessao } from "./api/contextoSessao";
 import Casca from "./componentes/Casca";
 import Carregando from "./componentes/Carregando";
+import { EXIGE, abre } from "./navegacao/telas";
 import Aprovacao from "./paginas/Aprovacao";
 import Assistente from "./paginas/Assistente";
 import Auditoria from "./paginas/Auditoria";
@@ -34,6 +36,7 @@ import RelatorioDesempenho from "./paginas/RelatorioDesempenho";
 import RelatorioOperacoes from "./paginas/RelatorioOperacoes";
 import RelatorioRisco from "./paginas/RelatorioRisco";
 import Relatorios from "./paginas/Relatorios";
+import SemAcesso from "./paginas/SemAcesso";
 import Usuario from "./paginas/Usuario";
 import Usuarios from "./paginas/Usuarios";
 
@@ -63,6 +66,19 @@ function Protegido({ children }) {
 }
 
 /**
+ * A tela que o perfil abre — ou a página que diz que ele não abre (H94).
+ *
+ * Como o `Protegido`, **isto não é controle de acesso**: a API valida o perfil a
+ * cada requisição. É a interface deixando de montar uma tela que ela já sabe,
+ * pelas telas que o servidor mandou na sessão, que vai ser recusada. A tabela
+ * `EXIGE` é a mesma que o menu lê.
+ */
+function Tela({ exige, children }) {
+  const { usuario } = useSessao();
+  return abre(usuario, exige) ? children : <SemAcesso />;
+}
+
+/**
  * A página inicial de cada um. O Parceiro não tem o painel da rede (RF26): o
  * endereço raiz o leva ao portal dele, em vez de a um painel que a API recusa.
  */
@@ -75,7 +91,43 @@ function Inicio() {
   return <Painel />;
 }
 
+/**
+ * Ao trocar de tela, o foco vai para o título dela (H96).
+ *
+ * Numa aplicação de página única, clicar num item do menu troca o conteúdo e
+ * deixa o foco onde estava — no item do menu. Quem usa leitor de tela não ouve
+ * que a tela mudou, e quem usa o teclado continua no menu. Levar o foco ao
+ * título resolve os dois: ele é anunciado, e o Tab seguinte entra no conteúdo.
+ *
+ * **Só quando o caminho muda.** Os filtros das listas moram na URL: mudar um
+ * filtro troca a consulta, e não o caminho — e tirar o foco do campo em que a
+ * pessoa está digitando seria pior que o defeito que isto corrige.
+ *
+ * Fora das rotas, e depois delas, para o efeito rodar com a tela nova já montada.
+ */
+function FocoNaTroca() {
+  const { pathname } = useLocation();
+  const anterior = useRef(pathname);
+
+  useEffect(() => {
+    if (anterior.current === pathname) return;
+    anterior.current = pathname;
+    document.getElementById("titulo-da-tela")?.focus();
+  }, [pathname]);
+
+  return null;
+}
+
 export default function App() {
+  return (
+    <>
+      <Rotas />
+      <FocoNaTroca />
+    </>
+  );
+}
+
+function Rotas() {
   return (
     <Routes>
       <Route path="/entrar" element={<Login />} />
@@ -87,7 +139,14 @@ export default function App() {
           </Protegido>
         }
       >
-        <Route index element={<Inicio />} />
+        <Route
+          index
+          element={
+            <Tela exige={EXIGE.inicio}>
+              <Inicio />
+            </Tela>
+          }
+        />
       </Route>
 
       <Route
@@ -97,7 +156,14 @@ export default function App() {
           </Protegido>
         }
       >
-        <Route path="/importacao" element={<Importacao />} />
+        <Route
+          path="/importacao"
+          element={
+            <Tela exige={EXIGE.importacao}>
+              <Importacao />
+            </Tela>
+          }
+        />
       </Route>
 
       <Route
@@ -107,12 +173,33 @@ export default function App() {
           </Protegido>
         }
       >
-        <Route path="/parceiros" element={<Parceiros />} />
+        <Route
+          path="/parceiros"
+          element={
+            <Tela exige={EXIGE.parceiros}>
+              <Parceiros />
+            </Tela>
+          }
+        />
         {/* Cadastro e edição no mesmo componente, cada um com endereço próprio:
             o cadastro de um parceiro precisa poder ser aberto por link, e o
             botão voltar precisa devolver a lista com o filtro que ela tinha. */}
-        <Route path="/parceiros/novo" element={<Parceiro />} />
-        <Route path="/parceiros/:id" element={<Parceiro />} />
+        <Route
+          path="/parceiros/novo"
+          element={
+            <Tela exige={EXIGE.parceiros}>
+              <Parceiro />
+            </Tela>
+          }
+        />
+        <Route
+          path="/parceiros/:id"
+          element={
+            <Tela exige={EXIGE.parceiros}>
+              <Parceiro />
+            </Tela>
+          }
+        />
       </Route>
 
       {/* A conta de quem está usando (H92): de todos os perfis, e por isso fora do
@@ -134,9 +221,30 @@ export default function App() {
           </Protegido>
         }
       >
-        <Route path="/usuarios" element={<Usuarios />} />
-        <Route path="/usuarios/novo" element={<Usuario />} />
-        <Route path="/usuarios/:id" element={<Usuario />} />
+        <Route
+          path="/usuarios"
+          element={
+            <Tela exige={EXIGE.usuarios}>
+              <Usuarios />
+            </Tela>
+          }
+        />
+        <Route
+          path="/usuarios/novo"
+          element={
+            <Tela exige={EXIGE.usuarios}>
+              <Usuario />
+            </Tela>
+          }
+        />
+        <Route
+          path="/usuarios/:id"
+          element={
+            <Tela exige={EXIGE.usuarios}>
+              <Usuario />
+            </Tela>
+          }
+        />
       </Route>
 
       <Route
@@ -146,7 +254,14 @@ export default function App() {
           </Protegido>
         }
       >
-        <Route path="/auditoria" element={<Auditoria />} />
+        <Route
+          path="/auditoria"
+          element={
+            <Tela exige={EXIGE.auditoria}>
+              <Auditoria />
+            </Tela>
+          }
+        />
       </Route>
 
       <Route
@@ -158,11 +273,46 @@ export default function App() {
       >
         {/* Cada relatório com endereço próprio, e o recorte nele: é o que deixa
             mandar o link de um relatório já filtrado (UC15). */}
-        <Route path="/relatorios" element={<Relatorios />} />
-        <Route path="/relatorios/desempenho" element={<RelatorioDesempenho />} />
-        <Route path="/relatorios/risco" element={<RelatorioRisco />} />
-        <Route path="/relatorios/campanha" element={<RelatorioCampanha />} />
-        <Route path="/relatorios/operacoes" element={<RelatorioOperacoes />} />
+        <Route
+          path="/relatorios"
+          element={
+            <Tela exige={EXIGE.relatorios}>
+              <Relatorios />
+            </Tela>
+          }
+        />
+        <Route
+          path="/relatorios/desempenho"
+          element={
+            <Tela exige={EXIGE.relatorios}>
+              <RelatorioDesempenho />
+            </Tela>
+          }
+        />
+        <Route
+          path="/relatorios/risco"
+          element={
+            <Tela exige={EXIGE.relatorios}>
+              <RelatorioRisco />
+            </Tela>
+          }
+        />
+        <Route
+          path="/relatorios/campanha"
+          element={
+            <Tela exige={EXIGE.relatorios}>
+              <RelatorioCampanha />
+            </Tela>
+          }
+        />
+        <Route
+          path="/relatorios/operacoes"
+          element={
+            <Tela exige={EXIGE.operacoes}>
+              <RelatorioOperacoes />
+            </Tela>
+          }
+        />
       </Route>
 
       <Route
@@ -172,7 +322,14 @@ export default function App() {
           </Protegido>
         }
       >
-        <Route path="/configuracao" element={<Configuracao />} />
+        <Route
+          path="/configuracao"
+          element={
+            <Tela exige={EXIGE.configuracao}>
+              <Configuracao />
+            </Tela>
+          }
+        />
       </Route>
 
       <Route
@@ -182,7 +339,14 @@ export default function App() {
           </Protegido>
         }
       >
-        <Route path="/modelo" element={<Modelo />} />
+        <Route
+          path="/modelo"
+          element={
+            <Tela exige={EXIGE.modelo}>
+              <Modelo />
+            </Tela>
+          }
+        />
       </Route>
 
       <Route
@@ -192,7 +356,14 @@ export default function App() {
           </Protegido>
         }
       >
-        <Route path="/campanha" element={<Campanha />} />
+        <Route
+          path="/campanha"
+          element={
+            <Tela exige={EXIGE.campanha}>
+              <Campanha />
+            </Tela>
+          }
+        />
       </Route>
 
       <Route
@@ -202,9 +373,30 @@ export default function App() {
           </Protegido>
         }
       >
-        <Route path="/execucoes" element={<Execucoes />} />
-        <Route path="/execucoes/comparar" element={<Comparacao />} />
-        <Route path="/execucoes/:id" element={<Execucao />} />
+        <Route
+          path="/execucoes"
+          element={
+            <Tela exige={EXIGE.execucoes}>
+              <Execucoes />
+            </Tela>
+          }
+        />
+        <Route
+          path="/execucoes/comparar"
+          element={
+            <Tela exige={EXIGE.execucao}>
+              <Comparacao />
+            </Tela>
+          }
+        />
+        <Route
+          path="/execucoes/:id"
+          element={
+            <Tela exige={EXIGE.execucao}>
+              <Execucao />
+            </Tela>
+          }
+        />
       </Route>
 
       <Route
@@ -214,7 +406,14 @@ export default function App() {
           </Protegido>
         }
       >
-        <Route path="/benchmark" element={<Benchmark />} />
+        <Route
+          path="/benchmark"
+          element={
+            <Tela exige={EXIGE.benchmark}>
+              <Benchmark />
+            </Tela>
+          }
+        />
       </Route>
 
       <Route
@@ -224,7 +423,14 @@ export default function App() {
           </Protegido>
         }
       >
-        <Route path="/mensagens" element={<Mensagens />} />
+        <Route
+          path="/mensagens"
+          element={
+            <Tela exige={EXIGE.mensagens}>
+              <Mensagens />
+            </Tela>
+          }
+        />
       </Route>
 
       <Route
@@ -234,7 +440,14 @@ export default function App() {
           </Protegido>
         }
       >
-        <Route path="/aprovacao" element={<Aprovacao />} />
+        <Route
+          path="/aprovacao"
+          element={
+            <Tela exige={EXIGE.aprovacao}>
+              <Aprovacao />
+            </Tela>
+          }
+        />
       </Route>
 
       <Route
@@ -244,7 +457,14 @@ export default function App() {
           </Protegido>
         }
       >
-        <Route path="/assistente" element={<Assistente />} />
+        <Route
+          path="/assistente"
+          element={
+            <Tela exige={EXIGE.assistente}>
+              <Assistente />
+            </Tela>
+          }
+        />
       </Route>
 
       <Route
@@ -254,7 +474,14 @@ export default function App() {
           </Protegido>
         }
       >
-        <Route path="/meu-desempenho" element={<MeuDesempenho />} />
+        <Route
+          path="/meu-desempenho"
+          element={
+            <Tela exige={EXIGE.meuDesempenho}>
+              <MeuDesempenho />
+            </Tela>
+          }
+        />
       </Route>
 
       {/* Endereço que não existe mostra a página que diz isso, dentro da casca
