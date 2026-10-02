@@ -898,13 +898,23 @@ function montar() {
   ], { zebra: true, boldCol: 0, size: 17 }));
 
   c.push(h2('11.1 As duas pendências da Pré-Banca, como estão'));
+  // As três leituras do registro: todos aprovados, nenhum, ou parte deles.
+  const semAprovacao = revisoes.length - aprovadosNoGithub;
+  let situacaoDasRevisoes;
+  if (!semAprovacao) {
+    situacaoDasRevisoes = `os ${revisoes.length} têm aprovação registrada no GitHub. A pendência fecha se isso se `
+      + 'mantiver até a entrega final';
+  } else if (!aprovadosNoGithub) {
+    situacaoDasRevisoes = 'nenhum tem aprovação registrada no GitHub: ela foi dada fora da plataforma, como na '
+      + 'entrega anterior, e a pendência continua em aberto';
+  } else {
+    situacaoDasRevisoes = `${aprovadosNoGithub} têm aprovação registrada no GitHub; nos outros ${semAprovacao}, `
+      + 'ela foi dada fora da plataforma, e a pendência continua em aberto';
+  }
   c.push(bullet(
-    `Revisão cruzada. Cada Pull Request desta entrega foi aberto convidando o dono de cada área a revisar. Dos `
-    + `${revisoes.length} incorporados desde a entrega anterior, ${aprovadosNoGithub} têm aprovação registrada no `
-    + `GitHub. ${aprovadosNoGithub === revisoes.length
-      ? 'A pendência fecha se isso se mantiver até a entrega final'
-      : 'Nos demais, o GitHub não registra a aprovação de um colega, e a pendência continua em aberto'}; `
-    + 'o registro é gerado de novo a cada entrega.',
+    `Revisão cruzada. Cada Pull Request desta entrega foi aberto convidando o dono de cada área a revisar, e `
+    + `pedindo a aprovação no próprio PR. Dos ${revisoes.length} incorporados desde a entrega anterior, `
+    + `${situacaoDasRevisoes}. O registro é gerado de novo a cada entrega.`,
   ));
   c.push(bullet(
     `Autoria. Os ${totalDeCommits} commits continuam com o mesmo autor, e os demais integrantes como coautores, `
