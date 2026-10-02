@@ -142,13 +142,38 @@ class TrocaSenha(BaseModel):
 
 # ------------------------------------------------------------------- auditoria
 class RegistroAuditoria(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    """Um evento da trilha, como a tela o lê (RF08, H89).
+
+    O código da ação e os `detalhes` crus continuam aqui, para investigar; o
+    `rotulo` e o `resumo` são a frase, montada no servidor.
+    """
 
     id: int
     usuario_id: int | None
+    autor: str | None = Field(description="O nome de quem fez; nulo sem usuário (UC14-A1).")
+    autor_login: str | None
     acao: str
+    rotulo: str = Field(description="A ação em português.")
+    resumo: str = Field(description="O que aconteceu, a partir dos detalhes gravados.")
     detalhes: dict | None
     origem: str | None
+    ocorrido_em: datetime
+
+
+class AcaoAuditavel(BaseModel):
+    """Uma ação que a trilha registra, para o filtro da tela."""
+
+    acao: str
+    rotulo: str
+
+
+class EventoDoParceiro(BaseModel):
+    """Um evento do cadastro de um parceiro (RF50, H90) — sem a origem, que é da auditoria."""
+
+    acao: str
+    rotulo: str
+    resumo: str
+    autor: str | None
     ocorrido_em: datetime
 
 

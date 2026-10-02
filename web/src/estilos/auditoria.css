@@ -1,0 +1,92 @@
+/* A trilha de auditoria (H89) e o histórico do cadastro do parceiro (H90). */
+
+/* A ação é o que se procura com os olhos, e leva o peso; o resumo é texto
+   corrido, e quebra de linha — a célula da tabela, por padrão, não quebra. */
+.auditoria__tabela .nome {
+  min-width: 16ch;
+}
+
+/* Com a tabela na frente: `.tabela td` não quebra linha, e ganha de uma classe
+   sozinha. Sem isto a frase empurrava a origem para trás da rolagem. */
+.auditoria__tabela .auditoria__resumo {
+  min-width: 28ch;
+  white-space: normal;
+}
+
+/* O login embaixo do nome, e não ao lado: lado a lado, a coluna de quem fez
+   ficava mais larga que a do que aconteceu. */
+.auditoria__login {
+  display: block;
+  color: var(--ink-2);
+  font-family: var(--fonte-dados);
+  font-size: var(--txt-12);
+}
+
+/* Os parâmetros crus, para quem investiga. Fechados por padrão: a frase acima
+   basta na maior parte das vezes, e o JSON aberto em toda linha seria ruído. */
+.auditoria__gravado {
+  margin-top: var(--esp-4);
+}
+
+.auditoria__gravado summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  color: var(--acao-ink);
+  font-size: var(--txt-12);
+  font-weight: var(--peso-rotulo);
+  cursor: pointer;
+}
+
+.auditoria__gravado pre {
+  margin: var(--esp-4) 0 0;
+  padding: var(--esp-8);
+  border-radius: var(--raio-controle);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-family: var(--fonte-dados);
+  font-size: var(--txt-12);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------- histórico do cadastro (H90) */
+.historico-cadastro {
+  margin: 0;
+  padding: 0 var(--esp-16) var(--esp-16);
+  list-style: none;
+}
+
+.historico-cadastro__evento {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  gap: var(--esp-4) var(--esp-16);
+  padding: var(--esp-12) 0;
+  border-top: 1px solid var(--border);
+}
+
+.historico-cadastro__evento:first-child {
+  border-top: none;
+}
+
+.historico-cadastro__quando {
+  color: var(--ink-2);
+  font-family: var(--fonte-dados);
+  font-size: var(--txt-12);
+  font-variant-numeric: tabular-nums;
+}
+
+.historico-cadastro__acao {
+  font-weight: var(--peso-nome);
+}
+
+.historico-cadastro__detalhe {
+  color: var(--ink-2);
+  font-size: var(--txt-13);
+}
+
+@media (max-width: 560px) {
+  .historico-cadastro__evento {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

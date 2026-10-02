@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 2.1 — 30/09/2026 · as histórias da Sprint 06 acadêmica (2.0 — 15/09/2026, sprints semanais)
+**Versão:** 2.2 — 01/10/2026 · as histórias da Sprint 07 acadêmica (2.1 — 30/09/2026, as da Sprint 06; 2.0 — 15/09/2026, sprints semanais)
 
 ---
 
@@ -35,15 +35,15 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | Épico | Título | Pontos | Sprints |
 |---|---|---:|---|
 | **E1** | Fundação, planejamento e ambiente | 47 | 1–3 |
-| **E2** | Autenticação, perfis e auditoria | 39 | 4–5 |
-| **E3** | Ingestão e modelo de dados | 46 | 2–6 |
-| **E4** | Inteligência de negócio e segmentação | 52 | 6–9, S06 |
-| **E5** | Núcleo preditivo | 37 | 8–9, S06 |
-| **E6** | Otimização, paralelismo e GPU | 82 | 3–11 |
+| **E2** | Autenticação, perfis e auditoria | 47 | 4–5, S07 |
+| **E3** | Ingestão e modelo de dados | 49 | 2–6, S07 |
+| **E4** | Inteligência de negócio e segmentação | 70 | 6–9, S06, S07 |
+| **E5** | Núcleo preditivo | 40 | 8–9, S06, S07 |
+| **E6** | Otimização, paralelismo e GPU | 88 | 3–11, S07 |
 | **E7** | Central de comunicação | 26 | 12 |
 | **E8** | Assistente analítico | 21 | 12–13 |
 | **E9** | Qualidade, documentação e entrega | 52 | 2–13, S06 |
-| | **Total** | **402** | |
+| | **Total** | **440** | |
 
 ---
 
@@ -75,6 +75,8 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H17** | Como sistema, quero validar a permissão no servidor a cada requisição, para que a interface não seja a barreira de segurança. | M | 8 | 5 | RNF14; teste automatizado tenta cada endpoint com cada perfil e confirma a negação esperada |
 | **H18** | Como administrador, quero consultar a trilha de auditoria, para investigar o que foi feito e por quem. | S | 5 | 4 | RF06, RF08; registro de ações sensíveis com autor, data e parâmetros; filtros funcionando |
 | **H19** | Como usuário, quero alterar minha senha, para manter minha conta segura. | S | 3 | 4 | RF07; exige a senha atual; nova senha validada quanto à força mínima |
+| **H87** | Como administrador, quero um relatório do que foi feito no sistema, por tipo de ação, por usuário e por dia, para acompanhar o uso e achar o que foge do comum. | S | 3 | S07 | RF47; contagens num intervalo de datas, com filtro por autor e ação; os totais são os da trilha no mesmo recorte |
+| **H89** | Como administrador, quero consultar a trilha de auditoria numa tela, filtrando, buscando e exportando, para investigar o que foi feito sem depender da API. | M | 5 | S07 | RF08, RF49; autor, ação em português e resumo de cada operação; filtros, busca por texto, paginação e CSV do recorte — a interface do UC14, que a H18 deixou só na API |
 
 ## E3 — Ingestão e modelo de dados
 
@@ -91,6 +93,7 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H28** | Como equipe, quero um gerador de dados sintéticos, para demonstrar o sistema e medir o otimizador em escala. | M | 5 | 3 | RF16; gera de 100 a 10.000 parceiros com múltiplos períodos, tendência, sazonalidade e ruído; semente reproduzível |
 | **H29** | Como analista, quero consultar o histórico de importações, para auditar a origem dos dados. | M | 2 | 6 | RF13; autor, data, período e total de registros |
 | **H77** | Como desenvolvedor, quero um comando que limpe e repovoe o banco, para testar sempre a partir de um estado conhecido. | M | 2 | 3 | Limpa o banco, aplica as migrações e repovoa com o gerador em um comando; pede confirmação antes de apagar |
+| **H90** | Como gestor ou analista, quero ver no cadastro do parceiro o que mudou nele, quando e por quem, para entender a história de um cadastro. | S | 3 | S07 | RF50; criação, edição, classificação, desativação e reativação, só do próprio parceiro |
 
 ## E4 — Inteligência de negócio e segmentação
 
@@ -108,6 +111,10 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H39** | Como parceiro, quero consultar meu próprio desempenho, para acompanhar minha evolução. | C | 3 | 12 | RF26; sem acesso a dados de terceiros nem a ranking comparativo; negação validada no servidor |
 | **H40** | Como gestor, quero que o painel responda rápido mesmo com base grande, para usar o sistema no dia a dia. | M | 3 | 6 | RNF03, RNF05; até 2 s com 5.000 parceiros; consultas com índice |
 | **H81** | Como gestor ou analista, quero passar de um módulo a outro pelos próprios dados, para seguir um parceiro do painel até a campanha sem procurar pelo menu. | S | 5 | S06 | RF22, RF28; ranking e segmentos do painel levam ao parceiro e à lista filtrada; o cadastro mostra a ação do parceiro no último plano, com link para a execução |
+| **H82** | Como gestor ou analista, quero escolher o período e a categoria que o painel mostra, para acompanhar um recorte da rede, e não só o período mais recente. | M | 5 | S07 | RF17 a RF20; seletor de período e filtro por categoria, na URL; a posição do ranking continua a global (RN02); sem N+1 (RNF03) |
+| **H83** | Como gestor ou analista, quero ver no painel o que o modelo prevê e o que a última campanha decidiu, para acompanhar os três módulos num lugar só. | S | 3 | S07 | RF28, RF30; o previsto ao lado do medido, os parceiros de maior risco e o resumo do último plano, só para quem a API autoriza |
+| **H84** | Como gestor ou analista, quero um relatório do desempenho de um período, por categoria e por segmento, para apresentar como a rede foi. | M | 5 | S07 | RF44; faturamento, pedidos, ticket médio derivado (RN04), parceiros e variação; os totais são os do painel |
+| **H88** | Como gestor, analista ou administrador, quero exportar cada relatório em CSV e imprimi-lo em PDF, para levá-lo para fora do sistema. | M | 5 | S07 | RF48; o CSV com o recorte da tela e a proteção contra fórmula; a impressão sem menu nem filtros, com o recorte, a data e quem gerou; nenhuma dependência nova |
 
 ## E5 — Núcleo preditivo
 
@@ -120,6 +127,7 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H45** | Como administrador, quero disparar o retreino do modelo, para incorporar os períodos novos. | S | 5 | 9 | RF27; registra data, volume de dados e métricas obtidas; execução registrada na auditoria |
 | **H46** | Como equipe, quero comparar o modelo com baselines estatísticos, para provar que o aprendizado agrega. | M | 3 | 8 | Tabela comparativa com pelo menos dois baselines; resultado publicado na documentação |
 | **H80** | Como gestor ou analista, quero ver e ordenar a lista de parceiros pelo risco de queda, para saber em quem investir olhando a rede inteira de uma vez. | S | 3 | S06 | RF23, RF28; a probabilidade da versão em uso na lista e no CSV, ordenável, sem previsão por último; sem N+1 (RNF03) |
+| **H85** | Como gestor ou analista, quero um relatório de quem está em risco e de quem o modelo prevê que caia, para decidir a quem dar atenção. | M | 3 | S07 | RF45; segmento, variação, faturamento medido e previsto, risco e a ação no último plano; o risco mínimo é filtro de quem consulta, e não limiar do sistema |
 
 ## E6 — Otimização, paralelismo e GPU
 
@@ -143,6 +151,8 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H57** | Como gestor, quero ver o benchmark comparativo na interface, para enxergar o ganho de forma objetiva. | M | 8 | 11 | RF33; tabela com tempo, desvio, speedup e uplift; gráfico de escalabilidade |
 | **H58** | Como gestor, quero consultar o histórico de execuções do otimizador, para retomar e comparar decisões. | S | 3 | 10 | RF34; autor, data, parâmetros, modo, tempo e resultado |
 | **H59** | Como gestor, quero comparar dois planos lado a lado, para escolher entre cenários. | C | 5 | 11 | RF35; diferenças destacadas entre os dois planos |
+| **H86** | Como gestor ou analista, quero um relatório do plano de uma campanha, por ação, por categoria e por segmento, para apresentar onde a verba foi. | M | 3 | S07 | RF46; parceiros, custo e ganho esperado; sem escolha, vale o último plano viável; os totais somam o plano gravado |
+| **H91** | Como gestor, analista ou administrador, quero filtrar o histórico de execuções, buscar um usuário e exportar um plano, para chegar ao registro que procuro. | S | 3 | S07 | RF51, RF52, RF53; execuções por modo, resultado, autor e datas; usuários por nome ou login; o plano em CSV |
 
 ## E7 — Central de comunicação
 
@@ -201,7 +211,8 @@ Detalhamento e datas em [05 — Cronograma](05-cronograma.md).
 | **12** | Central de comunicação | H60, H61, H62, H63, H64, H39 | 29 |
 | **13** | Assistente e fechamento | H65, H66, H67, H68, H72, H73, H74, H75, H76 | 48 |
 | **S06** | Sprint 06 acadêmica — navegação, risco na lista e integração | H79, H80, H81 | 13 |
-| | | **Total** | **402** |
+| **S07** | Sprint 07 acadêmica — painel, relatórios, pesquisa, filtros, exportação e histórico | H82, H83, H84, H85, H86, H87, H88, H89, H90, H91 | 38 |
+| | | **Total** | **440** |
 
 > A média é de **30,2 pontos por semana**, contra uma capacidade nominal de ~40. A folga é pequena, e a
 > Sprint 13 está deliberadamente acima da média — ver a seção *A semana que não fecha* no cronograma.
@@ -209,6 +220,12 @@ Detalhamento e datas em [05 — Cronograma](05-cronograma.md).
 > **Replanejamento de 27/09/2026.** A H39 não entrou na Sprint 9 e passa para a 12. A H68 vai para a 13,
 > com o assistente cuja confiabilidade ela protege: a abstenção só se testa com o catálogo de perguntas
 > pronto (ADR-013). O total não muda.
+
+> **Sprint 07 da disciplina, 01/10/2026.** O enunciado pede dashboard, relatórios, pesquisas, filtros,
+> exportação e histórico de operações. O levantamento achou o que já existia — o painel, a busca e os filtros
+> de parceiros, o CSV, a trilha de auditoria na API — e o que faltava: os relatórios, a tela da auditoria e
+> os filtros do painel. As dez histórias novas, H82 a H91, entram com critério de aceite antes do código, e o
+> escopo passa de 402 para 440 pontos.
 
 ## Primeiro corte, se o prazo apertar
 

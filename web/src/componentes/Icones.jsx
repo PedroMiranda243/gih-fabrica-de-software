@@ -117,6 +117,19 @@ export function IconeExecucoes(props) {
   );
 }
 
+/* Uma lista conferida: a trilha do que foi feito, registro a registro (H89). */
+export function IconeAuditoria(props) {
+  return (
+    <svg {...comuns} {...props}>
+      <path d="M3.5 2.5h9v11h-9z" />
+      <path d="M5.5 5.5l.9.9 1.6-1.7" />
+      <path d="M9.5 5.8h1.5" />
+      <path d="M5.5 9.5l.9.9 1.6-1.7" />
+      <path d="M9.5 9.8h1.5" />
+    </svg>
+  );
+}
+
 /* Um velocímetro: o benchmark mede a velocidade de cada modo. */
 export function IconeBenchmark(props) {
   return (

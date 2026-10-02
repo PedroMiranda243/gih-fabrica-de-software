@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 1.0 — 03/09/2026
+**Versão:** 1.1 — 01/10/2026 · o módulo 7, da Sprint 07 acadêmica (1.0 — 03/09/2026)
 
 ---
 
@@ -48,7 +48,7 @@
 
 | ID | Requisito | Prioridade | Perfis |
 |---|---|---|---|
-| **RF17** | O sistema deve exibir um painel com os indicadores consolidados do período selecionado: faturamento total, número de pedidos, ticket médio, parceiros ativos e variação em relação ao período anterior. | M | GES, ANL |
+| **RF17** | O sistema deve exibir um painel com os indicadores consolidados do período selecionado, da rede inteira ou de uma categoria: faturamento total, número de pedidos, ticket médio, parceiros ativos e variação em relação ao período anterior. | M | GES, ANL |
 | **RF18** | O sistema deve exibir o ranking de parceiros por faturamento, com a posição atual, a posição no período anterior e a variação percentual. | M | GES, ANL |
 | **RF19** | O sistema deve exibir a série histórica em gráfico, tanto para a unidade quanto para um parceiro individual. | M | GES, ANL, PAR |
 | **RF20** | O sistema deve classificar cada parceiro em exatamente um segmento (Top, Em Ascensão, Em Risco, Recém-chegado, Prospecção ou Estável) aplicando regra determinística com ordem de precedência explícita. | M | GES, ANL |
@@ -91,7 +91,26 @@
 | **RF42** | O sistema deve citar, em toda resposta do assistente, o período e a origem dos dados utilizados; e deve declarar explicitamente a insuficiência de dados quando não houver base para responder, em vez de produzir uma resposta especulativa. | M | GES, ANL |
 | **RF43** | O sistema deve impedir que o assistente produza valores numéricos que não tenham sido calculados pelo núcleo determinístico. | M | GES, ANL |
 
-> **Total: 43 requisitos funcionais** — 31 *Must*, 9 *Should*, 3 *Could*.
+### Módulo 7 — Relatórios, consulta e acompanhamento
+
+Acrescentado em 01/10/2026, para a Sprint 07 da disciplina: os relatórios, e o que faltava de pesquisa, filtro,
+exportação e histórico de operações nos módulos anteriores. Nenhum deles traz regra de negócio nova — todos
+leem o que os módulos 1 a 4 já gravam.
+
+| ID | Requisito | Prioridade | Perfis |
+|---|---|---|---|
+| **RF44** | O sistema deve gerar o relatório de desempenho de um período, consolidado por categoria e por segmento, com faturamento, pedidos, ticket médio, número de parceiros e variação em relação ao período anterior. | M | GES, ANL |
+| **RF45** | O sistema deve gerar o relatório de parceiros em risco, com o segmento, a variação, o faturamento medido e o previsto, o risco estimado de queda e a ação no último plano de campanha. | M | GES, ANL |
+| **RF46** | O sistema deve gerar o relatório de um plano de campanha, resumido por ação, por categoria e por segmento, com parceiros, custo e ganho esperado. | M | GES, ANL |
+| **RF47** | O sistema deve gerar o relatório das operações registradas na trilha de auditoria, por tipo de ação, por usuário e por dia, num intervalo de datas. | S | ADM |
+| **RF48** | O sistema deve permitir exportar cada relatório em CSV, com o recorte aplicado, e imprimi-lo ou salvá-lo em PDF. | M | GES, ANL, ADM |
+| **RF49** | O sistema deve permitir buscar por texto na trilha de auditoria e exportá-la em CSV, com o recorte aplicado. | S | ADM |
+| **RF50** | O sistema deve exibir, no cadastro do parceiro, o histórico das alterações do próprio cadastro, com autor e data. O histórico diz o que mudou: o nome e o status com o valor de antes e o de depois, e a categoria pelo nome que tinha na hora. O contato entra como alterado, sem o valor — é dado de uma pessoa, e a trilha não se apaga. | S | GES, ANL |
+| **RF51** | O sistema deve permitir filtrar o histórico de execuções do otimizador por modo, resultado, autor e data. | S | GES, ANL, ADM |
+| **RF52** | O sistema deve permitir buscar usuário por nome ou login. | S | ADM |
+| **RF53** | O sistema deve permitir exportar em CSV os itens de um plano de campanha. | S | GES, ANL |
+
+> **Total: 53 requisitos funcionais** — 35 *Must*, 15 *Should*, 3 *Could*.
 
 ---
 
@@ -184,19 +203,23 @@ que o exercita. Casos de uso detalhados em [03 — Casos de uso](03-casos-de-uso
 | RF32 a RF34 | O6 | **P4** | UC09 |
 | RF36 a RF40 | O7 | P5 | UC10, UC11 |
 | RF41 a RF43 | O2 | P1 | UC12 |
+| RF44 a RF48 | O2, O4, O5, O8 | P1, P2, **P4** | UC15 |
+| RF49, RF52 | O8 | transversal | UC14, UC02 |
+| RF50 | O1 | P1 | UC04 |
+| RF51, RF53 | O5, O6 | **P4** | UC08, UC09 |
 
 ### Cobertura inversa: de objetivo para requisito
 
 | Objetivo | Requisitos que o realizam |
 |---|---|
-| O1 — Ingerir e normalizar | RF09, RF10, RF11, RF12, RF13, RF14, RF16 |
-| O2 — Métricas e séries | RF17, RF18, RF19, RF23, RF24, RF25, RF41, RF42 |
+| O1 — Ingerir e normalizar | RF09, RF10, RF11, RF12, RF13, RF14, RF16, RF50 |
+| O2 — Métricas e séries | RF17, RF18, RF19, RF23, RF24, RF25, RF41, RF42, RF44, RF48 |
 | O3 — Segmentar | RF20, RF21, RF22 |
-| O4 — Prever | RF27, RF28 |
-| O5 — Otimizar | RF29, RF30, RF31, RF35 |
-| O6 — Acelerar | RF32, RF33, RF34 |
+| O4 — Prever | RF27, RF28, RF45 |
+| O5 — Otimizar | RF29, RF30, RF31, RF35, RF46, RF53 |
+| O6 — Acelerar | RF32, RF33, RF34, RF51 |
 | O7 — Comunicar com aprovação | RF36, RF37, RF38, RF39, RF40 |
-| O8 — Controlar acesso | RF01, RF02, RF03, RF04, RF05, RF06, RF07, RF08 |
+| O8 — Controlar acesso | RF01, RF02, RF03, RF04, RF05, RF06, RF07, RF08, RF47, RF49, RF52 |
 
 Nenhum objetivo está sem requisito, e nenhum requisito funcional está órfão de objetivo.
 

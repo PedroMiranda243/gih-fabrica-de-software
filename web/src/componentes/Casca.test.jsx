@@ -161,6 +161,25 @@ describe("o menu por módulo (H79)", () => {
     ]);
   });
 
+  it("a Auditoria entra na Administração, para quem o servidor a dá (UC14, H89)", () => {
+    const trilho = comMenu({
+      nome: "Admin",
+      perfil: "ADMINISTRADOR",
+      telas: ["painel", "usuarios", "auditoria", "configuracao"],
+    });
+
+    const administracao = within(trilho).getByRole("group", { name: "Administração" });
+    expect(within(administracao).getAllByRole("link").map((a) => a.textContent.trim())).toEqual([
+      "Usuários",
+      "Auditoria",
+      "Configuração",
+    ]);
+    expect(within(administracao).getByRole("link", { name: "Auditoria" })).toHaveAttribute(
+      "href",
+      "/auditoria",
+    );
+  });
+
   it("o Parceiro vê só o próprio desempenho, sem os módulos da rede (RF26)", () => {
     const trilho = comMenu({ nome: "Parceiro", perfil: "PARCEIRO", telas: ["meu_desempenho"] });
 

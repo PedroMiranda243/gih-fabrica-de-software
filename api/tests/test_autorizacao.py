@@ -96,6 +96,8 @@ PERMISSOES: dict[tuple[str, str], object] = {
     ("GET", "/api/parceiros/{parceiro_id}/previsao"): {Perfil.GESTOR, Perfil.ANALISTA},
     # O parceiro no último plano (H81): quem abre o cadastro — os mesmos que abrem a Campanha.
     ("GET", "/api/parceiros/{parceiro_id}/campanha"): {Perfil.GESTOR, Perfil.ANALISTA},
+    # O histórico do cadastro (RF50): de quem gerencia parceiros; a trilha inteira é do UC14.
+    ("GET", "/api/parceiros/{parceiro_id}/historico"): {Perfil.GESTOR, Perfil.ANALISTA},
     # UC08 — Executar otimização: o Gestor executa, o Analista consulta. O
     # plano decide onde vai a verba; o Administrador cuida de acesso, e não de
     # campanha. O catálogo (RF29) segue a mesma divisão. O histórico (RF34) é a
@@ -140,6 +142,7 @@ PERMISSOES: dict[tuple[str, str], object] = {
     # UC14 — Auditar ações: só Administrador
     ("GET", "/api/auditoria"): {Perfil.ADMINISTRADOR},
     ("GET", "/api/auditoria/acoes"): {Perfil.ADMINISTRADOR},
+    ("GET", "/api/auditoria/exportacao.csv"): {Perfil.ADMINISTRADOR},
 }
 
 # Rotas que o FastAPI cria sozinho e que não são superfície da aplicação.
