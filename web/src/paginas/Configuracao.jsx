@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 
 import { api } from "../api/cliente";
 import { Esqueleto } from "../componentes/Carregando";
+import AlteracoesNaoSalvas from "../componentes/AlteracoesNaoSalvas";
 import Campo from "../componentes/Campo";
 import Confirmacao from "../componentes/Confirmacao";
 import { comoDataHora } from "../formato";
@@ -132,6 +133,8 @@ export default function Configuracao() {
 
   return (
     <>
+      <AlteracoesNaoSalvas quando={mudou} />
+
       {sucesso !== null && (
         <div className="aviso aviso--sucesso" role="status">
           <p className="aviso__titulo">Limiares salvos.</p>

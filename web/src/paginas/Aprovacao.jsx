@@ -29,6 +29,7 @@ import { useSearchParams } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { useSessao } from "../api/contextoSessao";
+import AlteracoesNaoSalvas from "../componentes/AlteracoesNaoSalvas";
 import { Esqueleto } from "../componentes/Carregando";
 import CartaoMensagem from "../componentes/CartaoMensagem";
 import Confirmacao from "../componentes/Confirmacao";
@@ -559,6 +560,11 @@ function Pendente({
           </p>
         </div>
       )}
+
+      {/* O texto reescrito e o motivo digitado se perdem com a troca de tela (H97). */}
+      <AlteracoesNaoSalvas
+        quando={(modo === "editar" && texto !== m.texto) || (modo === "rejeitar" && motivo !== "")}
+      />
 
       {decide && modo === null && (
         <div className="aprovacao__acoes">

@@ -19,6 +19,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { useSessao } from "../api/contextoSessao";
+import AlteracoesNaoSalvas from "../componentes/AlteracoesNaoSalvas";
 import Campo from "../componentes/Campo";
 import { Esqueleto } from "../componentes/Carregando";
 import Confirmacao from "../componentes/Confirmacao";
@@ -122,6 +123,17 @@ function Conta({ id }) {
   const erroDoParceiro =
     erroDoCampo.parceiro_id ?? (deParceiro ? erroDoCampo["requisição"] : undefined);
 
+  /* O que está nos campos é diferente do que está salvo? É o que decide o
+     aviso de alterações não salvas (H97). Enviando, não: criar a conta leva à
+     conta criada, e essa saída é a do próprio formulário. */
+  const alterado =
+    !enviando &&
+    (novo
+      ? form.login !== "" || form.nome !== "" || form.senha !== "" || parceiro !== null
+      : form.nome !== conta.nome ||
+        form.perfil !== conta.perfil ||
+        (deParceiro && (parceiro?.id ?? null) !== (conta.parceiro_id ?? null)));
+
   function mudar(campo, valor) {
     setForm((f) => ({ ...f, [campo]: valor }));
     setSucesso(null);
@@ -199,6 +211,8 @@ function Conta({ id }) {
         <span aria-hidden="true">›</span>
         <span aria-current="page">{novo ? "Novo usuário" : conta?.nome}</span>
       </nav>
+
+      <AlteracoesNaoSalvas quando={alterado} />
 
       {sucesso && (
         <div className="aviso aviso--sucesso" role="status">

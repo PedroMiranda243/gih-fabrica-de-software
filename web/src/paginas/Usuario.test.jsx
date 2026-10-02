@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
 import { ContextoSessao } from "../api/contextoSessao";
-import { simularApi } from "../testes/preparar";
+import { avisariaAoFechar, simularApi } from "../testes/preparar";
 import Usuario from "./Usuario";
 
 const EU = { id: 1, login: "admin", nome: "Administração", perfil: "ADMINISTRADOR", ativo: true };
@@ -337,5 +337,49 @@ describe("conta de usuário", () => {
 
     expect(await screen.findByText("Usuário não encontrado")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Voltar para os usuários" })).toHaveAttribute("href", "/usuarios");
+  });
+});
+
+describe("conta de usuário — alterações não salvas (H97)", () => {
+  it("com o nome alterado, a trilha pergunta antes de sair; salva, a conta deixa sair", async () => {
+    simularApi({
+      "GET /api/usuarios/2": { corpo: OUTRA },
+      "PATCH /api/usuarios/2": { corpo: { ...OUTRA, nome: "Gestora de Exemplo Lima" } },
+    });
+    const usuario = userEvent.setup();
+    renderizar("/usuarios/2");
+    const trilha = () =>
+      within(screen.getByRole("navigation", { name: "Você está em" })).getByRole("link", { name: "Usuários" });
+
+    await usuario.type(await screen.findByLabelText(/^Nome/), " Lima");
+    expect(avisariaAoFechar()).toBe(true);
+    await usuario.click(trilha());
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Há alterações que não foram salvas.");
+    await usuario.click(screen.getByRole("button", { name: "Continuar editando" }));
+    expect(screen.getByLabelText(/^Nome/)).toHaveValue("Gestora de Exemplo Lima");
+
+    await usuario.click(screen.getByRole("button", { name: "Salvar alterações" }));
+    expect(await screen.findByText("Alterações salvas.")).toBeInTheDocument();
+    expect(avisariaAoFechar()).toBe(false);
+  });
+
+  it("a conta aberta e não mexida não pergunta nada", async () => {
+    simularApi({ "GET /api/usuarios/2": { corpo: OUTRA } });
+    renderizar("/usuarios/2");
+
+    await screen.findByLabelText(/^Nome/);
+
+    expect(avisariaAoFechar()).toBe(false);
+  });
+
+  it("a conta nova começada também é alteração: o que foi digitado se perderia", async () => {
+    const usuario = userEvent.setup();
+    renderizar("/usuarios/novo");
+    expect(avisariaAoFechar()).toBe(false);
+
+    await usuario.type(screen.getByLabelText(/^Login/), "nova.pessoa");
+
+    expect(avisariaAoFechar()).toBe(true);
   });
 });

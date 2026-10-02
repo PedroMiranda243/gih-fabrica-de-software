@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
-import { simularApi } from "../testes/preparar";
+import { avisariaAoFechar, simularApi } from "../testes/preparar";
 import Parceiro from "./Parceiro";
 
 const CATEGORIAS = [
@@ -545,5 +545,44 @@ describe("Parceiro — histórico do cadastro (H90)", () => {
 
     expect(await screen.findByLabelText(/Nome/)).toHaveValue("Casa Azul");
     expect(screen.queryByRole("region", { name: "Histórico do cadastro" })).toBeNull();
+  });
+});
+
+describe("Parceiro — alterações não salvas (H97)", () => {
+  it("com o cadastro alterado, a trilha pergunta; 'Sair sem salvar' leva à lista", async () => {
+    simularApi(rotasDoCadastro());
+    const usuario = userEvent.setup();
+    renderizar("/parceiros/7");
+
+    await usuario.type(await screen.findByLabelText(/Nome/), " Ltda");
+    await usuario.click(
+      within(screen.getByRole("navigation", { name: "Você está em" })).getByRole("link", { name: "Parceiros" }),
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Há alterações que não foram salvas.");
+    expect(screen.queryByText("lista:/parceiros")).not.toBeInTheDocument();
+
+    await usuario.click(screen.getByRole("button", { name: "Sair sem salvar" }));
+    expect(screen.getByText("lista:/parceiros")).toBeInTheDocument();
+  });
+
+  it("o cadastro aberto e o cadastro salvo não perguntam nada", async () => {
+    simularApi(
+      rotasDoCadastro({
+        "PATCH /api/parceiros/7": { corpo: { ...CASA_AZUL, nome: "Casa Azul Ltda" } },
+      }),
+    );
+    const usuario = userEvent.setup();
+    renderizar("/parceiros/7");
+
+    const nome = await screen.findByLabelText(/Nome/);
+    expect(avisariaAoFechar()).toBe(false);
+
+    await usuario.type(nome, " Ltda");
+    expect(avisariaAoFechar()).toBe(true);
+
+    await usuario.click(screen.getByRole("button", { name: "Salvar alterações" }));
+    expect(await screen.findByText("Alterações salvas.")).toBeVisible();
+    expect(avisariaAoFechar()).toBe(false);
   });
 });

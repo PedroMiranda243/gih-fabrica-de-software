@@ -19,6 +19,7 @@ import { useEffect, useId, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { api } from "../api/cliente";
+import AlteracoesNaoSalvas from "../componentes/AlteracoesNaoSalvas";
 import Campo from "../componentes/Campo";
 import { Esqueleto } from "../componentes/Carregando";
 import Confirmacao from "../componentes/Confirmacao";
@@ -513,24 +514,27 @@ const ACAO_VAZIA = { nome: "", custo_unitario: "", efeito_crescimento: "", efeit
 function Catalogo({ estado, aoMudar }) {
   const [editando, setEditando] = useState(null); // id da ação, ou "nova"
   const [valores, setValores] = useState(ACAO_VAZIA);
+  // Como a linha estava ao abrir a edição: é contra isto que se sabe se algo mudou (H97).
+  const [abertos, setAbertos] = useState(ACAO_VAZIA);
   const [erro, setErro] = useState(null);
   const [salvando, setSalvando] = useState(false);
   const editavel = estado.pode_editar_catalogo;
+  const alterado = editando !== null && Object.keys(abertos).some((campo) => valores[campo] !== abertos[campo]);
 
   function editar(acao) {
+    const linha = acao
+      ? {
+          nome: acao.nome,
+          custo_unitario: String(acao.custo_unitario).replace(".", ","),
+          efeito_crescimento: paraPercentual(acao.efeito_crescimento),
+          efeito_retencao: paraPercentual(acao.efeito_retencao),
+          ativa: acao.ativa,
+        }
+      : ACAO_VAZIA;
     setErro(null);
     setEditando(acao?.id ?? "nova");
-    setValores(
-      acao
-        ? {
-            nome: acao.nome,
-            custo_unitario: String(acao.custo_unitario).replace(".", ","),
-            efeito_crescimento: paraPercentual(acao.efeito_crescimento),
-            efeito_retencao: paraPercentual(acao.efeito_retencao),
-            ativa: acao.ativa,
-          }
-        : ACAO_VAZIA,
-    );
+    setValores(linha);
+    setAbertos(linha);
   }
 
   async function salvar() {
@@ -580,6 +584,8 @@ function Catalogo({ estado, aoMudar }) {
           </div>
         )}
       </div>
+
+      <AlteracoesNaoSalvas quando={alterado} className="campanha__corpo" />
 
       {erro && (
         <div className="campanha__corpo">
