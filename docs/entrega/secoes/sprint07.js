@@ -710,6 +710,9 @@ function montar() {
     + `das ${telas.auditorias} auditorias do axe acusa violação.`,
   ));
 
+  // Em página nova: sem a quebra anterior das validações, o título caía sozinho
+  // no pé da página, com o texto dele na seguinte.
+  c.push(quebra());
   c.push(h2('7.5 Os bugs desta entrega'));
   c.push(p(
     'Todo defeito vira issue com o rótulo "fix" — o que apareceu, a causa, a correção e como foi encontrado — e '
