@@ -75,7 +75,10 @@ frente: quatro outras pessoas vão escolher outro.
 
 As duas mais fáceis de errar:
 
-- **RN01** — a segmentação tem ordem de precedência, e *Em Risco vence Top de propósito*.
+- **RN01** — a segmentação tem ordem de precedência, e *Em Risco vence Top de propósito*. Os três limiares
+  são configuráveis (Top 15, 2 períodos de tendência e 3 de recém-chegado, de fábrica): **nenhum texto de
+  tela ou de arquivo pode trazer o número escrito** — foi assim que o rótulo "Top 15" passou a mentir com o
+  limiar em 10 (#229).
 - **RN02** — a mobilidade do Top N lê o **ranking**, nunca o segmento armazenado. Ler do segmento faz o
   sistema anunciar que um parceiro saiu do Top N enquanto ele continua lá.
 
@@ -277,7 +280,8 @@ inconsistente compromete a demonstração final, que vale 20% da nota.
 O que precisa estar decidido antes de codificar, e registrado em `docs/`:
 
 - Paleta, tipografia e escala de espaçamento — uma vez, para o projeto inteiro
-- Regra de cor para os **segmentos** (Top, Em Ascensão, Em Risco, Recém-chegado, Estável): cada segmento
+- Regra de cor para os **segmentos** (Prospecção, Recém-chegado, Em Risco, Top, Em Ascensão, Estável — os
+  seis da RN01, na ordem de precedência): cada segmento
   tem uma cor e só uma, usada de forma idêntica em tabela, gráfico e indicador
 - Contraste mínimo AA (RNF22) e layout a partir de 768 px (RNF21) — verificados, não presumidos
 - Estados vazios: base sem dados, período único, otimização sem solução viável
@@ -295,7 +299,7 @@ Vieram da correção daquele redesign rejeitado. Valem desde a primeira tela.
 seleção — e nada mais. No projeto anterior ela era marca, ação **e** dado ao mesmo tempo, usada 18 vezes
 incluindo todas as barras de categoria. Quando uma cor significa tudo, não significa nada.
 
-- As cores semânticas (risco, ascensão, Top, recém-chegado) aparecem só como **ponto ou barra**
+- As cores semânticas (risco, ascensão, Top, recém-chegado, prospecção) aparecem só como **ponto ou barra**
 - O rótulo do segmento é **neutro** — "Top 15" repetido doze vezes em cor é ruído puro
 - Gráficos usam uma **rampa fria própria**, nunca a cor de ação nem as semânticas
 

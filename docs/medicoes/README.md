@@ -10,8 +10,9 @@ aparece na frente da banca.
 | [`painel-10000.md`](painel-10000.md) | O mesmo no teto de carga do RNF04 | H40 |
 | [`modelo.md`](modelo.md) | O modelo preditivo contra as referências, em várias redes e sementes | H42, H43, H46 |
 | [`otimizador.md`](otimizador.md) | O otimizador serial contra o guloso e contra um teto do ótimo; o tempo do baseline | H48, H49 (RNF02) |
-| [`acessibilidade.md`](acessibilidade.md) | As vinte telas a 768 e a 1440 px, o axe no navegador nos dois temas e o contraste dos tokens | H76 (RNF21, RNF22) |
+| [`acessibilidade.md`](acessibilidade.md) | As telas a 768 e a 1440 px, o axe no navegador nos dois temas e o contraste dos tokens | H76 (RNF21, RNF22) |
 | [`assistente.md`](assistente.md) | O assistente contra o modelo de verdade: a leitura das perguntas, os números inventados e a abstenção | H65 a H68 (RF41 a RF43) |
+| [`regras.md`](regras.md) | As regras de negócio RN01 a RN11 contra o que o sistema faz: o cenário, o esperado e o que voltou | H99 |
 
 ## Como refazer
 
@@ -21,6 +22,7 @@ api/.venv/Scripts/python scripts/medir_modelo.py
 api/.venv/Scripts/python scripts/medir_otimizador.py
 api/.venv/Scripts/python scripts/medir_assistente.py
 api/.venv/Scripts/python scripts/medir_telas.py
+api/.venv/Scripts/python scripts/revisar_regras.py
 ```
 
 O script cria o banco `gih_medicao` na mesma instância do Postgres e gera a massa lá. **O banco de
@@ -35,6 +37,10 @@ ela tiver, pelo navegador. Cria três usuários de medição e calcula dois plan
 e apaga os planos, pela mesma limpeza da verificação de ponta a ponta. Precisa do `docker compose up`, da
 senha do administrador em `GIH_ADMIN_SENHA` e do Playwright (`scripts/requisitos-medicao.txt`), que usa o
 Edge da máquina.
+
+O `revisar_regras.py` não mede tempo: confere regra. Usa um banco só dele, `gih_regras`, recriado a cada
+execução, com uma rede de 22 parceiros desenhada para cair em cada ramo de cada regra; o esperado está
+escrito no roteiro, deduzido da regra, e não sai do código que se revisa.
 
 O comando exato de cada medição está dentro do próprio relatório, com a semente usada.
 
