@@ -17,6 +17,7 @@ from app import servico_benchmark, servico_mensagens, servico_otimizacao, servic
 from app.db import sessao
 from app.erros import erro_de_validacao
 from app.rotas import (
+    ajuda,
     assistente,
     auditoria,
     autenticacao,
@@ -129,6 +130,7 @@ app.include_router(meu_desempenho.router)
 app.include_router(assistente.router)
 app.include_router(auditoria.router)
 app.include_router(relatorios.router)
+app.include_router(ajuda.router)
 
 
 # Erro de validacao em portugues, com a explicacao do campo quando ela existe
