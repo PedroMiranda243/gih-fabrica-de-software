@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 2.1 — 01/10/2026 · o UC15, da Sprint 07 acadêmica (2.0 — 16/09/2026)
+**Versão:** 2.2 — 02/10/2026 · o UC16 e os fluxos de senha, da Sprint 08 acadêmica (2.1 — 01/10/2026, o UC15; 2.0 — 16/09/2026)
 
 ---
 
@@ -27,7 +27,8 @@
 ![Diagrama de casos de uso do GIH](diagramas/casos-de-uso.svg)
 
 > O diagrama é o da Sprint 1, com os quatorze casos de então, e é a figura que foi entregue. O UC15 —
-> consultar e exportar relatórios —, da Sprint 07 da disciplina, está na tabela e na especificação abaixo.
+> consultar e exportar relatórios —, da Sprint 07 da disciplina, e o UC16 — consultar a ajuda —, da Sprint 08,
+> estão na tabela e na especificação abaixo.
 
 ---
 
@@ -36,7 +37,7 @@
 | ID | Caso de uso | Ator principal | Requisitos cobertos |
 |---|---|---|---|
 | **UC01** | Autenticar no sistema | Todos | RF01, RF02, RF07 |
-| **UC02** | Gerenciar usuários e perfis | Administrador | RF03, RF04, RF05, RF52 |
+| **UC02** | Gerenciar usuários e perfis | Administrador | RF03, RF04, RF05, RF52, RF54, RF56 |
 | **UC03** | Importar relatório de desempenho | Analista, Gestor | RF09, RF10, RF11, RF12, RF13 |
 | **UC04** | Gerenciar parceiros e categorias | Analista, Gestor | RF14, RF15, RF16, RF50 |
 | **UC05** | Consultar painel e ranking | Gestor, Analista | RF17, RF18, RF19, RF20, RF23, RF24, RF25 |
@@ -50,6 +51,7 @@
 | **UC13** | Consultar meu desempenho | Parceiro | RF19, RF26 |
 | **UC14** | Auditar ações do sistema | Administrador | RF06, RF08, RF49 |
 | **UC15** | Consultar e exportar relatórios | Gestor, Analista, Administrador | RF44, RF45, RF46, RF47, RF48 |
+| **UC16** | Consultar a ajuda | Todos | RF55 |
 
 ### Matriz de permissões
 
@@ -70,6 +72,7 @@
 | UC13 Meu desempenho | — | — | — | ● |
 | UC14 Auditoria | ● | — | — | — |
 | UC15 Relatórios | ○ | ● | ● | — |
+| UC16 Ajuda | ● | ● | ● | ● |
 
 ● executa · ○ somente leitura · — sem acesso
 
@@ -85,11 +88,19 @@ Analista o abrem. Decisão de 26/09/2026, na H58.
 No UC15, o Administrador abre só o **relatório de operações**, que sai da trilha de auditoria dele (UC14). Os
 de desempenho, de risco e de campanha mostram dados de parceiros, e são do Gestor e do Analista.
 
+No UC04, o "sem acesso" do Administrador ganha uma exceção estreita, da Sprint 08: para criar a conta de
+perfil Parceiro, ele **acha o parceiro pelo nome** (RF56). A busca devolve só o nome e a situação — sem
+desempenho, segmento, categoria ou contato —, e o cadastro e a lista de parceiros continuam fora do alcance
+dele. Sem ela, a conta do parceiro só se criava pela API. Decisão de 02/10/2026, na H101.
+
+No UC16, a ajuda do Parceiro fala só do portal dele: o que os segmentos significam e os limiares da rede são
+da operação interna, e não chegam a ele (RF26).
+
 ---
 
 ## 4. Especificação detalhada
 
-Os **quinze** casos de uso, cada um com ator principal, objetivo, pré e pós-condições, requisitos
+Os **dezesseis** casos de uso, cada um com ator principal, objetivo, pré e pós-condições, requisitos
 cobertos, fluxo principal, fluxos alternativos e exceções.
 
 Os fluxos alternativos e as exceções recebem o mesmo peso do fluxo principal, e por um motivo prático: é
@@ -107,7 +118,7 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 | **Objetivo** | Obter acesso ao sistema conforme o perfil atribuído |
 | **Pré-condições** | O usuário possui credenciais válidas e está ativo |
 | **Pós-condições** | Sessão criada, identificador de sessão renovado e evento registrado na auditoria |
-| **Requisitos** | RF01, RF02, RF05, RF06, RNF09, RNF10, RNF11 |
+| **Requisitos** | RF01, RF02, RF05, RF06, RF07, RNF09, RNF10, RNF11 |
 
 **Fluxo principal**
 
@@ -127,6 +138,13 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
   informando apenas que o acesso está temporariamente indisponível.
 - **A3 — Usuário desativado.** O sistema responde com a mesma mensagem genérica de A1, sem revelar o estado
   da conta.
+- **A4 — Troca da própria senha** (RF07). Já autenticado, o usuário abre **Minha conta**, pelo nome dele no
+  cabeçalho, e informa a senha atual e a nova. O sistema confere a atual, valida a força da nova, grava o
+  hash e **encerra as outras sessões** da conta — a que fez a troca continua. A tela diz isso. O evento entra
+  na auditoria.
+- **A5 — Sessão encerrada no meio do uso.** Se a sessão expirar ou for revogada com a tela aberta, a
+  requisição seguinte é recusada, e o sistema leva ao login **dizendo que a sessão terminou**; depois de
+  entrar, a pessoa volta para onde estava.
 
 **Exceções**
 
@@ -143,7 +161,7 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 | **Objetivo** | Controlar quem acessa o sistema e o que cada pessoa pode fazer |
 | **Pré-condições** | Usuário autenticado com perfil Administrador |
 | **Pós-condições** | Usuário criado, editado ou desativado; alteração registrada na auditoria |
-| **Requisitos** | RF03, RF04, RF05; RNF09, RNF14 |
+| **Requisitos** | RF03, RF04, RF05, RF52, RF54, RF56; RNF09, RNF14 |
 
 **Fluxo principal**
 
@@ -163,13 +181,17 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
   não é apagado: a trilha de auditoria referencia o autor de cada ação, e remover a linha deixaria o
   histórico apontando para o nada.
 - **A3 — Perfil Parceiro.** Só esse perfil aceita vínculo com um parceiro, e ele é obrigatório nesse caso.
-  O banco garante a condição nos dois sentidos.
-  **Na tela, o perfil Parceiro ainda não é oferecido:** escolher o parceiro exigiria que o Administrador
-  listasse parceiros, o que a matriz não lhe dá, e o portal do parceiro (H39) ainda não existe. A API
-  aceita a criação; a tela diz por que o perfil não está na lista.
+  O banco garante a condição nos dois sentidos. Na tela, ao escolher o perfil Parceiro, o Administrador
+  **acha o parceiro pelo nome** (RF56): a busca devolve só o nome e a situação, e o cadastro e a lista de
+  parceiros continuam fora do alcance dele. Até a Sprint 07 a tela não oferecia esse perfil, e a conta só se
+  criava pela API.
 - **A4 — Tentativa por perfil não autorizado.** Gestor, Analista ou Parceiro que chame a rota diretamente
   recebem recusa do servidor, independentemente do que a interface exiba (RNF14), e a tentativa entra na
   auditoria.
+- **A5 — Redefinição de senha** (RF54). Para quem esqueceu a senha, o Administrador informa uma nova no
+  cadastro do usuário e confirma. O sistema valida a força, grava o hash, **encerra todas as sessões** da
+  conta e registra o evento na auditoria, sem a senha. A própria senha ele não redefine por aqui: troca pela
+  Minha conta (UC01, A4), que exige a atual.
 
 **Exceções**
 
@@ -879,34 +901,6 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 
 ---
 
-## 5. Cobertura
-
-Os **quatorze** casos de uso estão especificados: ator, objetivo, pré e pós-condições, requisitos cobertos,
-fluxo principal, fluxos alternativos e exceções.
-
-| Requisito funcional | Caso de uso |
-|---|---|
-| RF01, RF02, RF07 | UC01 |
-| RF03, RF04, RF05 | UC02 |
-| RF06, RF08 | UC14 |
-| RF09 a RF13 | UC03 |
-| RF14, RF15, RF16 | UC04 |
-| RF17 a RF20, RF23 a RF25 | UC05 |
-| RF21 | UC05, UC06 (configuração da segmentação) |
-| RF22 | UC06 |
-| RF26 | UC13 |
-| RF27, RF28 | UC07 |
-| RF29 a RF31, RF35 | UC08 |
-| RF32, RF33, RF34 | UC09 |
-| RF36, RF37 | UC10 |
-| RF38, RF39, RF40 | UC11 |
-| RF41, RF42, RF43 | UC12 |
-
-Nenhum requisito funcional ficou órfão de caso de uso, e nenhum caso de uso existe sem requisito que o
-justifique.
-
----
-
 ### UC15 — Consultar e exportar relatórios
 
 | | |
@@ -946,3 +940,64 @@ justifique.
 > **Os relatórios não calculam regra nova.** Eles leem o que os outros módulos gravam, pelas mesmas consultas
 > do painel, da previsão e do plano: o total do relatório de desempenho é o do painel no mesmo período, o
 > risco é o da previsão, e o custo é o do plano. O ticket médio continua derivado das parcelas (RN04).
+
+---
+
+### UC16 — Consultar a ajuda
+
+| | |
+|---|---|
+| **Ator principal** | Todos os perfis |
+| **Objetivo** | Entender os termos que o sistema usa e o que o próprio perfil pode fazer, sem treinamento |
+| **Pré-condições** | Usuário autenticado |
+| **Pós-condições** | Nenhuma alteração de estado — consulta |
+| **Requisitos** | RF55; RNF20 |
+
+**Fluxo principal**
+
+1. O usuário abre a Ajuda, pelo cabeçalho, ou segue o caminho "o que é isto?" de um rótulo de segmento ou
+   de uma marca de estimativa.
+2. O sistema mostra o que o perfil dele pode fazer, a partir das telas que o servidor lhe dá.
+3. O sistema explica cada segmento, na ordem de precedência da RN01, com os limiares **em vigor** — o
+   tamanho do Top, os períodos de tendência e os de recém-chegado —, que vêm da configuração, e não do texto
+   da tela.
+4. O sistema explica o que é estimativa: de onde vêm o faturamento previsto e a chance de queda (RN09), e
+   como se chega ao ganho esperado de uma ação (RN10).
+
+**Fluxos alternativos**
+
+- **A1 — Parceiro.** A ajuda do perfil Parceiro fala só do portal dele: o que ele vê e de onde vêm os
+  números. Os segmentos e os limiares da rede não aparecem, e a rota que os devolve lhe é negada (RF26).
+- **A2 — Sem modelo treinado.** A explicação da previsão diz que ainda não há modelo em uso, em vez de
+  descrever números que a base não tem.
+
+---
+
+## 5. Cobertura
+
+Os **dezesseis** casos de uso estão especificados: ator, objetivo, pré e pós-condições, requisitos cobertos,
+fluxo principal, fluxos alternativos e exceções.
+
+| Requisito funcional | Caso de uso |
+|---|---|
+| RF01, RF02, RF07 | UC01 |
+| RF03, RF04, RF05, RF52, RF54, RF56 | UC02 |
+| RF06, RF08, RF49 | UC14 |
+| RF09 a RF13 | UC03 |
+| RF14, RF15, RF16, RF50 | UC04 |
+| RF17 a RF20, RF23 a RF25 | UC05 |
+| RF21 | UC05, UC06 (configuração da segmentação) |
+| RF22 | UC06 |
+| RF26 | UC13 |
+| RF27, RF28 | UC07 |
+| RF29 a RF31, RF35, RF53 | UC08 |
+| RF32, RF33, RF34, RF51 | UC09 |
+| RF36, RF37 | UC10 |
+| RF38, RF39, RF40 | UC11 |
+| RF41, RF42, RF43 | UC12 |
+| RF44 a RF48 | UC15 |
+| RF55 | UC16 |
+
+Nenhum requisito funcional ficou órfão de caso de uso, e nenhum caso de uso existe sem requisito que o
+justifique. A matriz completa — requisito, caso de uso, rota, tela e teste — está em
+[11 — Rastreabilidade](11-rastreabilidade.md), e um teste a confere.
