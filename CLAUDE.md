@@ -529,6 +529,11 @@ frente com alguma, a resposta já está aqui.
   `docker-compose.yml` usa `POSTGRES_PORT`, com 5433 como padrão — e o `DATABASE_URL` precisa apontar para
   a mesma porta, senão as migrações rodam no banco errado.
 
+- **Rota nova entra na matriz de rastreabilidade, no mesmo Pull Request.** O `test_rastreabilidade.py` reprova a
+  rota que não está em `docs/11-rastreabilidade.md`, e o requisito cuja coluna Perfis não é a união dos perfis
+  das rotas dele. Na primeira execução ele achou sete requisitos em que `docs/02` dizia menos do que a API
+  fazia desde a Sprint 1. Rota que não é de um requisito só vai para a seção "Rotas de apoio", com o motivo.
+
 - **A parte entregue do documento lê a cópia da entrega, nunca o arquivo vivo.** A Parte VI lia a medição das
   telas direto de `docs/medicoes/`, e na geração da Sprint 07 passou a dizer 26 telas onde o PDF entregue diz
   20 — sem erro e sem aviso (#208). Evidência, figura e medição de uma entrega ficam na pasta dela
@@ -548,6 +553,7 @@ frente com alguma, a resposta já está aqui.
 | Prazos, marcos e riscos | [`docs/05-cronograma.md`](docs/05-cronograma.md) |
 | Papéis, cerimônias, Definition of Done | [`docs/06-equipe-e-processo.md`](docs/06-equipe-e-processo.md) |
 | Arquitetura e decisões registradas | [`docs/07-arquitetura-preliminar.md`](docs/07-arquitetura-preliminar.md) |
+| Onde cada requisito está: rota, tela e teste | [`docs/11-rastreabilidade.md`](docs/11-rastreabilidade.md) |
 | Ramos, commits, Pull Requests | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 
 **Este arquivo é vivo.** Decisão de arquitetura ou convenção nova entra aqui, no mesmo Pull Request que a
