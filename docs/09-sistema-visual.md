@@ -243,7 +243,7 @@ Aprovação registrada na issue **#8**. Só depois disso começa o CSS em `web/`
 
 ## 9. Telas e navegação
 
-Vinte e sete telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
+Vinte e oito telas, cada uma com **endereço próprio**. Não é detalhe: o botão voltar precisa desfazer o último
 passo, um recorte filtrado precisa poder ser mandado por link, e um cadastro precisa poder ser aberto
 direto — tudo isso depende de a tela estar na URL, e não num estado escondido da página.
 
@@ -276,6 +276,7 @@ flowchart TD
     Aprovacao["Aprovação<br/>/aprovacao"]
     Assistente["Assistente<br/>/assistente"]
     MeuDesempenho["Meu desempenho<br/>/meu-desempenho"]
+    MinhaConta["Minha conta<br/>/conta"]
     Inexistente(["endereço que não existe"])
     NaoEncontrada["Página não encontrada"]
 
@@ -296,6 +297,7 @@ flowchart TD
     Menu -. "gestor e analista" .-> Aprovacao
     Menu -. "gestor e analista" .-> Assistente
     Menu -. "parceiro" .-> MeuDesempenho
+    Menu -. "todos: o nome,<br/>no cabeçalho" .-> MinhaConta
     Painel -- "parceiro: a página<br/>inicial é o portal" --> MeuDesempenho
     Painel -- "base vazia:<br/>importar um relatório" --> Importacao
     Importacao -- "importação concluída:<br/>ver no painel" --> Painel
@@ -324,6 +326,7 @@ flowchart TD
     NovoUsuario -- "criar" --> Conta
     NovoUsuario -- "login em uso:<br/>abrir a conta" --> Conta
     Conta -- "voltar, com o<br/>mesmo filtro" --> Usuarios
+    Conta -- "a própria conta:<br/>a senha se troca lá" --> MinhaConta
     Modelo -- "treinar:<br/>acompanha até terminar" --> Modelo
     Campanha -- "calcular:<br/>acompanha até o plano" --> Campanha
     Campanha -- "parceiro do plano" --> Cadastro
@@ -422,6 +425,17 @@ Os comportamentos que o desenho não mostra, e que valem para todas as telas:
 - **O plano também sai do sistema** (H91). A execução aberta pelo histórico tem "Exportar CSV", com os
   itens que a tela mostra, e "Imprimir ou salvar em PDF", pela mesma folha dos relatórios: na folha, a
   trilha vira o título "Plano de campanha", com quando foi calculado e por quem.
+- **A conta de quem está usando fica no nome, no cabeçalho** (H92). É onde a pessoa procura "os meus
+  dados", e a conta não é item de menu: os quatro perfis a têm. O nome só parece link ao passar por ele —
+  num cabeçalho que está em toda tela, um sublinhado fixo competiria com o título. A troca da senha é uma
+  coluna só, de cima para baixo: a atual, a nova e a nova de novo, com o erro embaixo do campo a que pertence.
+- **Senha alheia pede confirmação e não volta para a tela** (H93). Redefinir a senha de outra pessoa derruba
+  as sessões dela na hora, e por isso passa pela confirmação na própria página. Depois de salva, o campo
+  esvazia: quem a passa adiante é o administrador, por fora do sistema. Na própria conta, o bloco vira o
+  caminho para a Minha conta.
+- **O que o perfil não lista, ele acha por busca** (H101). O administrador não tem a lista de parceiros, e
+  para vincular uma conta ele digita o nome: os achados aparecem como botões, só com o nome e a situação, e
+  o escolhido fica escrito embaixo do campo. Sem duas letras, a tela não pede nada — a API recusaria.
 - **Estimativa não se veste de medição.** A previsão do modelo aparece com a etiqueta "Estimativa", o
   período de onde parte e a versão que a produziu — e o ganho esperado do plano de campanha também; na série do parceiro, o trecho até o próximo período é
   tracejado, com marcador vazado e legenda — cor diferente sozinha não bastaria (H44).
