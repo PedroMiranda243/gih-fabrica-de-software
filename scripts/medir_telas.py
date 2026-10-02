@@ -254,6 +254,8 @@ def telas(ids: dict) -> list[Tela]:
         # A conta de quem está usando (H92) é de todos os perfis; medida com o
         # Parceiro, que tem o menu mais curto — e é quem menos telas tem para errar.
         Tela("Minha conta", "/conta", "PARCEIRO", "minha-conta"),
+        # A tela que o perfil não abre (H94): o Parceiro no endereço dos parceiros da rede.
+        Tela("Sem acesso", "/parceiros", "PARCEIRO", "sem-acesso"),
     ]
     return lista
 
