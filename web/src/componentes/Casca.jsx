@@ -173,11 +173,18 @@ export default function Casca({ titulo }) {
           <h1 className="cabecalho__titulo">{titulo}</h1>
 
           <div className="cabecalho__direita">
+            {/* O nome é o caminho para a conta de quem está usando (H92): é onde a
+                pessoa procura "os meus dados", e a conta não é item de menu — todos
+                os perfis a têm. */}
             {usuario && (
-              <div className="cabecalho__quem">
-                <span className="cabecalho__nome">{usuario.nome}</span>
+              <NavLink to="/conta" className="cabecalho__quem">
+                {/* Sem ver o cabeçalho, "Gestora de Exemplo GESTOR" não diz aonde o link leva. */}
+                {/* Os espaços soltos separam as três partes no nome que o leitor de
+                    tela lê; na tela, que é uma coluna, eles não ocupam lugar. */}
+                <span className="so-leitor">Minha conta:</span>{" "}
+                <span className="cabecalho__nome">{usuario.nome}</span>{" "}
                 <span className="cabecalho__perfil">{usuario.perfil}</span>
-              </div>
+              </NavLink>
             )}
 
             <button

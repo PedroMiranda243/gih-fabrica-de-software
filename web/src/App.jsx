@@ -22,6 +22,7 @@ import Execucoes from "./paginas/Execucoes";
 import Importacao from "./paginas/Importacao";
 import Login from "./paginas/Login";
 import Mensagens from "./paginas/Mensagens";
+import MinhaConta from "./paginas/MinhaConta";
 import MeuDesempenho from "./paginas/MeuDesempenho";
 import Modelo from "./paginas/Modelo";
 import NaoEncontrada from "./paginas/NaoEncontrada";
@@ -112,6 +113,18 @@ export default function App() {
             botão voltar precisa devolver a lista com o filtro que ela tinha. */}
         <Route path="/parceiros/novo" element={<Parceiro />} />
         <Route path="/parceiros/:id" element={<Parceiro />} />
+      </Route>
+
+      {/* A conta de quem está usando (H92): de todos os perfis, e por isso fora do
+          menu — chega-se a ela pelo nome, no cabeçalho. */}
+      <Route
+        element={
+          <Protegido>
+            <Casca titulo="Minha conta" />
+          </Protegido>
+        }
+      >
+        <Route path="/conta" element={<MinhaConta />} />
       </Route>
 
       <Route

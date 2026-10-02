@@ -6,10 +6,13 @@
  * que fazer — e, no login repetido, a conta que já o usa, porque o caso comum é
  * a conta desativada de quem voltou (UC02-E1).
  *
- * **O perfil Parceiro não é oferecido aqui.** Ele exige vincular um parceiro, o
- * Administrador não lista parceiros, e o portal do parceiro (H39) ainda não
- * existe. Uma conta Parceiro criada pela API aparece e pode ter o nome mudado;
- * o perfil dela, só pela API, até a H39.
+ * **O perfil Parceiro exige o parceiro da conta** (RF04, H101). O Administrador
+ * não tem o cadastro nem a lista de parceiros, e por isso acha o parceiro pelo
+ * nome: a busca devolve só o nome e a situação (RF56). Até a Sprint 07 a tela
+ * não oferecia este perfil, e a conta do parceiro só se criava pela API.
+ *
+ * **A senha de outra pessoa se redefine aqui** (RF54, H93): é a volta de quem a
+ * esqueceu. A própria, não — ela tem a Minha conta, que pede a atual.
  */
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -19,13 +22,21 @@ import { useSessao } from "../api/contextoSessao";
 import Campo from "../componentes/Campo";
 import { Esqueleto } from "../componentes/Carregando";
 import Confirmacao from "../componentes/Confirmacao";
+import EscolhaDoParceiro from "../componentes/EscolhaDoParceiro";
 import EstadoVazio from "../componentes/EstadoVazio";
 import { useTituloDaAba } from "../componentes/tituloDaAba";
 import { ROTULO_PERFIL } from "../formato";
 import "../estilos/usuarios.css";
 
-const PERFIS_DA_TELA = ["ADMINISTRADOR", "GESTOR", "ANALISTA"];
-const ROTULO_CAMPO = { login: "Login", nome: "Nome", senha: "Senha inicial", perfil: "Perfil" };
+const PERFIS = ["ADMINISTRADOR", "GESTOR", "ANALISTA", "PARCEIRO"];
+const ROTULO_CAMPO = {
+  login: "Login",
+  nome: "Nome",
+  senha: "Senha inicial",
+  perfil: "Perfil",
+  parceiro_id: "Parceiro da conta",
+};
+const ORDEM_DOS_CAMPOS = ["login", "nome", "senha", "perfil", "parceiro_id"];
 
 export default function Usuario() {
   const { id } = useParams();
@@ -44,6 +55,8 @@ function Conta({ id }) {
   const [conta, setConta] = useState(null);
   const [naoExiste, setNaoExiste] = useState(false);
   const [form, setForm] = useState({ login: "", nome: "", senha: "", perfil: "GESTOR" });
+  // O parceiro do vínculo, com o nome: a resposta de salvar traz só o identificador.
+  const [parceiro, setParceiro] = useState(null);
   const [erro, setErro] = useState(null);
   const [sucesso, setSucesso] = useState(lugar.state?.aviso ?? null);
   const [enviando, setEnviando] = useState(false);
@@ -59,6 +72,7 @@ function Conta({ id }) {
       .then((u) => {
         if (!vivo) return;
         setConta(u);
+        setParceiro(u.parceiro ?? null);
         setForm({ login: u.login, nome: u.nome, senha: "", perfil: u.perfil });
       })
       .catch((e) => {
@@ -100,8 +114,12 @@ function Conta({ id }) {
 
   const erroDoCampo = Object.fromEntries((erro?.campos ?? []).map((c) => [c.campo, c]));
   const existente = erro?.status === 409 ? erro.corpo?.detail?.existente : null;
-  const perfis = conta?.perfil === "PARCEIRO" ? [...PERFIS_DA_TELA, "PARCEIRO"] : PERFIS_DA_TELA;
   const souEu = conta && eu?.id === conta.id;
+  const deParceiro = form.perfil === "PARCEIRO";
+  /* "O perfil Parceiro exige um parceiro vinculado" é regra do conjunto, e a API
+     a devolve sem campo. Na tela, ela pertence ao campo do parceiro. */
+  const erroDoParceiro =
+    erroDoCampo.parceiro_id ?? (deParceiro ? erroDoCampo["requisição"] : undefined);
 
   function mudar(campo, valor) {
     setForm((f) => ({ ...f, [campo]: valor }));
@@ -115,7 +133,10 @@ function Conta({ id }) {
     setEnviando(true);
     try {
       if (novo) {
-        const criado = await api.post("/api/usuarios", form);
+        const criado = await api.post(
+          "/api/usuarios",
+          deParceiro ? { ...form, parceiro_id: parceiro?.id ?? null } : form,
+        );
         navegar(`/usuarios/${criado.id}`, {
           replace: true,
           state: {
@@ -127,8 +148,12 @@ function Conta({ id }) {
       }
       const corpo = { nome: form.nome };
       if (form.perfil !== conta.perfil) corpo.perfil = form.perfil;
+      if (deParceiro && (parceiro?.id ?? null) !== conta.parceiro_id) {
+        corpo.parceiro_id = parceiro?.id ?? null;
+      }
       const salvo = await api.patch(`/api/usuarios/${id}`, corpo);
       setConta(salvo);
+      if (salvo.perfil !== "PARCEIRO") setParceiro(null);
       setForm((f) => ({ ...f, nome: salvo.nome, perfil: salvo.perfil }));
       setSucesso(
         corpo.perfil
@@ -137,9 +162,9 @@ function Conta({ id }) {
       );
     } catch (e) {
       setErro(e);
-      const primeiro = ["login", "nome", "senha", "perfil"].find((c) =>
-        e.campos?.some((x) => x.campo === c),
-      );
+      const primeiro =
+        ORDEM_DOS_CAMPOS.find((c) => e.campos?.some((x) => x.campo === c)) ??
+        (deParceiro && e.campos?.some((x) => x.campo === "requisição") ? "parceiro_id" : null);
       if (primeiro) document.getElementById(`campo-${primeiro}`)?.focus();
     } finally {
       setEnviando(false);
@@ -272,9 +297,9 @@ function Conta({ id }) {
             obrigatorio
             erro={erroDoCampo.perfil}
             ajuda={
-              conta?.perfil === "PARCEIRO"
-                ? "Conta vinculada a um parceiro. Mudar para outro perfil desfaz o vínculo."
-                : "O perfil Parceiro ainda não é oferecido aqui: depende do portal do parceiro."
+              conta?.perfil === "PARCEIRO" && !deParceiro
+                ? "Mudar para outro perfil desfaz o vínculo com o parceiro."
+                : "O perfil decide o que a pessoa abre. O Parceiro vê só o portal dele."
             }
           >
             <select
@@ -282,13 +307,24 @@ function Conta({ id }) {
               value={form.perfil}
               onChange={(e) => mudar("perfil", e.target.value)}
             >
-              {perfis.map((p) => (
+              {PERFIS.map((p) => (
                 <option key={p} value={p}>
                   {ROTULO_PERFIL[p]}
                 </option>
               ))}
             </select>
           </Campo>
+
+          {deParceiro && (
+            <EscolhaDoParceiro
+              valor={parceiro}
+              erro={erroDoParceiro}
+              aoEscolher={(p) => {
+                setParceiro(p);
+                setSucesso(null);
+              }}
+            />
+          )}
 
           <div className="conta__acoes">
             <button className="botao" type="submit" disabled={enviando}>
@@ -300,6 +336,8 @@ function Conta({ id }) {
           </div>
         </form>
       </section>
+
+      {!novo && conta && <Senha conta={conta} souEu={souEu} />}
 
       {!novo && conta && (
         <section className="painel" aria-labelledby="titulo-situacao">
@@ -372,5 +410,117 @@ function Conta({ id }) {
         </section>
       )}
     </>
+  );
+}
+
+/**
+ * A senha de outra pessoa, redefinida pelo Administrador (RF54, H93).
+ *
+ * Pede confirmação porque derruba as sessões abertas da conta na hora. A senha
+ * nova não volta na resposta nem fica na tela depois de salva: quem a passa
+ * para a pessoa é o Administrador, por fora do sistema.
+ */
+function Senha({ conta, souEu }) {
+  const [senha, setSenha] = useState("");
+  const [confirmando, setConfirmando] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState(null);
+  const [redefinida, setRedefinida] = useState(false);
+  const erroDoCampo = erro?.campos?.find((c) => c.campo === "senha_nova");
+
+  async function redefinir() {
+    setErro(null);
+    setEnviando(true);
+    try {
+      await api.post(`/api/usuarios/${conta.id}/senha`, { senha_nova: senha });
+      setSenha("");
+      setRedefinida(true);
+    } catch (e) {
+      setErro(e);
+      if (e.campos?.length) document.getElementById("campo-senha_nova")?.focus();
+    } finally {
+      setEnviando(false);
+      setConfirmando(false);
+    }
+  }
+
+  return (
+    <section className="painel" aria-labelledby="titulo-senha">
+      <div className="painel__cabecalho">
+        <h2 className="painel__titulo" id="titulo-senha">
+          Senha
+        </h2>
+        <span className="painel__nota">para quem esqueceu a dela</span>
+      </div>
+
+      {souEu ? (
+        <p className="situacao__corpo situacao__texto">
+          Esta é a sua conta: a sua senha se troca em{" "}
+          <Link to="/conta">Minha conta</Link>, que pede a senha atual.
+        </p>
+      ) : (
+        <form
+          className="conta"
+          noValidate
+          onSubmit={(evento) => {
+            evento.preventDefault();
+            setRedefinida(false);
+            setConfirmando(true);
+          }}
+        >
+          {redefinida && (
+            <div className="aviso aviso--sucesso conta__aviso" role="status">
+              <p className="aviso__titulo">Senha redefinida.</p>
+              <p className="aviso__ajuda">
+                As sessões abertas de {conta.nome} foram encerradas. Passe a senha nova à pessoa
+                por fora do sistema; ela pode trocá-la depois, em Minha conta.
+              </p>
+            </div>
+          )}
+
+          {erro && !erroDoCampo && (
+            <div className="aviso conta__aviso" role="alert">
+              <p className="aviso__titulo">{erro.message}</p>
+              {erro.ajuda && <p className="aviso__ajuda">{erro.ajuda}</p>}
+            </div>
+          )}
+
+          <Campo
+            id="senha_nova"
+            rotulo="Senha nova"
+            obrigatorio
+            erro={erroDoCampo}
+            ajuda="O servidor confere a força. Depois de salva, ninguém a vê — nem aqui."
+          >
+            <input
+              id="campo-senha_nova"
+              type="password"
+              autoComplete="new-password"
+              value={senha}
+              onChange={(e) => {
+                setSenha(e.target.value);
+                setRedefinida(false);
+              }}
+            />
+          </Campo>
+
+          <div className="conta__acoes">
+            {confirmando ? (
+              <Confirmacao
+                texto={`Redefinir a senha de ${conta.nome}? As sessões abertas dela são encerradas agora, e a senha de antes deixa de valer.`}
+                acao="Redefinir a senha"
+                ocupado={enviando}
+                aoConfirmar={redefinir}
+                aoCancelar={() => setConfirmando(false)}
+              />
+            ) : (
+              <button className="botao botao--secundario" type="submit" disabled={enviando}>
+                Redefinir a senha
+              </button>
+            )}
+          </div>
+        </form>
+      )}
+    </section>
   );
 }
