@@ -278,9 +278,11 @@ def exportar_campanha(s: Banco, execucao_id: ExecucaoId = None) -> StreamingResp
 
 
 # =================================================== 4. operações (RF47, H87)
-def _ler_operacoes(s, de, ate, autor, acao) -> RelatorioOperacoes:
+def _ler_operacoes(s, de, ate, autor, acao, *, todas_as_pessoas=False) -> RelatorioOperacoes:
     try:
-        return servico_relatorios.operacoes(s, de=de, ate=ate, autor=autor, acao=acao)
+        return servico_relatorios.operacoes(
+            s, de=de, ate=ate, autor=autor, acao=acao, todas_as_pessoas=todas_as_pessoas
+        )
     except RelatorioRecusado as recusa:
         raise _recusa(recusa) from recusa
 
@@ -300,8 +302,8 @@ CABECALHO_OPERACOES = ("Agrupamento", "Grupo", "Operações")
 def exportar_operacoes(
     s: Banco, de: De = None, ate: Ate = None, autor: Autor = None, acao: DaAcao = None
 ) -> StreamingResponse:
-    """O mesmo relatório, em CSV (RF48)."""
-    relatorio = _ler_operacoes(s, de, ate, autor, acao)
+    """O mesmo relatório, em CSV (RF48) — com todas as pessoas, que a tela resume."""
+    relatorio = _ler_operacoes(s, de, ate, autor, acao, todas_as_pessoas=True)
     linhas = _grupos(
         (
             ("Ação", relatorio.por_acao),

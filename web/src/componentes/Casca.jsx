@@ -34,8 +34,10 @@ import {
   IconeImportar,
   IconeMensagens,
   IconeModelo,
+  IconeOperacoes,
   IconePainel,
   IconeParceiros,
+  IconeRelatorios,
   IconeSair,
   IconeUsuarios,
   IconeTemaClaro,
@@ -62,6 +64,8 @@ const GRUPOS = [
       { para: "/parceiros", rotulo: "Parceiros", Icone: IconeParceiros, exige: ["parceiros"] },
       /* Consulta, como o painel e a lista de parceiros: por isso junto deles (UC12). */
       { para: "/assistente", rotulo: "Assistente", Icone: IconeAssistente, exige: ["assistente"] },
+      /* Os três relatórios da rede (UC15), que resumem o que este grupo mostra. */
+      { para: "/relatorios", rotulo: "Relatórios", Icone: IconeRelatorios, exige: ["relatorios"] },
     ],
   },
   {
@@ -96,6 +100,13 @@ const GRUPOS = [
       { para: "/usuarios", rotulo: "Usuários", Icone: IconeUsuarios, exige: ["usuarios"] },
       /* A trilha do que foi feito (UC14): só o Administrador a abre. */
       { para: "/auditoria", rotulo: "Auditoria", Icone: IconeAuditoria, exige: ["auditoria"] },
+      /* O relatório das operações resume a trilha, e fica ao lado dela (RF47). */
+      {
+        para: "/relatorios/operacoes",
+        rotulo: "Operações",
+        Icone: IconeOperacoes,
+        exige: ["relatorio_operacoes"],
+      },
       {
         para: "/configuracao",
         rotulo: "Configuração",

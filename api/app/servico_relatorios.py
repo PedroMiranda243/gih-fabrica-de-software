@@ -65,6 +65,11 @@ SEM_USUARIO = "sem usuário"
 # O intervalo do relatório de operações quando ninguém escolhe as datas (RF47).
 DIAS_PADRAO = 30
 
+# Quantas pessoas o relatório de operações lista, das que mais fizeram. É o
+# tamanho de uma lista na tela, e não uma regra: as outras continuam contadas,
+# numa linha só, e o CSV traz todas.
+PESSOAS_NA_TELA = 15
+
 
 class RelatorioRecusado(Exception):
     """O relatório não sai, e a mensagem diz por quê e o que fazer."""
@@ -706,6 +711,7 @@ def operacoes(
     ate: date | None = None,
     autor: int | None = None,
     acao: Acao | None = None,
+    todas_as_pessoas: bool = False,
 ) -> RelatorioOperacoes:
     """O que foi feito no sistema, por tipo de ação, por usuário e por dia (RF47, H87).
 
@@ -718,6 +724,12 @@ def operacoes(
     com horário de verão, um registro da outra metade do ano perto da meia-noite
     cairia no dia vizinho; o fuso do projeto (`TZ` no `docker-compose.yml`) não
     tem.
+
+    **A tela lista as pessoas que mais fizeram, e soma as outras.** Com a base de
+    demonstração, que guarda os usuários de cada verificação, "por pessoa" tinha
+    duzentas linhas. As primeiras `PESSOAS_NA_TELA` vêm uma a uma, e o resto em
+    `outras_pessoas` — a soma continua a do total. O CSV pede todas
+    (`todas_as_pessoas`).
     """
     de, ate = intervalo(de, ate)
     filtros = servico_auditoria.condicoes(autor=autor, acao=acao, de=de, ate=ate)
@@ -741,11 +753,23 @@ def operacoes(
         select(dia, func.count()).where(*filtros).group_by(dia).order_by(dia)
     ).all()
 
+    listadas = por_usuario if todas_as_pessoas else por_usuario[:PESSOAS_NA_TELA]
+    restantes = por_usuario[len(listadas):]
+    outras = None
+    if restantes:
+        outras = ContagemOperacao(
+            chave=None,
+            rotulo=f"Outras {len(restantes)} pessoas" if len(restantes) > 1 else "Outra pessoa",
+            total=sum(total for *_, total in restantes),
+        )
+
     return RelatorioOperacoes(
         de=de,
         ate=ate,
         autor=autor,
         acao=str(acao) if acao else None,
+        pessoas=len(por_usuario),
+        outras_pessoas=outras,
         total=sum(total for _, total in por_acao),
         por_acao=[
             ContagemOperacao(chave=codigo, rotulo=servico_auditoria.rotulo(codigo), total=total)
@@ -757,7 +781,7 @@ def operacoes(
                 rotulo=_rotulo_do_usuario(nome, login),
                 total=total,
             )
-            for usuario_id, nome, login, total in por_usuario
+            for usuario_id, nome, login, total in listadas
         ],
         por_dia=[
             ContagemOperacao(chave=quando.isoformat(), rotulo=quando.isoformat(), total=total)

@@ -238,10 +238,17 @@ def telas(ids: dict) -> list[Tela]:
         Tela("Aprovação", "/aprovacao", "GESTOR", "aprovacao"),
         Tela("Benchmark", "/benchmark", "GESTOR", "benchmark"),
         Tela("Modelo", "/modelo", "GESTOR", "modelo"),
+        Tela("Relatórios", "/relatorios", "GESTOR", "relatorios"),
+        Tela("Relatório de desempenho", "/relatorios/desempenho", "GESTOR", "relatorio-desempenho"),
+        Tela("Relatório de risco", "/relatorios/risco", "GESTOR", "relatorio-risco"),
+        Tela("Relatório da campanha", "/relatorios/campanha", "GESTOR", "relatorio-campanha"),
         Tela("Usuários", "/usuarios", "ADMINISTRADOR", "usuarios"),
         Tela("Novo usuário", "/usuarios/novo", "ADMINISTRADOR", "usuario-novo"),
         Tela("Conta do usuário", f"/usuarios/{ids['usuario']}", "ADMINISTRADOR", "usuario"),
         Tela("Auditoria", "/auditoria", "ADMINISTRADOR", "auditoria"),
+        Tela(
+            "Relatório de operações", "/relatorios/operacoes", "ADMINISTRADOR", "relatorio-operacoes"
+        ),
         Tela("Limiares", "/configuracao", "ADMINISTRADOR", "configuracao"),
         Tela("Meu desempenho", "/meu-desempenho", "PARCEIRO", "meu-desempenho"),
     ]

@@ -1812,6 +1812,12 @@ class RelatorioOperacoes(BaseModel):
     autor: int | None
     acao: str | None
     total: int
+    pessoas: int = Field(
+        description="Quantas pessoas fizeram operações — todas, e não só as listadas."
+    )
     por_acao: list[ContagemOperacao]
-    por_usuario: list[ContagemOperacao]
+    por_usuario: list[ContagemOperacao] = Field(
+        description="As que mais fizeram. As demais vêm somadas em `outras_pessoas`."
+    )
+    outras_pessoas: ContagemOperacao | None = None
     por_dia: list[ContagemOperacao]

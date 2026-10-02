@@ -12,7 +12,7 @@ Três verificações, em três lugares:
 
 | Item | Valor |
 |---|---|
-| Data | 01/10/2026 06:49 |
+| Data | 01/10/2026 07:44 |
 | Navegador | Microsoft Edge 154.0.4258.37, sem cabeça, pelo Playwright |
 | axe-core | 4.13.0 |
 | Dados | a base de trabalho, com a massa do gerador; dois planos calculados para a medição e apagados depois |
@@ -53,7 +53,7 @@ api/.venv/Scripts/python scripts/medir_telas.py
 
 ## As telas
 
-**21 telas. Com a página rolando na horizontal ou conteúdo cortado: 0 das 42 medidas. Com violação do axe no navegador: 0 das 42 auditorias** (cada tela, nos dois temas).
+**26 telas. Com a página rolando na horizontal ou conteúdo cortado: 0 das 52 medidas. Com violação do axe no navegador: 0 das 52 auditorias** (cada tela, nos dois temas).
 
 | Tela | Rota | Perfil | 768 px | 1440 px | axe, claro | axe, escuro |
 |---|---|---|---|---|--:|--:|
@@ -66,16 +66,21 @@ api/.venv/Scripts/python scripts/medir_telas.py
 | Assistente | `/assistente` | gestor | ok | ok | 0 | 0 |
 | Campanha | `/campanha` | gestor | ok | ok | 0 | 0 |
 | Execuções | `/execucoes` | gestor | ok | ok | 0 | 0 |
-| Execução | `/execucoes/131` | gestor | ok | ok | 0 | 0 |
-| Comparação | `/execucoes/comparar?a=131&b=132` | gestor | ok | ok | 0 | 0 |
+| Execução | `/execucoes/136` | gestor | ok | ok | 0 | 0 |
+| Comparação | `/execucoes/comparar?a=136&b=137` | gestor | ok | ok | 0 | 0 |
 | Mensagens | `/mensagens` | gestor | ok | ok | 0 | 0 |
 | Aprovação | `/aprovacao` | gestor | ok | ok | 0 | 0 |
 | Benchmark | `/benchmark` | gestor | ok | ok | 0 | 0 |
 | Modelo | `/modelo` | gestor | ok | ok | 0 | 0 |
+| Relatórios | `/relatorios` | gestor | ok | ok | 0 | 0 |
+| Relatório de desempenho | `/relatorios/desempenho` | gestor | ok | ok | 0 | 0 |
+| Relatório de risco | `/relatorios/risco` | gestor | ok | ok | 0 | 0 |
+| Relatório da campanha | `/relatorios/campanha` | gestor | ok | ok | 0 | 0 |
 | Usuários | `/usuarios` | administrador | ok | ok | 0 | 0 |
 | Novo usuário | `/usuarios/novo` | administrador | ok | ok | 0 | 0 |
-| Conta do usuário | `/usuarios/173` | administrador | ok | ok | 0 | 0 |
+| Conta do usuário | `/usuarios/185` | administrador | ok | ok | 0 | 0 |
 | Auditoria | `/auditoria` | administrador | ok | ok | 0 | 0 |
+| Relatório de operações | `/relatorios/operacoes` | administrador | ok | ok | 0 | 0 |
 | Limiares | `/configuracao` | administrador | ok | ok | 0 | 0 |
 | Meu desempenho | `/meu-desempenho` | parceiro | ok | ok | 0 | 0 |
 
@@ -97,10 +102,15 @@ api/.venv/Scripts/python scripts/medir_telas.py
 | Aprovação | 768 px | `nav.trilho` |
 | Benchmark | 768 px | `nav.trilho`, `div.tabela-rolagem` |
 | Modelo | 768 px | `nav.trilho`, `div.tabela-rolagem` |
+| Relatórios | 768 px | `nav.trilho` |
+| Relatório de desempenho | 768 px | `nav.trilho` |
+| Relatório de risco | 768 px | `nav.trilho`, `div.tabela-rolagem` |
+| Relatório da campanha | 768 px | `nav.trilho` |
 | Usuários | 768 px | `nav.trilho` |
 | Novo usuário | 768 px | `nav.trilho` |
 | Conta do usuário | 768 px | `nav.trilho` |
 | Auditoria | 768 px | `nav.trilho`, `div.tabela-rolagem` |
+| Relatório de operações | 768 px | `nav.trilho` |
 | Limiares | 768 px | `nav.trilho` |
 
 ## As capturas
@@ -167,6 +177,22 @@ Tema claro. À esquerda, 768 px; à direita, 1440 px.
 
 <img src="telas/modelo-768.jpg" width="280" alt="Modelo a 768 px"> <img src="telas/modelo-1440.jpg" width="480" alt="Modelo a 1440 px">
 
+### Relatórios
+
+<img src="telas/relatorios-768.jpg" width="280" alt="Relatórios a 768 px"> <img src="telas/relatorios-1440.jpg" width="480" alt="Relatórios a 1440 px">
+
+### Relatório de desempenho
+
+<img src="telas/relatorio-desempenho-768.jpg" width="280" alt="Relatório de desempenho a 768 px"> <img src="telas/relatorio-desempenho-1440.jpg" width="480" alt="Relatório de desempenho a 1440 px">
+
+### Relatório de risco
+
+<img src="telas/relatorio-risco-768.jpg" width="280" alt="Relatório de risco a 768 px"> <img src="telas/relatorio-risco-1440.jpg" width="480" alt="Relatório de risco a 1440 px">
+
+### Relatório da campanha
+
+<img src="telas/relatorio-campanha-768.jpg" width="280" alt="Relatório da campanha a 768 px"> <img src="telas/relatorio-campanha-1440.jpg" width="480" alt="Relatório da campanha a 1440 px">
+
 ### Usuários
 
 <img src="telas/usuarios-768.jpg" width="280" alt="Usuários a 768 px"> <img src="telas/usuarios-1440.jpg" width="480" alt="Usuários a 1440 px">
@@ -182,6 +208,10 @@ Tema claro. À esquerda, 768 px; à direita, 1440 px.
 ### Auditoria
 
 <img src="telas/auditoria-768.jpg" width="280" alt="Auditoria a 768 px"> <img src="telas/auditoria-1440.jpg" width="480" alt="Auditoria a 1440 px">
+
+### Relatório de operações
+
+<img src="telas/relatorio-operacoes-768.jpg" width="280" alt="Relatório de operações a 768 px"> <img src="telas/relatorio-operacoes-1440.jpg" width="480" alt="Relatório de operações a 1440 px">
 
 ### Limiares
 
