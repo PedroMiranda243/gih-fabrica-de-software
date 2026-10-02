@@ -14,6 +14,10 @@
  * verificação de ponta a ponta deixa as suas, desativadas —, e o trabalho do dia
  * é com quem entra no sistema. "Todas" tem valor próprio no endereço: sem ele,
  * escolher "Todas" apagaria o parâmetro e a lista voltaria aos ativos.
+ *
+ * **A busca é por nome ou login** (RF52, H91), sem maiúscula nem acento, e vai
+ * ao servidor: quem compara é a API, pela mesma regra da busca de parceiros.
+ * Ela espera a digitação parar, como lá.
  */
 import { useEffect, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
@@ -33,24 +37,29 @@ const SITUACAO_PADRAO = "true";
 export default function Usuarios() {
   const [parametros, setParametros] = useSearchParams();
   const lugar = useLocation();
+  const busca = parametros.get("busca") ?? "";
   const perfil = parametros.get("perfil") ?? "";
   const ativo = parametros.get("ativo") || SITUACAO_PADRAO;
   const aqui = lugar.pathname + lugar.search;
   const aviso = lugar.state?.aviso;
 
-  const consulta = `${perfil}|${ativo}`;
+  const consulta = `${busca}|${perfil}|${ativo}`;
   const [estado, setEstado] = useState({ consulta: null, usuarios: null, erro: null });
 
   useEffect(() => {
     let vivo = true;
-    api
-      .get("/api/usuarios", { perfil, ativo: ativo === "todas" ? "" : ativo })
-      .then((usuarios) => vivo && setEstado({ consulta, usuarios, erro: null }))
-      .catch((erro) => vivo && setEstado({ consulta, usuarios: null, erro }));
+    /* A busca espera a digitação parar, como na lista de parceiros. */
+    const relogio = setTimeout(() => {
+      api
+        .get("/api/usuarios", { busca, perfil, ativo: ativo === "todas" ? "" : ativo })
+        .then((usuarios) => vivo && setEstado({ consulta, usuarios, erro: null }))
+        .catch((erro) => vivo && setEstado({ consulta, usuarios: null, erro }));
+    }, 250);
     return () => {
       vivo = false;
+      clearTimeout(relogio);
     };
-  }, [consulta, perfil, ativo]);
+  }, [consulta, busca, perfil, ativo]);
 
   const atual = estado.consulta === consulta;
   const usuarios = atual ? estado.usuarios : null;
@@ -72,8 +81,18 @@ export default function Usuarios() {
         </div>
       )}
 
-      <section className="painel">
+      <section className="painel" aria-label="Filtros dos usuários">
         <div className="filtros">
+          <div className="campo filtros__busca">
+            <label htmlFor="busca">Buscar por nome ou login</label>
+            <input
+              id="busca"
+              type="search"
+              value={busca}
+              placeholder="Um trecho do nome ou do login"
+              onChange={(e) => ajustar({ busca: e.target.value })}
+            />
+          </div>
           <div className="campo">
             <label htmlFor="perfil">Perfil</label>
             <select id="perfil" value={perfil} onChange={(e) => ajustar({ perfil: e.target.value })}>
@@ -137,7 +156,7 @@ export default function Usuarios() {
         {usuarios && usuarios.length === 0 && (
           <EstadoVazio
             titulo="Nenhum usuário neste recorte"
-            texto="Mude o perfil ou a situação para ver outros usuários — a lista abre só nos ativos."
+            texto="Mude a busca, o perfil ou a situação para ver outros usuários — a lista abre só nos ativos."
           />
         )}
 

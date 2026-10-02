@@ -415,7 +415,13 @@ Os comportamentos que o desenho não mostra, e que valem para todas as telas:
   nem tinha aberto.
 - **O filtro da lista vive na URL.** Por isso "voltar" do cadastro devolve o mesmo recorte, e o link de
   exportar é a mesma consulta em outro formato. A lista de usuários abre nos ativos; "todas as situações"
-  tem valor próprio no endereço.
+  tem valor próprio no endereço. Vale para todas as listas (H91): o histórico de execuções filtra pelo
+  resultado, pelo modo em que rodou, por quem calculou e pelas datas, e a lista de usuários busca por nome
+  ou login, sem maiúscula nem acento. Mudar um filtro volta para a primeira página, e o recorte sem
+  resultado diz que é o recorte que está vazio — e não que a lista nunca teve nada.
+- **O plano também sai do sistema** (H91). A execução aberta pelo histórico tem "Exportar CSV", com os
+  itens que a tela mostra, e "Imprimir ou salvar em PDF", pela mesma folha dos relatórios: na folha, a
+  trilha vira o título "Plano de campanha", com quando foi calculado e por quem.
 - **Estimativa não se veste de medição.** A previsão do modelo aparece com a etiqueta "Estimativa", o
   período de onde parte e a versão que a produziu — e o ganho esperado do plano de campanha também; na série do parceiro, o trecho até o próximo período é
   tracejado, com marcador vazado e legenda — cor diferente sozinha não bastaria (H44).

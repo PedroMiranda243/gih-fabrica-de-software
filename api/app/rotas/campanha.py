@@ -13,18 +13,31 @@ agenda a busca para depois da resposta. A tela acompanha pelo `GET` da execuçã
 """
 from __future__ import annotations
 
+from datetime import date, timedelta
+from typing import Annotated
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app import auditoria, servico_comparacao, servico_otimizacao, servico_previsao
+from app import (
+    auditoria,
+    planilha,
+    servico_auditoria,
+    servico_comparacao,
+    servico_otimizacao,
+    servico_previsao,
+)
 from app.auditoria import Acao
 from app.dependencias import Banco, UsuarioAtual, exigir
+from app.desempenho import ROTULO_SEGMENTO
 from app.esquemas import (
     AcaoComercialEdicao,
     AcaoComercialEntrada,
     AcaoComercialResposta,
+    AutorDeExecucao,
     CategoriaCampanha,
     ComparacaoPlanos,
     CotaEmContagem,
@@ -36,6 +49,7 @@ from app.esquemas import (
     PaginaExecucoes,
     ParametrosCampanha,
     PeriodoResposta,
+    ResultadoDaExecucao,
 )
 from app.modelos import (
     AcaoComercial,
@@ -271,9 +285,29 @@ def calcular(
     return _resposta(s, execucao)
 
 
+# Como cada resultado se lê nas colunas da execução (RF51). Em andamento não é
+# resultado: a execução ainda não terminou de nenhum jeito.
+_DO_RESULTADO = {
+    ResultadoDaExecucao.VIAVEL: (
+        ExecucaoOtimizador.situacao == SituacaoExecucao.CONCLUIDA,
+        ExecucaoOtimizador.viavel.is_(True),
+    ),
+    ResultadoDaExecucao.INVIAVEL: (
+        ExecucaoOtimizador.situacao == SituacaoExecucao.CONCLUIDA,
+        ExecucaoOtimizador.viavel.is_(False),
+    ),
+    ResultadoDaExecucao.FALHOU: (ExecucaoOtimizador.situacao == SituacaoExecucao.FALHOU,),
+}
+
+
 @historico.get("", response_model=PaginaExecucoes)
 def listar(
     s: Banco,
+    modo: Annotated[ModoExecucao | None, Query(description="O modo em que rodou.")] = None,
+    resultado: Annotated[ResultadoDaExecucao | None, Query()] = None,
+    autor: Annotated[int | None, Query(description="Id de quem calculou.")] = None,
+    de: Annotated[date | None, Query(description="Iniciadas a partir deste dia.")] = None,
+    ate: Annotated[date | None, Query(description="Iniciadas até este dia, inclusive.")] = None,
     pagina: int = Query(1, ge=1),
     tamanho: int = Query(10, ge=1, le=50),
 ) -> PaginaExecucoes:
@@ -282,16 +316,48 @@ def listar(
     Sem os itens do plano: cada execução vem com autor, data, parâmetros, modo,
     tempo e resultado — o que o Administrador também vê. O plano, parceiro a
     parceiro, só na consulta de uma execução, que é da campanha (UC08).
+
+    **Os filtros (RF51, H91).** O modo é o em que a execução **rodou**, e não o
+    pedido — quem pede GPU numa máquina sem placa roda no paralelo, e é isso
+    que a coluna mostra. O dia é o do relógio do servidor, como na trilha de
+    auditoria, e a data final inclui o dia inteiro.
     """
-    total = s.scalar(select(func.count()).select_from(ExecucaoOtimizador))
+    filtros = []
+    if modo is not None:
+        filtros.append(ExecucaoOtimizador.modo == modo)
+    if resultado is not None:
+        filtros.extend(_DO_RESULTADO[resultado])
+    if autor is not None:
+        filtros.append(ExecucaoOtimizador.usuario_id == autor)
+    if de is not None:
+        filtros.append(ExecucaoOtimizador.iniciada_em >= servico_auditoria.inicio_do_dia(de))
+    if ate is not None:
+        filtros.append(
+            ExecucaoOtimizador.iniciada_em
+            < servico_auditoria.inicio_do_dia(ate + timedelta(days=1))
+        )
+
+    total = s.scalar(select(func.count()).select_from(ExecucaoOtimizador).where(*filtros))
     execucoes = s.scalars(
         select(ExecucaoOtimizador)
+        .where(*filtros)
         .order_by(ExecucaoOtimizador.id.desc())
         .offset((pagina - 1) * tamanho)
         .limit(tamanho)
     )
+    # Todos os que já calcularam, e não só os do recorte: escolher um autor não
+    # pode tirar os outros da lista de escolha.
+    autores = s.execute(
+        select(Usuario.id, Usuario.nome)
+        .where(Usuario.id.in_(select(ExecucaoOtimizador.usuario_id)))
+        .order_by(Usuario.nome, Usuario.id)
+    ).all()
     return PaginaExecucoes(
-        itens=[_resposta(s, e) for e in execucoes], total=total, pagina=pagina, tamanho=tamanho
+        itens=[_resposta(s, e) for e in execucoes],
+        total=total,
+        pagina=pagina,
+        tamanho=tamanho,
+        autores=[AutorDeExecucao(id=id_, nome=nome) for id_, nome in autores],
     )
 
 
@@ -351,6 +417,56 @@ def obter(execucao_id: int, s: Banco) -> ExecucaoResposta:
     if execucao is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Otimização não encontrada.")
     return _resposta(s, execucao, com_itens=True)
+
+
+CABECALHO_DO_PLANO = (
+    "Parceiro", "Categoria", "Segmento", "Cauda longa", "Ação", "Custo", "Ganho esperado",
+)
+
+
+@router.get("/otimizacoes/{execucao_id}/exportacao.csv", response_class=StreamingResponse)
+def exportar_plano(execucao_id: int, s: Banco) -> StreamingResponse:
+    """Os itens de um plano, em CSV (RF53, H91) — do Gestor e do Analista, como o plano.
+
+    As mesmas linhas, na mesma ordem, que a consulta da execução mostra
+    (`_itens`). O nome do parceiro, o da categoria e o da ação vieram de quem
+    cadastra, e passam pela proteção contra fórmula. Execução sem plano —
+    inviável, em andamento, ou que falhou — não tem o que exportar, e a resposta
+    diz isso em vez de mandar um arquivo só com o cabeçalho.
+    """
+    execucao = s.get(ExecucaoOtimizador, execucao_id)
+    if execucao is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Otimização não encontrada.")
+    itens = _itens(s, execucao)
+    if not itens:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail={
+                "erro": "Esta execução não tem plano para exportar.",
+                "ajuda": "Só o plano calculado e viável tem itens: escolha outra no histórico.",
+            },
+        )
+    linhas = [
+        (
+            planilha.texto(item.parceiro),
+            planilha.texto(item.categoria),
+            ROTULO_SEGMENTO.get(item.segmento, ""),
+            "Sim" if item.cauda_longa else "Não",
+            planilha.texto(item.acao),
+            planilha.numero(item.custo),
+            planilha.numero(item.ganho),
+        )
+        for item in itens
+    ]
+    linhas.append(
+        ("Total", "", "", "", "", planilha.numero(execucao.custo_total),
+         planilha.numero(execucao.uplift_total))
+    )
+    return StreamingResponse(
+        planilha.de_linhas(CABECALHO_DO_PLANO, linhas),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="plano-execucao-{execucao.id}.csv"'},
+    )
 
 
 # ------------------------------------------------------------ o catálogo

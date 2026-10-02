@@ -5,6 +5,11 @@
  * mesmo jeito que a Campanha o mostrou. É o que permite retomar uma decisão:
  * "com que orçamento e que cotas saiu aquele plano?" tem a resposta aqui, e não
  * na memória de quem calculou.
+ *
+ * **O plano sai do sistema por dois caminhos** (RF53, H91): o CSV, com os itens
+ * que a tela mostra, e a impressão do navegador, pela mesma folha dos
+ * relatórios. O CSV só aparece quando há itens — a execução inviável, a que
+ * falhou e a que ainda calcula não têm o que exportar.
  */
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -16,6 +21,7 @@ import PlanoDeCampanha from "../componentes/PlanoDeCampanha";
 import { useTituloDaAba } from "../componentes/tituloDaAba";
 import { comoDataHora, comoDinheiro, comoFracao, comoInteiro, cotasDoPedido, ROTULO_MODO, TRACO } from "../formato";
 import "../estilos/execucoes.css";
+import "../estilos/relatorios.css";
 
 export default function Execucao() {
   const { id } = useParams();
@@ -49,11 +55,40 @@ export default function Execucao() {
 
   return (
     <>
-      <nav className="trilha" aria-label="Você está em">
-        <Link to="/execucoes">Execuções</Link>
-        <span aria-hidden="true">›</span>
-        <span aria-current="page">{execucao ? comoDataHora(execucao.iniciada_em) : "Execução"}</span>
-      </nav>
+      <div className="relatorio__cabecalho">
+        <nav className="trilha nao-imprime" aria-label="Você está em">
+          <Link to="/execucoes">Execuções</Link>
+          <span aria-hidden="true">›</span>
+          <span aria-current="page">{execucao ? comoDataHora(execucao.iniciada_em) : "Execução"}</span>
+        </nav>
+
+        {execucao && (
+          <>
+            {/* Só na folha: o título, que na tela é a trilha. */}
+            <div className="so-impressao">
+              <p className="relatorio__titulo">Plano de campanha</p>
+              <p className="relatorio__emissao">
+                Execução de {comoDataHora(execucao.iniciada_em)}
+                {execucao.autor ? `, por ${execucao.autor}` : ""} · Growth Intelligence Hub
+              </p>
+            </div>
+            <div className="relatorio__acoes nao-imprime">
+              {execucao.itens?.length > 0 && (
+                <a
+                  className="botao botao--secundario"
+                  href={`/api/otimizacoes/${execucao.id}/exportacao.csv`}
+                  download
+                >
+                  Exportar CSV
+                </a>
+              )}
+              <button type="button" className="botao botao--secundario" onClick={() => window.print()}>
+                Imprimir ou salvar em PDF
+              </button>
+            </div>
+          </>
+        )}
+      </div>
 
       {erro && (
         <div className="aviso" role="alert">

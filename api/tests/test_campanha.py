@@ -16,7 +16,10 @@ ranking e a categoria de cada parceiro.
 """
 from __future__ import annotations
 
+import csv
+import io
 import os
+from datetime import timedelta
 from decimal import Decimal
 
 import gih_nucleo
@@ -639,6 +642,167 @@ def test_o_administrador_ve_o_historico_mas_nao_abre_o_plano(
 
 
 # ================================================================ a comparação (RF35, H59)
+# ------------------------------------------- os filtros do histórico (RF51, H91)
+def _historico(cliente, **filtros):
+    r = cliente.get("/api/otimizacoes", params=filtros)
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+def test_o_historico_filtra_pelo_resultado(base, gestor, monkeypatch):
+    base(_seis())
+    viavel = _calcular(gestor)
+    inviavel = _calcular(gestor, orcamento="10.00", cota_cauda_longa="1")
+
+    def explode(*_a, **_k):
+        raise RuntimeError("o núcleo caiu")
+
+    monkeypatch.setattr(servico_otimizacao, "_executar", explode)
+    falhou = gestor.post("/api/otimizacoes", json=_parametros()).json()
+
+    def ids(resultado):
+        return [e["id"] for e in _historico(gestor, resultado=resultado)["itens"]]
+
+    assert ids("VIAVEL") == [viavel["id"]]
+    assert ids("INVIAVEL") == [inviavel["id"]]
+    assert ids("FALHOU") == [falhou["id"]]
+    assert _historico(gestor, resultado="VIAVEL")["total"] == 1
+    assert _historico(gestor)["total"] == 3
+
+
+def test_o_historico_filtra_pelo_modo_em_que_rodou_e_nao_pelo_pedido(base, gestor):
+    """Quem pede a GPU numa máquina sem placa roda no serial: é o que a coluna
+    mostra, e é por ela que o filtro procura."""
+    base(_seis())
+    pedida_na_gpu = _calcular(gestor, modo="GPU")
+
+    assert pedida_na_gpu["modo"] == "SERIAL"
+    assert [e["id"] for e in _historico(gestor, modo="SERIAL")["itens"]] == [pedida_na_gpu["id"]]
+    assert _historico(gestor, modo="GPU")["total"] == 0
+
+
+def test_o_historico_filtra_pelo_autor_e_oferece_quem_ja_calculou(
+    base, gestor, criar_usuario, autenticar
+):
+    base(_seis())
+    da_gestora = _calcular(gestor)
+    outra_id = criar_usuario(login="outra", perfil=Perfil.GESTOR, nome="Outra Gestora")
+    criar_usuario(login="quieta", perfil=Perfil.GESTOR, nome="Nunca Calculou")
+    outra = autenticar("outra")
+    da_outra = _calcular(outra)
+
+    pagina = _historico(outra, autor=outra_id)
+
+    assert [e["id"] for e in pagina["itens"]] == [da_outra["id"]]
+    # Todos os que já calcularam, mesmo com o filtro em um: escolher um autor não
+    # tira os outros da lista. Quem nunca calculou não aparece.
+    assert [a["nome"] for a in pagina["autores"]] == ["Gestora", "Outra Gestora"]
+    assert da_gestora["id"] not in [e["id"] for e in pagina["itens"]]
+
+
+def test_o_historico_filtra_pelas_datas_com_o_dia_final_inteiro(base, gestor):
+    base(_seis())
+    hoje = _calcular(gestor)
+    antiga = _calcular(gestor, orcamento="300.00")
+    s = Sessao()
+    try:
+        execucao = s.get(ExecucaoOtimizador, antiga["id"])
+        execucao.iniciada_em = execucao.iniciada_em - timedelta(days=10)
+        s.commit()
+        dia = s.get(ExecucaoOtimizador, hoje["id"]).iniciada_em.astimezone().date()
+    finally:
+        s.close()
+
+    de_hoje = _historico(gestor, de=dia.isoformat(), ate=dia.isoformat())
+    ate_ontem = _historico(gestor, ate=(dia - timedelta(days=1)).isoformat())
+
+    # Quem filtra "até hoje" espera o dia de hoje inteiro.
+    assert [e["id"] for e in de_hoje["itens"]] == [hoje["id"]]
+    assert [e["id"] for e in ate_ontem["itens"]] == [antiga["id"]]
+
+
+def test_os_filtros_do_historico_se_combinam_e_o_total_e_o_do_recorte(base, gestor):
+    base(_seis())
+    _calcular(gestor)
+    _calcular(gestor, orcamento="300.00")
+    _calcular(gestor, orcamento="10.00", cota_cauda_longa="1")
+
+    pagina = _historico(gestor, resultado="VIAVEL", modo="SERIAL", tamanho=1)
+
+    assert pagina["total"] == 2
+    assert len(pagina["itens"]) == 1
+
+
+def test_resultado_ou_modo_que_nao_existe_e_recusado(base, gestor):
+    base(_seis())
+
+    assert gestor.get("/api/otimizacoes", params={"resultado": "TALVEZ"}).status_code == 422
+    assert gestor.get("/api/otimizacoes", params={"modo": "QUANTICO"}).status_code == 422
+
+
+# ----------------------------------------------- o plano em CSV (RF53, H91)
+def _csv(resposta) -> list[list[str]]:
+    assert resposta.status_code == 200, resposta.text
+    assert resposta.content.startswith(b"\xef\xbb\xbf")
+    return list(csv.reader(io.StringIO(resposta.content.decode("utf-8-sig")), delimiter=";"))
+
+
+def test_o_csv_do_plano_traz_os_itens_da_tela_e_o_total(base, gestor):
+    base(_seis())
+    execucao = _calcular(gestor)
+
+    r = gestor.get(f"/api/otimizacoes/{execucao['id']}/exportacao.csv")
+
+    linhas = _csv(r)
+    assert linhas[0] == [
+        "Parceiro", "Categoria", "Segmento", "Cauda longa", "Ação", "Custo", "Ganho esperado",
+    ]
+    # As mesmas linhas, na mesma ordem, que a consulta da execução mostra.
+    assert [linha[0] for linha in linhas[1:-1]] == [i["parceiro"] for i in execucao["itens"]]
+    primeiro = execucao["itens"][0]
+    assert linhas[1][4] == primeiro["acao"]
+    assert linhas[1][5] == primeiro["custo"].replace(".", ",")
+    assert linhas[1][6] == primeiro["ganho"].replace(".", ",")
+    assert linhas[1][3] in {"Sim", "Não"}
+    assert linhas[-1][0] == "Total"
+    assert linhas[-1][5] == execucao["custo_total"].replace(".", ",")
+    assert linhas[-1][6] == execucao["uplift_total"].replace(".", ",")
+    assert f"plano-execucao-{execucao['id']}.csv" in r.headers["content-disposition"]
+
+
+def test_execucao_sem_plano_nao_tem_csv_e_a_resposta_diz_por_que(base, gestor):
+    base(_seis())
+    inviavel = _calcular(gestor, orcamento="10.00", cota_cauda_longa="1")
+
+    r = gestor.get(f"/api/otimizacoes/{inviavel['id']}/exportacao.csv")
+
+    assert r.status_code == 409
+    assert r.json()["detail"]["erro"] == "Esta execução não tem plano para exportar."
+    assert gestor.get("/api/otimizacoes/999999/exportacao.csv").status_code == 404
+
+
+def test_o_analista_exporta_o_plano_e_o_administrador_nao(
+    base, gestor, criar_usuario, autenticar
+):
+    """Como abrir o plano: o Administrador vê o histórico, e não o plano parceiro a parceiro."""
+    base(_seis())
+    execucao = _calcular(gestor)
+    caminho = f"/api/otimizacoes/{execucao['id']}/exportacao.csv"
+    criar_usuario(login="analista", perfil=Perfil.ANALISTA)
+    assert autenticar("analista").get(caminho).status_code == 200
+    criar_usuario(login="admin2", perfil=Perfil.ADMINISTRADOR)
+    assert autenticar("admin2").get(caminho).status_code == 403
+
+
+def test_parceiro_com_nome_de_formula_nao_vira_formula_no_csv_do_plano(base, gestor):
+    base([_parceiro("=cmd|' /C calc'!A0", "1000.00", previsto="900.00", risco=0.9)])
+    execucao = _calcular(gestor)
+
+    linhas = _csv(gestor.get(f"/api/otimizacoes/{execucao['id']}/exportacao.csv"))
+
+    assert linhas[1][0].startswith("'=cmd")
+
+
 def _comparar(cliente, a, b):
     return cliente.get("/api/otimizacoes/comparacao", params={"a": a["id"], "b": b["id"]})
 
