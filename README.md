@@ -94,7 +94,8 @@ na [documentação técnica final](#documentação-técnica-final).
 | Sprint 03 — estrutura inicial funcionando | 19/09/2026 | [`GRUPO-18-GIH-SPRINT-03.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-03.pdf) |
 | Sprint 04 — primeiro módulo completo | 26/09/2026 | [`GRUPO-18-GIH-SPRINT-04.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-04.pdf) |
 | Sprint 05 — segundo módulo funcionando | 03/10/2026 | [`GRUPO-18-GIH-SPRINT-05.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-05.pdf) |
-| **Sprint 06 — aprimoramento do sistema** | 17/10/2026 | [`GRUPO-18-GIH-SPRINT-06.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-06.pdf) |
+| Sprint 06 — aprimoramento do sistema | 17/10/2026 | [`GRUPO-18-GIH-SPRINT-06.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-06.pdf) |
+| **Sprint 07 — sistema quase completo** | 24/10/2026 | [`GRUPO-18-GIH-SPRINT-07.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-07.pdf) |
 
 O documento é acumulado: cada entrega traz as sprints anteriores e a atual. Ele é **gerado a partir da
 documentação deste repositório**, e não escrito à parte — ver [`docs/entrega/`](docs/entrega/).
@@ -102,7 +103,7 @@ documentação deste repositório**, e não escrito à parte — ver [`docs/entr
 ```bash
 node docs/entrega/renderizar_diagramas.js   # diagramas, a partir dos blocos mermaid do markdown
 node docs/entrega/gerar.js                  # monta o .docx
-powershell -ExecutionPolicy Bypass -File docs/entrega/converter_pdf.ps1 -Nome GRUPO-18-GIH-SPRINT-06
+powershell -ExecutionPolicy Bypass -File docs/entrega/converter_pdf.ps1 -Nome GRUPO-18-GIH-SPRINT-07
 ```
 
 A conversão pelo Word trava nesta máquina com frequência, sem erro e sem janela. Quando acontecer, o

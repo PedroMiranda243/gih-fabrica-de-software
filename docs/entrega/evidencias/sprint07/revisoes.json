@@ -1,0 +1,104 @@
+[
+  {
+    "numero": 207,
+    "titulo": "A trilha de auditoria na tela e o histórico do cadastro do parceiro (H89, H90)",
+    "mesclado_em": "2026-10-01T21:11-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 209,
+    "titulo": "O painel com período e categoria, e a previsão e a campanha dentro dele (H82, H83)",
+    "mesclado_em": "2026-10-01T21:28-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 210,
+    "titulo": "Os relatórios de desempenho, de risco, da campanha e das operações na API, com o CSV de cada um (H84 a H88)",
+    "mesclado_em": "2026-10-01T22:16-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 211,
+    "titulo": "Os relatórios na tela, com o CSV e a impressão em PDF (H84 a H88)",
+    "mesclado_em": "2026-10-01T22:50-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 212,
+    "titulo": "Filtros no histórico de execuções, busca nos usuários e o plano em CSV e em PDF (H91)",
+    "mesclado_em": "2026-10-01T23:08-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 213,
+    "titulo": "Evidências da Sprint 07: o painel, os relatórios, os filtros, a exportação e a trilha, contra o sistema no ar",
+    "mesclado_em": "2026-10-01T23:38-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 214,
+    "titulo": "As Partes V e VI leem a medição como foi entregue, e não a viva (#208)",
+    "mesclado_em": "2026-10-01T23:47-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  }
+]

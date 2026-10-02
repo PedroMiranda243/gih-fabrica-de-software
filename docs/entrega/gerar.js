@@ -31,6 +31,7 @@ const sprint03 = require('./secoes/sprint03');
 const sprint04 = require('./secoes/sprint04');
 const sprint05 = require('./secoes/sprint05');
 const sprint06 = require('./secoes/sprint06');
+const sprint07 = require('./secoes/sprint07');
 
 const GRUPO = '18';
 const PROJETO = 'GROWTH INTELLIGENCE HUB (GIH)';
@@ -39,9 +40,9 @@ const PROJETO = 'GROWTH INTELLIGENCE HUB (GIH)';
 // as anteriores e a atual, então acrescentar uma sprint é acrescentar um módulo
 // em `secoes/` e uma linha aqui.
 const SPRINT = {
-  numero: '06',
-  titulo: 'APRIMORAMENTO DO SISTEMA',
-  anteriores: 'Documento acumulado: inclui as Sprints 01, 02, 03, 04 e 05',
+  numero: '07',
+  titulo: 'SISTEMA QUASE COMPLETO',
+  anteriores: 'Documento acumulado: inclui as Sprints 01, 02, 03, 04, 05 e 06',
 };
 const SAIDA = path.join(
   __dirname, '..', 'entregas', `GRUPO-${GRUPO}-GIH-SPRINT-${SPRINT.numero}.docx`,
@@ -144,6 +145,15 @@ function sumario() {
     '11. Ajustes no planejamento, na arquitetura e na modelagem', '12. Próximos passos',
   ].forEach((t) => c.push(p(t, { size: 20, after: 70, indent: { left: 280 } })));
 
+  c.push(p('PARTE VII — SPRINT 07 · SISTEMA QUASE COMPLETO', { bold: true, size: 21, color: '2C5B8F', before: 260, after: 100 }));
+  [
+    '1. Dashboard', '2. Relatórios', '3. Pesquisas e filtros', '4. Exportação',
+    '5. Logs e histórico de operações', '6. Integração com os módulos anteriores',
+    '7. Testes e bugs', '8. Repositório, commits e revisões',
+    '9. Execução e roteiro de demonstração', '10. Dificuldades encontradas',
+    '11. Ajustes no planejamento, na arquitetura e na modelagem', '12. Próximos passos',
+  ].forEach((t) => c.push(p(t, { size: 20, after: 70, indent: { left: 280 } })));
+
   c.push(espaco(300));
   c.push(rich([
     { t: 'Documentação completa e versionada em: ', s: 19, c: '5A6B7E' },
@@ -163,6 +173,7 @@ function main() {
     ...sprint04.montar(),
     ...sprint05.montar(),
     ...sprint06.montar(),
+    ...sprint07.montar(),
   ];
 
   const doc = new Document({
