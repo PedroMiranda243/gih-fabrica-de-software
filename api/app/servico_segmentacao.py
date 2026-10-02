@@ -48,21 +48,21 @@ from app.ranking import posicoes
 class Limiares:
     """Os três números que a regra usa. A H34 os torna configuráveis (RF21)."""
 
+    # Os três valores de fábrica estão na RN01, com a origem de cada um
+    # (`docs/02-requisitos.md`, parte IV).
+
     # "Top 15" está em `docs/01-visao-do-produto.md`, no problema e no glossário,
     # e é o que o protótipo aprovado mostra.
     top_n: int = 15
 
-    # RN01 escreve "2 ou mais períodos consecutivos" para queda **e** para
-    # crescimento. A RF21 só nomeia o da queda como configurável; enquanto os
-    # dois forem o mesmo número, um limiar só evita a ilusão de que dá para
-    # afrouxar um sem o outro. Separá-los é conversa da H34.
+    # Um limiar só, para a queda **e** para a alta: com dois números, daria para
+    # afrouxar um sem o outro, e o mesmo parceiro oscilando mudaria de segmento a
+    # cada semana.
     periodos_tendencia: int = 2
 
-    # **Este não está em `docs/`** — RN01 diz apenas "menos períodos de histórico
-    # que o limiar configurado". O 3 vem da premissa registrada em
-    # `docs/01-visao-do-produto.md` §6: "existe histórico de ao menos 3 períodos
-    # para que a segmentação por tendência e a previsão façam sentido". A lacuna
-    # está aberta na issue #59, com o PO.
+    # O 3 vem da premissa de `docs/01-visao-do-produto.md` §6: "existe histórico
+    # de ao menos 3 períodos para que a segmentação por tendência e a previsão
+    # façam sentido". Ficou só aqui, no código, até a revisão das regras (#59).
     periodos_novato: int = 3
 
     @property

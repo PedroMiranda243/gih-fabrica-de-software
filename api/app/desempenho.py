@@ -21,8 +21,13 @@ from app.modelos import HistoricoSegmento, Metrica, Parceiro, Periodo, Segmento
 # está vendo, e ler "EM_RISCO" numa planilha onde a tela dizia "Em risco" faz
 # parecer que são duas coisas diferentes. Não dá para compartilhar a fonte entre
 # Python e JavaScript; dá para deixar o aviso aqui.
+#
+# **"Top", e não "Top 15"** (#229). O tamanho do Top é configurável (RF21): com o
+# limiar em 10, o rótulo com o número escrito continuava dizendo 15 para dez
+# parceiros. Onde o número importa — a mobilidade, a ajuda, a configuração —, ele
+# vem do limiar em vigor.
 ROTULO_SEGMENTO = {
-    Segmento.TOP: "Top 15",
+    Segmento.TOP: "Top",
     Segmento.EM_ASCENSAO: "Em ascensão",
     Segmento.EM_RISCO: "Em risco",
     Segmento.RECEM_CHEGADO: "Recém-chegado",
