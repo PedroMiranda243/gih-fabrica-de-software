@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 2.2 — 02/10/2026 · o UC16 e os fluxos de senha, da Sprint 08 acadêmica (2.1 — 01/10/2026, o UC15; 2.0 — 16/09/2026)
+**Versão:** 2.3 — 02/10/2026 · como a matriz de permissões é conferida, na H100 (2.2 — 02/10/2026, o UC16 e os fluxos de senha; 2.1 — 01/10/2026, o UC15; 2.0 — 16/09/2026)
 
 ---
 
@@ -95,6 +95,18 @@ dele. Sem ela, a conta do parceiro só se criava pela API. Decisão de 02/10/202
 
 No UC16, a ajuda do Parceiro fala só do portal dele: o que os segmentos significam e os limiares da rede são
 da operação interna, e não chegam a ele (RF26).
+
+**Como a matriz é conferida.** De três jeitos, que não dependem um do outro:
+
+1. `api/tests/test_autorizacao.py` traz esta matriz transcrita à mão, rota a rota, e tenta cada rota com cada
+   perfil no banco de testes. Rota nova sem permissão declarada reprova a suíte (RNF14).
+2. A matriz de [11 — Rastreabilidade](11-rastreabilidade.md) cruza a coluna Perfis de cada requisito com os
+   perfis que as rotas dele aceitam.
+3. `api/e2e/transcricao_permissoes.py` entra com os quatro perfis na aplicação no ar e exercita cada
+   combinação: a negada responde 403, a leitura permitida passa, e sem sessão a resposta é 401. Mostra também
+   um acesso permitido e um negado por caso de uso, o acesso por objeto — um parceiro não vê o outro — e a
+   sessão que cai com a troca de senha, com a redefinição e com a desativação. No fim, conta na trilha de
+   auditoria um registro para cada acesso negado (RF06).
 
 ---
 
