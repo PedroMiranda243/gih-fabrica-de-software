@@ -1,7 +1,7 @@
 # 05 — Cronograma
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Versão:** 3.2 — 01/10/2026 · a Sprint 07 da disciplina (3.1 — 30/09/2026, a Sprint 06; 3.0 — 28/09/2026, o calendário real; 2.1 — 16/09/2026, o plano em sprints semanais)
+**Versão:** 3.3 — 02/10/2026 · a Sprint 08 da disciplina (3.2 — 01/10/2026, a Sprint 07; 3.1 — 30/09/2026, a Sprint 06; 3.0 — 28/09/2026, o calendário real; 2.1 — 16/09/2026, o plano em sprints semanais)
 **Datas oficiais da disciplina:** entrega da Sprint 1 em **05/09/2026** · entrega final em **05/12/2026**
 
 ---
@@ -21,7 +21,8 @@ desenvolvimento da equipe, não a terceira entrega avaliada.
 | **Sprint 05** — segundo módulo funcionando | 03/10/2026 | 8, e a H45 da 9 | Previsão: variáveis, referências, rede com risco calibrado, treino pela tela com versão em uso, previsão e risco no cadastro do parceiro |
 | **Sprint 06** — aprimoramento do sistema | 17/10/2026 | 9 a 11, e as H79 a H81 | Campanha e otimizador: Python, C++, OpenMP e GPU com o mesmo plano, histórico, comparação e benchmark; os módulos ligados pelos dados e pela tela; navegação por módulo e risco na lista de parceiros; as correções da Pré-Banca |
 | **Sprint 07** — sistema quase completo | 24/10/2026 | as H82 a H91 | Painel com período e categoria, e com a previsão e a campanha; quatro relatórios, com CSV e PDF pela impressão; busca e filtros nas listas que não tinham; a trilha de auditoria na tela e o histórico no cadastro do parceiro |
-| Sprint 08 em diante | conforme os enunciados | 12 e 13 | A comunicação e o assistente — já construídos |
+| **Sprint 08** — funcionalidades concluídas | 31/10/2026 | 12 e 13, e as H92 a H101 | A comunicação, o assistente e o portal do parceiro, apresentados; a Minha conta, a redefinição de senha e a conta de perfil Parceiro pela tela; a página "Sem acesso", o teclado e o aviso de alterações não salvas; a ajuda; e três revisões conferidas por execução — a rastreabilidade dos requisitos, as permissões e as regras de negócio |
+| Sprint 09 em diante | conforme os enunciados | — | O que os enunciados pedirem; a construção está concluída |
 
 A numeração semanal é a que aparece nas *issues*, nos *milestones* e nos commits do GitHub, e por isso não
 foi renumerada: mudá-la desalinharia o histórico do repositório, que é justamente onde a disciplina pede
@@ -48,6 +49,14 @@ das nossas sprints semanais: o painel abria só no período mais recente, não h
 auditoria — que existe desde a nossa Sprint 4 — nunca tinha ganhado tela. O que faltava de cada item virou história
 com critério de aceite, e os requisitos RF44 a RF53 e o UC15 entraram em `docs/02` e `docs/03` antes do
 código. O escopo passou de 402 para 440 pontos.
+
+**A Sprint 08 da disciplina trouxe mais dez**, H92 a H101 (33 pontos, `docs/04`). O enunciado pediu todas as
+funcionalidades implementadas, o controle de permissões, as melhorias de usabilidade e a revisão geral das
+regras de negócio. O levantamento percorreu os requisitos um a um e achou três que não se alcançavam pela
+tela — a troca da própria senha, a conta de perfil Parceiro e a volta de quem esquecia a senha —, além da
+falta de ajuda. As três revisões viraram instrumentos que rodam: a matriz de rastreabilidade, com teste; a
+transcrição das permissões, com os quatro perfis; e o roteiro das regras de negócio. Os requisitos RF54 a RF56
+e o UC16 entraram em `docs/02` e `docs/03` antes do código. O escopo passou de 440 para 473 pontos.
 
 **A segunda entrega cobre quatro das nossas sprints, e não uma.** A equipe está adiantada em relação ao
 calendário da disciplina: na data da entrega de arquitetura e modelagem, o banco já está criado e migrado,
