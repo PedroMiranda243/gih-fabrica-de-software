@@ -122,8 +122,14 @@ function captura(nome, limiteLargura) {
   });
 }
 
-/** Captura de evidência: Swagger, terminal, qualquer prova de execução. */
-function evidencia(nome, limiteLargura) {
+/**
+ * Captura de evidência: Swagger, terminal, qualquer prova de execução.
+ *
+ * `comALegenda` mantém a figura na mesma página do parágrafo seguinte — a
+ * legenda. É da Parte VIII em diante: as partes entregues não o passam, e a
+ * figura delas sai como sempre saiu.
+ */
+function evidencia(nome, limiteLargura, comALegenda = false) {
   const arquivo = path.join(__dirname, '..', 'evidencias', `${nome}.png`);
   if (!fs.existsSync(arquivo)) {
     throw new Error(
@@ -134,6 +140,7 @@ function evidencia(nome, limiteLargura) {
   const dados = fs.readFileSync(arquivo);
   return new Paragraph({
     alignment: AlignmentType.CENTER,
+    keepNext: comALegenda || undefined,
     spacing: { before: 120, after: 60 },
     children: [new ImageRun({
       type: 'png',
