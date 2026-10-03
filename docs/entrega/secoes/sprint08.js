@@ -544,8 +544,9 @@ function montar() {
     + 'calcula. E vê a fila de aprovação, e não decide. Quem diz isso à tela é a API, pelo perfil de quem '
     + 'pergunta; e quem tenta assim mesmo é recusado.',
   ));
-  c.push(...figura('sprint08/permissoes-campanha-analista', 'A campanha para o Analista: no lugar do botão de calcular, o motivo.', 560));
-  c.push(...figura('sprint08/permissoes-aprovacao-analista', 'A fila de aprovação para o Analista: as mensagens, sem os botões de decidir.', 560));
+  // A 560, a última linha das transcrições abaixo caía sozinha na página seguinte.
+  c.push(...figura('sprint08/permissoes-campanha-analista', 'A campanha para o Analista: no lugar do botão de calcular, o motivo.', 520));
+  c.push(...figura('sprint08/permissoes-aprovacao-analista', 'A fila de aprovação para o Analista: as mensagens, sem os botões de decidir.', 520));
   c.push(...mono(daCaptura('sprint08/permissoes-na-tela.txt', 'A campanha —')));
   c.push(...mono(daCaptura('sprint08/permissoes-na-tela.txt', 'A fila de aprovação —')));
 
@@ -574,7 +575,9 @@ function montar() {
   c.push(espaco(40));
   c.push(...mono(trecho('sprint08/permissoes.txt', 'Cada célula é o que a aplicação respondeu', 'negações').filter((l) => l.trim())));
 
-  c.push(quebra());
+  // Sem quebra: a matriz deixa mais da metade da página livre, e o bloco dos
+  // casos de uso, uma página e uma linha, deixaria a última linha sozinha.
+  c.push(espaco(160));
   c.push(h2('3.5 Por caso de uso: um acesso permitido e um negado'));
   c.push(espaco(40));
   c.push(...mono(trecho('sprint08/permissoes.txt', 'UC02 Gerenciar usuários', '3. Por capacidade')
@@ -1091,7 +1094,8 @@ function montar() {
   ));
 
   // ========================================= 12. PRÓXIMOS PASSOS
-  c.push(quebra());
+  // Sem quebra: a seção 11 enche a página até o pé, e a quebra caía sozinha na
+  // seguinte, deixando uma página em branco.
   c.push(h1('12. Próximos passos'));
   c.push(table([2200, 7438], [
     ['Onde', 'O que entra'],
