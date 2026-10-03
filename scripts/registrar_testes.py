@@ -245,7 +245,13 @@ def _vitest(temporaria: Path) -> Suite:
         nome = Path(arquivo["name"]).name
         for caso in arquivo["assertionResults"]:
             situacao = {"passed": "passou", "failed": "falhou"}.get(caso["status"], "pulado")
-            suite.resultados[(nome, caso["title"])] = situacao
+            chave = (nome, caso["title"])
+            # Dois testes com o mesmo nome virariam um só, e o registro contaria a
+            # menos sem dizer: foi o que um título de it.each fez, na Sprint 08.
+            if chave in suite.resultados:
+                raise SystemExit(f'Dois testes da interface com o mesmo nome, em {nome}: '
+                                 f'"{caso["title"]}". Dê a cada um o seu.')
+            suite.resultados[chave] = situacao
     return suite
 
 

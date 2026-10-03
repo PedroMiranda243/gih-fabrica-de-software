@@ -55,18 +55,20 @@ describe("a guarda das rotas pelo perfil", () => {
     expect(espia).not.toHaveBeenCalled();
   });
 
+  // O endereço vem antes do usuário: o segundo %s do título é o endereço, e não
+  // o objeto da sessão — com ele, cinco testes saíam com o mesmo nome.
   it.each([
-    ["o analista", ANALISTA, "/usuarios"],
-    ["o analista", ANALISTA, "/usuarios/7"],
-    ["o analista", ANALISTA, "/configuracao"],
-    ["o analista", ANALISTA, "/relatorios/operacoes"],
-    ["o analista", ANALISTA, "/modelo"],
-    ["o administrador", ADMINISTRADOR, "/parceiros"],
-    ["o administrador", ADMINISTRADOR, "/campanha"],
-    ["o administrador", ADMINISTRADOR, "/relatorios/risco"],
-    ["o parceiro", PARCEIRO, "/parceiros/3"],
-    ["o parceiro", PARCEIRO, "/execucoes"],
-  ])("%s não abre %s", (_quem, usuario, endereco) => {
+    ["o analista", "/usuarios", ANALISTA],
+    ["o analista", "/usuarios/7", ANALISTA],
+    ["o analista", "/configuracao", ANALISTA],
+    ["o analista", "/relatorios/operacoes", ANALISTA],
+    ["o analista", "/modelo", ANALISTA],
+    ["o administrador", "/parceiros", ADMINISTRADOR],
+    ["o administrador", "/campanha", ADMINISTRADOR],
+    ["o administrador", "/relatorios/risco", ADMINISTRADOR],
+    ["o parceiro", "/parceiros/3", PARCEIRO],
+    ["o parceiro", "/execucoes", PARCEIRO],
+  ])("%s não abre %s", (_quem, endereco, usuario) => {
     const espia = abrir(usuario, endereco);
 
     expect(semAcesso()).toBeInTheDocument();
@@ -79,12 +81,12 @@ describe("a guarda das rotas pelo perfil", () => {
   });
 
   it.each([
-    ["o administrador", ADMINISTRADOR, "/execucoes"],
-    ["o administrador", ADMINISTRADOR, "/importacao"],
-    ["o analista", ANALISTA, "/relatorios/desempenho"],
-    ["o parceiro", PARCEIRO, "/meu-desempenho"],
-    ["o parceiro", PARCEIRO, "/"],
-  ])("%s abre %s", (_quem, usuario, endereco) => {
+    ["o administrador", "/execucoes", ADMINISTRADOR],
+    ["o administrador", "/importacao", ADMINISTRADOR],
+    ["o analista", "/relatorios/desempenho", ANALISTA],
+    ["o parceiro", "/meu-desempenho", PARCEIRO],
+    ["o parceiro", "/", PARCEIRO],
+  ])("%s abre %s", (_quem, endereco, usuario) => {
     abrir(usuario, endereco);
     expect(semAcesso()).not.toBeInTheDocument();
   });
