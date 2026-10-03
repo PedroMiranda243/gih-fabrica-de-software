@@ -1,22 +1,22 @@
 Commits do repositório
 https://github.com/PedroMiranda243/gih-fabrica-de-software
-Referência origin/main em b96b4ec · de 2026-09-03 a 2026-10-02
+Referência origin/main em a5566df · de 2026-09-03 a 2026-10-02
 Gerado a partir do git log; nenhum número foi escrito à mão.
 
 Totais
 ------
-  commits de trabalho              420
-  Pull Requests incorporados        98
+  commits de trabalho              432
+  Pull Requests incorporados        99
   commits direto na main            22   (até 15/09, antes de a main ser protegida)
 
 Por tipo (Conventional Commits)
 -------------------------------
-  docs      141   34%
-  feat      113   27%
-  test       85   20%
+  docs      147   34%
+  feat      113   26%
+  test       90   21%
   fix        33    8%
-  ci         19    5%
-  chore       9    2%
+  ci         19    4%
+  chore      10    2%
   build       7    2%
   refactor    7    2%
   spike       3    1%
@@ -30,15 +30,15 @@ Por semana (segunda a domingo)
   07/09 a 13/09    0  
   14/09 a 20/09   72  ██████████████
   21/09 a 27/09  211  ████████████████████████████████████████
-  28/09 a 04/10  130  █████████████████████████
+  28/09 a 04/10  142  ███████████████████████████
 
 Autoria e coautoria
 -------------------
   Cada commit tem um autor e, por área, o colega responsável como coautor
   (trailer Co-authored-by, que o GitHub credita ao coautor).
-  autor     Pedro Miranda                             420
-  coautor   João Pedro Nunes de França                135
-  coautor   Marcio Maycom                             135
+  autor     Pedro Miranda                             432
+  coautor   João Pedro Nunes de França                141
+  coautor   Marcio Maycom                             141
   coautor   Ingryd Vitoria de Araújo Barbosa           55
   coautor   Thiago José Falcão de Freitas              22
   sem coautor                                         84
@@ -149,7 +149,7 @@ Pull Requests incorporados, por janela de entrega
     #214 01/10  As Partes V e VI leem a medição como foi entregue, e não a viva (#208)
     #215 02/10  Parte VII do documento e o PDF da Sprint 07 — sistema quase completo
 
-  Sprint 08 — 02/10, depois do PDF, a 31/10: 7
+  Sprint 08 — 02/10, depois do PDF, a 31/10: 8
     #228 02/10  Minha conta, a redefinição de senha e a conta de perfil Parceiro pela tela…
     #230 02/10  A página "Sem acesso", o teclado, a sessão terminada e o aviso de alterações…
     #231 02/10  A tela de Ajuda, com o que o perfil faz, os segmentos, a estimativa e o…
@@ -157,3 +157,4 @@ Pull Requests incorporados, por janela de entrega
     #233 02/10  A transcrição do controle de permissões, com os quatro perfis contra a…
     #234 02/10  A revisão das regras de negócio RN01 a RN11, a RN01 com os limiares de…
     #236 02/10  O assistente lê pelo código a semana dita pelo nome — "na última semana" é a…
+    #237 02/10  As evidências da Sprint 08: a rodada final, da base limpa e com o modelo de…

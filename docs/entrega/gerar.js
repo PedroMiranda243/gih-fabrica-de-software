@@ -32,6 +32,7 @@ const sprint04 = require('./secoes/sprint04');
 const sprint05 = require('./secoes/sprint05');
 const sprint06 = require('./secoes/sprint06');
 const sprint07 = require('./secoes/sprint07');
+const sprint08 = require('./secoes/sprint08');
 
 const GRUPO = '18';
 const PROJETO = 'GROWTH INTELLIGENCE HUB (GIH)';
@@ -40,9 +41,9 @@ const PROJETO = 'GROWTH INTELLIGENCE HUB (GIH)';
 // as anteriores e a atual, então acrescentar uma sprint é acrescentar um módulo
 // em `secoes/` e uma linha aqui.
 const SPRINT = {
-  numero: '07',
-  titulo: 'SISTEMA QUASE COMPLETO',
-  anteriores: 'Documento acumulado: inclui as Sprints 01, 02, 03, 04, 05 e 06',
+  numero: '08',
+  titulo: 'FUNCIONALIDADES CONCLUÍDAS',
+  anteriores: 'Documento acumulado: inclui as Sprints 01, 02, 03, 04, 05, 06 e 07',
 };
 const SAIDA = path.join(
   __dirname, '..', 'entregas', `GRUPO-${GRUPO}-GIH-SPRINT-${SPRINT.numero}.docx`,
@@ -154,6 +155,16 @@ function sumario() {
     '11. Ajustes no planejamento, na arquitetura e na modelagem', '12. Próximos passos',
   ].forEach((t) => c.push(p(t, { size: 20, after: 70, indent: { left: 280 } })));
 
+  c.push(p('PARTE VIII — SPRINT 08 · FUNCIONALIDADES CONCLUÍDAS', { bold: true, size: 21, color: '2C5B8F', before: 260, after: 100 }));
+  [
+    '1. Funcionalidades concluídas', '2. Os principais fluxos em funcionamento',
+    '3. Controle de permissões', '4. Melhorias de usabilidade',
+    '5. Revisão geral das regras de negócio', '6. Alterações no escopo, e a justificativa de cada uma',
+    '7. Testes e bugs', '8. Repositório, commits e revisões',
+    '9. Execução e roteiro de demonstração', '10. Dificuldades encontradas',
+    '11. Ajustes no planejamento, na arquitetura e na modelagem', '12. Próximos passos',
+  ].forEach((t) => c.push(p(t, { size: 20, after: 70, indent: { left: 280 } })));
+
   c.push(espaco(300));
   c.push(rich([
     { t: 'Documentação completa e versionada em: ', s: 19, c: '5A6B7E' },
@@ -174,6 +185,7 @@ function main() {
     ...sprint05.montar(),
     ...sprint06.montar(),
     ...sprint07.montar(),
+    ...sprint08.montar(),
   ];
 
   const doc = new Document({
