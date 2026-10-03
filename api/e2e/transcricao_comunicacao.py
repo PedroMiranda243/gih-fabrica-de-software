@@ -397,13 +397,17 @@ def assistente(
 
     da_rede = perguntar(an, "Como foi a rede na última semana?")
     fonte = da_rede.get("fonte") or {}
-    # O período de que a resposta fala é o último relatório da fonte. O painel
-    # desse mesmo período é que precisa dizer o mesmo número.
+    # O período de que a resposta fala é o último relatório da fonte. "A última
+    # semana" é a mais recente, a que o painel abre sem período escolhido: o
+    # modelo chegou a trocá-la pela anterior, com o número certo da semana errada
+    # (#235).
     do_periodo = (fonte.get("relatorios") or [{}])[-1].get("periodo") or {}
-    painel = an.get("/api/painel/indicadores", params={"periodo_id": do_periodo.get("id")}).json()
-    print(f"\n  O painel do mesmo período, de {do_periodo.get('data_inicio')} a "
-          f"{do_periodo.get('data_fim')}: {reais(painel['faturamento'])}")
-    confere("a pergunta sobre a rede traz o faturamento que o painel mostra no mesmo período",
+    painel = an.get("/api/painel/indicadores").json()
+    print(f"\n  O painel abre em {painel['periodo']['data_inicio']} a "
+          f"{painel['periodo']['data_fim']}: {reais(painel['faturamento'])}")
+    confere("a última semana da pergunta é a semana mais recente, a que o painel abre",
+            do_periodo.get("id") == painel["periodo"]["id"])
+    confere("e a resposta traz o faturamento que o painel mostra nela",
             da_rede["situacao"] == "RESPONDIDA"
             and reais(painel["faturamento"]) in da_rede["texto"])
     confere("e a fonte: os relatórios de onde os números saíram, com a data da importação",
