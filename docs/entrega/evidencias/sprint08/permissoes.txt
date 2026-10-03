@@ -1,0 +1,352 @@
+Controle de permissões, com os quatro perfis · http://localhost:8000
+Dados sintéticos; nenhum nome real de empresa ou pessoa. Nenhuma senha na transcrição.
+
+==============================================================================
+Preparação — uma conta por perfil, criadas pelo administrador (UC02)
+==============================================================================
+  201  t32563.adm             ADMINISTRADOR
+  201  t32563.gestor          GESTOR
+  201  t32563.analista        ANALISTA
+  201  t32563.reserva         ANALISTA
+  201  t32563.parceiro        PARCEIRO
+  201  t32563.parceirob       PARCEIRO
+
+  ADM entra: 201, e a sessão lhe dá 10 áreas
+  GES entra: 201, e a sessão lhe dá 17 áreas
+  ANL entra: 201, e a sessão lhe dá 13 áreas
+  PAR entra: 201, e a sessão lhe dá 1 área
+  ok    os quatro perfis entram (UC01)
+
+==============================================================================
+1. A matriz perfil × rota — tirada do código e exercitada
+==============================================================================
+
+81 rotas, lidas das rotas registradas na aplicação. Os perfis de cada uma
+vêm da dependência `exigir` da própria rota: não há uma segunda tabela.
+  ok    as 81 rotas do código são as que a aplicação no ar publica
+
+Cada célula é o que a aplicação respondeu ao perfil, com a requisição vazia:
+  403  negado, como a matriz manda        401  sem sessão
+  200, 404, 409, 422  a autorização deixou passar; o resto é da própria rota
+  ·    permitido e não exercitado aqui: é escrita, e o corpo vazio poderia gravar
+  púb  rota pública
+
+rota                                               ADM  GES  ANL  PAR  sem sessão
+---------------------------------------------------------------------------------
+GET /api/acoes-comerciais                          403  200  200  403  401
+POST /api/acoes-comerciais                         403    ·  403  403  401
+PATCH /api/acoes-comerciais/{acao_id}              403    ·  403  403  401
+GET /api/ajuda/regras                              200  200  200  403  401
+GET /api/assistente                                403  200  200  403  401
+POST /api/assistente/perguntas                     403    ·    ·  403  401
+GET /api/auditoria                                 200  403  403  403  401
+GET /api/auditoria/acoes                           200  403  403  403  401
+GET /api/auditoria/exportacao.csv                  200  403  403  403  401
+GET /api/benchmark                                 200  200  403  403  401
+GET /api/benchmarks                                200  200  403  403  401
+POST /api/benchmarks                                 ·    ·  403  403  401
+GET /api/benchmarks/{execucao_id}                  404  404  403  403  401
+GET /api/campanha                                  403  200  200  403  401
+GET /api/categorias                                403  200  200  403  401
+POST /api/categorias                               403    ·    ·  403  401
+GET /api/categorias/sugestao                       403  422  422  403  401
+GET /api/configuracao/segmentacao                  200  403  403  403  401
+PUT /api/configuracao/segmentacao                    ·  403  403  403  401
+GET /api/health                                    200  200  200  200  púb
+GET /api/importacoes                               200  200  200  403  401
+POST /api/importacoes                              403    ·    ·  403  401
+POST /api/importacoes/arquivo                      403    ·    ·  403  401
+POST /api/importacoes/arquivo/previa               403    ·    ·  403  401
+POST /api/importacoes/previa                       403    ·    ·  403  401
+GET /api/mensagens                                 403  200  200  403  401
+POST /api/mensagens/aprovacao-em-lote              403    ·  403  403  401
+GET /api/mensagens/exportacao.csv                  403  200  200  403  401
+GET /api/mensagens/geracao                         403  200  200  403  401
+POST /api/mensagens/lotes                          403    ·    ·  403  401
+GET /api/mensagens/lotes/{lote_id}                 403  404  404  403  401
+POST /api/mensagens/lotes/{lote_id}/refazer        403    ·    ·  403  401
+POST /api/mensagens/publico                        403    ·    ·  403  401
+POST /api/mensagens/{mensagem_id}/aprovacao        403    ·  403  403  401
+POST /api/mensagens/{mensagem_id}/edicao           403    ·  403  403  401
+POST /api/mensagens/{mensagem_id}/rejeicao         403    ·  403  403  401
+GET /api/meu-desempenho                            403  403  403  200  401
+GET /api/modelo                                    200  200  403  403  401
+GET /api/modelo/treinos                            200  200  403  403  401
+POST /api/modelo/treinos                             ·    ·  403  403  401
+GET /api/modelo/treinos/{treino_id}                404  404  403  403  401
+GET /api/otimizacoes                               200  200  200  403  401
+POST /api/otimizacoes                              403    ·  403  403  401
+GET /api/otimizacoes/comparacao                    403  422  422  403  401
+GET /api/otimizacoes/{execucao_id}                 403  404  404  403  401
+GET /api/otimizacoes/{execucao_id}/exportacao.csv  403  404  404  403  401
+GET /api/painel/decisao                            403  200  200  403  401
+GET /api/painel/indicadores                        200  200  200  403  401
+GET /api/painel/mobilidade                         200  200  200  403  401
+GET /api/painel/ranking                            200  200  200  403  401
+GET /api/painel/recortes                           200  200  200  403  401
+GET /api/painel/segmentos                          200  200  200  403  401
+GET /api/painel/series                             200  200  200  403  401
+GET /api/parceiros                                 403  200  200  403  401
+POST /api/parceiros                                403    ·    ·  403  401
+GET /api/parceiros/exportacao.csv                  403  200  200  403  401
+DELETE /api/parceiros/{parceiro_id}                403    ·    ·  403  401
+GET /api/parceiros/{parceiro_id}                   403  404  404  403  401
+PATCH /api/parceiros/{parceiro_id}                 403    ·    ·  403  401
+GET /api/parceiros/{parceiro_id}/campanha          403  404  404  403  401
+GET /api/parceiros/{parceiro_id}/historico         403  404  404  403  401
+GET /api/parceiros/{parceiro_id}/previsao          403  404  404  403  401
+GET /api/relatorios/campanha                       403  200  200  403  401
+GET /api/relatorios/campanha/exportacao.csv        403  409  409  403  401
+GET /api/relatorios/campanha/planos                403  200  200  403  401
+GET /api/relatorios/desempenho                     403  200  200  403  401
+GET /api/relatorios/desempenho/exportacao.csv      403  200  200  403  401
+GET /api/relatorios/operacoes                      200  403  403  403  401
+GET /api/relatorios/operacoes/exportacao.csv       200  403  403  403  401
+GET /api/relatorios/risco                          403  200  200  403  401
+GET /api/relatorios/risco/exportacao.csv           403  200  200  403  401
+DELETE /api/sessao                                   ·    ·    ·    ·  401
+POST /api/sessao                                     ·    ·    ·    ·  púb
+GET /api/sessao/atual                              200  200  200  200  401
+POST /api/sessao/senha                               ·    ·    ·    ·  401
+GET /api/usuarios                                  200  403  403  403  401
+POST /api/usuarios                                   ·  403  403  403  401
+GET /api/usuarios/parceiros                        422  403  403  403  401
+GET /api/usuarios/{usuario_id}                     404  403  403  403  401
+PATCH /api/usuarios/{usuario_id}                     ·  403  403  403  401
+POST /api/usuarios/{usuario_id}/senha                ·  403  403  403  401
+
+   164  negações
+   109  leituras permitidas
+    79  sem sessão
+    51  escritas permitidas, não exercitadas
+Limpeza — removidos do banco: 1 parceiro; analista desativado.
+  ok    as 164 combinações que a matriz nega responderam 403
+  ok    as 109 leituras que a matriz permite passaram pela autorização
+  ok    sem sessão, as 79 rotas protegidas responderam 401
+
+==============================================================================
+2. Por caso de uso — um acesso permitido e um negado
+==============================================================================
+
+UC01 Autenticar no sistema
+  Os quatro perfis entraram na preparação, e a sessão de cada um diz o que ele abre.
+  A recusa está na parte 5: sem sessão, senha antiga e conta desativada.
+
+UC08 Configurar e executar otimização — e UC11 Aprovar mensagem: na parte 3, por
+  capacidade, que é onde os dois se decidem.
+
+UC02 Gerenciar usuários e perfis
+  permitido ADM  GET   /api/usuarios?busca=t32563                   200
+                 6 contas desta execução
+  negado    GES  GET   /api/usuarios?busca=t32563                   403
+  ok    UC02: o permitido passou e o negado foi recusado
+
+UC03 Importar relatório de desempenho
+  permitido ANL  POST  /api/importacoes/previa                      200
+                 a prévia, sem gravar nada
+  negado    ADM  POST  /api/importacoes/previa                      403
+  permitido ADM  GET   /api/importacoes?tamanho=1                   200
+                 só o histórico: 12 importações (RF13)
+  ok    UC03: o permitido passou e o negado foi recusado
+
+UC04 Gerenciar parceiros e categorias
+  permitido ANL  POST  /api/parceiros                               201
+                 cadastrou Comércio t32563
+  negado    ADM  POST  /api/parceiros                               403
+  permitido ADM  GET   /api/usuarios/parceiros?busca=t32563         200
+                 só o nome e a situação: ['ativo', 'id', 'nome'] (RF56)
+  ok    UC04: o permitido passou e o negado foi recusado
+
+UC05 Consultar painel e ranking
+  permitido ADM  GET   /api/painel/indicadores                      200
+                 só leitura, pela matriz de docs/03
+  negado    PAR  GET   /api/painel/indicadores                      403
+  ok    UC05: o permitido passou e o negado foi recusado
+
+UC06 Analisar mobilidade do Top N
+  permitido GES  GET   /api/painel/mobilidade                       200
+                 Top 15
+  negado    PAR  GET   /api/painel/mobilidade                       403
+  ok    UC06: o permitido passou e o negado foi recusado
+
+UC07 Treinar modelo de previsão
+  permitido GES  GET   /api/modelo                                  200
+                 versão em uso: rede-1
+  negado    ANL  GET   /api/modelo                                  403
+  negado    ANL  POST  /api/modelo/treinos                          403
+  permitido ANL  GET   /api/parceiros/246/previsao                  200
+                 lê a previsão no cadastro (RF28), e não treina
+  ok    UC07: o permitido passou e o negado foi recusado
+
+UC09 Comparar desempenho serial, paralelo e GPU
+  permitido ADM  GET   /api/benchmark                               200
+                 o estado do benchmark
+  negado    ANL  GET   /api/benchmark                               403
+  ok    UC09: o permitido passou e o negado foi recusado
+
+UC10 Gerar mensagens por segmento
+  permitido ANL  GET   /api/mensagens/geracao                       200
+                 o estado da geração
+  negado    ADM  GET   /api/mensagens/geracao                       403
+  ok    UC10: o permitido passou e o negado foi recusado
+
+UC12 Consultar assistente analítico
+  permitido GES  GET   /api/assistente                              200
+                 o estado do assistente
+  negado    ADM  GET   /api/assistente                              403
+  ok    UC12: o permitido passou e o negado foi recusado
+
+UC13 Consultar meu desempenho
+  permitido PAR  GET   /api/meu-desempenho                          200
+                 o histórico de Ponto Azul 2
+  negado    GES  GET   /api/meu-desempenho                          403
+  ok    UC13: o permitido passou e o negado foi recusado
+
+UC14 Auditar ações do sistema
+  permitido ADM  GET   /api/auditoria?tamanho=1                     200
+                 428 registros na trilha
+  negado    GES  GET   /api/auditoria?tamanho=1                     403
+  ok    UC14: o permitido passou e o negado foi recusado
+
+UC15 Consultar e exportar relatórios
+  permitido GES  GET   /api/relatorios/desempenho                   200
+                 o relatório de desempenho da rede
+  negado    ADM  GET   /api/relatorios/desempenho                   403
+  permitido ADM  GET   /api/relatorios/operacoes                    200
+                 o relatório de operações, que sai da trilha dele
+  negado    GES  GET   /api/relatorios/operacoes                    403
+  ok    UC15: o permitido passou e o negado foi recusado
+
+UC16 Consultar a ajuda
+  permitido ANL  GET   /api/ajuda/regras                            200
+                 Top 15, 6 segmentos na ordem da RN01
+  negado    PAR  GET   /api/ajuda/regras                            403
+  ok    UC16: o permitido passou e o negado foi recusado
+
+==============================================================================
+3. Por capacidade — o que o perfil vê e não faz
+==============================================================================
+
+A sessão diz a cada perfil o que ele pode. A tela desenha os botões a partir disto:
+  calcular_campanha    GES
+  decidir_mensagens    GES
+  execucao             GES, ANL
+  ajuda_regras         ADM, GES, ANL
+  o Parceiro, inteiro: ['meu_desempenho']
+  ok    só o Gestor calcula a campanha e decide as mensagens
+  ok    o Parceiro tem só o portal dele
+
+UC08 — a campanha: o Gestor calcula, o Analista consulta, o Administrador não abre
+  permitido GES  GET   /api/campanha                                200
+                 pode calcular: True
+  permitido ANL  GET   /api/campanha                                200
+                 pode calcular: False
+  negado    ANL  POST  /api/otimizacoes                             403
+  negado    ADM  GET   /api/campanha                                403
+  ok    o Analista vê a campanha e não a calcula; a API diz isso e recusa a tentativa
+
+RF34 — o histórico das execuções: o Administrador lista e não abre o plano
+  permitido ADM  GET   /api/otimizacoes?tamanho=1                   200
+                 0 execuções
+  negado    ADM  GET   /api/otimizacoes/{id}                        403
+  negado    ADM  GET   /api/otimizacoes/comparacao                  403
+  ok    o Administrador vê o histórico e é recusado no plano e na comparação
+
+UC11 — a fila de aprovação: o Analista vê, e só o Gestor decide (RN06)
+  permitido ANL  GET   /api/mensagens?tamanho=1                     200
+                 0 na fila
+  negado    ANL  POST  /api/mensagens/{id}/aprovacao                403
+  negado    ANL  POST  /api/mensagens/{id}/edicao                   403
+  negado    ANL  POST  /api/mensagens/{id}/rejeicao                 403
+  negado    ANL  POST  /api/mensagens/aprovacao-em-lote             403
+  permitido GES  POST  /api/mensagens/{id}/aprovacao                404
+                 passou da autorização: a mensagem é que não existe
+  ok    aprovar, editar, rejeitar e aprovar em lote são recusados ao Analista
+  ok    o Gestor passa pela autorização da decisão
+
+==============================================================================
+4. Por objeto — cada parceiro vê o próprio histórico, e só ele (RF26)
+==============================================================================
+
+Duas contas de perfil Parceiro: uma de Ponto Azul 2, outra de Quintal Verde 2.
+  conta A  GET /api/meu-desempenho  200  Ponto Azul 2 · 12 períodos
+  conta B  GET /api/meu-desempenho  200  Quintal Verde 2 · 12 períodos
+  os campos da resposta: anterior, atual, categoria, parceiro, pontos, variacao
+  ok    cada conta recebe o histórico do parceiro dela
+  ok    a resposta não traz ranking, posição nem comparação com a rede
+
+A conta A tentando chegar ao parceiro B:
+  GET /api/meu-desempenho?parceiro_id=460  200  continua sendo Ponto Azul 2: a rota não tem parâmetro
+  ok    pedir outro parceiro pelo endereço não muda de quem é o histórico
+  GET /api/parceiros/460                             403
+  GET /api/painel/series?parceiro_id=460             403
+  GET /api/parceiros/460/previsao                    403
+  GET /api/painel/ranking                            403
+  GET /api/parceiros                                 403
+  GET /api/relatorios/desempenho                     403
+  ok    o cadastro, a série e a previsão do outro, e os dados da rede, são recusados
+
+==============================================================================
+5. A sessão — sem ela, com ela forjada, trocada, redefinida e desativada
+==============================================================================
+
+  sem sessão            GET /api/parceiros     401  "Sessão inválida ou expirada."
+  cookie forjado        GET /api/parceiros     401  "Sessão inválida ou expirada."
+  ok    sem sessão, ou com um cookie inventado, a resposta é 401
+
+A mesma pessoa em duas sessões — dois navegadores. O cookie de cada uma:
+  gih_sessao: HttpOnly=True, SameSite=lax
+  ok    o cookie da sessão não é lido por script nem enviado por outro site (RNF10)
+
+  a primeira troca a senha    POST /api/sessao/senha   204
+  a sessão de quem trocou     GET /api/sessao/atual    200
+  a outra sessão              GET /api/sessao/atual    401  "Sessão inválida ou expirada."
+  ok    trocar a senha derruba as outras sessões e mantém a de quem trocou (RF07)
+
+  o administrador redefine    POST /api/usuarios/{id}/senha   204
+  as duas sessões da conta    GET /api/sessao/atual    401 e 401
+  entrar com a senha de antes POST /api/sessao         401
+  entrar com a redefinida     POST /api/sessao         201
+  ok    a redefinição derruba todas as sessões da conta, e só a senha nova entra (RF54)
+
+  o administrador desativa    PATCH /api/usuarios/{id}   200
+  a sessão aberta da conta    GET /api/sessao/atual    401  "Sessão inválida ou expirada."
+  entrar de novo              POST /api/sessao         401  "Login ou senha inválidos."
+  ok    desativar a conta derruba a sessão aberta na hora e impede a entrada
+
+==============================================================================
+6. A trilha — cada acesso negado desta execução está na auditoria (RF06)
+==============================================================================
+
+$ SQL, só leitura, no banco da API
+  > SELECT u.perfil, count(*)
+  > FROM auditoria a JOIN usuario u ON u.id = a.usuario_id
+  > WHERE a.acao = 'ACESSO_NEGADO' AND u.login LIKE :marca
+  > GROUP BY u.perfil ORDER BY u.perfil
+  < perfil        | acessos negados
+  < --------------+----------------
+  < ADMINISTRADOR | 54             
+  < GESTOR        | 18             
+  < ANALISTA      | 37             
+  < PARCEIRO      | 84             
+
+  A transcrição recebeu 193 respostas 403; a trilha tem 193 registros de acesso negado.
+  ok    cada 403 desta execução virou um registro na trilha, com o perfil de quem tentou
+
+  A mensagem de todas as recusas por perfil: "Seu perfil não permite esta operação."
+  ok    a recusa é sempre a mesma frase: ela não diz o que existe por trás da rota
+
+==============================================================================
+O que fica por conta dos testes automatizados
+==============================================================================
+
+Duas regras não são provocadas contra a aplicação no ar, e têm teste que as cobra:
+  - o bloqueio depois de cinco falhas de login, que é por origem (RNF11):
+    api/tests/test_autenticacao.py::test_bloqueia_apos_cinco_falhas
+  - o último administrador ativo não pode ser desativado nem perder o perfil:
+    api/tests/test_usuarios.py::test_ultimo_administrador_ativo_nao_pode_cair
+E a matriz inteira, com a escrita permitida, roda no banco de testes:
+    api/tests/test_autorizacao.py::test_cada_endpoint_contra_cada_perfil
+
+==============================================================================
+Resultado: 35 de 35 conferências passaram.

@@ -1,0 +1,503 @@
+Comunicação, assistente e portal do parceiro · http://localhost:8000
+Dados sintéticos; nenhum nome real de empresa ou pessoa. Nenhuma senha na transcrição.
+
+==============================================================================
+Preparação — um gestor, que calcula e decide, e um analista, que gera
+==============================================================================
+  201  t79714.gestor        GESTOR
+  201  t79714.analista      ANALISTA
+
+O gestor calcula um plano pequeno: é dele que as mensagens saem (UC08).
+
+$ POST /api/otimizacoes
+  > {
+  >   "orcamento": "1500.00",
+  >   "maximo_acoes": 8,
+  >   "cota_cauda_longa": "0.25",
+  >   "aplicacao_inicio": "2026-10-05",
+  >   "aplicacao_fim": "2026-10-11"
+  > }
+  202 Accepted
+  < {
+  <   "id": 5,
+  <   "situacao": "EM_ANDAMENTO",
+  <   "autor": "Gestor da Evidência",
+  <   "modo": "GPU",
+  <   "substituicao": null,
+  <   "threads": null,
+  <   "iniciada_em": "2026-10-03T00:09:56.236947Z",
+  <   "concluida_em": null,
+  <   "parametros": {
+  <     "orcamento": "1500.00",
+  <     "maximo_acoes": 8,
+  <     "cota_cauda_longa": "0.25",
+  <     "cotas_categoria": [],
+  <     "aplicacao_inicio": "2026-10-05",
+  <     "aplicacao_fim": "2026-10-11",
+  <     "modo": null
+  <   },
+  <   "periodo_base": {
+  <     "id": 12,
+  <     "data_inicio": "2026-09-21",
+  <     "data_fim": "2026-09-27"
+  <   },
+  <   "modelo_versao": "rede-1",
+  <   "viavel": null,
+  <   "restricao_violada": null,
+  <   "motivo": null,
+  <   "ajuda": null,
+  <   "uplift_total": null,
+  <   "custo_total": null,
+  <   "tempo_ms": null,
+  <   "parcial": null,
+  <   "acoes": null,
+  <   "elegiveis": null,
+  <   "excluidos": null,
+  <   "cotas": [],
+  <   "folga_orcamento": null,
+  <   "folga_acoes": null,
+  <   "ganho_guloso": null,
+  <   "itens": null
+  < }
+
+  ... 2 consulta(s) a GET /api/otimizacoes/5 até a situação mudar (1.0 s)
+  ok    o plano é viável, com uma ação por parceiro
+  8 ações · custo R$ 1.500,00 · ganho esperado R$ 63.136,22
+
+==============================================================================
+1. Gerar — as mensagens do plano, pelo analista (UC10, RF36, RF37)
+==============================================================================
+
+O modelo de linguagem está no ar: qwen2.5:7b. Ele redige, e a guarda
+numérica confere cada texto contra os fatos; o que ela reprova sai do modelo fixo.
+
+$ POST /api/mensagens/publico
+  > {
+  >   "tipo": "PLANO",
+  >   "execucao_id": 5
+  > }
+  200 OK
+  < {
+  <   "descricao": "Plano de campanha de 05/10/2026 a 11/10/2026",
+  <   "total": 8,
+  <   "parceiros": [
+  <     {
+  <       "id": 246,
+  <       "nome": "Ponto Azul 2",
+  <       "segmento": "EM_RISCO",
+  <       "categoria": "Mercado",
+  <       "acao": "Campanha de categoria"
+  <     },
+  <     {
+  <       "id": 460,
+  <       "nome": "Quintal Verde 2",
+  <       "segmento": "TOP",
+  <       "categoria": "Restaurante",
+  <       "acao": "Campanha de categoria"
+  <     },
+  <     "... mais 6 registros"
+  <   ],
+  <   "excluidos": {},
+  <   "maximo": 500,
+  <   "pode_gerar": true,
+  <   "motivo": null
+  < }
+  ok    a prévia traz os parceiros do plano, cada um com a ação dele, e não grava nada
+
+$ POST /api/mensagens/lotes
+  > {
+  >   "tipo": "PLANO",
+  >   "execucao_id": 5
+  > }
+  202 Accepted
+  < {
+  <   "id": 4,
+  <   "situacao": "EM_ANDAMENTO",
+  <   "autor": "Analista da Evidência",
+  <   "publico": {
+  <     "tipo": "PLANO",
+  <     "segmento": null,
+  <     "categoria_id": null,
+  <     "execucao_id": 5,
+  <     "parceiros": null
+  <   },
+  <   "descricao": "Plano de campanha de 05/10/2026 a 11/10/2026",
+  <   "iniciado_em": "2026-10-03T00:09:57.358577Z",
+  <   "concluido_em": null,
+  <   "total": 8,
+  <   "geradas": 0,
+  <   "pelo_modelo": 0,
+  <   "falhas": [],
+  <   "modelo": null,
+  <   "motivo": null,
+  <   "mensagens": null
+  < }
+
+  ... 12 consulta(s) a GET /api/mensagens/lotes/4 até a geração terminar (22.1 s)
+
+  8 de 8 geradas: 8 pelo modelo de linguagem, 0 pelo modelo fixo.
+
+  para Ponto Azul 2 · Campanha de categoria · redator MODELO · PENDENTE
+    "Olá, Ponto Azul 2, no período de 21/09/2026 a 27/09/2026, vocês realizaram R$ 79.410,29 em faturamento com 1.070 pedidos, mantendo um ticket médio de R$ 74,22. Considerando o desempenho do período anterior, houve uma variação de -15,06%. Para ajudar a retomar as vendas, oferecemos uma campanha de categoria no período de 05/10/2026 a 11/10/2026."
+    fatos: Parceiro: Ponto Azul 2; Período: 21/09/2026 a 27/09/2026; Faturamento no período: R$ 79.410,29; Pedidos no período: 1.070; Ticket médio: R$ 74,22; Variação do faturamento sobre o período anterior: -15,06%; Ação oferecida: Campanha de categoria; Período da ação: 05/10/2026 a 11/10/2026
+
+  para Quintal Verde 2 · Campanha de categoria · redator MODELO · PENDENTE
+    "Olá, Quintal Verde 2, no período de 21/09/2026 a 27/09/2026, vocês realizaram R$ 57.841,79 em faturamento com 1.129 pedidos, o que representa um ticket médio de R$ 51,23. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026 para reforçar nosso relacionamento."
+    fatos: Parceiro: Quintal Verde 2; Período: 21/09/2026 a 27/09/2026; Faturamento no período: R$ 57.841,79; Pedidos no período: 1.129; Ticket médio: R$ 51,23; Variação do faturamento sobre o período anterior: -14,11%; Ação oferecida: Campanha de categoria; Período da ação: 05/10/2026 a 11/10/2026
+
+  para Quintal da Serra · Visita de relacionamento · redator MODELO · PENDENTE
+    "Olá, Quintal da Serra, vocês realizaram R$ 23.741,23 em faturamento e atenderam 515 pedidos no período de 21/09/2026 a 27/09/2026. Estamos agendando uma visita de relacionamento para o período de 05/10/2026 a 11/10/2026."
+    fatos: Parceiro: Quintal da Serra; Período: 21/09/2026 a 27/09/2026; Faturamento no período: R$ 23.741,23; Pedidos no período: 515; Ticket médio: R$ 46,10; Variação do faturamento sobre o período anterior: -19,67%; Ação oferecida: Visita de relacionamento; Período da ação: 05/10/2026 a 11/10/2026
+  ok    uma mensagem por parceiro do plano, sem falha
+  ok    todas nascem pendentes: nenhuma está pronta para envio (RN06)
+  ok    cada mensagem leva a ação que o plano deu ao parceiro
+  ok    nenhum texto tem número que não veio dos fatos (RN08)
+  ok    nenhum texto inverte o sentido de uma variação
+  ok    a mensagem do modelo fixo diz por que não é do modelo
+
+==============================================================================
+2. Decidir — a fila de aprovação (UC11, RF38, RF39, RN06)
+==============================================================================
+
+O analista abre a fila: GET /api/mensagens?lote_id=4 → 8 pendentes.
+Ele gerou as mensagens, e tenta aprovar a primeira:
+
+$ POST /api/mensagens/35/aprovacao
+  403 Forbidden
+  < {
+  <   "detail": "Seu perfil não permite esta operação."
+  < }
+  ok    o analista vê a fila e não aprova
+
+O gestor aprova a primeira:
+
+$ POST /api/mensagens/35/aprovacao
+  200 OK
+  < {
+  <   "id": 35,
+  <   "parceiro_id": 246,
+  <   "parceiro": "Ponto Azul 2",
+  <   "segmento": "EM_RISCO",
+  <   "acao": "Campanha de categoria",
+  <   "texto": "Olá, Ponto Azul 2, no período de 21/09/2026 a 27/09/2026, vocês realizaram R$ 79.410,29 em faturamento com 1.070 pedidos, mantendo um ticket médio de R$ 74,22. Considerando o desempenho do período anterior, houve uma variação de -15,06%. Para ajudar a retomar as vendas, oferecemos uma campanha de categoria no período de 05/10/2026 a 11/10/2026.",
+  <   "texto_gerado": "Olá, Ponto Azul 2, no período de 21/09/2026 a 27/09/2026, vocês realizaram R$ 79.410,29 em faturamento com 1.070 pedidos, mantendo um ticket médio de R$ 74,22. Considerando o desempenho do período anterior, houve uma variação de -15,06%. Para ajudar a retomar as vendas, oferecemos uma campanha de categoria no período de 05/10/2026 a 11/10/2026.",
+  <   "estado": "APROVADA",
+Limpeza — removidos do banco: 1 otimização, 1 lote de mensagens, 8 mensagens; analista desativado.
+  <   "redator": "MODELO",
+  <   "modelo": "qwen2.5:7b",
+  <   "motivo_redator": null,
+  <   "fatos": [
+  <     {
+  <       "fato": "Parceiro",
+  <       "valor": "Ponto Azul 2"
+  <     },
+  <     {
+  <       "fato": "Período",
+  <       "valor": "21/09/2026 a 27/09/2026"
+  <     },
+  <     "... mais 6 registros"
+  <   ],
+  <   "lote_id": 4,
+  <   "gerada_em": "2026-10-03T00:10:00.809783Z",
+  <   "categoria": "Mercado",
+  <   "editada": false,
+  <   "numeros_fora_dos_fatos": [],
+  <   "decidida_por": "Gestor da Evidência",
+  <   "decidida_em": "2026-10-03T00:10:21.566169Z",
+  <   "motivo_rejeicao": null,
+  <   "contato": null
+  < }
+  ok    a aprovação registra quem decidiu e quando
+
+Edita a segunda, e escreve um desconto que não está nos fatos:
+
+$ POST /api/mensagens/36/edicao
+  > {
+  >   "texto": "Olá, Quintal Verde 2, no período de 21/09/2026 a 27/09/2026, vocês realizaram R$ 57.841,79 em faturamento com 1.129 pedidos, o que representa um ticket médio de R$ 51,23. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026 para reforçar nosso relacionamento. Nesta semana, 15% de desconto na taxa."
+  > }
+  200 OK
+  < {
+  <   "id": 36,
+  <   "parceiro_id": 460,
+  <   "parceiro": "Quintal Verde 2",
+  <   "segmento": "TOP",
+  <   "acao": "Campanha de categoria",
+  <   "texto": "Olá, Quintal Verde 2, no período de 21/09/2026 a 27/09/2026, vocês realizaram R$ 57.841,79 em faturamento com 1.129 pedidos, o que representa um ticket médio de R$ 51,23. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026 para reforçar nosso relacionamento. Nesta semana, 15% de desconto na taxa.",
+  <   "texto_gerado": "Olá, Quintal Verde 2, no período de 21/09/2026 a 27/09/2026, vocês realizaram R$ 57.841,79 em faturamento com 1.129 pedidos, o que representa um ticket médio de R$ 51,23. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026 para reforçar nosso relacionamento.",
+  <   "estado": "PENDENTE",
+  <   "redator": "MODELO",
+  <   "modelo": "qwen2.5:7b",
+  <   "motivo_redator": null,
+  <   "fatos": [
+  <     {
+  <       "fato": "Parceiro",
+  <       "valor": "Quintal Verde 2"
+  <     },
+  <     {
+  <       "fato": "Período",
+  <       "valor": "21/09/2026 a 27/09/2026"
+  <     },
+  <     "... mais 6 registros"
+  <   ],
+  <   "lote_id": 4,
+  <   "gerada_em": "2026-10-03T00:10:03.771692Z",
+  <   "categoria": "Restaurante",
+  <   "editada": true,
+  <   "numeros_fora_dos_fatos": [
+  <     "15%"
+  <   ],
+  <   "decidida_por": null,
+  <   "decidida_em": null,
+  <   "motivo_rejeicao": null,
+  <   "contato": null
+  < }
+  ok    editar guarda o texto redigido e não aprova: a mensagem continua pendente
+  ok    o número que o gestor escreveu fica apontado, para ele conferir antes de aprovar
+
+  ... e aprova a editada: APROVADA, com o texto dele.
+
+Rejeita a terceira, com o motivo:
+
+$ POST /api/mensagens/37/rejeicao
+  > {
+  >   "motivo": "O tom não serve para este parceiro."
+  > }
+  200 OK
+  < {
+  <   "id": 37,
+  <   "parceiro_id": 152,
+  <   "parceiro": "Quintal da Serra",
+  <   "segmento": "TOP",
+  <   "acao": "Visita de relacionamento",
+  <   "texto": "Olá, Quintal da Serra, vocês realizaram R$ 23.741,23 em faturamento e atenderam 515 pedidos no período de 21/09/2026 a 27/09/2026. Estamos agendando uma visita de relacionamento para o período de 05/10/2026 a 11/10/2026.",
+  <   "texto_gerado": "Olá, Quintal da Serra, vocês realizaram R$ 23.741,23 em faturamento e atenderam 515 pedidos no período de 21/09/2026 a 27/09/2026. Estamos agendando uma visita de relacionamento para o período de 05/10/2026 a 11/10/2026.",
+  <   "estado": "REJEITADA",
+  <   "redator": "MODELO",
+  <   "modelo": "qwen2.5:7b",
+  <   "motivo_redator": null,
+  <   "fatos": [
+  <     {
+  <       "fato": "Parceiro",
+  <       "valor": "Quintal da Serra"
+  <     },
+  <     {
+  <       "fato": "Período",
+  <       "valor": "21/09/2026 a 27/09/2026"
+  <     },
+  <     "... mais 6 registros"
+  <   ],
+  <   "lote_id": 4,
+  <   "gerada_em": "2026-10-03T00:10:06.201798Z",
+  <   "categoria": "Restaurante",
+  <   "editada": false,
+  <   "numeros_fora_dos_fatos": [],
+  <   "decidida_por": "Gestor da Evidência",
+  <   "decidida_em": "2026-10-03T00:10:21.605175Z",
+  <   "motivo_rejeicao": "O tom não serve para este parceiro.",
+  <   "contato": null
+  < }
+  ok    a rejeição guarda o motivo
+
+Tenta decidir de novo a que já foi aprovada:
+
+$ POST /api/mensagens/35/rejeicao
+  > {}
+  409 Conflict
+  < {
+  <   "detail": {
+  <     "erro": "Esta mensagem já foi decidida.",
+  <     "ajuda": "Ela foi aprovada por Gestor da Evidência enquanto você a revisava. A fila foi atualizada.",
+  <     "mensagem_id": 35,
+  <     "estado": "APROVADA",
+  <     "decidida_por": "Gestor da Evidência",
+  <     "decidida_em": "2026-10-03T00:10:21.566169+00:00"
+  <   }
+  < }
+  ok    mensagem já decidida não é decidida de novo
+
+E aprova três de uma vez:
+
+$ POST /api/mensagens/aprovacao-em-lote
+  > {
+  >   "ids": [
+  >     38,
+  >     39,
+  >     40
+  >   ]
+  > }
+  200 OK
+  < {
+  <   "aprovadas": [
+  <     38,
+  <     39,
+  <     40
+  <   ],
+  <   "ja_decididas": [],
+  <   "nao_encontradas": []
+  < }
+  ok    a aprovação em lote decide as três, e o resto continua na fila
+
+  Na fila ficaram 2 de 8: nenhuma sai sem decisão.
+
+==============================================================================
+3. Histórico e exportação — o que foi decidido, e o que vai para envio (RF40)
+==============================================================================
+
+GET /api/mensagens?estado=APROVADA&lote_id=4 → 5
+GET /api/mensagens?estado=REJEITADA&lote_id=4 → 1
+  Quintal do Sol 3             aprovada por Gestor da Evidência
+  Villa da Praça               aprovada por Gestor da Evidência
+  Esquina do Vale 3            aprovada por Gestor da Evidência
+  Quintal Verde 2              aprovada por Gestor da Evidência · editada
+  Ponto Azul 2                 aprovada por Gestor da Evidência
+  Quintal da Serra             rejeitada por Gestor da Evidência: O tom não serve para este parceiro.
+  ok    o histórico traz cinco aprovadas e uma rejeitada, cada uma com quem decidiu
+  ok    a editada guarda o texto final e o que foi redigido
+
+$ GET /api/mensagens/exportacao.csv
+  200 · attachment; filename="mensagens-aprovadas-2026-10-02.csv"
+  < Parceiro;Contato;Segmento;Categoria;Acao;Mensagem;Editada;Aprovada por;Aprovada em
+  < Quintal do Sol 3;;Estável;Restaurante;Visita de relacionamento;Olá, Quintal do Sol 3, no período de 21/09/2026 a 27/09/2026, vocês realizaram R$ 13.86...
+  < Villa da Praça;;Top;Petshop;Visita de relacionamento;Olá, Villa da Praça, durante o período de 21/09/2026 a 27/09/2026, vocês realizaram R$ 31.039,82 ...
+  < ... 5 linhas além do cabeçalho
+  ok    o arquivo para envio traz as aprovadas deste lote
+  ok    e não traz a rejeitada
+  ok    nem as que ainda esperam a decisão
+
+==============================================================================
+4. No banco — as mensagens do lote, por estado
+==============================================================================
+
+$ SQL, só leitura, no banco da API
+  > SELECT m.estado, count(*), count(m.decidida_por_id), count(m.decidida_em)
+  > FROM mensagem m WHERE m.lote_id = :lote
+  > GROUP BY m.estado ORDER BY m.estado
+  < estado    | mensagens | com quem decidiu | com quando
+  < ----------+-----------+------------------+-----------
+  < PENDENTE  | 2         | 0                | 0         
+  < APROVADA  | 5         | 5                | 5         
+  < REJEITADA | 1         | 1                | 1         
+  ok    cinco aprovadas, uma rejeitada e o resto pendente
+  ok    toda mensagem decidida tem quem decidiu e quando; nenhuma pendente tem
+
+==============================================================================
+5. Assistente — a resposta com a fonte, ou a abstenção (UC12, RF41 a RF43)
+==============================================================================
+
+GET /api/assistente → disponível: True, qwen2.5:7b; 11 tipos de pergunta no catálogo.
+
+$ POST /api/assistente/perguntas
+  > Qual a média de faturamento das pizzarias?
+  200 em 0.0 s · situação ABSTENCAO · tipo fora_do_catalogo · redator MODELO_FIXO
+  < Essa pergunta pede uma conta — soma, média, diferença ou total de várias semanas —, e o assistente não faz contas: ele responde com os números que o sistema já calculou. Pergunte por um parceiro ou pela rede numa semana, ou veja o painel.
+  ok    a pergunta que pede conta recebe a abstenção do código, com ou sem o modelo
+  201  t79714.adm           ADMINISTRADOR
+
+  O administrador pergunta: 403. As respostas falam de parceiros e de planos, que ele não abre.
+  ok    o administrador não pergunta ao assistente
+
+$ POST /api/assistente/perguntas
+  > Quanto Ponto Azul 2 faturou na última semana?
+  200 em 3.6 s · situação RESPONDIDA · tipo desempenho_do_parceiro · redator MODELO
+  < O Ponto Azul 2 faturou R$ 79.410,29 na última semana, representando uma queda de 15,06% em comparação ao período anterior.
+  < fonte: Relatórios de 14/09/2026 a 20/09/2026 e de 21/09/2026 a 27/09/2026.
+  ok    a pergunta do parceiro traz o faturamento que a lista de parceiros mostra
+  ok    o texto só tem números dos fatos, no sentido deles (RN08)
+
+$ POST /api/assistente/perguntas
+  > Como foi a rede na última semana?
+  200 em 4.1 s · situação RESPONDIDA · tipo resumo_do_periodo · redator MODELO
+  < Na última semana, a rede faturou R$ 1.839.707,96 em 41.974 pedidos, com um ticket médio de R$ 43,83, representando uma queda de 0,12% no faturamento e 0,06% nos pedidos em comparação ao período anterior.
+  < fonte: Relatórios de 14/09/2026 a 20/09/2026 e de 21/09/2026 a 27/09/2026.
+
+  O painel abre em 2026-09-21 a 2026-09-27: R$ 1.839.707,96
+  ok    a última semana da pergunta é a semana mais recente, a que o painel abre
+  ok    e a resposta traz o faturamento que o painel mostra nela
+  ok    e a fonte: os relatórios de onde os números saíram, com a data da importação
+
+$ POST /api/assistente/perguntas
+  > Qual a capital da França?
+  200 em 1.5 s · situação ABSTENCAO · tipo fora_do_catalogo · redator MODELO_FIXO
+  < Essa pergunta está fora do que o assistente sabe responder. Ele responde sobre o desempenho, a evolução, a posição, o segmento e a previsão de um parceiro; o ranking, os segmentos e o Top de um período; o resumo da rede; e o último plano de campanha.
+  ok    a pergunta fora do catálogo recebe a abstenção, e não um palpite
+
+$ POST /api/assistente/perguntas
+  > Por que Ponto Azul 2 faturou isso?
+  200 em 0.0 s · situação ABSTENCAO · tipo fora_do_catalogo · redator MODELO_FIXO
+  < O assistente responde com os números, e não com as causas: os dados dizem o que aconteceu, e não por quê.
+  ok    a pergunta pela causa também: o sistema sabe quanto, e não por quê
+
+==============================================================================
+6. Portal do parceiro — o próprio histórico, e só ele (UC13, RF19, RF26)
+==============================================================================
+
+O administrador acha o parceiro pelo nome e cria a conta dele (RF56, RF04):
+  GET /api/usuarios/parceiros?busca=… → [{'id': 246, 'nome': 'Ponto Azul 2', 'ativo': True}]
+  201  t79714.parceiro      PARCEIRO
+
+A conta entra: 201. A sessão lhe dá: ['meu_desempenho']
+
+$ GET /api/meu-desempenho
+  200 OK
+  < {
+  <   "parceiro": "Ponto Azul 2",
+  <   "categoria": "Mercado",
+  <   "atual": {
+  <     "periodo": {
+  <       "id": 12,
+  <       "data_inicio": "2026-09-21",
+  <       "data_fim": "2026-09-27"
+  <     },
+  <     "faturamento": "79410.29",
+  <     "pedidos": 1070,
+  <     "ticket_medio": "74.22"
+  <   },
+  <   "anterior": {
+  <     "id": 11,
+  <     "data_inicio": "2026-09-14",
+  <     "data_fim": "2026-09-20"
+  <   },
+  <   "variacao": {
+  <     "faturamento": "-15.06",
+  <     "pedidos": "-15.08",
+  <     "ticket_medio": "0.03"
+  <   },
+  <   "pontos": [
+  <     {
+  <       "periodo": {
+  <         "id": 1,
+  <         "data_inicio": "2026-07-06",
+  <         "data_fim": "2026-07-12"
+  <       },
+  <       "faturamento": "84536.86",
+  <       "pedidos": 1139,
+  <       "ticket_medio": "74.22"
+  <     },
+  <     {
+  <       "periodo": {
+  <         "id": 2,
+  <         "data_inicio": "2026-07-13",
+  <         "data_fim": "2026-07-19"
+  <       },
+  <       "faturamento": "85343.55",
+  <       "pedidos": 1150,
+  <       "ticket_medio": "74.21"
+  <     },
+  <     "... mais 10 registros"
+  <   ]
+  < }
+  ok    o parceiro tem só o portal dele
+  ok    o histórico é o do parceiro da conta
+  ok    o faturamento do período mais recente é o que a lista mostra ao analista
+  ok    a resposta não traz ranking, posição nem comparação com a rede
+
+  O ranking da rede, pela conta do parceiro: 403
+  ok    os dados da rede são recusados
+
+==============================================================================
+Depois da limpeza
+==============================================================================
+  ok    o histórico de execuções voltou a ser o de antes da transcrição
+
+==============================================================================
+Resultado: 37 de 37 conferências passaram.

@@ -1,0 +1,43 @@
+O controle de permissões — o que cada perfil vê na tela
+
+O menu de cada perfil — só o que ele abre
+  administrador Painel, Importação, Modelo, Execuções, Benchmark, Usuários, Auditoria,
+              Operações, Configuração
+  gestor        Painel, Importação, Parceiros, Assistente, Relatórios, Modelo, Campanha,
+              Execuções, Benchmark, Mensagens, Aprovação
+  analista      Painel, Importação, Parceiros, Assistente, Relatórios, Campanha, Execuções,
+              Mensagens, Aprovação
+  parceiro      Meu desempenho
+
+O endereço de uma tela que o perfil não abre — a página "Sem acesso"
+  analista      /auditoria   O seu perfil não abre esta tela · O perfil Analista não tem
+              acesso a /auditoria. As telas que você abre estão no menu. Se precisar desta,
+              fale com o administrador do sistema. · Ir para o início
+  administrador /parceiros   O seu perfil não abre esta tela · O perfil Administrador não tem
+              acesso a /parceiros. As telas que você abre estão no menu. Se precisar desta,
+              fale com o administrador do sistema. · Ir para o início
+  parceiro      /parceiros   O seu perfil não abre esta tela · O perfil Parceiro não tem
+              acesso a /parceiros. As telas que você abre estão no menu. Se precisar desta,
+              fale com o administrador do sistema. · Ir para o início
+  gestor        /usuarios    O seu perfil não abre esta tela · O perfil Gestor não tem acesso
+              a /usuarios. As telas que você abre estão no menu. Se precisar desta, fale com o
+              administrador do sistema. · Ir para o início
+
+A campanha — o gestor calcula; o analista consulta
+  gestor        Calcular plano
+  analista      Só o gestor calcula o plano; o analista consulta.
+
+A fila de aprovação — o analista vê; só o gestor decide (RN06)
+  gestor        os botões da primeira mensagem: Aprovar, Editar, Rejeitar
+  analista      os botões da primeira mensagem: nenhum
+
+O painel do administrador — só leitura, sem a previsão nem a campanha
+  blocos        Faturamento da rede · Distribuição por segmento · Ranking de parceiros
+
+O portal do parceiro — o histórico dele, e nada da rede (RF26)
+  de quem       Ponto Azul 2
+  ajuda         O que você pode fazer · O seu portal
+
+A página "Sem acesso" não faz nenhuma chamada à API: quem decide o acesso continua
+sendo o servidor, a cada requisição. A trilha tem 0 acessos negados registrados,
+de quem chamou a rota — a transcrição das permissões os provoca e os conta.

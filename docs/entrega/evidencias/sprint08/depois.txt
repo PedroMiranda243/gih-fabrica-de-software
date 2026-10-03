@@ -1,0 +1,40 @@
+O depois da Sprint 08 — o que a tela diz em cada endereço
+
+O cabeçalho, de qualquer tela
+  na tela     Minha conta: · Gestora da Captura · GESTOR — o nome leva à conta, e há o botão
+              da ajuda
+
+O analista abre /auditoria pelo endereço
+  título      Sem acesso · Auditoria · GIH
+  na tela     O seu perfil não abre esta tela · O perfil Analista não tem acesso a /auditoria.
+              As telas que você abre estão no menu. Se precisar desta, fale com o
+              administrador do sistema. · Ir para o início
+
+O administrador cria um usuário
+  endereço    /usuarios/novo
+  perfis      Administrador, Gestor, Analista, Parceiro
+  parceiro    com o perfil Parceiro, a busca pelo nome, que devolve só o nome e a situação
+
+O administrador abre a conta de um usuário
+  endereço    /usuarios/{id}
+  blocos      Conta · Senha · Situação
+
+A Minha conta — os dados e a troca da senha, com o erro embaixo do campo
+  na tela     A senha atual está incorreta.
+
+O teclado — o primeiro Tab, e o Enter no primeiro item do menu
+  1º Tab      o link "Pular para o conteúdo", que só aparece com o foco
+  foco        depois de trocar de tela: h1#titulo-da-tela: "Painel"
+
+O aviso de alterações não salvas — um campo mudado, e o clique em outro item do menu
+  na tela     Há alterações que não foram salvas. Sair desta tela agora descarta o que você
+              mudou. · Sair sem salvar · Continuar editando
+  endereço    continua em /parceiros/{id}
+
+A ajuda — o que o perfil faz, os segmentos, a estimativa e o ganho esperado
+  segmentos   na ordem da regra: Prospecção, Recém-chegado, Em risco, Top 15, Em ascensão,
+              Estável
+
+O login, depois de o servidor encerrar a sessão
+  na tela     A sua sessão terminou. · Entre de novo para continuar de onde parou.
+  a senha     com "Mostrar" e "Ocultar" no campo
