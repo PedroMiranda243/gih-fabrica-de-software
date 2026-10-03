@@ -871,12 +871,13 @@ function montar() {
     c.push(p(`Causa: ${limpo(b.causa)}`, { size: 18 }));
     c.push(p(`${b.situacao === 'corrigido' ? 'Correção' : 'O que fazer'}: ${limpo(b.correcao)}`, { size: 18 }));
   }
-  if (bugs.length === 2) {
+  if (bugs.length === 3) {
     c.push(espaco(60));
     c.push(p(
-      'Os dois apareceram do jeito que esta entrega procurava defeito: um ao levantar o que faltava para uma '
-      + 'funcionalidade chegar à tela, e o outro ao escrever a ajuda, que mostrou lado a lado o número em vigor e '
-      + 'o número escrito no rótulo.',
+      'Os três apareceram do jeito que esta entrega procurava defeito: um ao levantar o que faltava para uma '
+      + 'funcionalidade chegar à tela; outro ao escrever a ajuda, que mostrou lado a lado o número em vigor e o '
+      + 'número escrito no rótulo; e o terceiro na rodada final das evidências, ao conferir a figura do '
+      + 'assistente contra o painel.',
       { size: 19 },
     ));
   }
@@ -1011,12 +1012,16 @@ function montar() {
     + 'do navegador. As contas que tinham ficado ativas foram desativadas na hora.',
   );
   dificuldade(
-    '10.6 "Semana passada" e "última semana"',
-    'Na primeira transcrição do assistente, uma conferência reprovou: à pergunta "Como foi a rede na semana '
-    + 'passada?", ele respondeu com a semana anterior à mais recente, e a conferência esperava a mais recente. A '
-    + 'resposta estava certa para o período que ela mesma citava, com a fonte.',
-    'A conferência passou a comparar a resposta com o painel do período que a fonte da resposta cita, e não '
-    + 'com o período que quem escreveu a conferência supôs.',
+    '10.6 "Semana passada", "última semana" e uma conferência branda demais',
+    'Na primeira transcrição do assistente, a conferência que esperava a semana mais recente reprovou "Como foi '
+    + 'a rede na semana passada?" — e a resposta estava certa: a semana passada é a anterior à mais recente. A '
+    + 'conferência foi abrandada para comparar a resposta com o período que a própria fonte cita, e foi isso que '
+    + 'deixou passar o defeito seguinte. Nas capturas finais, "na última semana" saiu como a semana anterior, com '
+    + 'o número certo da semana errada (#235). Quem lia a semana era o modelo de linguagem, e ele às vezes troca '
+    + 'as duas.',
+    'A semana dita pelo nome passou a ser lida pelo código, das datas da base, e não mais pelo modelo. A '
+    + 'conferência cobra as duas coisas: que o período da resposta seja o mais recente, o que o painel abre, e '
+    + 'que o número seja o do painel nesse período.',
   );
 
   // =============================================== 11. AJUSTES
