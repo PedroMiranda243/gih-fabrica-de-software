@@ -1615,6 +1615,126 @@ def _aguardar_lote(c: httpx.Client, lote_id: int) -> dict:
     return lote
 
 
+def item_conta(
+    r: Relatorio, url: str, admin: httpx.Client, criados: dict[str, str], marca: str
+) -> None:
+    """A conta, a senha, o vínculo do parceiro e a ajuda (RF07, RF54, RF55, RF56).
+
+    Com uma conta só para isto: trocar e redefinir senha derruba sessões, e as
+    dos outros itens precisam continuar de pé. A conta é desativada na limpeza,
+    como as outras da execução.
+    """
+    r.secao("Conta — a troca e a redefinição de senha, a busca do parceiro e a ajuda")
+    login = f"{marca}.conta"
+    criada = admin.post(
+        "/api/usuarios",
+        json={"login": login, "nome": "Verificação Conta", "senha": SENHA, "perfil": "ANALISTA"},
+    )
+    if not r.checar("cria a conta que vai trocar de senha", criada.status_code == 201):
+        return
+    conta = criada.json()["id"]
+    trocada = f"trocada-{secrets.token_urlsafe(12)}"
+    redefinida = f"redefinida-{secrets.token_urlsafe(12)}"
+
+    with sessao(url) as um, sessao(url) as outro:
+        entrar(um, login, SENHA)
+        entrar(outro, login, SENHA)
+        errada = um.post(
+            "/api/sessao/senha", json={"senha_atual": "não é esta", "senha_nova": trocada}
+        )
+        fraca = um.post("/api/sessao/senha", json={"senha_atual": SENHA, "senha_nova": "curta"})
+        r.checar(
+            "a senha atual errada e a nova fraca voltam como erro do campo (RF07)",
+            errada.status_code == fraca.status_code == 422
+            and [c["campo"] for c in errada.json().get("campos", [])] == ["senha_atual"]
+            and [c["campo"] for c in fraca.json().get("campos", [])] == ["senha_nova"],
+            (fraca.json().get("campos") or [{}])[0].get("mensagem", ""),
+        )
+        troca = um.post("/api/sessao/senha", json={"senha_atual": SENHA, "senha_nova": trocada})
+        r.checar(
+            "trocar a senha mantém a sessão de quem trocou e derruba as outras",
+            troca.status_code == 204
+            and um.get("/api/sessao/atual").status_code == 200
+            and outro.get("/api/sessao/atual").status_code == 401,
+        )
+
+        eu = admin.get("/api/sessao/atual").json()
+        propria = admin.post(f"/api/usuarios/{eu['id']}/senha", json={"senha_nova": redefinida})
+        r.checar(
+            "o administrador não redefine a própria senha por aqui: tem a Minha conta (RF54)",
+            propria.status_code == 409,
+            (propria.json().get("detail") or {}).get("ajuda", "")
+            if propria.status_code == 409 else f"HTTP {propria.status_code}",
+        )
+        redefinicao = admin.post(f"/api/usuarios/{conta}/senha", json={"senha_nova": redefinida})
+        r.checar(
+            "a redefinição derruba todas as sessões da conta, e só a senha nova entra",
+            redefinicao.status_code == 204
+            and um.get("/api/sessao/atual").status_code == 401
+            and not entrar(outro, login, trocada)
+            and entrar(outro, login, redefinida),
+        )
+    trilha = admin.get("/api/auditoria", params={"acao": "SENHA_REDEFINIDA", "tamanho": 5})
+    da_conta = [
+        e for e in trilha.json().get("itens", [])
+        if (e.get("detalhes") or {}).get("login") == login
+    ] if trilha.status_code == 200 else []
+    r.checar(
+        "a redefinição entra na trilha, sem a senha (RF06)",
+        bool(da_conta) and redefinida not in trilha.text,
+        da_conta[0].get("resumo", "") if da_conta else f"HTTP {trilha.status_code}",
+    )
+
+    # O vínculo da conta de perfil Parceiro, pela busca de nomes (RF56).
+    analista = criados.get("ANALISTA")
+    nome = None
+    if analista:
+        with sessao(url) as c:
+            entrar(c, analista, SENHA)
+            itens = c.get("/api/parceiros", params={"tamanho": 1}).json().get("itens", [])
+            nome = itens[0]["nome"] if itens else None
+            negada = c.get("/api/usuarios/parceiros", params={"busca": "ab"}).status_code
+            regras = c.get("/api/ajuda/regras")
+    if nome is None:
+        r.nota("a base não tem parceiro: a busca de nomes não foi conferida")
+        return
+    curta = admin.get("/api/usuarios/parceiros", params={"busca": nome[:1]})
+    achados = admin.get("/api/usuarios/parceiros", params={"busca": nome})
+    r.checar(
+        "a busca de parceiros do administrador devolve só o nome e a situação (RF56)",
+        curta.status_code == 422
+        and achados.status_code == 200
+        and bool(achados.json())
+        and all(set(p) == {"id", "nome", "ativo"} for p in achados.json())
+        and negada == 403,
+        f"{len(achados.json())} achado(s) para {nome!r}; a busca de uma letra é recusada",
+    )
+    orfa = admin.post(
+        "/api/usuarios",
+        json={"login": f"{marca}.orfa", "nome": "Verificação Órfã", "senha": SENHA,
+              "perfil": "PARCEIRO", "parceiro_id": 2_000_000_000},
+    )
+    r.checar(
+        "vincular a um parceiro que não existe é erro do campo, e não login em uso (#227)",
+        orfa.status_code == 422
+        and [c["campo"] for c in orfa.json().get("campos", [])] == ["parceiro_id"],
+        (orfa.json().get("campos") or [{}])[0].get("mensagem", "")
+        if orfa.status_code == 422 else f"HTTP {orfa.status_code}",
+    )
+
+    # A ajuda (RF55): os limiares que ela mostra são os da configuração.
+    configurado = admin.get("/api/configuracao/segmentacao").json()
+    corpo = regras.json() if regras.status_code == 200 else {}
+    r.checar(
+        "a ajuda mostra os limiares em vigor e os segmentos na ordem da RN01 (RF55)",
+        all(corpo.get(k) == configurado.get(k)
+            for k in ("top_n", "periodos_tendencia", "periodos_novato"))
+        and corpo.get("segmentos", [])[:4] == ["PROSPECCAO", "RECEM_CHEGADO", "EM_RISCO", "TOP"],
+        f"Top {corpo.get('top_n')}, {corpo.get('periodos_tendencia')} períodos de tendência, "
+        f"{corpo.get('periodos_novato')} de recém-chegado",
+    )
+
+
 def item_mensagens(r: Relatorio, url: str, criados: dict[str, str]) -> None:
     """As mensagens do último plano (UC10, RF36, RF37, RN08), pelo Analista.
 
@@ -2104,6 +2224,7 @@ def main() -> int:
             item_benchmark(r, a.url, criados)
             item_mensagens(r, a.url, criados)
             item_portal(r, a.url, admin, criados, marca)
+            item_conta(r, a.url, admin, criados, marca)
             item_assistente(r, a.url, criados)
             item_crud(r, a.url, criados, marca)
             periodo_id = item_ingestao(r, a.url, criados, marca)

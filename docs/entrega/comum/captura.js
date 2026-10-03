@@ -67,12 +67,18 @@ async function sessaoAdmin() {
   });
   if (r.status !== 201) throw new Error(`O administrador não autenticou (${r.status}).`);
   const cookie = r.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
-  return (metodo, caminho, corpo) =>
+  const pedir = (metodo, caminho, corpo) =>
     fetch(`${API}${caminho}`, {
       method: metodo,
       headers: { 'Content-Type': 'application/json', Cookie: cookie },
       body: corpo ? JSON.stringify(corpo) : undefined,
     });
+  /* Uma segunda tentativa, quando a conexão cai: depois de minutos sem uso, o
+     Node pode reaproveitar uma conexão que o servidor já fechou, e o `fetch`
+     estoura antes de enviar. Sem isto, a limpeza do fim parava no primeiro
+     usuário e deixava os outros ativos. */
+  return (metodo, caminho, corpo) =>
+    pedir(metodo, caminho, corpo).catch(() => pedir(metodo, caminho, corpo));
 }
 
 function python() {
@@ -157,6 +163,9 @@ async function paginaDe(navegador, login, senha) {
   const pagina = await contexto.newPage();
   await pagina.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'light' }]);
   await pagina.setViewport(VISOR);
+  /* Com um formulário alterado, sair da página abre o aviso do navegador (H97).
+     Sem aceitar, a navegação seguinte do roteiro ficaria esperando para sempre. */
+  pagina.on('dialog', (dialogo) => dialogo.accept().catch(() => {}));
   try {
     await ir(pagina, '/entrar', '#login');
   } catch {
@@ -236,9 +245,25 @@ async function executar(etapas, saida, entrega) {
     const administrador = await paginaDe(
       navegador, pessoas.ADMINISTRADOR.login, pessoas.ADMINISTRADOR.senha,
     );
-    await etapas[etapa]({ gestor, analista, administrador, pessoas, admin, marca, ...roteiro(saida) });
-    for (const p of [gestor, analista, administrador]) {
-      await p.evaluate(() => fetch('/api/sessao', { method: 'DELETE', credentials: 'same-origin' }));
+    /* Uma pessoa a mais, quando a etapa precisa: a conta de perfil Parceiro, por
+       exemplo. Entra em `pessoas`, e por isso é desativada no fim com as outras. */
+    const paginas = [gestor, analista, administrador];
+    const outraPessoa = async (apelido, perfil, nome, extra = {}) => {
+      const login = `${marca}.${apelido}`;
+      const senha = crypto.randomBytes(18).toString('base64url');
+      const criado = await admin('POST', '/api/usuarios', { login, nome, senha, perfil, ...extra });
+      if (criado.status !== 201) throw new Error(`Não criei ${login} (${criado.status}).`);
+      pessoas[apelido] = { login, senha, id: (await criado.json()).id };
+      const pagina = await paginaDe(navegador, login, senha);
+      paginas.push(pagina);
+      return pagina;
+    };
+    await etapas[etapa]({
+      gestor, analista, administrador, pessoas, admin, marca, outraPessoa, ...roteiro(saida),
+    });
+    for (const p of paginas) {
+      await p.evaluate(() => fetch('/api/sessao', { method: 'DELETE', credentials: 'same-origin' }))
+        .catch(() => {});
     }
   } finally {
     await navegador.close();

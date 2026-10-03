@@ -1,0 +1,48 @@
+Os fluxos principais — o que cada tela disse
+
+1. Importação — o analista confere a prévia antes de gravar
+  na tela     Prévia · 3 reconhecidas · 1 rejeitadas
+
+2. Painel — os indicadores, o ranking e a distribuição por segmento
+  indicadores Faturamento · R$ 1.839.707,96 · -0,12% · em relação ao período anterior ·
+              Pedidos · 41.974 · -0,06% · em relação ao período anterior · Ticket médio · R$
+              43,83 · -0,07% · em relação ao período anterior · Parceiros ativos · 500 ·
+              +2,25% · em relação ao período anterior · Em risco · 104 · 8 a mais · em relação
+              ao período anterior · Ver quem está em risco · Mobilidade Top 15 · 2 · entraram
+              · 2 saíram
+
+3. Modelo — a versão que está prevendo
+  em uso      rede-1 (MODELO)
+
+4. Campanha — o plano que o otimizador devolveu
+  plano       8 ações, custo de R$ 1500.00, ganho esperado de R$ 63136.22, no modo GPU
+
+5. Mensagens — uma para cada parceiro do plano, todas pendentes
+  modelo      no ar: qwen2.5:7b
+  geradas     8, por redator: {"MODELO":8}
+  um texto    Olá, Ponto Azul 2, no período de 21/09/2026 a 27/09/2026, vocês realizaram R$
+              79.410,29 em faturamento com 1.070 pedidos, mantendo um ticket médio de R$
+              74,22. Considerando o desempenho do período anterior, houve uma variação de
+              -15,06%. Para ajudar a retomar as vendas, oferecemos uma campanha de categoria
+              no período de 05/10/2026 a 11/10/2026.
+
+6. Aprovação — o gestor aprova uma, edita e aprova outra, e rejeita uma terceira
+  aprovadas   2, por Gestora da Captura
+  na fila     5: nenhuma sai sem a decisão de um gestor (RN06)
+
+7. Assistente — a resposta com a fonte, e a abstenção
+  na tela     Qual a média de faturamento das pizzarias? · Sem base para responder · Essa
+              pergunta pede uma conta — soma, média, diferença ou total de várias semanas —, e
+              o assistente não faz contas: ele responde com os números que o sistema já
+              calculou. Pergunte por um parceiro ou pela rede numa semana, ou veja o painel.
+  na tela     Como foi a rede na última semana? · Na última semana, a rede registrou
+              faturamento de R$ 1.839.707,96 em 41.974 pedidos, com um ticket médio de R$
+              43,83 e 500 parceiros ativos, representando uma queda de 0,12% no faturamento e
+              0,06% nos pedidos em comparação ao período anterior. · Fonte Relatórios de
+              14/09/2026 a 20/09/2026 e de 21/09/2026 a 27/09/2026. O mais recente foi
+              importado em 02/10/2026 às 21:02 por Gerador de dados. · Redigida pelo
+              qwen2.5:7b, com os números do sistema conferidos. · Os números da resposta
+
+8. Relatório da campanha — o plano resumido por ação, categoria e segmento
+  resumo      Ganho esperado · R$ 63.136,22 · Custo · R$ 1.500,00 · Orçamento · R$ 1.500,00 ·
+              Ações · 8

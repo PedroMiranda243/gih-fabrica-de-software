@@ -28,7 +28,7 @@ uma da outra.
 
 Uso, da raiz do projeto:
 
-    api/.venv/Scripts/python scripts/registrar_testes.py --saida docs/entrega/evidencias/sprint07
+    api/.venv/Scripts/python scripts/registrar_testes.py --saida docs/entrega/evidencias/sprint08
 """
 from __future__ import annotations
 
@@ -52,77 +52,97 @@ IMAGEM_DO_NUCLEO = "gih-nucleo"
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-# Os exemplos de cada tipo que o enunciado nomeia: (suíte, arquivo, teste, o que prova).
-# Os da Sprint 07: o painel num recorte e com os três módulos (H82, H83), os
-# relatórios e a exportação (H84 a H88), a trilha na tela e o histórico do
-# cadastro (H89, H90), e os filtros e a busca que faltavam (H91).
+# Os exemplos de cada tipo: (suíte, arquivo, teste, o que prova). Os quatro
+# tipos são os que as entregas anteriores nomeiam; o quinto, permissões, é o que
+# a Sprint 08 pede.
+# Os da Sprint 08: a conta, a redefinição de senha e a conta de perfil Parceiro
+# (H92, H93, H101), a página "Sem acesso", o teclado e a sessão (H94, H96), o
+# aviso de alterações não salvas (H97), a ajuda (H95), a rastreabilidade (H98) e
+# a revisão das regras (H99).
 EXEMPLOS: dict[str, list[tuple[str, str, str, str]]] = {
     "Fluxos principais": [
-        ("api", "test_painel.py", "test_no_ranking_da_categoria_a_posicao_continua_a_da_rede",
-         "no painel filtrado por categoria, a posição continua a da rede (H82, RN02)"),
-        ("api", "test_painel_decisao.py", "test_o_previsto_e_o_medido_somam_os_mesmos_parceiros",
-         "o painel traz o previsto ao lado do medido, nos mesmos parceiros (H83)"),
-        ("api", "test_relatorios.py", "test_o_total_do_relatorio_e_o_indicador_do_painel",
-         "o total do relatório de desempenho é o indicador do painel (RF44)"),
-        ("api", "test_relatorios.py", "test_o_risco_do_relatorio_e_o_do_cadastro_e_diz_de_que_modelo",
-         "o risco do relatório é o da previsão no cadastro, e diz de que modelo (RF45)"),
-        ("api", "test_parceiros_historico.py",
-         "test_o_historico_conta_o_que_mudou_quando_e_por_quem",
-         "o cadastro do parceiro conta o que mudou, quando e por quem (RF50)"),
-        ("interface", "Relatorios.test.jsx",
-         "os filtros vão para a API e para o CSV, que é a mesma consulta",
-         "os filtros do relatório vão para a tela e para o arquivo exportado"),
-        ("interface", "Auditoria.test.jsx",
-         "mostra quando, quem, a ação em português e o que aconteceu",
-         "a trilha de auditoria na tela, com a ação em português (H89)"),
+        ("api", "test_usuarios_senha_e_vinculo.py",
+         "test_o_administrador_redefine_a_senha_e_a_pessoa_entra_com_a_nova",
+         "o administrador redefine a senha, e a pessoa entra com a nova (RF54)"),
+        ("api", "test_usuarios_senha_e_vinculo.py",
+         "test_cria_a_conta_parceiro_e_a_trilha_diz_de_quem",
+         "a conta de perfil Parceiro nasce com o parceiro dela, e a trilha diz qual (RF56)"),
+        ("api", "test_ajuda.py", "test_mudar_o_limiar_na_configuracao_muda_o_que_a_ajuda_diz",
+         "mudar um limiar na configuração muda o que a ajuda diz (RF55)"),
+        ("interface", "MinhaConta.test.jsx",
+         "trocar manda a atual e a nova, esvazia os campos e diz que as outras sessões caíram",
+         "a troca da própria senha, pela tela (RF07, H92)"),
+        ("interface", "Ajuda.test.jsx",
+         "os segmentos vêm na ordem que a API mandou, com os limiares em vigor no critério",
+         "a ajuda lista os segmentos na ordem da regra, com os limiares em vigor (H95)"),
+        ("interface", "AlteracoesNaoSalvas.test.jsx",
+         "'Sair sem salvar' segue o link que foi clicado, com o que ele carregava",
+         "o aviso de alterações não salvas deixa sair, para onde a pessoa ia (H97)"),
+    ],
+    "Permissões": [
+        ("api", "test_autorizacao.py", "test_toda_rota_tem_permissao_declarada",
+         "toda rota da aplicação tem a permissão declarada na matriz (RNF14)"),
+        ("api", "test_aprovacao.py",
+         "test_o_gestor_ganha_a_capacidade_de_decidir_e_o_analista_nao",
+         "a sessão dá ao Gestor a capacidade de decidir as mensagens, e ao Analista não (RN06)"),
+        ("api", "test_usuarios_senha_e_vinculo.py", "test_a_busca_devolve_so_o_nome_e_a_situacao",
+         "a busca de parceiros do administrador devolve só o nome e a situação (RF56)"),
+        ("api", "test_ajuda.py",
+         "test_o_parceiro_nao_recebe_as_regras_da_rede_e_a_tela_dele_nao_as_pede",
+         "o Parceiro não recebe as regras da rede, e a tentativa fica na trilha (RF26)"),
+        ("api", "test_rastreabilidade.py", "test_toda_rota_da_aplicacao_esta_no_documento",
+         "toda rota da aplicação está na matriz de rastreabilidade (H98)"),
+        ("interface", "App.guarda.test.jsx",
+         "a tela que o perfil não tem diz isso, com o perfil e a volta, e não pede nada à API",
+         "a página \"Sem acesso\", sem nenhuma chamada à API (H94)"),
     ],
     "Operações com o banco": [
-        ("api", "test_relatorios.py", "test_o_relatorio_da_campanha_soma_o_plano_gravado",
-         "o relatório da campanha soma o plano gravado (RF46)"),
-        ("api", "test_relatorios.py", "test_as_operacoes_somam_a_trilha_no_mesmo_recorte",
-         "o relatório de operações soma a trilha no mesmo recorte (RF47)"),
-        ("api", "test_relatorios.py", "test_o_desempenho_nao_faz_uma_consulta_por_parceiro",
-         "o relatório de desempenho não faz uma consulta por parceiro (RNF03)"),
-        ("api", "test_auditoria.py", "test_busca_no_que_foi_gravado_e_em_quem_fez",
-         "a busca na trilha procura no que foi gravado e em quem fez (RF49)"),
-        ("api", "test_campanha.py",
-         "test_os_filtros_do_historico_se_combinam_e_o_total_e_o_do_recorte",
-         "os filtros do histórico de execuções se combinam (RF51)"),
-        ("api", "test_usuarios.py", "test_a_busca_ignora_maiuscula_e_acento_dos_dois_lados",
-         "a busca de usuários ignora maiúscula e acento (RF52)"),
+        ("api", "test_usuarios_senha_e_vinculo.py",
+         "test_a_redefinicao_derruba_todas_as_sessoes_da_conta",
+         "a redefinição encerra todas as sessões da conta"),
+        ("api", "test_usuarios_senha_e_vinculo.py",
+         "test_a_redefinicao_entra_na_trilha_sem_a_senha",
+         "a redefinição entra na trilha de auditoria, sem a senha (RF06)"),
+        ("api", "test_usuarios_senha_e_vinculo.py",
+         "test_trocar_o_vinculo_registra_o_parceiro_de_antes_e_o_de_depois",
+         "trocar o parceiro da conta registra o de antes e o de depois"),
+        ("api", "test_ajuda.py", "test_com_treino_concluido_a_ajuda_diz_a_versao_em_uso",
+         "a ajuda lê do banco a versão do modelo em uso"),
     ],
     "Validações": [
-        ("api", "test_usuarios.py", "test_a_busca_trata_curinga_como_texto",
-         "a busca de usuários trata o curinga digitado como texto"),
-        ("api", "test_relatorios.py", "test_datas_invertidas_sao_recusa_e_nao_um_relatorio_vazio",
-         "datas invertidas são recusadas, em vez de virar um relatório vazio"),
-        ("api", "test_painel.py",
-         "test_a_serie_e_de_um_parceiro_ou_de_uma_categoria_e_nao_dos_dois",
-         "a série é de um parceiro ou de uma categoria, e não dos dois"),
-        ("api", "test_relatorios.py",
-         "test_categoria_com_nome_de_formula_nao_vira_formula_na_planilha",
-         "texto com cara de fórmula não vira fórmula no arquivo exportado"),
-        ("api", "test_parceiros_historico.py",
-         "test_o_contato_entra_como_alterado_e_o_valor_fica_fora_da_trilha",
-         "o contato entra na trilha como alterado, sem o valor"),
+        ("api", "test_usuarios_senha_e_vinculo.py",
+         "test_senha_fraca_na_redefinicao_e_erro_do_campo",
+         "a senha fraca na redefinição é erro do campo"),
+        ("api", "test_usuarios_senha_e_vinculo.py", "test_a_busca_para_num_teto",
+         "a busca de parceiros do administrador para num teto: não devolve a rede inteira"),
+        ("api", "test_segmentacao.py", "test_a_ordem_do_enum_e_a_ordem_em_que_a_regra_decide",
+         "a ordem dos segmentos que a ajuda mostra é a ordem em que a regra decide (RN01)"),
+        ("api", "test_segmentacao.py", "test_nenhum_rotulo_de_segmento_traz_o_numero_do_limiar",
+         "nenhum rótulo de segmento traz o número do limiar, que é configurável (#229)"),
+        ("interface", "MinhaConta.test.jsx",
+         "as duas digitações diferentes não chegam ao servidor",
+         "a senha nova digitada de dois jeitos não é enviada"),
     ],
     "Situações de erro": [
-        ("api", "test_relatorios.py", "test_execucao_sem_plano_e_recusada_com_o_porque",
-         "o relatório de uma execução sem plano é recusado, com o porquê"),
-        ("api", "test_relatorios.py",
-         "test_sem_modelo_treinado_o_relatorio_de_risco_diz_o_que_falta",
-         "sem modelo treinado, o relatório de risco diz o que falta"),
-        ("api", "test_auditoria.py", "test_a_exportacao_e_so_do_administrador",
-         "a exportação da trilha de auditoria é só do administrador (RF08)"),
-        ("api", "test_campanha.py",
-         "test_execucao_sem_plano_nao_tem_csv_e_a_resposta_diz_por_que",
-         "a execução sem plano não tem o que exportar, e a resposta diz por quê (RF53)"),
-        ("interface", "impressao.test.js",
-         "quem escolheu o escuro imprime no claro, e volta ao escuro depois",
-         "a tela no tema escuro imprime no claro, e volta ao escuro depois (RF48)"),
-        ("interface", "Painel.test.jsx",
-         "recorte que a API recusa mostra o erro e deixa escolher outro",
-         "o recorte que a API recusa mostra o erro, e deixa escolher outro"),
+        ("api", "test_usuarios_senha_e_vinculo.py",
+         "test_a_propria_senha_nao_se_redefine_por_aqui",
+         "o administrador não redefine a própria senha: tem a Minha conta, que pede a atual"),
+        ("api", "test_usuarios_senha_e_vinculo.py",
+         "test_editar_para_parceiro_inexistente_e_erro_do_campo_e_nao_erro_500",
+         "vincular a um parceiro que não existe é erro do campo, e não erro 500 (#227)"),
+        ("api", "test_ajuda.py",
+         "test_sem_treino_concluido_a_ajuda_diz_que_nao_ha_modelo_e_quanto_falta_de_historico",
+         "sem modelo treinado, a ajuda diz que não há modelo e quanto histórico falta"),
+        ("interface", "Ajuda.test.jsx",
+         "se as regras não chegam, a tela diz isso e mantém o que o perfil pode fazer",
+         "a ajuda sem as regras diz o que houve, e mantém o que o perfil faz"),
+        ("interface", "App.teclado.test.jsx",
+         "leva ao login dizendo que a sessão terminou, e depois de entrar volta para onde a "
+         "pessoa estava",
+         "a sessão que o servidor encerra leva ao login, com o aviso e a volta (H96)"),
+        ("interface", "MinhaConta.test.jsx",
+         "a senha atual que não confere aparece embaixo dela, com o foco nela",
+         "a senha atual errada aparece embaixo do campo, com o foco nele"),
     ],
 }
 
@@ -225,7 +245,13 @@ def _vitest(temporaria: Path) -> Suite:
         nome = Path(arquivo["name"]).name
         for caso in arquivo["assertionResults"]:
             situacao = {"passed": "passou", "failed": "falhou"}.get(caso["status"], "pulado")
-            suite.resultados[(nome, caso["title"])] = situacao
+            chave = (nome, caso["title"])
+            # Dois testes com o mesmo nome virariam um só, e o registro contaria a
+            # menos sem dizer: foi o que um título de it.each fez, na Sprint 08.
+            if chave in suite.resultados:
+                raise SystemExit(f'Dois testes da interface com o mesmo nome, em {nome}: '
+                                 f'"{caso["title"]}". Dê a cada um o seu.')
+            suite.resultados[chave] = situacao
     return suite
 
 

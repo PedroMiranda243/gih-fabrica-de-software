@@ -12,7 +12,7 @@
  *
  * Uso:
  *   git fetch origin
- *   node docs/entrega/registrar_commits.js > docs/entrega/evidencias/sprint07/commits.txt
+ *   node docs/entrega/registrar_commits.js > docs/entrega/evidencias/sprint08/commits.txt
  *   node docs/entrega/registrar_commits.js outra-ref      # outra referência
  */
 const { execFileSync } = require('child_process');
@@ -37,7 +37,8 @@ const JANELAS = [
   { rotulo: 'Sprint 04 — 20/09 a 21/09, data do PDF', ate: '2026-09-21' },
   { rotulo: 'Sprint 05 — 22/09 a 25/09, até o PR do PDF (#112)', atePr: 112 },
   { rotulo: 'Sprint 06 — 25/09, depois do PDF, a 01/10, até o PR do PDF (#195)', atePr: 195 },
-  { rotulo: 'Sprint 07 — 01/10, depois do PDF, a 24/10', ate: '2026-10-24' },
+  { rotulo: 'Sprint 07 — 01/10, depois do PDF, a 02/10, até o PR do PDF (#215)', atePr: 215 },
+  { rotulo: 'Sprint 08 — 02/10, depois do PDF, a 31/10', ate: '2026-10-31' },
 ];
 
 // Separadores de controle: nenhum deles aparece em mensagem de commit.

@@ -1,0 +1,214 @@
+Verificação de ponta a ponta · http://localhost:8000
+
+[1/6] Banco de dados conectado
+      ok   a API responde à verificação de saúde
+      ok   a API confirma o banco no ar  banco='ok'
+      ok   o banco tem registros gravados pela aplicação  54 eventos na trilha
+
+[2/6] Login funcional
+      ok   credencial válida abre sessão
+      ok   o cookie de sessão vem protegido  HttpOnly presente
+      ok   a resposta não devolve senha
+      ok   a sessão identifica o usuário
+      ok   encerrar invalida a sessão no servidor
+      ok   senha errada é recusada
+      ok   usuário inexistente responde igual a senha errada  indistinguível, como pede o RNF11
+
+[3/6] Cadastro de usuários
+      ok   cria usuário com perfil ADMINISTRADOR  e2e60414.administrador
+      ok   cria usuário com perfil GESTOR  e2e60414.gestor
+      ok   cria usuário com perfil ANALISTA  e2e60414.analista
+      ok   os usuários criados estão persistidos
+      ok   a listagem não expõe hash de senha
+
+[4/6] Controle de perfis
+      ·    80 rotas conferidas contra 3 perfis, a partir da matriz de docs/03-casos-de-uso.md
+      ok   sem sessão, todo endpoint protegido responde 401
+      ok   perfil ADMINISTRADOR só acessa o que a matriz permite
+      ok   perfil GESTOR só acessa o que a matriz permite
+      ok   perfil ANALISTA só acessa o que a matriz permite
+
+[  + ] Modelo preditivo — treino, versão em uso e previsão
+      ok   o analista não treina o modelo  treinar muda as previsões de toda a equipe (UC07)
+      ok   a tela do modelo diz se dá para treinar e por quê  12 períodos na base; mínimo 8 (RN09)
+      ok   o treino é aceito e roda fora da requisição  HTTP 202
+      ok   um segundo treino, com o primeiro rodando, é recusado  um treino por vez, travado pelo banco (ADR-010)
+      ok   o treino termina e registra data, volume e métricas (RF27)  500 parceiros · 12 períodos · 0,64 s
+      ok   a versão em uso é a que venceu as referências, ou a anterior com o motivo (UC07-A1)  rede 9,2% contra 10,0% da melhor referência; em uso: rede-4
+      ok   o cadastro do parceiro mostra a previsão, com base e versão (RF28)  Ponto Azul 2: R$ 84818,54 previstos, risco de 24%
+
+[  + ] Campanha — plano viável, cotas e recusa com o que falta
+      ok   o analista consulta a campanha, mas não calcula o plano  o plano decide onde vai a verba (UC08)
+      ok   a tela diz quantos parceiros entram e quantos ficam fora, e por quê (RN11)  469 elegíveis; fora: 31 historico curto
+      ok   o cálculo é aceito e roda fora da requisição  HTTP 202
+      ok   um segundo cálculo, com o primeiro rodando, é recusado  um otimizador por vez, travado pelo banco (ADR-011)
+      ok   o plano respeita orçamento, máximo de ações e cota da cauda longa (RN07)  23 ações · R$ 5.000,00 de R$ 5.000,00 · 12 na cauda longa
+      ok   o ganho do plano não fica abaixo do guloso, e sai da previsão em uso (RN10)  ganho de R$ 114.527,83 contra R$ 110.496,69 do guloso, em 6,8 s
+      ok   sem escolha, roda o primeiro modo disponível — GPU, CPU paralelo, serial —, com o mesmo plano do serial (RF32)  disponíveis: GPU, CPU_PARALELO, SERIAL; GPU em 0,31 s, contra 6,80 s do serial
+      ok   dois planos lado a lado dizem o que mudou: só o modo, e nenhum parceiro (RF35)  23 parceiros iguais nos dois
+      ok   a campanha inviável é registrada sem plano, dizendo o que falta (RN07, UC08-A1)  As cotas mínimas exigem pelo menos R$ 1.350,00, acima do orçamento de R$ 100,00: faltam R$ 1.250,00.
+      ok   o histórico traz cada execução com autor, parâmetros, modo, tempo e resultado (RF34)  as 3 desta verificação entre as 3 mais recentes
+      ok   o administrador vê o histórico, mas não abre o plano (RF34, UC08)  histórico HTTP 200; plano HTTP 403
+
+[  + ] Painel — o recorte por período e categoria, e os três módulos
+      ok   o painel oferece os períodos do mais recente ao mais antigo, e as categorias  12 períodos, 10 categorias
+      ok   os indicadores do recorte são a soma do ranking do mesmo recorte  Açaí e sorvetes: R$ 101766.60 em 31 parceiros
+      ok   no ranking da categoria, a posição é a do ranking da rede (RN02)  posições 8 a 475, entre 489
+      ok   a série do recorte é da categoria e termina no período escolhido  11 períodos
+      ok   categoria que não existe é recusada, e não vira a rede inteira  404
+      ok   o painel traz o previsto ao lado do medido, nos mesmos parceiros  previsto R$ 1753164.03 · medido R$ 1753406.48 · 469 parceiros
+      ok   o maior risco do painel é o da previsão no cadastro do parceiro  Varanda do Norte 2: 1.00
+      ok   a campanha do painel é o último plano viável do histórico  execução 3, 23 ações
+      ok   o administrador lê o painel, e não recebe a previsão e a campanha  o bloco é a soma do que ele não abre
+
+[  + ] Relatórios — conferidos contra as telas que resumem, e o CSV de cada um
+      ok   desempenho: o total é o indicador do painel no mesmo período  R$ 1839707.96 em 500 parceiros
+      ok   desempenho: cada categoria é o painel filtrado por ela, e elas somam o total  10 categorias
+      ok   desempenho: cada segmento tem os parceiros que o painel conta nele  5 segmentos
+      ok   desempenho: o CSV traz as categorias, os segmentos e o total da tela  16 linhas
+      ok   risco: do maior para o menor, e o primeiro é a previsão do cadastro dele  500 parceiros, 469 com previsão
+      ok   risco: quem não tem previsão vem com o motivo, e não com zero (RN09)  21 recém-chegados sem previsão: Com 1 período de histórico, ainda não há previsão: são necessários 4.
+      ok   risco: o CSV é o recorte inteiro, com o filtro da tela  92 com chance a partir de 50%
+      ok   campanha: o relatório soma o plano gravado, e cada agrupamento soma o total  23 ações, custo R$ 5000.00
+      ok   campanha: o CSV do plano tem uma linha por item, na ordem da tela (RF53)  23 itens
+      ok   o analista não abre o relatório de operações  é do administrador
+      ok   operações: o total é o da trilha no mesmo intervalo, e cada agrupamento o soma  173 operações de 2026-09-03 a 2026-10-02
+      ok   operações: o CSV traz todas as pessoas, que a tela resume  15 pessoas, 15 na tela
+      ok   o administrador não abre os relatórios da rede  são do gestor e do analista
+
+[  + ] Trilha de auditoria, histórico do cadastro e filtros das listas
+      ok   toda ação da trilha tem rótulo em português  35 ações
+      ok   o cadastro do parceiro mostra o que mudou nele, do mais recente ao mais antigo  3 eventos, sem a origem nem os parâmetros crus
+      ok   a troca de categoria diz de qual para qual, pelo nome  categoria de sem categoria para Açaí e sorvetes
+      ok   o analista não consulta a trilha inteira  é do administrador (RF08)
+      ok   o histórico de execuções filtra pelo resultado (RF51)  2 viáveis, 1 inviáveis
+      ok   a busca na trilha acha as alterações pelo nome do parceiro, com autor e frase (RF49)  2 registros
+      ok   o CSV da trilha traz o recorte da busca  2 linhas
+      ok   a busca de usuários acha pelo login e ignora o acento do nome (RF52)  3 pelo login, 3 por "verificacao"
+
+[  + ] Benchmark — o mesmo problema em cada modo, com o mesmo plano
+      ok   o analista não tem o benchmark (UC09)
+      ok   mede cada modo desta instalação, com o mesmo plano em todos (RF33, RNF02)  PYTHON em 1,53 s, CPP_SERIAL em 18,5 ms, OPENMP em 5,0 ms, GPU em 190,7 ms
+      ok   o modo que falta nesta máquina diz por quê (UC09-A1)  nenhum falta
+      ok   o gráfico de escalabilidade traz o tamanho medido (UC09, passo 7)  4 série(s)
+
+[  + ] Mensagens — do plano à fila, sem número que o núcleo não calculou
+      ok   o administrador não gera mensagens (UC10)
+      ·    assistente no ar: qwen2.5:7b
+      ok   público vazio: a prévia diz, e nada é gerado (UC10-E1)  Nenhum parceiro ativo neste público: nada a gerar.
+      ok   a prévia do plano traz os parceiros dele, com a ação de cada um (UC10, passo 2)  Plano de campanha de 05/10/2026 a 11/10/2026: 23 parceiro(s)
+      ok   uma mensagem por parceiro do plano, todas pendentes (RF36, RF37)  23 de 23 em 60,39 s: 23 pelo modelo, 0 pelo modelo fixo
+      ok   nenhum texto tem número que não veio dos fatos (RN08, RF43)  23 texto(s) conferido(s)
+      ok   nenhum texto conta ao parceiro a classificação da rede (RF26)
+      ok   cada mensagem leva a ação do plano, e a do modelo fixo diz por quê (ADR-013)  todas pelo modelo
+      ok   o analista vê a fila, mas não aprova (RN06, UC11-A4)  HTTP 403 ao aprovar
+      ok   o gestor aprova, edita e rejeita, com autor e data em cada decisão (RF38, RF39)  HTTP 200, 200, 200, 200
+      ok   a edição guarda o texto redigido ao lado do final (UC11-A1)
+      ok   a mensagem já decidida não é sobrescrita, e a resposta diz a decisão (UC11-E1)  Ela foi rejeitada por Verificação Gestor enquanto você a revisava. A fila foi atualizada.
+      ok   as decididas saem da fila de pendentes (UC11, passo 5)  20 pendente(s) do lote
+      ok   o histórico traz as decididas de hoje, com autor, data, texto final e motivo (RF40)  2 aprovada(s), 1 rejeitada(s)
+      ok   a exportação traz as aprovadas prontas para envio, com o texto final (RF40)  2 linha(s) no CSV de hoje
+
+[  + ] Portal do Parceiro — só o próprio histórico, nada da rede
+      ok   cria o usuário Parceiro vinculado a um parceiro
+      ok   o menu do Parceiro tem só o portal dele  meu_desempenho
+      ok   vê o próprio histórico, sem ranking nem comparação (UC13, RF26)  12 período(s) de Ponto Azul 2
+      ok   o dado da rede e o de outro parceiro são recusados no servidor (UC13-E1, RNF14)  /api/parceiros/460 403, /api/painel/series 403, /api/painel/ranking 403, /api/mensagens 403
+
+[  + ] Conta — a troca e a redefinição de senha, a busca do parceiro e a ajuda
+      ok   cria a conta que vai trocar de senha
+      ok   a senha atual errada e a nova fraca voltam como erro do campo (RF07)  A senha precisa ter pelo menos 10 caracteres.
+      ok   trocar a senha mantém a sessão de quem trocou e derruba as outras
+      ok   o administrador não redefine a própria senha por aqui: tem a Minha conta (RF54)  Troque a sua senha em Minha conta, que pede a senha atual.
+      ok   a redefinição derruba todas as sessões da conta, e só a senha nova entra
+      ok   a redefinição entra na trilha, sem a senha (RF06)  e2e60414.conta: 1 sessão(ões) encerrada(s)
+      ok   a busca de parceiros do administrador devolve só o nome e a situação (RF56)  2 achado(s) para 'Cantina Azul'; a busca de uma letra é recusada
+      ok   vincular a um parceiro que não existe é erro do campo, e não login em uso (#227)  Parceiro não encontrado.
+      ok   a ajuda mostra os limiares em vigor e os segmentos na ordem da RN01 (RF55)  Top 15, 2 períodos de tendência, 3 de recém-chegado
+
+[  + ] Assistente — o catálogo, com os números das telas, ou a abstenção
+      ok   o administrador não pergunta ao assistente (UC12)
+      ok   o assistente diz se está no ar e mostra os exemplos do catálogo  11 tipos de pergunta
+      ok   a pergunta acima do limite é recusada com o limite (UC12-E2, RNF15)
+      ok   a pergunta que pede conta recebe a abstenção do código, com ou sem o modelo (H68)  Essa pergunta pede uma conta — soma, média, diferença ou total de várias semanas —, e o as
+      ·    assistente no ar: qwen2.5:7b
+      ok   a pergunta do parceiro traz o faturamento da lista, e só números dos fatos (RF41, RN08)  desempenho_do_parceiro em 3.5 s, redigida pelo MODELO: O Ponto Azul 2 faturou R$ 79.410,29 na última semana, representando uma queda de
+      ok   a pergunta sobre a rede traz a fonte, montada pelo código (RF42, H66)  Relatórios de 07/09/2026 a 13/09/2026 e de 14/09/2026 a 20/09/2026.
+      ok   a pergunta fora do catálogo recebe a abstenção, e não um palpite (UC12-A1)  fora_do_catalogo
+
+[5/6] CRUD principal — parceiros
+      ok   cadastrar  Comércio e2e60414
+      ok   consultar
+      ok   consultar pela busca por nome
+      ok   cadastrar categoria
+      ok   atualizar
+      ok   a categoria confirmada por pessoa é gravada como MANUAL  RN05
+      ok   nome repetido é recusado
+      ok   a recusa aponta o parceiro que já usa o nome  UC04-E1 — a tela oferece abrir o cadastro existente
+      ok   categoria inexistente é erro do campo, e não nome duplicado  o usuário corrige o campo certo
+      ok   excluir
+      ok   o excluído some da consulta
+      ok   excluir parceiro com histórico é recusado  409
+      ok   a recusa diz quantos registros impedem e aponta a desativação
+
+[6/6] Ingestão e execução local
+      ok   importação sem período é recusada  RN03
+      ok   a recusa explica por que o período é obrigatório
+      ok   a prévia lista reconhecidos e rejeitados
+      ok   a importação grava as métricas  2 gravadas
+      ok   reimportar o mesmo período é recusado  RF12
+      ok   a recusa diz quantos registros seriam apagados e quem os trouxe  H25
+      ok   com substituir, o período é trocado e não somado  H25
+      ok   importa por arquivo enviado  H22
+      ok   o histórico traz o autor de cada importação  RF13
+      ok   a importação substituída fica no histórico, com zero métrica vigente  o rastro sobrevive ao dado
+      ok   a documentação interativa está no ar  /api/docs
+      ·    a segmentação do período importado é conferida no bloco de segmentação
+
+[  + ] Painel — indicadores, ranking e séries
+      ok   os indicadores consolidam o período importado  21440.40 em 513 pedidos
+      ok   o ticket médio é a razão dos totais, e não coluna guardada  RN04
+      ok   o ranking ordena por faturamento, com posições sem buraco  2 parceiros
+      ok   a série da rede sai em ordem cronológica  15 períodos
+      ok   a série individual cobre todos os períodos, com lacuna explícita  período sem medição vem nulo, não sumido
+
+[  + ] Segmentação, distribuição e mobilidade
+      ok   a importação já deixou o período segmentado  sem reprocessamento manual
+      ok   a distribuição soma os parceiros do período  2 classificados em 1 segmento
+      ok   a distribuição vem do maior para o menor  sem desempate estável, o gráfico parece mudar sem nada ter mudado
+      ok   cada parceiro recebe exatamente um segmento  RN01
+      ok   a mobilidade responde com o Top N configurado  Top 15
+      ok   ninguém que está no Top N aparece como saída  RN02 — a mobilidade lê o ranking, não o segmento
+
+[  + ] Parceiros — recorte, ordenação e exportação
+      ok   a lista vem paginada, com o total do recorte  2 de 505
+      ok   a ordenação por faturamento respeita o sentido pedido  2 com movimento
+      ok   quem não teve métrica no período vai para o fim  não é o melhor nem o pior
+      ok   ordenar por coluna desconhecida é recusado  o valor entra num ORDER BY
+      ok   o arquivo exportado traz exatamente o recorte da tela  5 linhas
+      ok   o arquivo vem pronto para a planilha  BOM de UTF-8, senão 'Praça' abre como 'PraÃ§a'
+
+[  + ] Configuração da segmentação
+      ok   o administrador lê os limiares em vigor  Top 15 · tendência 2
+      ok   o gestor não altera a régua da segmentação  quem mexe aqui reescreve o que 'em risco' significa para a rede
+      ok   limiar sem sentido é recusado  Top 0 não tem ninguém dentro
+      ok   alterar o limiar reclassifica o período mais recente  configuração que não se reflete na tela engana quem a mudou
+      ok   a alteração fica na trilha, com o valor anterior  sem dizer o que era antes, a trilha não responde nada
+      ok   o limiar volta ao que era antes da verificação  configuração é global: resíduo aqui muda a próxima execução
+
+[  + ] Telas por perfil e histórico de importações
+      ok   o administrador vê usuários e configuração, e não parceiros  painel, historico_importacoes, usuarios, auditoria, configuracao, modelo, execucoes, benchmark, relatorio_operacoes, ajuda_regras
+      ok   o administrador lê o histórico de importações (RF13)  16 importações
+      ok   o analista vê importação e parceiros, e não usuários  painel, painel_decisao, importar, historico_importacoes, parceiros, campanha, execucoes, execucao, mensagens, aprovacao, relatorios, assistente, ajuda_regras
+
+[  + ] Sugestão de categoria pelo nome
+      ok   um nome com a palavra da categoria recebe a sugestão  Pizzaria e2e60414
+      ok   um nome que aponta duas categorias não recebe nenhuma  branco é melhor que palpite
+
+[  + ] Limpeza — o banco volta ao que era antes da execução
+      ok   remove do banco o que a execução gravou  3 períodos, 4 importações, 5 métricas, 5 parceiros, 1 categoria, 3 treinos, 3 otimizações, 1 benchmark, 1 lote de mensagens, 23 mensagens
+      ok   o painel volta a abrir no mesmo período, com os mesmos totais  período de 2026-09-21
+      ok   a versão do modelo em uso volta a ser a de antes  rede-1
+      ·    os usuários da execução ficam, desativados: a trilha de auditoria aponta para eles
+
+As 160 verificações passaram.
