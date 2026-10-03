@@ -465,13 +465,15 @@ function montar() {
     + 'pendentes. Só um gestor decide — aprova, edita ou rejeita —, e só a aprovada vai para o arquivo de envio: '
     + 'o sistema não envia nada (RN06).',
   ));
-  c.push(...figura('sprint08/fluxo-5-mensagens-geradas', 'As mensagens do plano, geradas uma a uma, com o redator de cada uma.'));
+  // As larguras abaixo são as que deixam a transcrição de cada página nela: no
+  // tamanho máximo, as últimas linhas caíam sozinhas antes da quebra seguinte.
+  c.push(...figura('sprint08/fluxo-5-mensagens-geradas', 'As mensagens do plano, geradas uma a uma, com o redator de cada uma.', 370));
   c.push(...mono(daCaptura('sprint08/fluxos.txt', '5. Mensagens')));
   c.push(quebra());
   c.push(...figura('sprint08/fluxo-6-aprovacao-fila', 'A fila de aprovação do gestor: cada mensagem com os dados de onde ela saiu e os três botões.'));
   c.push(quebra());
-  c.push(...figura('sprint08/fluxo-6-aprovacao-editada', 'Depois de aprovar uma, editar outra e rejeitar uma terceira: a editada aponta o número que não veio dos dados.'));
-  c.push(...figura('sprint08/fluxo-7-aprovacao-historico', 'O histórico das aprovadas, com quem decidiu e quando, e o caminho para o arquivo de envio.'));
+  c.push(...figura('sprint08/fluxo-6-aprovacao-editada', 'Depois de aprovar uma, editar outra e rejeitar uma terceira: a editada aponta o número que não veio dos dados.', 590));
+  c.push(...figura('sprint08/fluxo-7-aprovacao-historico', 'O histórico das aprovadas, com quem decidiu e quando, e o caminho para o arquivo de envio.', 590));
   c.push(...mono(daCaptura('sprint08/fluxos.txt', '6. Aprovação')));
 
   c.push(quebra());
@@ -658,10 +660,11 @@ function montar() {
 
   c.push(quebra());
   c.push(h2('4.5 O teclado, e o que não foi salvo'));
-  c.push(...figura('sprint08/depois-pular-para-o-conteudo', 'O primeiro Tab de qualquer tela: "Pular para o conteúdo".', 560));
+  // A 560, o fim desta seção caía sozinho numa página antes da quebra da 4.6.
+  c.push(...figura('sprint08/depois-pular-para-o-conteudo', 'O primeiro Tab de qualquer tela: "Pular para o conteúdo".', 480));
   c.push(...mono(daCaptura('sprint08/depois.txt', 'O teclado —')));
   c.push(espaco(80));
-  c.push(...figura('sprint08/depois-alteracoes-nao-salvas', 'Um campo alterado e o clique no menu: a pergunta, na própria página, com o foco nela.', 560));
+  c.push(...figura('sprint08/depois-alteracoes-nao-salvas', 'Um campo alterado e o clique no menu: a pergunta, na própria página, com o foco nela.', 480));
   c.push(...mono(daCaptura('sprint08/depois.txt', 'O aviso de alterações não salvas —')));
   c.push(espaco(60));
   c.push(p(
