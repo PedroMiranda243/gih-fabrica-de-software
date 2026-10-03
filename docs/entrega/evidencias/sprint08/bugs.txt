@@ -1,5 +1,5 @@
 Registro de bugs — gerado das issues com o rótulo `fix`
-Abertas desde 02/10/2026; gerado em 02/10/2026 21:51 por scripts/registrar_bugs.py
+Abertas desde 02/10/2026; gerado em 02/10/2026 22:03 por scripts/registrar_bugs.py
 Fora as que o registro da entrega anterior já tem (docs/entrega/evidencias/sprint07/bugs.json)
 
 #227  Conta Parceiro com parceiro inexistente: a criação dizia que o login já existia, e a edição dava erro 500

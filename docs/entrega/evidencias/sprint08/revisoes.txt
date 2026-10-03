@@ -1,6 +1,6 @@
 Registro das revisões dos Pull Requests — gerado do GitHub
 https://github.com/PedroMiranda243/gih-fabrica-de-software
-PRs incorporados depois do #215; gerado em 02/10/2026 21:50 por scripts/registrar_revisoes.py
+PRs incorporados depois do #215; gerado em 02/10/2026 22:04 por scripts/registrar_revisoes.py
 
 #228  02/10  Minha conta, a redefinição de senha e a conta de perfil Parceiro pela tela…
       aberto por PedroMiranda243 · mesclado por PedroMiranda243
@@ -37,16 +37,21 @@ PRs incorporados depois do #215; gerado em 02/10/2026 21:50 por scripts/registra
       convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
       revisões:   nenhuma registrada no GitHub
 
+#237  02/10  As evidências da Sprint 08: a rodada final, da base limpa e com o modelo de…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
 Resumo
-  PRs incorporados                                  7
+  PRs incorporados                                  8
   com aprovação de um colega                        0
   com revisão de um colega, sem aprovação           0
-  sem revisão registrada no GitHub                  7
+  sem revisão registrada no GitHub                  8
 
 Por colega convidado
-  ingrydaraujob            convidado em   7 · aprovou   0 · pediu mudanças  0 · comentou  0
-  joaopfranca04            convidado em   7 · aprovou   0 · pediu mudanças  0 · comentou  0
-  mihaeldatoman            convidado em   7 · aprovou   0 · pediu mudanças  0 · comentou  0
+  ingrydaraujob            convidado em   8 · aprovou   0 · pediu mudanças  0 · comentou  0
+  joaopfranca04            convidado em   8 · aprovou   0 · pediu mudanças  0 · comentou  0
+  mihaeldatoman            convidado em   8 · aprovou   0 · pediu mudanças  0 · comentou  0
   ThiagojFalcao            convidado em   2 · aprovou   0 · pediu mudanças  0 · comentou  0
 
-Resultado: 7 PRs incorporados, 0 com aprovação registrada de um colega, 7 sem revisão registrada.
+Resultado: 8 PRs incorporados, 0 com aprovação registrada de um colega, 8 sem revisão registrada.
