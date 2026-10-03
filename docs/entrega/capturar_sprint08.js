@@ -280,6 +280,9 @@ async function fluxos({ gestor, analista, fotografar, fotografarElemento, gravar
       );
       await esperar(600);
     }
+    // A resposta nova recebe o foco, para o leitor de tela; na figura, o anel em
+    // volta do título pareceria um destaque.
+    await gestor.evaluate(() => document.activeElement && document.activeElement.blur());
     await fotografar(gestor, 'fluxo-8-assistente', { fullPage: true });
     const respostas = await gestor.$$eval('.resposta', (rs) => rs.map((r) => r.innerText.replace(/\s*\n\s*/g, ' · ')));
     respostas.forEach((r) => linhas.push(`  na tela     ${r}`));
