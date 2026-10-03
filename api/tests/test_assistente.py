@@ -368,7 +368,7 @@ def test_o_artigo_copiado_com_o_nome_nao_atrapalha(rede, analista, modelo):
     """Na sonda do H65, o modelo devolveu "A Esquina da Serra"."""
     modelo(ModeloFalso({"tipo": "segmento_do_parceiro", "parceiro": "A Esquina da Serra"}))
     texto = _respondida(_perguntar(analista, "A Esquina da Serra está em risco?"))
-    assert texto.startswith("Em 29/06/2026 a 05/07/2026, Esquina da Serra está no segmento Top 15.")
+    assert texto.startswith("Em 29/06/2026 a 05/07/2026, Esquina da Serra está no segmento Top.")
 
 
 def test_o_parceiro_que_se_chama_com_o_artigo_e_achado_pelo_nome(base, analista, modelo):
@@ -693,7 +693,7 @@ def test_a_distribuicao_dos_segmentos(rede, analista, modelo):
     assert texto == (
         "Os parceiros por segmento em 29/06/2026 a 05/07/2026, num total de 4:\n"
         "- Em risco: 2\n"
-        "- Top 15: 1\n"
+        "- Top: 1\n"
         "- Estável: 1"
     )
 
@@ -800,7 +800,7 @@ def test_o_modelo_nao_ve_a_fonte(rede, analista, modelo):
 
 # ======================================================== a redação (H67)
 def test_o_modelo_redige_e_a_guarda_aprova(rede, analista, modelo):
-    texto = "Não: em 29/06/2026 a 05/07/2026, a Esquina da Serra está no segmento Top 15."
+    texto = "Não: em 29/06/2026 a 05/07/2026, a Esquina da Serra está no segmento Top."
     modelo(
         ModeloFalso(
             {"tipo": "segmento_do_parceiro", "parceiro": "Esquina da Serra"},

@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 1.3 — 02/10/2026 · a coluna Perfis conferida contra as rotas, na H98 (1.2 — 02/10/2026, o módulo 8; 1.1 — 01/10/2026, o módulo 7; 1.0 — 03/09/2026)
+**Versão:** 1.4 — 02/10/2026 · a revisão das regras de negócio, na H99 (1.3 — 02/10/2026, a coluna Perfis conferida contra as rotas; 1.2 — 02/10/2026, o módulo 8; 1.1 — 01/10/2026, o módulo 7; 1.0 — 03/09/2026)
 
 ---
 
@@ -259,15 +259,33 @@ decide:
 | Ordem | Segmento | Critério |
 |---|---|---|
 | 1 | **Prospecção** | Marcado manualmente; ainda não converteu |
-| 2 | **Recém-chegado** | Possui menos períodos de histórico que o limiar configurado |
-| 3 | **Em Risco** | Queda de faturamento em 2 ou mais períodos consecutivos |
+| 2 | **Recém-chegado** | Possui menos períodos de histórico que o limiar de recém-chegado |
+| 3 | **Em Risco** | Queda de faturamento em tantos períodos consecutivos quanto o limiar de tendência, ou mais |
 | 4 | **Top** | Está entre os N maiores por faturamento no período mais recente |
-| 5 | **Em Ascensão** | Crescimento em 2 ou mais períodos consecutivos, fora do Top N |
+| 5 | **Em Ascensão** | Crescimento em tantos períodos consecutivos quanto o limiar de tendência, ou mais, fora do Top N |
 | 6 | **Estável** | Nenhum critério anterior se aplica |
 
 **Em Risco vence Top deliberadamente.** É o que permite ao painel responder à pergunta *quem está prestes a
 sair do Top N?* Um parceiro entre os maiores, mas em queda consecutiva, precisa aparecer como risco, não
 diluído entre os campeões.
+
+**Os três limiares, e o valor de fábrica de cada um.** O Administrador os muda sem alteração de código
+(RF21), e a mudança reclassifica o período mais recente.
+
+| Limiar | De fábrica | De onde vem o valor |
+|---|--:|---|
+| Tamanho do Top (N) | **15** | O problema que o produto ataca, em `docs/01`: a atenção concentrada no Top 15 |
+| Períodos de tendência | **2** | Duas quedas seguidas já são padrão, e não oscilação; uma só não classifica ninguém |
+| Períodos de recém-chegado | **3** | A premissa de `docs/01`, seção 6: com menos de 3 períodos de histórico, tendência não faz sentido |
+
+O limiar de tendência é **um só**, para a queda e para a alta: com dois números, daria para exigir três
+quedas para o risco e uma alta para a ascensão, e o mesmo parceiro oscilando mudaria de segmento a cada
+semana. O limiar de recém-chegado não estava escrito aqui até 02/10/2026 — a regra dizia só "o limiar
+configurado", e o valor estava no código (issue #59).
+
+**O nome do segmento é "Top", sem o número.** O número é o do limiar em vigor, e aparece onde importa: na
+mobilidade do painel, na ajuda e na configuração. Até a Sprint 08 o rótulo era "Top 15", fixo, e continuava
+dizendo 15 com o limiar em outro valor (issue #229).
 
 ### RN02 — Mobilidade do Top N lê o ranking, não o segmento
 
@@ -338,8 +356,8 @@ citado na redação (RF43, RNF16). O modelo redige; ele não conta, não soma e 
 ### RN09 — Queda prevista é entrar em risco, e o modelo exige histórico
 
 A "probabilidade de queda" do RF28 e da H43 é a probabilidade de o parceiro estar **Em Risco no período
-seguinte**, pelo critério da RN01: a sequência de quedas consecutivas chegar ao limiar configurado (hoje, 2
-períodos). Para quem já está em risco, é a probabilidade de continuar. Regra decidida na issue #85.
+seguinte**, pelo critério da RN01: a sequência de quedas consecutivas chegar ao limiar de tendência (de
+fábrica, 2 períodos). Para quem já está em risco, é a probabilidade de continuar. Regra decidida na issue #85.
 
 1. **O rótulo do treino sai da mesma regra que classifica o segmento.** Modelo e segmentação nunca discordam
    sobre o que é queda, e mudar o limiar na configuração (RF21) muda os dois juntos.
@@ -392,3 +410,39 @@ Com as cotas em contagem, a viabilidade é **decidida com exatidão antes da bus
 ação custa menos que a mais barata do catálogo, e todo parceiro pode recebê-la; então os mínimos cabem na
 campanha se, e somente se, o menor conjunto que os cumpre couber no máximo de ações e no orçamento pagando a
 ação mais barata. A recusa nomeia a restrição e diz quanto falta. Regra decidida na issue #117.
+
+### Onde cada regra está, e como é conferida
+
+Revisão de 02/10/2026 (H99). Cada regra tem um lugar no código, testes automatizados que a cobram a cada
+Pull Request, e um cenário no roteiro `scripts/revisar_regras.py`, que monta uma rede pequena desenhada para
+cair em cada ramo, passa-a pela aplicação e compara o que voltou com o que a regra manda. O resultado, regra
+a regra, está em [`medicoes/regras.md`](medicoes/regras.md).
+
+| Regra | Onde está no código | Teste que a cobra |
+|---|---|---|
+| RN01 | `api/app/servico_segmentacao.py`, `classificar` e `Limiares` | `api/tests/test_segmentacao.py` — os seis ramos e a ordem da precedência |
+| RN02 | `api/app/ranking.py` e `api/app/rotas/painel.py`, `mobilidade` | `api/tests/test_painel.py::test_top_em_queda_nao_aparece_como_saida` |
+| RN03 | `api/app/esquemas.py`, `PedidoImportacao`, e `api/app/erros.py` | `api/tests/test_importacao.py::test_sem_periodo_a_importacao_e_recusada` |
+| RN04 | `api/app/calculos.py`, `ticket_medio` | `api/tests/test_importacao.py::test_ticket_medio_nao_e_gravado` |
+| RN05 | `api/app/sugestao_categoria.py` e `api/app/servico_importacao.py` | `api/tests/test_sugestao_categoria.py` |
+| RN06 | `api/app/rotas/mensagens.py` e `api/app/servico_aprovacao.py` | `api/tests/test_aprovacao.py` — o Analista não decide, e o banco recusa decisão sem autor |
+| RN07 | `nucleo/gih_nucleo/viabilidade.py` e `api/app/servico_otimizacao.py` | `nucleo/tests/test_viabilidade.py` e `api/tests/test_campanha.py::test_campanha_inviavel_diz_quanto_falta` |
+| RN08 | `api/app/guarda_numerica.py` | `api/tests/test_guarda_numerica.py` e `api/tests/test_assistente.py::test_numero_inventado_nunca_chega_a_tela` |
+| RN09 | `api/app/servico_previsao.py` e `modelo/gih_modelo/variaveis.py` | `api/tests/test_previsao.py` e `modelo/tests/test_variaveis.py::test_os_minimos_sao_os_da_rn09` |
+| RN10 | `api/app/servico_otimizacao.py`, `ganho_em_centavos` | `api/tests/test_campanha.py::test_o_ganho_de_cada_item_e_o_da_rn10` |
+| RN11 | `api/app/servico_otimizacao.py` | `api/tests/test_campanha.py::test_quem_fica_fora_e_contado_por_motivo` e `::test_a_cauda_longa_vem_do_ranking_e_nao_do_segmento` |
+
+**O que a revisão achou e ajustou:**
+
+- **RN01 não dizia o limiar de recém-chegado** (issue #59). O valor, 3, estava só no código. Passou a estar
+  na regra, com a origem dele, junto dos outros dois.
+- **RN01 e RN09 escreviam "2 períodos" como número fixo**, e o limiar é configurável desde a H34. As duas
+  passaram a dizer "o limiar de tendência", com o 2 como valor de fábrica.
+- **O rótulo "Top 15" era fixo** (issue #229), na interface, nos arquivos exportados e nas respostas do
+  assistente. Com o limiar em 10, o sistema classificava dez parceiros e chamava o segmento de "Top 15". O
+  rótulo passou a ser "Top".
+- **O `CLAUDE.md` listava cinco segmentos**, sem a Prospecção, onde a RN01 tem seis.
+
+Nenhuma regra foi achada com o comportamento errado: as 79 conferências do roteiro passaram. E o roteiro
+acusa regra quebrada — com a precedência de Em Risco e Top invertida de propósito no código, quatro
+conferências da RN01 e da RN02 falharam.

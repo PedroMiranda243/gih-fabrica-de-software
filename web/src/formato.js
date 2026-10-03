@@ -124,7 +124,9 @@ export function comoPeriodo(periodo) {
  * vezes em cor é ruído puro — e cor como único canal reprovaria a RNF22.
  */
 export const ROTULO_SEGMENTO = {
-  TOP: "Top 15",
+  /* Sem o número (#229): o tamanho do Top é configurável (RF21), e "Top 15" continuava
+     dizendo 15 com o limiar em 10. Onde o número importa, ele vem da API. */
+  TOP: "Top",
   EM_ASCENSAO: "Em ascensão",
   EM_RISCO: "Em risco",
   RECEM_CHEGADO: "Recém-chegado",

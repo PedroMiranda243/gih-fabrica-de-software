@@ -172,7 +172,7 @@ describe("Painel", () => {
     const linhas = within(distribuicao).getAllByRole("listitem");
     expect(linhas).toHaveLength(2);
     /* O número ao lado é o que cumpre a RNF22: nada aqui depende só de cor. */
-    expect(within(linhas[0]).getByText("Top 15")).toBeVisible();
+    expect(within(linhas[0]).getByText("Top")).toBeVisible();
     expect(within(linhas[0]).getByText(/^1$/)).toBeVisible();
   });
 
@@ -290,7 +290,7 @@ describe("do painel para os outros módulos (H81)", () => {
       "href",
       "/parceiros?segmento=EM_RISCO",
     );
-    expect(within(distribuicao).getByRole("link", { name: /Top 15/ })).toHaveAttribute(
+    expect(within(distribuicao).getByRole("link", { name: /^Top/ })).toHaveAttribute(
       "href",
       "/parceiros?segmento=TOP",
     );
@@ -417,7 +417,7 @@ describe("o recorte do painel (H82)", () => {
     const link = await screen.findByRole("link", { name: "Ver quem está em risco" });
     expect(link).toHaveAttribute("href", "/parceiros?segmento=EM_RISCO&categoria_id=4");
     const distribuicao = screen.getByRole("region", { name: "Distribuição por segmento" });
-    expect(within(distribuicao).getByRole("link", { name: /Top 15/ })).toHaveAttribute(
+    expect(within(distribuicao).getByRole("link", { name: /^Top/ })).toHaveAttribute(
       "href",
       "/parceiros?segmento=TOP&categoria_id=4",
     );
@@ -437,7 +437,7 @@ describe("o recorte do painel (H82)", () => {
     renderizar({ endereco: "/?periodo=1" });
 
     const distribuicao = await screen.findByRole("region", { name: "Distribuição por segmento" });
-    expect(within(distribuicao).getByText("Top 15")).toBeVisible();
+    expect(within(distribuicao).getByText("Top")).toBeVisible();
     // O único link que sobra no bloco é o da ajuda, que não depende do período.
     expect(within(distribuicao).getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual([
       "/ajuda#segmentos",
