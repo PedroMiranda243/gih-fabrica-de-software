@@ -840,7 +840,7 @@ function montar() {
   ], { zebra: true, boldCol: 0, size: 16 }));
   c.push(espaco(80));
   c.push(rich([
-    { t: 'Resultado da transcrição de validações, com as seções das Sprints 03 a 07: ', b: true, s: 19 },
+    { t: 'Resultado da transcrição de validações, com as seções das Sprints 03 a 07 e a desta: ', b: true, s: 19 },
     { t: semRotulo(validacoes), s: 19 },
   ]));
 
