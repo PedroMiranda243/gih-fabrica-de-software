@@ -1,0 +1,109 @@
+[
+  {
+    "numero": 228,
+    "titulo": "Minha conta, a redefinição de senha e a conta de perfil Parceiro pela tela (H92, H93, H101)",
+    "mesclado_em": "2026-10-02T04:25-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 230,
+    "titulo": "A página \"Sem acesso\", o teclado, a sessão terminada e o aviso de alterações não salvas (H94, H96, H97)",
+    "mesclado_em": "2026-10-02T19:33-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 231,
+    "titulo": "A tela de Ajuda, com o que o perfil faz, os segmentos, a estimativa e o ganho esperado (H95)",
+    "mesclado_em": "2026-10-02T19:44-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 232,
+    "titulo": "A matriz de rastreabilidade dos requisitos, conferida por teste (H98)",
+    "mesclado_em": "2026-10-02T20:23-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 233,
+    "titulo": "A transcrição do controle de permissões, com os quatro perfis contra a aplicação no ar (H100)",
+    "mesclado_em": "2026-10-02T20:34-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 234,
+    "titulo": "A revisão das regras de negócio RN01 a RN11, a RN01 com os limiares de fábrica e o rótulo \"Top\" sem número (H99)",
+    "mesclado_em": "2026-10-02T21:23-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 236,
+    "titulo": "O assistente lê pelo código a semana dita pelo nome — \"na última semana\" é a mais recente, mesmo que o modelo traga outra (#235)",
+    "mesclado_em": "2026-10-02T21:49-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  }
+]

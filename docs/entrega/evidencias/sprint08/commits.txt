@@ -1,0 +1,159 @@
+Commits do repositório
+https://github.com/PedroMiranda243/gih-fabrica-de-software
+Referência origin/main em b96b4ec · de 2026-09-03 a 2026-10-02
+Gerado a partir do git log; nenhum número foi escrito à mão.
+
+Totais
+------
+  commits de trabalho              420
+  Pull Requests incorporados        98
+  commits direto na main            22   (até 15/09, antes de a main ser protegida)
+
+Por tipo (Conventional Commits)
+-------------------------------
+  docs      141   34%
+  feat      113   27%
+  test       85   20%
+  fix        33    8%
+  ci         19    5%
+  chore       9    2%
+  build       7    2%
+  refactor    7    2%
+  spike       3    1%
+  perf        2    0%
+  fora        1  (fora da convenção:)
+             2026-09-15  Revert "docs: corta a central de comunicação e torna o assistente…
+
+Por semana (segunda a domingo)
+------------------------------
+  31/08 a 06/09    7  █
+  07/09 a 13/09    0  
+  14/09 a 20/09   72  ██████████████
+  21/09 a 27/09  211  ████████████████████████████████████████
+  28/09 a 04/10  130  █████████████████████████
+
+Autoria e coautoria
+-------------------
+  Cada commit tem um autor e, por área, o colega responsável como coautor
+  (trailer Co-authored-by, que o GitHub credita ao coautor).
+  autor     Pedro Miranda                             420
+  coautor   João Pedro Nunes de França                135
+  coautor   Marcio Maycom                             135
+  coautor   Ingryd Vitoria de Araújo Barbosa           55
+  coautor   Thiago José Falcão de Freitas              22
+  sem coautor                                         84
+
+Pull Requests incorporados, por janela de entrega
+-------------------------------------------------
+
+  Sprint 01 — até 05/09: 0
+
+  Sprints 02 e 03 — 06/09 a 19/09: 11
+    #26  16/09  feat: autentica por sessão com estado no servidor, perfis e auditoria
+    #25  16/09  spike: valida o toolchain nativo e mede OpenMP contra CUDA
+    #31  16/09  feat: autorização verificada em cada endpoint e ingestão por texto
+    #32  17/09  docs: entrega da Sprint 02 acadêmica — arquitetura, classes, MER e modelo…
+    #36  17/09  feat: CRUD de parceiros, verificação de ponta a ponta e entrega da Sprint 03
+    #45  17/09  feat: ingestão completa — arquivo CSV, substituição de período e histórico…
+    #46  17/09  feat: painel — indicadores consolidados, ranking com variação e séries…
+    #47  17/09  feat: busca de parceiro sem sensibilidade a acentuação, com índice de trigrama
+    #49  18/09  feat: interface web — login, painel, importação e parceiros
+    #50  18/09  fix: verificação de ponta a ponta não deixa resíduo no banco da equipe
+    #51  19/09  docs: entrega da Sprint 03 atualizada — interface, números remedidos e…
+
+  Sprint 04 — 20/09 a 21/09, data do PDF: 18
+    #61  20/09  Segmenta cada parceiro por regra determinística (H33)
+    #52  20/09  Mede o tempo de resposta do painel com base grande (H40)
+    #62  20/09  Mobilidade do Top N e o painel com paridade com o protótipo (H35)
+    #63  20/09  Limiares da segmentação configuráveis sem alterar código (H34)
+    #64  20/09  Filtrar, ordenar e exportar a lista de parceiros (H36, H38)
+    #65  20/09  Verificação de ponta a ponta do núcleo de regras, e piso de cobertura (H69)
+    #66  21/09  Sazonalidade do gerador sem viés de direção nem de calendário (#60)
+    #67  21/09  As recusas do cadastro de parceiro dizem o que aconteceu (UC04)
+    #69  21/09  Tela de cadastro de parceiro — reaberta: a #68 não chegou à main
+    #70  21/09  Os contêineres voltam sozinhos quando o Docker volta
+    #71  21/09  Modelagem atualizada e mapa de navegação entre as telas
+    #72  21/09  A recusa do período já importado fala com quem usa a tela
+    #73  21/09  As evidências da Sprint 03 ganham pasta própria, e a Parte III fica como foi…
+    #74  21/09  Geradores das evidências da Sprint 04 — persistência, validações, capturas e…
+    #75  21/09  A importação concluída leva ao painel
+    #76  21/09  Nenhuma mensagem de validação sai em inglês, e o 500 ganha teste
+    #77  21/09  Entrega da Sprint 04 — Parte IV, evidências e medição do painel
+    #78  21/09  PDF da Sprint 04, com a Parte III idêntica à entregue
+
+  Sprint 05 — 22/09 a 25/09, até o PR do PDF (#112): 14
+    #79  24/09  A sessão diz as telas do perfil; histórico para o Administrador; recusas de…
+    #80  24/09  O menu segue o perfil, e o histórico de importações na tela
+    #81  24/09  A tela dos limiares da segmentação (RF21)
+    #82  24/09  A tela de usuários (UC02)
+    #83  24/09  O mapa de navegação com as telas de administração; a Parte IV guarda o mapa…
+    #84  24/09  A categoria sugerida pelo nome do parceiro (H27, RF15)
+    #93  24/09  docs: RN09 e ADR-010 — queda prevista, histórico mínimo e onde o treino roda
+    #94  24/09  feat(modelo): o pacote do modelo preditivo — variáveis, referências, rede e…
+    #95  24/09  feat: o módulo de previsão pela API — treino, versão em uso e previsão no…
+    #96  24/09  feat(web): a tela do modelo e a previsão no cadastro do parceiro
+    #107 25/09  Registros de bugs e de testes gerados de fonte; docs/08 e docs/05 corrigidos
+    #109 25/09  Geradores das evidências da Sprint 05 — integração com o banco…
+    #111 25/09  Entrega da Sprint 05 — Parte V, evidências e a Parte II como foi entregue
+    #112 25/09  PDF da Sprint 05, com as Partes II a IV idênticas às entregues
+
+  Sprint 06 — 25/09, depois do PDF, a 01/10, até o PR do PDF (#195): 40
+    #114 25/09  A conclusão do treino é gravada quando ele termina
+    #116 25/09  O reset recria o administrador e reinicia a API
+    #124 25/09  RN10 e RN11, a formalização do otimizador e a ADR-011
+    #125 25/09  O otimizador serial em Python e a recusa de campanha inviável
+    #126 25/09  A campanha na API: catálogo, cálculo do plano e recusa com o que falta
+    #127 25/09  A medição do otimizador serial: contra o guloso, o teto e a enumeração
+    #128 25/09  A tela de campanha: restrições, plano recomendado e catálogo
+    #129 25/09  A campanha nos documentos vivos: dados, classes, casos de uso e telas
+    #130 26/09  Spike: o núcleo C++/CUDA dentro da imagem da API, com a GPU (ADR-012)
+    #137 26/09  H53a: o genético em C++, idêntico ao Python, chamado por processo
+    #138 26/09  H53b: o genético com OpenMP, com o mesmo plano da versão serial
+    #139 26/09  H55: a campanha escolhe o modo de execução, e o automático é o mais rápido
+    #140 26/09  H58: o histórico de execuções do otimizador
+    #147 26/09  H54a: as estruturas de dados na GPU e a transferência, conferida
+    #148 26/09  H56: sem GPU o sistema funciona igual, e diz por quê
+    #149 26/09  H54b: o kernel CUDA que avalia a população, igual à CPU
+    #150 26/09  H54c: o genético inteiro na GPU, com o mesmo plano
+    #151 27/09  H57: o benchmark na tela, com as quatro colunas
+    #152 27/09  H70: testes de segurança derivados da aplicação, e dois vetores fechados
+    #153 27/09  H59: dois planos lado a lado, com o que mudou
+    #169 27/09  ADR-013: o modelo de linguagem local, o redator e a guarda numérica
+    #170 27/09  H60 (API): gerar mensagens, com o modelo fixo quando o modelo falha
+    #171 27/09  H60 (tela): gerar mensagens, com a prévia e as mensagens chegando uma a uma
+    #172 27/09  H61–H63 (API): a fila de aprovação, e a decisão só do gestor
+    #173 27/09  H61–H63 (tela): a fila de aprovação, com a decisão do gestor
+    #174 27/09  H64: o histórico das mensagens decididas, e a exportação das aprovadas
+    #175 27/09  H39: o portal do Parceiro, só com o próprio histórico
+    #176 27/09  H65: o assistente com o catálogo fechado de perguntas
+    #177 28/09  H66, H67, H68: a fonte, a guarda e a abstenção do assistente
+    #178 28/09  H65 a H68: a tela do assistente
+    #179 28/09  H76: a acessibilidade e a responsividade medidas
+    #180 28/09  H72: o README que um avaliador segue sozinho
+    #181 28/09  H73: a documentação técnica final consolidada, e o cronograma real
+    #186 30/09  H79: a navegação por módulo, o título de cada aba e a página "não encontrada"
+    #187 30/09  H80: o risco de queda na lista de parceiros, ordenável e no CSV
+    #188 30/09  H81: os módulos ligados pelos próprios dados — do painel ao cadastro, do…
+    #191 30/09  Evidências da Sprint 06: o terceiro módulo, a integração e a navegação, e…
+    #193 01/10  A 768 px, a página não rola mais na horizontal (#192)
+    #194 01/10  Parte VI do documento: a Sprint 06 — aprimoramento do sistema
+    #195 01/10  PDF da Sprint 06, com as Partes I a V idênticas às entregues
+
+  Sprint 07 — 01/10, depois do PDF, a 02/10, até o PR do PDF (#215): 8
+    #207 01/10  A trilha de auditoria na tela e o histórico do cadastro do parceiro (H89, H90)
+    #209 01/10  O painel com período e categoria, e a previsão e a campanha dentro dele…
+    #210 01/10  Os relatórios de desempenho, de risco, da campanha e das operações na API…
+    #211 01/10  Os relatórios na tela, com o CSV e a impressão em PDF (H84 a H88)
+    #212 01/10  Filtros no histórico de execuções, busca nos usuários e o plano em CSV e em…
+    #213 01/10  Evidências da Sprint 07: o painel, os relatórios, os filtros, a exportação e…
+    #214 01/10  As Partes V e VI leem a medição como foi entregue, e não a viva (#208)
+    #215 02/10  Parte VII do documento e o PDF da Sprint 07 — sistema quase completo
+
+  Sprint 08 — 02/10, depois do PDF, a 31/10: 7
+    #228 02/10  Minha conta, a redefinição de senha e a conta de perfil Parceiro pela tela…
+    #230 02/10  A página "Sem acesso", o teclado, a sessão terminada e o aviso de alterações…
+    #231 02/10  A tela de Ajuda, com o que o perfil faz, os segmentos, a estimativa e o…
+    #232 02/10  A matriz de rastreabilidade dos requisitos, conferida por teste (H98)
+    #233 02/10  A transcrição do controle de permissões, com os quatro perfis contra a…
+    #234 02/10  A revisão das regras de negócio RN01 a RN11, a RN01 com os limiares de…
+    #236 02/10  O assistente lê pelo código a semana dita pelo nome — "na última semana" é a…

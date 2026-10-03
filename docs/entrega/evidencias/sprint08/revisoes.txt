@@ -1,0 +1,52 @@
+Registro das revisões dos Pull Requests — gerado do GitHub
+https://github.com/PedroMiranda243/gih-fabrica-de-software
+PRs incorporados depois do #215; gerado em 02/10/2026 21:50 por scripts/registrar_revisoes.py
+
+#228  02/10  Minha conta, a redefinição de senha e a conta de perfil Parceiro pela tela…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#230  02/10  A página "Sem acesso", o teclado, a sessão terminada e o aviso de alterações…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#231  02/10  A tela de Ajuda, com o que o perfil faz, os segmentos, a estimativa e o ganho…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#232  02/10  A matriz de rastreabilidade dos requisitos, conferida por teste (H98)
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#233  02/10  A transcrição do controle de permissões, com os quatro perfis contra a…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#234  02/10  A revisão das regras de negócio RN01 a RN11, a RN01 com os limiares de fábrica…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#236  02/10  O assistente lê pelo código a semana dita pelo nome — "na última semana" é a…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+Resumo
+  PRs incorporados                                  7
+  com aprovação de um colega                        0
+  com revisão de um colega, sem aprovação           0
+  sem revisão registrada no GitHub                  7
+
+Por colega convidado
+  ingrydaraujob            convidado em   7 · aprovou   0 · pediu mudanças  0 · comentou  0
+  joaopfranca04            convidado em   7 · aprovou   0 · pediu mudanças  0 · comentou  0
+  mihaeldatoman            convidado em   7 · aprovou   0 · pediu mudanças  0 · comentou  0
+  ThiagojFalcao            convidado em   2 · aprovou   0 · pediu mudanças  0 · comentou  0
+
+Resultado: 7 PRs incorporados, 0 com aprovação registrada de um colega, 7 sem revisão registrada.

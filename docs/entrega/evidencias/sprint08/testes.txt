@@ -1,0 +1,171 @@
+Registro de testes — as quatro suítes, rodadas de verdade
+Gerado em 02/10/2026 21:41 por scripts/registrar_testes.py, no commit ca87798
+O otimizador rodou na imagem do núcleo, compilado com CUDA. GPU: NVIDIA GeForce RTX 4060 (capacidade 8.9, 8187 MB)
+
+Suítes
+  API (pytest, Postgres)        1550 testes  1545 passaram   0 falharam   5 pulados   526 s
+  Modelo preditivo (pytest)       31 testes    31 passaram   0 falharam   0 pulados     5 s
+  Otimizador (pytest, com GPU)   277 testes   277 passaram   0 falharam   0 pulados   106 s
+  Interface (Vitest)             405 testes   405 passaram   0 falharam   0 pulados    18 s
+
+Os quatro tipos que o enunciado pede — exemplos, com o resultado desta execução
+
+  Fluxos principais
+    ok    o administrador redefine a senha, e a pessoa entra com a nova (RF54)
+          api · test_usuarios_senha_e_vinculo.py · test_o_administrador_redefine_a_senha_e_a_pessoa_entra_com_a_nova
+    ok    a conta de perfil Parceiro nasce com o parceiro dela, e a trilha diz qual (RF56)
+          api · test_usuarios_senha_e_vinculo.py · test_cria_a_conta_parceiro_e_a_trilha_diz_de_quem
+    ok    mudar um limiar na configuração muda o que a ajuda diz (RF55)
+          api · test_ajuda.py · test_mudar_o_limiar_na_configuracao_muda_o_que_a_ajuda_diz
+    ok    a troca da própria senha, pela tela (RF07, H92)
+          interface · MinhaConta.test.jsx · trocar manda a atual e a nova, esvazia os campos e diz que as outras sessões caíram
+    ok    a ajuda lista os segmentos na ordem da regra, com os limiares em vigor (H95)
+          interface · Ajuda.test.jsx · os segmentos vêm na ordem que a API mandou, com os limiares em vigor no critério
+    ok    o aviso de alterações não salvas deixa sair, para onde a pessoa ia (H97)
+          interface · AlteracoesNaoSalvas.test.jsx · 'Sair sem salvar' segue o link que foi clicado, com o que ele carregava
+
+  Permissões
+    ok    toda rota da aplicação tem a permissão declarada na matriz (RNF14)
+          api · test_autorizacao.py · test_toda_rota_tem_permissao_declarada
+    ok    a sessão dá ao Gestor a capacidade de decidir as mensagens, e ao Analista não (RN06)
+          api · test_aprovacao.py · test_o_gestor_ganha_a_capacidade_de_decidir_e_o_analista_nao
+    ok    a busca de parceiros do administrador devolve só o nome e a situação (RF56)
+          api · test_usuarios_senha_e_vinculo.py · test_a_busca_devolve_so_o_nome_e_a_situacao
+    ok    o Parceiro não recebe as regras da rede, e a tentativa fica na trilha (RF26)
+          api · test_ajuda.py · test_o_parceiro_nao_recebe_as_regras_da_rede_e_a_tela_dele_nao_as_pede
+    ok    toda rota da aplicação está na matriz de rastreabilidade (H98)
+          api · test_rastreabilidade.py · test_toda_rota_da_aplicacao_esta_no_documento
+    ok    a página "Sem acesso", sem nenhuma chamada à API (H94)
+          interface · App.guarda.test.jsx · a tela que o perfil não tem diz isso, com o perfil e a volta, e não pede nada à API
+
+  Operações com o banco
+    ok    a redefinição encerra todas as sessões da conta
+          api · test_usuarios_senha_e_vinculo.py · test_a_redefinicao_derruba_todas_as_sessoes_da_conta
+    ok    a redefinição entra na trilha de auditoria, sem a senha (RF06)
+          api · test_usuarios_senha_e_vinculo.py · test_a_redefinicao_entra_na_trilha_sem_a_senha
+    ok    trocar o parceiro da conta registra o de antes e o de depois
+          api · test_usuarios_senha_e_vinculo.py · test_trocar_o_vinculo_registra_o_parceiro_de_antes_e_o_de_depois
+    ok    a ajuda lê do banco a versão do modelo em uso
+          api · test_ajuda.py · test_com_treino_concluido_a_ajuda_diz_a_versao_em_uso
+
+  Validações
+    ok    a senha fraca na redefinição é erro do campo
+          api · test_usuarios_senha_e_vinculo.py · test_senha_fraca_na_redefinicao_e_erro_do_campo
+    ok    a busca de parceiros do administrador para num teto: não devolve a rede inteira
+          api · test_usuarios_senha_e_vinculo.py · test_a_busca_para_num_teto
+    ok    a ordem dos segmentos que a ajuda mostra é a ordem em que a regra decide (RN01)
+          api · test_segmentacao.py · test_a_ordem_do_enum_e_a_ordem_em_que_a_regra_decide
+    ok    nenhum rótulo de segmento traz o número do limiar, que é configurável (#229)
+          api · test_segmentacao.py · test_nenhum_rotulo_de_segmento_traz_o_numero_do_limiar
+    ok    a senha nova digitada de dois jeitos não é enviada
+          interface · MinhaConta.test.jsx · as duas digitações diferentes não chegam ao servidor
+
+  Situações de erro
+    ok    o administrador não redefine a própria senha: tem a Minha conta, que pede a atual
+          api · test_usuarios_senha_e_vinculo.py · test_a_propria_senha_nao_se_redefine_por_aqui
+    ok    vincular a um parceiro que não existe é erro do campo, e não erro 500 (#227)
+          api · test_usuarios_senha_e_vinculo.py · test_editar_para_parceiro_inexistente_e_erro_do_campo_e_nao_erro_500
+    ok    sem modelo treinado, a ajuda diz que não há modelo e quanto histórico falta
+          api · test_ajuda.py · test_sem_treino_concluido_a_ajuda_diz_que_nao_ha_modelo_e_quanto_falta_de_historico
+    ok    a ajuda sem as regras diz o que houve, e mantém o que o perfil faz
+          interface · Ajuda.test.jsx · se as regras não chegam, a tela diz isso e mantém o que o perfil pode fazer
+    ok    a sessão que o servidor encerra leva ao login, com o aviso e a volta (H96)
+          interface · App.teclado.test.jsx · leva ao login dizendo que a sessão terminou, e depois de entrar volta para onde a pessoa estava
+    ok    a senha atual errada aparece embaixo do campo, com o foco nele
+          interface · MinhaConta.test.jsx · a senha atual que não confere aparece embaixo dela, com o foco nela
+
+Por arquivo
+
+  API (pytest, Postgres)
+    test_ajuda.py                                  10
+    test_aprovacao.py                              30
+    test_assistente.py                            164
+    test_auditoria.py                              36
+    test_autenticacao.py                           16
+    test_autorizacao.py                           402
+    test_benchmark.py                              23
+    test_campanha.py                               65
+    test_cli.py                                    27
+    test_configuracao.py                           14
+    test_erros.py                                  16
+    test_guarda_numerica.py                        99
+    test_health.py                                  3
+    test_importacao.py                             39
+    test_leitor_relatorio.py                       27
+    test_limpeza_da_verificacao.py                 15
+    test_mensagens.py                              60
+    test_meu_desempenho.py                         15
+    test_painel.py                                 58
+    test_painel_decisao.py                         17
+    test_parceiros.py                              49
+    test_parceiros_campanha.py                      7
+    test_parceiros_historico.py                     6
+    test_parceiros_recorte.py                      25
+    test_parceiros_risco.py                        11
+    test_previsao.py                               25
+    test_rastreabilidade.py                        67
+    test_redator.py                                26
+    test_relatorios.py                             64
+    test_segmentacao.py                            26
+    test_seguranca.py                              26
+    test_senha.py                                  13
+    test_sugestao_categoria.py                     21
+    test_usuarios.py                               26
+    test_usuarios_senha_e_vinculo.py               22
+
+  Modelo preditivo (pytest)
+    test_baselines.py                               7
+    test_treino.py                                 10
+    test_variaveis.py                              14
+
+  Otimizador (pytest, com GPU)
+    test_aleatorio.py                               5
+    test_cenario.py                                18
+    test_gpu.py                                    72
+    test_nativo.py                                110
+    test_otimizador.py                             48
+    test_problema.py                               15
+    test_viabilidade.py                             9
+
+  Interface (Vitest)
+    Ajuda.test.jsx                                 14
+    AlteracoesNaoSalvas.test.jsx                    8
+    App.acessibilidade.test.jsx                     2
+    App.guarda.test.jsx                            23
+    App.teclado.test.jsx                            8
+    Aprovacao.test.jsx                             16
+    Assistente.test.jsx                            12
+    Auditoria.test.jsx                              9
+    Benchmark.test.jsx                              9
+    Campanha.test.jsx                              11
+    Casca.test.jsx                                 20
+    Comparacao.test.jsx                             7
+    ComparacaoReferencias.test.jsx                  2
+    Configuracao.test.jsx                           6
+    EntradaDeSenha.test.jsx                         3
+    Execucoes.test.jsx                             13
+    Importacao.test.jsx                             5
+    Login.test.jsx                                  3
+    Mensagens.test.jsx                             14
+    MeuDesempenho.test.jsx                          5
+    MinhaConta.test.jsx                             6
+    Modelo.test.jsx                                 8
+    NaoEncontrada.test.jsx                          4
+    Painel.test.jsx                                32
+    Parceiro.test.jsx                              25
+    Parceiros.test.jsx                             18
+    PlanoDeCampanha.test.jsx                        3
+    Relatorios.test.jsx                            32
+    SerieHistorica.test.jsx                         5
+    Usuario.test.jsx                               17
+    Usuarios.test.jsx                               6
+    acessibilidade.test.jsx                         2
+    contraste.test.js                               9
+    escalaLog.test.js                               7
+    escalaSerie.test.js                            19
+    formato.test.js                                11
+    impressao.test.js                               3
+    seguranca.test.jsx                              7
+    tokens.test.js                                  1
+
+Resultado: 2263 testes, 2258 passaram, 0 falharam, 5 pulados.
