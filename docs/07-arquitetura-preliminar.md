@@ -1041,6 +1041,20 @@ Uma sonda contra o `qwen2.5:7b`, na RTX 4060, mediu o que segue (issue #154).
   entrar em risco". É o limite de um assistente sem aprovação humana, e é por isso que ele responde só o
   catálogo.
 
+**Adendo (02/10/2026, #235) — a semana dita pelo nome, lida pelo código:**
+
+- **Nas evidências da Sprint 08, "na última semana" saiu como a semana anterior à mais recente**, em duas
+  perguntas: a da rede e a de um parceiro. O número era o da semana que a fonte citava, e nenhuma guarda
+  reprovou — a semana é que era outra. Na base de antes do reset, as mesmas perguntas tinham saído certas: o
+  erro não é sempre, o que o torna pior.
+- A instrução traz o exemplo com as datas da base, e o modelo às vezes troca as duas. **A semana dita pelo nome
+  passou a ser do código** (`resolucao.semana_dita`), mesmo quando o modelo traz outra data: "nesta semana",
+  "na última semana" e "semana mais recente" são o período mais recente; "na semana passada" e "penúltima
+  semana", o anterior. Com as duas expressões na pergunta, vale a mais recente, que é a perguntada.
+- **O que fica com o modelo:** "período anterior" e "semana anterior", que costumam ser a comparação ("em
+  relação ao período anterior"), e não a semana perguntada; a pergunta com mês, ano ou data — "a última semana
+  de agosto" é outra semana; e a previsão e o último plano, que não escolhem período.
+
 ---
 
 ## 6. Ambiente de desenvolvimento

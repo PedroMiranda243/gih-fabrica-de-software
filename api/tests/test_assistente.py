@@ -1004,6 +1004,46 @@ def test_o_codigo_le_o_mes_e_o_ano_da_pergunta(pergunta, futuro, intervalo):
     assert lido == esperado
 
 
+ULTIMA = {"inicio": "2026-06-29", "fim": "2026-07-05"}
+PASSADA = {"inicio": "2026-06-22", "fim": "2026-06-28"}
+
+
+@pytest.mark.parametrize(
+    ("pergunta", "do_modelo", "semana"),
+    [
+        ("Como foi a rede na última semana?", PASSADA, "29/06/2026 a 05/07/2026"),
+        ("Como foi a rede nesta semana?", PASSADA, "29/06/2026 a 05/07/2026"),
+        ("E na semana mais recente?", {}, "29/06/2026 a 05/07/2026"),
+        ("Como foi a rede na semana passada?", ULTIMA, "22/06/2026 a 28/06/2026"),
+        ("E na penúltima semana?", {}, "22/06/2026 a 28/06/2026"),
+        ("Como foi a rede nesta semana, em relação à semana passada?", PASSADA,
+         "29/06/2026 a 05/07/2026"),
+    ],
+)
+def test_a_semana_dita_pelo_nome_e_lida_pelo_codigo(
+    rede, analista, modelo, pergunta, do_modelo, semana
+):
+    """Na evidência da Sprint 08 (#235), "na última semana" saiu como a semana anterior:
+    o modelo troca as duas, e o código sabe qual é qual."""
+    modelo(ModeloFalso({"tipo": "resumo_do_periodo", **do_modelo}))
+    assert _respondida(_perguntar(analista, pergunta)).startswith(f"Em {semana}, a rede faturou")
+
+
+def test_a_semana_com_o_mes_fica_com_a_data_do_modelo(rede, analista, modelo):
+    """ "A última semana de junho" é outra semana: não é a mais recente da base."""
+    modelo(ModeloFalso({"tipo": "resumo_do_periodo", **PASSADA}))
+    texto = _respondida(_perguntar(analista, "Como foi a rede na última semana de junho?"))
+    assert texto.startswith("Em 22/06/2026 a 28/06/2026, a rede faturou")
+
+
+def test_a_semana_dita_pelo_nome_nao_mexe_na_previsao(rede, analista, modelo):
+    """A previsão não escolhe período: "nesta semana" não pode virar a pergunta pela
+    previsão de uma semana que já passou."""
+    modelo(ModeloFalso({"tipo": "previsao_do_parceiro", "parceiro": "Esquina da Serra"}))
+    texto = _respondida(_perguntar(analista, "A Esquina da Serra vai cair nesta semana?"))
+    assert "no período seguinte, de 06/07/2026 a 12/07/2026" in texto
+
+
 def test_o_ano_sem_dados_que_o_modelo_nao_leu_e_abstencao(rede, analista, modelo):
     """Na medição, "em 2019" foi respondido com a semana mais recente."""
     modelo(ModeloFalso({"tipo": "desempenho_do_parceiro", "parceiro": "Esquina da Serra"}))
