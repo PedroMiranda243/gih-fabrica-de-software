@@ -1,7 +1,7 @@
 # 07 — Arquitetura
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Versão:** 2.1 — 30/09/2026, o dado entre os módulos (2.0 — 28/09/2026, o sistema construído; 1.0 — 03/09/2026, a arquitetura preliminar da Sprint 1)
+**Versão:** 2.2 — 04/10/2026, o acesso remoto por rede privada, na ADR-014 (2.1 — 30/09/2026, o dado entre os módulos; 2.0 — 28/09/2026, o sistema construído; 1.0 — 03/09/2026, a arquitetura preliminar da Sprint 1)
 
 > **O sistema como está, e as decisões que o trouxeram até aqui.** Este documento começou como a arquitetura
 > preliminar da Sprint 1. Cada decisão tomada na construção entrou como uma ADR, na seção 5, com a data e o
@@ -1057,6 +1057,80 @@ Uma sonda contra o `qwen2.5:7b`, na RTX 4060, mediu o que segue (issue #154).
 
 ---
 
+### ADR-014 — O acesso de fora da máquina é por rede privada, e nunca por link público
+
+**Status:** Decidido
+**Data:** 04/10/2026
+
+**Situação:** o sistema roda na máquina de demonstração, e a equipe quer usá-lo dos próprios aparelhos, fora de
+casa, para ensaiar e demonstrar (H102). O pedido veio com a condição: segurança primeiro, e cancelar se o risco
+não valer. Antes de escolher a ferramenta, o que o sistema é hoje:
+
+| Fato | Onde está | O que significa para um acesso de fora |
+|---|---|---|
+| A interface é o servidor de desenvolvimento do Vite | `web/Dockerfile` | Ele entrega o código-fonte, módulo a módulo, e não foi feito para sair da máquina |
+| Todas as portas estão presas a `127.0.0.1` | `docker-compose.yml` | Hoje nada é alcançável de fora, nem pela rede local |
+| O bloqueio de login é por origem, e atrás de um proxy todos têm a mesma | `auditoria.origem_de`, RNF11 | Exposto, cinco senhas erradas de um estranho travam a entrada de todos, quantas vezes ele quiser |
+| O cookie só ganha `Secure` por configuração, desligada | `config.cookie_seguro` | Por HTTPS ele precisa da marca; o acesso local continua em HTTP |
+| Não há autenticação antes do sistema, e ele roda num computador pessoal | — | Exposto, o login do GIH seria a única barreira entre a internet e a máquina |
+
+**Alternativas:**
+
+| Opção | Avaliação |
+|---|---|
+| **Rede privada (Tailscale), com um nó só para o sistema** | **Escolhida.** WireGuard entre os aparelhos; nada fica na internet e nenhuma porta abre no roteador. Só chega quem está na conta de quem opera, ou foi convidado por ela — e depois ainda vem o login do GIH |
+| Link público por túnel (Cloudflare Tunnel, ngrok, Tailscale Funnel) | **Recusada.** Os cinco fatos acima valem para qualquer um na internet. A camada de autenticação que resolveria (Cloudflare Access) exige domínio próprio; sem ela, o endereço público leva direto ao login |
+| Porta aberta no roteador | Recusada pelo mesmo motivo, e ainda expõe o endereço da casa |
+| O Tailscale instalado no Windows da máquina | Colocaria a máquina inteira na rede privada, e não só o sistema; e a instalação ficaria fora do repositório, sem reprodução |
+| Publicar o servidor de desenvolvimento, mesmo na rede privada | Recusada: lento pelo celular — centenas de módulos, sem compressão — e é o serviço errado para mostrar a alguém |
+
+**Decisão:**
+
+- **Um perfil opcional do Compose, `remoto`**, como o `assistente`: `docker compose --profile remoto up -d`. Sem
+  ele, nada disto existe, e o `docker compose up` de sempre fica igual (RNF07).
+- **O nó da rede privada é um contêiner** (`tailscale`), e não a máquina. Quem está na rede alcança a porta 443
+  dele, e mais nada. Ele serve por HTTPS, com certificado de verdade, **só para a rede**: `AllowFunnel: false`
+  é o que separa isto de um link público, e está escrito no Compose.
+- **Quem chega de fora recebe a interface empacotada** (`remoto/`, serviço `borda`): o `vite build`, servido por
+  nginx sem root, com o `/api` repassado pela mesma origem — o mesmo motivo do proxy de `web/vite.config.js`. A
+  documentação interativa da API (`/docs`) não passa por ela.
+- **O `Secure` do cookie é posto na borda**, e não na API. A API é a mesma para os dois caminhos, e o acesso
+  local continua em HTTP; ligar `COOKIE_SEGURO` quebraria os roteiros de verificação, que falam com ela por
+  `http://localhost`.
+- **Nenhuma porta nova na máquina, e nenhum segredo no repositório.** O nó entra na rede por um endereço de
+  autorização que sai no log na primeira subida, aberto por quem opera, na conta dele; a identidade fica num
+  volume. A `TS_AUTHKEY` é a alternativa, e só no `.env`.
+- **A equipe entra por compartilhamento do nó**: cada integrante com a própria conta vê só esta máquina, e quem
+  opera revoga quando quiser. O usuário de cada um no GIH continua sendo criado pelo administrador.
+- **O RNF30 guarda a decisão, e um roteiro a confere** (`scripts/conferir_acesso_remoto.py`): toda porta presa a
+  `127.0.0.1`, a borda entregando o que deve, o cookie com as três marcas, e o Funnel desligado — no que o
+  Compose declara e no que está rodando.
+
+**Medido em 04/10/2026**, com o perfil no ar: 16 de 16 conferências. Com o Funnel ligado e uma porta sem o
+`127.0.0.1`, numa cópia do Compose, o roteiro reprova as duas e sai com erro. O contêiner pede a autorização
+pelo log, sem chave em arquivo.
+
+**Consequências:**
+
+- **Um serviço de terceiros, opcional e fora do sistema.** O cliente é BSD-3; a coordenação da rede é um
+  serviço gratuito da Tailscale, que sabe quais aparelhos existem e não vê o tráfego. O sistema não depende
+  dele: se sair do ar, só o acesso remoto para (regra 2.8).
+- **A conta de quem opera passa a ser uma chave do sistema.** Verificação em duas etapas nela; e, se for
+  invadida, o invasor ainda para no login do GIH. Remover o nó no painel da rede corta o acesso de todos.
+- **O bloqueio de login vale para os remotos juntos.** Todos chegam à API pela borda, com a mesma origem: cinco
+  erros de um integrante travam os remotos por 15 minutos, e o acesso local não é afetado. Entre cinco pessoas
+  que se conhecem, é aceitável.
+- **O nome do nó e o da rede ficam no registro público de certificados.** O nome é neutro (`gih`), e o endereço
+  não responde fora da rede.
+- **A máquina precisa estar ligada**, sem suspender, e com o Docker aberto.
+
+**O que fica de fora, de propósito:** confiar no `X-Forwarded-For` da borda para o bloqueio e a trilha voltarem
+a ser por pessoa. O comentário de `origem_de` diz a condição — o proxy ser confiável e reescrever o cabeçalho —,
+e ela agora existe; mas mexe no RNF11, e não é preciso para cinco pessoas numa rede privada. Se o acesso remoto
+crescer, é a primeira coisa a fazer.
+
+---
+
 ## 6. Ambiente de desenvolvimento
 
 | Item | Situação |
@@ -1091,9 +1165,10 @@ growth-intelligence-hub/
 │   └── tests/
 ├── modelo/                 # o modelo preditivo em PyTorch: variáveis, rede, treino, avaliação
 ├── web/src/                # React + Vite: páginas, componentes, estilos e temas
+├── remoto/                 # a borda do acesso remoto: a interface empacotada e o proxy do /api (ADR-014)
 ├── scripts/                # gerador de dados sintéticos e as medições de docs/medicoes/
 ├── docs/                   # esta documentação, as medições e o gerador das entregas
-├── docker-compose.yml      # postgres, api e web; o Ollama no perfil assistente
+├── docker-compose.yml      # postgres, api e web; o Ollama no perfil assistente; a borda e o nó no perfil remoto
 └── docker-compose.gpu.yml  # a GPU, por cima do primeiro
 ```
 
@@ -1122,6 +1197,7 @@ Cada um desses pontos tem teste automatizado, e todos rodam na CI a cada Pull Re
 | RNF14 | Rota sem autorização no servidor | `test_autorizacao.py`: toda rota contra todo perfil; `test_troca_de_perfil_vale_na_requisicao_seguinte`, `test_desativar_derruba_as_sessoes_abertas`, `test_o_cookie_forjado_nao_abre_nada` |
 | RNF15 | Entrada grande demais | `test_entrada_grande_demais_e_recusada`, `test_arquivo_grande_demais_e_recusado` |
 | RNF18, RNF19 | Rastreamento de pilha na resposta | `test_falha_inesperada_responde_generico_com_correlacao` |
+| RNF30 | O sistema alcançável pela internet ou pela rede local | `scripts/conferir_acesso_remoto.py`, contra o ambiente no ar: toda porta presa a `127.0.0.1`, e o acesso remoto sem Funnel (ADR-014) |
 
 **O que reprova o PR que abre um vetor são os testes derivados**, e não os escritos rota a rota. Rota nova
 entra sozinha na matriz de autorização, que reprova se ela não declarar permissão; no fuzz de injeção,
@@ -1133,3 +1209,8 @@ desfeita ou um `dangerouslySetInnerHTML` plantado, eles reprovam.
 O texto do modelo de linguagem (H60, H65) chega à tela pelo mesmo caminho, e a leitura do código da tela já
 o cobre. O serviço do Ollama não tem autenticação, e por isso a porta dele não é publicada no host: só a API o
 alcança, pela rede do Compose (ADR-013).
+
+**O RNF30 é o único que não roda na CI**: ele é sobre o ambiente no ar, e não sobre o código. O roteiro lê o que
+o Compose declara e pergunta ao que está rodando, e foi conferido contra o defeito que procura — com uma porta
+sem o `127.0.0.1` e o Funnel ligado, reprova as duas. Roda-se depois de mexer no Compose e antes de cada
+demonstração feita de fora (ADR-014).

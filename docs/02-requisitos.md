@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 1.4 — 02/10/2026 · a revisão das regras de negócio, na H99 (1.3 — 02/10/2026, a coluna Perfis conferida contra as rotas; 1.2 — 02/10/2026, o módulo 8; 1.1 — 01/10/2026, o módulo 7; 1.0 — 03/09/2026)
+**Versão:** 1.5 — 04/10/2026 · o RNF30, do acesso remoto por rede privada (1.4 — 02/10/2026, a revisão das regras de negócio, na H99; 1.3 — 02/10/2026, a coluna Perfis conferida contra as rotas; 1.2 — 02/10/2026, o módulo 8; 1.1 — 01/10/2026, o módulo 7; 1.0 — 03/09/2026)
 
 ---
 
@@ -164,6 +164,11 @@ própria senha — já existia e ganha a tela nesta sprint, sem mudar de texto.
 | **RNF13** | Todo acesso ao banco deve usar consultas parametrizadas, sem concatenação de entrada do usuário. | Revisão de código e teste automatizado com carga de injeção SQL |
 | **RNF14** | A autorização por perfil deve ser verificada no servidor em todos os endpoints, nunca apenas na interface. | Teste automatizado tentando acessar cada endpoint com cada perfil |
 | **RNF15** | O sistema deve limitar o tamanho das entradas aceitas para evitar consumo excessivo de recursos. | Limite explícito para relatório importado e para pergunta ao assistente |
+| **RNF30** | O ambiente não deve ficar alcançável pela internet nem pela rede local: as portas ficam presas à própria máquina, e o acesso de fora dela só acontece por **rede privada autenticada**, nunca por link ou túnel público. | Nenhuma porta publicada fora de `127.0.0.1`; o acesso remoto restrito à rede privada, sem exposição pública; conferido por script contra o ambiente no ar |
+
+> O RNF30 entrou em 04/10/2026, com a H102, e fica aqui por ser de segurança — os identificadores não se
+> renumeram. O porquê de a rede ser privada, e não um link público, está na ADR-014 de
+> [`07-arquitetura-preliminar.md`](07-arquitetura-preliminar.md).
 
 ### Confiabilidade e rastreabilidade
 
@@ -199,7 +204,7 @@ própria senha — já existia e ganha a tela nesta sprint, sem mudar de texto.
 | **RNF28** | O sistema não deve coletar nem armazenar dados pessoais de consumidores finais; os dados tratados referem-se a pessoas jurídicas parceiras. | Modelo de dados sem entidade de consumidor final |
 | **RNF29** | O repositório não deve conter dados reais de nenhuma operação; toda massa de demonstração deve ser sintética. | `.gitignore` bloqueando arquivos de dados e verificação antes de cada entrega |
 
-> **Total: 29 requisitos não funcionais.**
+> **Total: 30 requisitos não funcionais.**
 
 ---
 
