@@ -19,6 +19,7 @@
 
 # Interface
 /web/                   @ingrydaraujob
+/remoto/                @PedroMiranda243
 
 # Banco de dados, scripts e testes
 /api/migrations/        @joaopfranca04
