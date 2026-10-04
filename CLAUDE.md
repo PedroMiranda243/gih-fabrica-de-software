@@ -160,6 +160,7 @@ mesmo arquivo na mesma semana.
 | `nucleo/` | @PedroMiranda243 | Dev Backend / Núcleo | responsável único — ver abaixo |
 | `modelo/` | @PedroMiranda243 | Dev Backend / Núcleo | — |
 | `web/` | @ingrydaraujob | Dev Frontend | — |
+| `remoto/` | @PedroMiranda243 | Dev Backend / Núcleo | Frontend, se o build da interface mudar |
 | `api/migrations/` | @joaopfranca04 | Banco de Dados | Backend, com aviso |
 | `scripts/` | @joaopfranca04 | Banco de Dados | todos |
 | `docs/` | @mihaeldatoman | Product Owner | todos |
@@ -515,6 +516,23 @@ frente com alguma, a resposta já está aqui.
 
 - **Docker para quando a máquina fica ociosa.** Se a API não sobe e o banco está fora, é provavelmente
   isso. Suba o Docker Desktop de novo antes de procurar bug.
+
+### Acesso de fora da máquina
+
+- **O sistema não sai da máquina, e o servidor de desenvolvimento, muito menos.** Toda porta do Compose é
+  `127.0.0.1:…` (RNF30); publicada sem o endereço, ela abre o serviço para a rede local inteira. Para usar o
+  sistema de outro aparelho existe o perfil `remoto`: uma rede privada, e uma borda que entrega a interface
+  empacotada (ADR-014). **Nunca um túnel público**, e nunca o serviço `web` exposto "só para mostrar": o Vite
+  de desenvolvimento entrega o código-fonte, e o bloqueio de login é por origem (RNF11) — com a tela de login
+  ao alcance de qualquer um, cinco senhas erradas de um estranho travam a entrada de todos.
+
+- **Mexeu no Compose, rode `scripts/conferir_acesso_remoto.py`.** Ele não está na CI: confere o ambiente no ar,
+  e não o código. Reprova a porta sem o `127.0.0.1`, o Funnel ligado e o cookie sem `Secure`.
+
+- **O `Secure` do cookie é posto na borda, e não na API.** Ligar `COOKIE_SEGURO` parece o certo e quebra os
+  roteiros de `api/e2e/`: o cliente deles não devolve cookie `Secure` por `http://localhost` — medido. A API é
+  a mesma para o acesso local, em HTTP, e para o remoto, em HTTPS; quem sabe por onde a pessoa chegou é a
+  borda (`remoto/nginx.conf`).
 
 ### Processo
 
