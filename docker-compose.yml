@@ -110,6 +110,85 @@ services:
         condition: service_healthy
     restart: "no"
 
+  # O acesso de fora da máquina (ADR-014, RNF30, H102): opcional, e por isso num
+  # perfil. Só sobe com `docker compose --profile remoto up -d`; sem o perfil,
+  # nada abaixo existe, e o sistema continua alcançável só por esta máquina.
+  #
+  # São dois serviços. Este entrega a interface empacotada e repassa o `/api` —
+  # quem chega de fora não recebe o servidor de desenvolvimento do serviço `web`.
+  #
+  # **A porta não é publicada no host, de propósito.** Só o serviço `tailscale`
+  # chega aqui, pela rede do Compose.
+  borda:
+    build:
+      context: ./web
+      dockerfile: ../remoto/Dockerfile
+      additional_contexts:
+        remoto: ./remoto
+    profiles: ["remoto"]
+    restart: unless-stopped
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # O nó da rede privada (Tailscale, cliente BSD-3). É por ele, e só por ele, que
+  # um aparelho de fora chega ao sistema: por WireGuard, e só os aparelhos da
+  # conta de quem opera, ou os que essa pessoa convidou.
+  #
+  # **Não é um túnel público.** O `AllowFunnel: false` abaixo é o que separa as
+  # duas coisas: o endereço só responde dentro da rede privada. Um link aberto na
+  # internet foi avaliado e recusado — o porquê está na ADR-014.
+  #
+  # Nenhuma porta publicada aqui também, e a máquina não entra na rede: só este
+  # contêiner. Quem está na rede alcança a 443 dele, e mais nada.
+  #
+  # Na primeira subida, o log traz o endereço para autorizar o nó na conta:
+  #   docker compose --profile remoto logs tailscale
+  # A identidade fica no volume, e as subidas seguintes entram sozinhas. A
+  # `TS_AUTHKEY` é a alternativa, e só no `.env` — nunca neste arquivo.
+  tailscale:
+    image: tailscale/tailscale:v1.102.5
+    profiles: ["remoto"]
+    restart: unless-stopped
+    hostname: ${TS_HOSTNAME:-gih}
+    environment:
+      TS_HOSTNAME: ${TS_HOSTNAME:-gih}
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /serve.json
+      TS_AUTHKEY: ${TS_AUTHKEY:-}
+      # Com a identidade no volume, não pede autorização de novo a cada subida.
+      TS_AUTH_ONCE: "true"
+    configs:
+      - source: tailscale_serve
+        target: /serve.json
+    volumes:
+      - estado_tailscale:/var/lib/tailscale
+    depends_on:
+      borda:
+        condition: service_healthy
+
+# O que o nó serve: HTTPS na 443, tudo para a borda, e só para a rede privada.
+# Embutido aqui, e não num arquivo montado: o caminho deste repositório tem
+# acento, e a montagem de arquivo é o que mais quebra por isso. O `$$` é o `$`
+# literal — quem troca o `TS_CERT_DOMAIN` pelo nome do nó é o contêiner.
+configs:
+  tailscale_serve:
+    content: |
+      {
+        "TCP": { "443": { "HTTPS": true } },
+        "Web": {
+          "$${TS_CERT_DOMAIN}:443": {
+            "Handlers": { "/": { "Proxy": "http://borda:8080" } }
+          }
+        },
+        "AllowFunnel": { "$${TS_CERT_DOMAIN}:443": false }
+      }
+
 volumes:
   dados_postgres:
   modelos_ollama:
+  estado_tailscale:

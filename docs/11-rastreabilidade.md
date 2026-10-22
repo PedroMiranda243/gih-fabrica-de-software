@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 08 acadêmica — história **H98**
-**Versão:** 1.0 — 02/10/2026
+**Versão:** 1.1 — 04/10/2026 · o RNF30, do acesso remoto por rede privada (1.0 — 02/10/2026)
 
 > **Para que serve.** "Todas as funcionalidades implementadas" é uma frase que qualquer documento escreve.
 > Esta matriz a transforma em algo que se confere: para cada requisito, **onde** ele está — o caso de uso, a
@@ -216,7 +216,8 @@ configuração do repositório — e o que a conferência diz hoje.
 | **RNF27** | Um terceiro sobe o sistema só com o README | `docs/validacao-do-readme.md`<br>`README.md` | Em aberto: o roteiro está escrito, e a validação por quem não escreveu o código é a H72 |
 | **RNF28** | Sem entidade de consumidor final | `docs/08-modelo-de-dados.md` | Atende |
 | **RNF29** | Nenhum dado real no repositório | `.gitignore`<br>`.github/workflows/ci.yml` | Atende: a CI reprova arquivo de dados versionado |
+| **RNF30** | Nenhuma porta fora da própria máquina; o acesso remoto só por rede privada | `scripts/conferir_acesso_remoto.py`<br>`docker-compose.yml` | Atende: 16 de 16 conferências com o perfil remoto no ar, em 04/10/2026; o roteiro reprova a porta solta e o Funnel ligado |
 
-> **29 requisitos não funcionais: 23 atendidos, 5 em parte (RNF04, RNF07, RNF08, RNF20, RNF25) e 1 em
+> **30 requisitos não funcionais: 24 atendidos, 5 em parte (RNF04, RNF07, RNF08, RNF20, RNF25) e 1 em
 > aberto (RNF27).** O que falta em cada um está dito na linha dele, e nenhum depende de código novo: são
 > medições e validações.

@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 2.3 — 02/10/2026 · as histórias da Sprint 08 acadêmica (2.2 — 01/10/2026, as da Sprint 07; 2.1 — 30/09/2026, as da Sprint 06; 2.0 — 15/09/2026, sprints semanais)
+**Versão:** 2.4 — 04/10/2026 · a H102, do acesso remoto por rede privada (2.3 — 02/10/2026, as histórias da Sprint 08 acadêmica; 2.2 — 01/10/2026, as da Sprint 07; 2.1 — 30/09/2026, as da Sprint 06; 2.0 — 15/09/2026, sprints semanais)
 
 ---
 
@@ -42,8 +42,8 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **E6** | Otimização, paralelismo e GPU | 88 | 3–11, S07 |
 | **E7** | Central de comunicação | 26 | 12 |
 | **E8** | Assistente analítico | 21 | 12–13 |
-| **E9** | Qualidade, documentação e entrega | 70 | 2–13, S06, S08 |
-| | **Total** | **473** | |
+| **E9** | Qualidade, documentação e entrega | 73 | 2–13, S06, S08, pós-S08 |
+| | **Total** | **476** | |
 
 ---
 
@@ -197,6 +197,7 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H97** | Como usuário, quero ser avisado antes de sair de um formulário com alterações que não salvei, para não perder o que digitei. | C | 2 | S08 | RNF20; cadastro de parceiro e de usuário, limiares, catálogo de ações e o texto em edição na fila de aprovação; sem alteração, nada pergunta; o botão voltar do navegador não é interceptado |
 | **H98** | Como equipe, quero uma matriz que diga, requisito a requisito, onde ele está e como é testado, para afirmar com evidência que as funcionalidades previstas estão implementadas. | M | 5 | S08 | RF01 a RF56 e RNF01 a RNF29; `docs/11-rastreabilidade.md`; teste que reprova se faltar um RF, se uma rota ou um teste citado não existir, ou se os perfis divergirem |
 | **H99** | Como equipe, quero revisar cada regra de negócio contra o que o sistema faz, para corrigir o que estiver incoerente antes da entrega final. | M | 5 | S08 | RN01 a RN11; roteiro executável regra a regra; `docs/02` diz onde cada regra está e como é conferida; os limiares de fábrica na RN01 (#59) |
+| **H102** | Como integrante da equipe, quero acessar o sistema que roda na máquina de demonstração a partir do meu próprio aparelho, por uma rede privada, para ensaiar e demonstrar fora de casa sem expor o sistema na internet. | C | 3 | pós-S08 | RNF30, RNF07, RNF10; perfil `remoto` do Compose; nenhuma porta fora do `127.0.0.1`; quem chega de fora recebe a interface empacotada, e não o servidor de desenvolvimento; o cookie sai com `Secure`; o link público foi avaliado e recusado (ADR-014) |
 
 ---
 
@@ -223,7 +224,8 @@ Detalhamento e datas em [05 — Cronograma](05-cronograma.md).
 | **S06** | Sprint 06 acadêmica — navegação, risco na lista e integração | H79, H80, H81 | 13 |
 | **S07** | Sprint 07 acadêmica — painel, relatórios, pesquisa, filtros, exportação e histórico | H82, H83, H84, H85, H86, H87, H88, H89, H90, H91 | 38 |
 | **S08** | Sprint 08 acadêmica — conta, permissões, usabilidade e revisão das regras | H92, H93, H94, H95, H96, H97, H98, H99, H100, H101 | 33 |
-| | | **Total** | **473** |
+| **pós-S08** | Depois da Sprint 08 acadêmica — o acesso remoto por rede privada | H102 | 3 |
+| | | **Total** | **476** |
 
 > A média é de **30,2 pontos por semana**, contra uma capacidade nominal de ~40. A folga é pequena, e a
 > Sprint 13 está deliberadamente acima da média — ver a seção *A semana que não fecha* no cronograma.
@@ -245,6 +247,12 @@ Detalhamento e datas em [05 — Cronograma](05-cronograma.md).
 > esquecia a senha não tinha como voltar. As dez histórias novas, H92 a H101, cobrem essas lacunas, a página
 > "Sem acesso", a ajuda, e as três revisões — rastreabilidade, permissões e regras. O escopo passa de 440 para
 > 473 pontos.
+
+> **Depois da Sprint 08, 04/10/2026.** A equipe quis usar o sistema da máquina de demonstração a partir dos
+> próprios aparelhos, para ensaiar e demonstrar fora de casa. A H102 entra com uma condição: o sistema não
+> fica na internet. O link público foi avaliado e recusado, e o acesso é por rede privada — o porquê está na
+> ADR-014. É operação do ambiente, e não funcionalidade do produto: nenhuma tela e nenhuma rota mudam. O
+> escopo passa de 473 para 476 pontos.
 
 ## Primeiro corte, se o prazo apertar
 

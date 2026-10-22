@@ -1,7 +1,7 @@
 # 05 — Cronograma
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Versão:** 3.3 — 02/10/2026 · a Sprint 08 da disciplina (3.2 — 01/10/2026, a Sprint 07; 3.1 — 30/09/2026, a Sprint 06; 3.0 — 28/09/2026, o calendário real; 2.1 — 16/09/2026, o plano em sprints semanais)
+**Versão:** 3.4 — 04/10/2026 · a H102, do acesso remoto (3.3 — 02/10/2026, a Sprint 08 da disciplina; 3.2 — 01/10/2026, a Sprint 07; 3.1 — 30/09/2026, a Sprint 06; 3.0 — 28/09/2026, o calendário real; 2.1 — 16/09/2026, o plano em sprints semanais)
 **Datas oficiais da disciplina:** entrega da Sprint 1 em **05/09/2026** · entrega final em **05/12/2026**
 
 ---
@@ -57,6 +57,11 @@ tela — a troca da própria senha, a conta de perfil Parceiro e a volta de quem
 falta de ajuda. As três revisões viraram instrumentos que rodam: a matriz de rastreabilidade, com teste; a
 transcrição das permissões, com os quatro perfis; e o roteiro das regras de negócio. Os requisitos RF54 a RF56
 e o UC16 entraram em `docs/02` e `docs/03` antes do código. O escopo passou de 440 para 473 pontos.
+
+**Depois da Sprint 08, uma história de operação**, a H102 (3 pontos, `docs/04`), em 04/10: usar o sistema da
+máquina de demonstração a partir dos aparelhos da equipe, por rede privada. Não é funcionalidade do produto —
+nenhuma tela e nenhuma rota mudam —, e entrou antes do congelamento de 25/10. O link público foi avaliado e
+recusado; o RNF30 e a ADR-014 dizem por quê. O escopo passou de 473 para 476 pontos.
 
 **A segunda entrega cobre quatro das nossas sprints, e não uma.** A equipe está adiantada em relação ao
 calendário da disciplina: na data da entrega de arquitetura e modelagem, o banco já está criado e migrado,

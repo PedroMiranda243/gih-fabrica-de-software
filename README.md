@@ -158,12 +158,12 @@ rode com a aplicação livre. Nenhum dos scripts deixa resíduo no banco.
 |---|---|
 | [**CLAUDE.md**](CLAUDE.md) | **Contexto e convenções para assistentes de IA — leia antes de codificar** |
 | [01 — Visão do produto](docs/01-visao-do-produto.md) | Tema, problema, objetivos, público-alvo, KPIs |
-| [02 — Requisitos](docs/02-requisitos.md) | 56 requisitos funcionais e 29 não funcionais, com rastreabilidade |
+| [02 — Requisitos](docs/02-requisitos.md) | 56 requisitos funcionais e 30 não funcionais, com rastreabilidade |
 | [03 — Casos de uso](docs/03-casos-de-uso.md) | 16 casos de uso, diagrama e especificação detalhada |
-| [04 — Product Backlog](docs/04-product-backlog.md) | 9 épicos e 104 histórias priorizadas |
+| [04 — Product Backlog](docs/04-product-backlog.md) | 9 épicos e 105 histórias priorizadas |
 | [05 — Cronograma](docs/05-cronograma.md) | O plano e o realizado das 13 sprints semanais, o que resta até 05/12/2026, marcos e riscos |
 | [06 — Equipe e processo](docs/06-equipe-e-processo.md) | Papéis, cerimônias, Definition of Done, fluxo Git |
-| [07 — Arquitetura](docs/07-arquitetura-preliminar.md) | As camadas e onde cada uma roda, o núcleo, as decisões (ADR-001 a ADR-013), o ambiente |
+| [07 — Arquitetura](docs/07-arquitetura-preliminar.md) | As camadas e onde cada uma roda, o núcleo, as decisões (ADR-001 a ADR-014), o ambiente |
 | [08 — Modelo de dados](docs/08-modelo-de-dados.md) | Diagrama ER, entidades, restrições e índices |
 | [09 — Sistema visual](docs/09-sistema-visual.md) | Paleta validada, tipografia, espaçamento e estados vazios |
 | [10 — Diagrama de classes](docs/10-diagrama-de-classes.md) | O domínio, os serviços e o núcleo computacional, em nove diagramas |
@@ -325,6 +325,69 @@ Anote: ela não é gravada em lugar nenhum e não pode ser recuperada. Troque no
 Depois de um `resetar_banco.py`, a senha sorteada sai na saída do reset, e não no log.
 
 Perdeu a senha do administrador? `redefinir-senha --login admin`, como acima.
+
+### Acessar de fora de casa, por rede privada
+
+**O sistema não fica na internet, e isso é de propósito.** Todas as portas ficam presas à própria máquina
+(RNF30). Para usá-lo de outro aparelho — o celular, o notebook, fora de casa —, o caminho é uma **rede
+privada** (Tailscale): só os aparelhos da sua conta, ou os que você convidar, chegam ao sistema, por conexão
+cifrada e HTTPS; e depois ainda vem o login do GIH. Um link público por túnel foi avaliado e recusado — o
+porquê está na ADR-014 de [`docs/07`](docs/07-arquitetura-preliminar.md).
+
+É um perfil opcional, como o do modelo de linguagem. Sem ele, nada disto sobe.
+
+**Uma vez só, na sua conta:**
+
+1. Crie uma conta gratuita em `tailscale.com`, com **verificação em duas etapas** no login que você usar.
+2. No painel dela, em **DNS**, ligue **MagicDNS** e **HTTPS Certificates**.
+
+**Na máquina que roda o sistema:**
+
+```bash
+docker compose --profile remoto up -d --build
+docker compose --profile remoto logs tailscale
+```
+
+O primeiro comando sobe dois serviços: a `borda`, que entrega a interface empacotada e repassa o `/api`, e o
+`tailscale`, o nó da rede privada. O segundo mostra, na primeira subida, a linha `To authenticate, visit:` com
+um endereço: abra-o, entre na sua conta e aprove a máquina **`gih`**. A identidade fica guardada num volume, e
+as subidas seguintes entram sozinhas. Com a GPU ou o modelo de linguagem, junte o arquivo e o perfil deles ao
+comando, como acima.
+
+**No aparelho de onde você vai acessar:** instale o aplicativo do Tailscale, entre com a mesma conta e abra
+`https://gih.<nome-da-sua-rede>.ts.net`. O endereço exato aparece no painel, em *Machines*, e na saída da
+conferência abaixo. A primeira abertura leva alguns segundos, enquanto o certificado é emitido.
+
+**Confira antes de confiar**, depois de mexer no Compose e antes de cada demonstração feita de fora:
+
+```bash
+python scripts/conferir_acesso_remoto.py
+```
+
+O roteiro reprova se alguma porta sair do `127.0.0.1`, se a borda entregar o servidor de desenvolvimento, se o
+cookie de sessão sair sem `Secure`, ou se o acesso estiver aberto para fora da rede privada (Funnel). Com
+`GIH_ADMIN_SENHA` no ambiente, ele confere também o cookie; a sessão que abre para isso é encerrada no fim.
+
+| Para… | Faça |
+|---|---|
+| **Convidar um colega** | No painel, *Machines* › `gih` › *Share*: ele aceita com a conta **dele** e instala o aplicativo. Vê só esta máquina. O usuário dele no GIH é criado na tela **Usuários**, como qualquer outro |
+| **Tirar o acesso de um colega** | No painel, remova o compartilhamento. No GIH, desative o usuário |
+| **Desligar o acesso remoto** | `docker compose --profile remoto stop tailscale borda` |
+| **Cortar tudo, de vez** | No painel, remova a máquina `gih`. Para voltar, é autorizar de novo |
+| **Perdeu um aparelho** | No painel, remova o aparelho; no GIH, troque a senha em **Minha conta**, que derruba as outras sessões |
+
+O que vale saber:
+
+- **A máquina precisa ficar ligada**, sem suspender, e com o Docker aberto. Se o endereço parou de responder,
+  é quase sempre isso.
+- **A autorização da máquina vence em 180 dias**, por padrão. No painel, em *Machines* › `gih`, dá para
+  desligar o vencimento.
+- **O nome `gih` e o da sua rede ficam no registro público de certificados.** O endereço não responde fora da
+  rede; só não ponha nada sensível no nome (`TS_HOSTNAME`, no `.env`).
+- **Cinco senhas erradas seguidas, de qualquer aparelho de fora, travam o login de fora por 15 minutos** — o
+  bloqueio é por origem (RNF11), e todos os remotos chegam pela borda. O acesso por esta máquina não é afetado.
+- **Não troque isto por um túnel público**, nem tire o `127.0.0.1` de uma porta "só para testar": o roteiro de
+  conferência reprova as duas coisas.
 
 ### Desenvolvendo a API fora do container
 
