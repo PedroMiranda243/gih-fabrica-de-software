@@ -34,6 +34,9 @@ export default function Casca() {
   const grupos = MENU.map((g) => ({ ...g, itens: g.itens.filter((i) => tem(usuario, ...i.exige)) })).filter((g) => g.itens.length);
   const ativo = itemAtivo(pathname);
   const area = grupoDe(ativo);
+  /* Enquanto a tela carregada sob demanda não diz o título dela, o h1 mostra o nome
+     dela no menu: título de página vazio é anunciado como nada pelo leitor de tela. */
+  const tituloDoMenu = area?.itens.find((i) => i.para === ativo)?.rotulo ?? "GIH";
   const volta = trilha?.filter((p) => p.para).at(-1) ?? null;
 
   useEffect(() => setGaveta(false), [pathname]);
@@ -129,7 +132,7 @@ export default function Casca() {
                 </Link>
               )}
               <h1 className="cabecalho__titulo" id="titulo-da-tela" tabIndex={-1}>
-                {titulo}
+                {titulo || tituloDoMenu}
               </h1>
             </div>
             <div className="cabecalho__acoes">
