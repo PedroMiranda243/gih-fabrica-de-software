@@ -70,7 +70,9 @@ export default function Entrar() {
           </span>
         </p>
       </header>
-      <div className="bolsa__frente">
+      {/* A frente da bolsa diz o que é o sistema: é texto de verdade, então fica
+          numa região com nome, e não solto fora de todas. */}
+      <section className="bolsa__frente" aria-label="Sobre o GIH">
         <p className="bolsa__lema">Inteligência de crescimento para redes de parceiros</p>
         <p className="bolsa__lacre">
           <span className="bolsa__lacre-sigla" aria-hidden="true">
@@ -81,7 +83,7 @@ export default function Entrar() {
             Cada perfil vê só a sua parte
           </span>
         </p>
-      </div>
+      </section>
       <main className="bolsa__janela">
         <form className="entrada-form" id="entrar-form" onSubmit={enviar} noValidate>
           <h1 className="entrada-form__titulo">Entrar</h1>

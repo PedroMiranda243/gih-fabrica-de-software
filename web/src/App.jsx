@@ -9,6 +9,7 @@ import { tem, useSessao } from "./api/sessao";
 import Casca from "./componentes/Casca";
 import Conferindo from "./componentes/Conferindo";
 import { Carregando } from "./componentes/Estados";
+import { EXIGE } from "./navegacao/telas";
 const Ajuda = lazy(() => import("./paginas/Ajuda"));
 const Aprovacao = lazy(() => import("./paginas/Aprovacao"));
 const Assistente = lazy(() => import("./paginas/Assistente"));
@@ -54,9 +55,9 @@ function Tela({ exige, children }) {
 
 function Inicio() {
   const { usuario } = useSessao();
-  if (!tem(usuario, "painel") && tem(usuario, "meu_desempenho") && Array.isArray(usuario.telas)) return <Navigate to="/meu-desempenho" replace />;
+  if (!tem(usuario, ...EXIGE.painel) && tem(usuario, ...EXIGE.meuDesempenho) && Array.isArray(usuario.telas)) return <Navigate to="/meu-desempenho" replace />;
   return (
-    <Tela exige={["painel"]}>
+    <Tela exige={EXIGE.painel}>
       <Painel />
     </Tela>
   );
@@ -97,30 +98,30 @@ export default function App() {
           }
         >
           <Route index element={<Inicio />} />
-          <Route path="meu-desempenho" element={T(["meu_desempenho"], MeuDesempenho)} />
-          <Route path="importacao" element={T(["importar", "historico_importacoes"], Importacao)} />
-          <Route path="parceiros" element={T(["parceiros"], Parceiros)} />
-          <Route path="parceiros/novo" element={T(["parceiros"], Parceiro)} />
-          <Route path="parceiros/:id" element={T(["parceiros"], Parceiro)} />
-          <Route path="assistente" element={T(["assistente"], Assistente)} />
-          <Route path="relatorios" element={T(["relatorios"], Relatorios)} />
-          <Route path="relatorios/desempenho" element={T(["relatorios"], RelatorioDesempenho)} />
-          <Route path="relatorios/risco" element={T(["relatorios"], RelatorioRisco)} />
-          <Route path="relatorios/campanha" element={T(["relatorios"], RelatorioCampanha)} />
-          <Route path="relatorios/operacoes" element={T(["relatorio_operacoes"], RelatorioOperacoes)} />
-          <Route path="modelo" element={T(["modelo"], Modelo)} />
-          <Route path="campanha" element={T(["campanha"], Campanha)} />
-          <Route path="execucoes" element={T(["execucoes"], Execucoes)} />
-          <Route path="execucoes/comparar" element={T(["execucao"], Comparacao)} />
-          <Route path="execucoes/:id" element={T(["execucao"], Execucao)} />
-          <Route path="benchmark" element={T(["benchmark"], Benchmark)} />
-          <Route path="mensagens" element={T(["mensagens"], Mensagens)} />
-          <Route path="aprovacao" element={T(["aprovacao"], Aprovacao)} />
-          <Route path="usuarios" element={T(["usuarios"], Usuarios)} />
-          <Route path="usuarios/novo" element={T(["usuarios"], Usuario)} />
-          <Route path="usuarios/:id" element={T(["usuarios"], Usuario)} />
-          <Route path="auditoria" element={T(["auditoria"], Auditoria)} />
-          <Route path="configuracao" element={T(["configuracao"], Configuracao)} />
+          <Route path="meu-desempenho" element={T(EXIGE.meuDesempenho, MeuDesempenho)} />
+          <Route path="importacao" element={T(EXIGE.importacao, Importacao)} />
+          <Route path="parceiros" element={T(EXIGE.parceiros, Parceiros)} />
+          <Route path="parceiros/novo" element={T(EXIGE.parceiros, Parceiro)} />
+          <Route path="parceiros/:id" element={T(EXIGE.parceiros, Parceiro)} />
+          <Route path="assistente" element={T(EXIGE.assistente, Assistente)} />
+          <Route path="relatorios" element={T(EXIGE.relatorios, Relatorios)} />
+          <Route path="relatorios/desempenho" element={T(EXIGE.relatorios, RelatorioDesempenho)} />
+          <Route path="relatorios/risco" element={T(EXIGE.relatorios, RelatorioRisco)} />
+          <Route path="relatorios/campanha" element={T(EXIGE.relatorios, RelatorioCampanha)} />
+          <Route path="relatorios/operacoes" element={T(EXIGE.operacoes, RelatorioOperacoes)} />
+          <Route path="modelo" element={T(EXIGE.modelo, Modelo)} />
+          <Route path="campanha" element={T(EXIGE.campanha, Campanha)} />
+          <Route path="execucoes" element={T(EXIGE.execucoes, Execucoes)} />
+          <Route path="execucoes/comparar" element={T(EXIGE.execucao, Comparacao)} />
+          <Route path="execucoes/:id" element={T(EXIGE.execucao, Execucao)} />
+          <Route path="benchmark" element={T(EXIGE.benchmark, Benchmark)} />
+          <Route path="mensagens" element={T(EXIGE.mensagens, Mensagens)} />
+          <Route path="aprovacao" element={T(EXIGE.aprovacao, Aprovacao)} />
+          <Route path="usuarios" element={T(EXIGE.usuarios, Usuarios)} />
+          <Route path="usuarios/novo" element={T(EXIGE.usuarios, Usuario)} />
+          <Route path="usuarios/:id" element={T(EXIGE.usuarios, Usuario)} />
+          <Route path="auditoria" element={T(EXIGE.auditoria, Auditoria)} />
+          <Route path="configuracao" element={T(EXIGE.configuracao, Configuracao)} />
           <Route path="conta" element={<Suspense fallback={<Carregando rotulo="Abrindo a tela" linhas={4} />}><MinhaConta /></Suspense>} />
           <Route path="ajuda" element={<Suspense fallback={<Carregando rotulo="Abrindo a tela" linhas={4} />}><Ajuda /></Suspense>} />
           <Route path="*" element={<NaoEncontrada />} />

@@ -26,16 +26,18 @@ export default function RelatorioRisco() {
   const lugar = useLocation();
   const [filtros, mudar] = useFiltros();
   const pagina = Number(filtros.pagina) || 1;
-  const consulta = { categoria_id: filtros.categoria_id, segmento: filtros.segmento, risco_minimo: filtros.risco_minimo };
+  /* No endereço, a chance de queda fica em percentual, como a pessoa digitou (e como
+     nos links da interface anterior); para a API, vai como fração. */
+  const consulta = { categoria_id: filtros.categoria_id, segmento: filtros.segmento, risco_minimo: paraFracao(filtros.risco_minimo) };
   const categorias = useCarregar(() => api.get("/api/categorias"), "cat");
   const rel = useCarregar(() => api.get("/api/relatorios/risco", { ...consulta, pagina, tamanho: TAMANHO }), lugar.search);
   const r = rel.dados;
 
-  const [minimo, setMinimo] = useState(filtros.risco_minimo ? deFracao(filtros.risco_minimo) : "");
+  const [minimo, setMinimo] = useState(filtros.risco_minimo ?? "");
   const minimoAtrasado = useAtraso(minimo, 500);
   useEffect(() => {
-    const fracao = paraFracao(minimoAtrasado);
-    if ((fracao ?? "") !== (filtros.risco_minimo ?? "")) mudar({ risco_minimo: fracao });
+    const percentual = String(minimoAtrasado).trim() || null;
+    if ((percentual ?? "") !== (filtros.risco_minimo ?? "")) mudar({ risco_minimo: percentual });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [minimoAtrasado]);
 

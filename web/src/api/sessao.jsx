@@ -62,11 +62,14 @@ export function ProvedorDeSessao({ children }) {
       await api.delete("/api/sessao");
     } catch (erro) {
       if (!(erro instanceof ErroDaApi)) throw erro;
+    } finally {
+      /* Mesmo que a chamada falhe, a pessoa pediu para sair: a tela obedece. O
+         servidor já invalidou a sessão, ou invalida na expiração. */
+      dentro.current = false;
+      setExpirou(false);
+      setUsuario(null);
+      navegar("/entrar", { replace: true });
     }
-    dentro.current = false;
-    setExpirou(false);
-    setUsuario(null);
-    navegar("/entrar", { replace: true });
   }, [navegar]);
 
   const valor = useMemo(() => ({ usuario, conferindo, expirou, entrar, sair, setUsuario }), [usuario, conferindo, expirou, entrar, sair]);

@@ -53,10 +53,14 @@ export function ColunaOrdenavel({ chave, rotulo, ordem, descendente, aoOrdenar, 
   );
 }
 
-/** A tabela larga rola aqui dentro; a caixa é alcançável pelo teclado e tem nome. */
+/**
+ * A tabela larga rola aqui dentro; a caixa é alcançável pelo teclado e tem nome.
+ * O nome diz que é a tabela: a seção em volta costuma ter o mesmo título, e duas
+ * regiões com o mesmo nome não se distinguem para quem navega por elas.
+ */
 export function CaixaDeTabela({ rotulo, children, className = "" }) {
   return (
-    <div className={`caixa-tabela ${className}`} role="region" aria-label={rotulo} tabIndex={0}>
+    <div className={`caixa-tabela ${className}`} role="region" aria-label={`Tabela: ${rotulo}`} tabIndex={0}>
       {children}
     </div>
   );

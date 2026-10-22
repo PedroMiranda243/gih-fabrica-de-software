@@ -74,6 +74,22 @@ export default function Mensagens() {
     setErroGerar(null);
   }, [publico]);
 
+  /* Vindo da Campanha ou de uma execução, o público já está escolhido: a prévia
+     vem junto, sem mais um clique. */
+  useEffect(() => {
+    if (!planoDoEndereco) return undefined;
+    let vivo = true;
+    setOcupado("previa");
+    api
+      .post("/api/mensagens/publico", { tipo: "PLANO", execucao_id: Number(planoDoEndereco) })
+      .then((r) => vivo && setPrevia(r))
+      .catch((e) => vivo && setErroPrevia(e))
+      .finally(() => vivo && setOcupado(null));
+    return () => {
+      vivo = false;
+    };
+  }, [planoDoEndereco]);
+
   if (estado.carregando) return <Carregando rotulo="Carregando as mensagens" linhas={8} />;
   if (estado.erro) return <ErroDaTela erro={estado.erro} />;
   const g = estado.dados;
