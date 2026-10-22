@@ -50,19 +50,40 @@ from e2e.limpeza import desativar_usuarios, limpar_execucao  # noqa: E402
 
 LARGURAS = {768: 1024, 1440: 900}
 AXE = RAIZ / "web" / "node_modules" / "axe-core" / "axe.min.js"
-TOKENS = RAIZ / "web" / "src" / "estilos" / "tokens.css"
+# As cores ficam no tokens.css; a tinta do botão principal, no base.css.
+TOKENS = [RAIZ / "web" / "src" / "estilos" / nome for nome in ("tokens.css", "base.css")]
 SENHA = f"medicao-{secrets.token_urlsafe(12)}"
 
 # Os pares de `web/src/estilos/contraste.test.js`: a tinta e os fundos dela.
+_SUPERFICIES = ["--chao", "--etiqueta", "--etiqueta-2"]
+_ESTADOS = ["--acao-fundo", "--neutro-fundo", "--erro-fundo", "--atencao-fundo", "--sucesso-fundo"]
+_ROTAS = ["--rota-analise", "--rota-previsao", "--rota-otimizacao", "--rota-comunicacao", "--rota-administracao"]
+_SEGMENTOS = ["prospeccao", "recem-chegado", "em-risco", "top", "em-ascensao", "estavel"]
 PARES_DE_TEXTO = {
-    "--ink": ["--ground", "--surface", "--surface-2", "--acao-fraca"],
-    "--ink-2": ["--ground", "--surface", "--surface-2", "--acao-fraca"],
-    "--acao-ink": ["--ground", "--surface", "--surface-2", "--acao-fraca"],
-    "--acao-sobre": ["--acao"],
+    "--carbono": _SUPERFICIES + _ESTADOS,
+    "--carbono-2": _SUPERFICIES + _ESTADOS,
+    "--carbono-3": ["--etiqueta", "--etiqueta-2"],
+    "--acao": _SUPERFICIES + ["--acao-fundo"],
+    "--erro": _SUPERFICIES + ["--erro-fundo"],
+    "--atencao": _SUPERFICIES + ["--atencao-fundo"],
+    "--sucesso": _SUPERFICIES + ["--sucesso-fundo"],
+    "--variacao-boa": _SUPERFICIES,
+    "--variacao-ruim": _SUPERFICIES,
+    "--acao-tinta": ["--acao", "--acao-forte"],
+    "--erro-tinta": ["--erro"],
+    "--lacre-tinta": ["--lacre"],
+    "--etiqueta": ["--carbono"],
+    "--nailon-tinta": ["--nailon", "--nailon-2"],
+    "--nailon-tinta-2": ["--nailon", "--nailon-2"],
+    "--nailon-tinta-forte": ["--nailon", "--nailon-2"],
+    "--rota-tinta": _ROTAS,
+    **{f"--seg-{s}-tinta": [f"--seg-{s}-fundo"] for s in _SEGMENTOS},
+    # O nome de cada área, na cor dela, sobre o trilho.
+    **{rota: ["--nailon", "--nailon-2"] for rota in _ROTAS},
 }
 PARES_DE_CONTORNO = {
-    "--borda-controle": ["--ground", "--surface", "--surface-2"],
-    "--acao-ink": ["--ground", "--surface", "--surface-2"],
+    "--fio-forte": ["--etiqueta", "--etiqueta-2"],
+    "--foco": _SUPERFICIES,
 }
 
 
@@ -99,9 +120,17 @@ class Auditoria:
 
 # ------------------------------------------------------------------ contraste
 def _bloco(texto: str, seletor: str) -> dict[str, str]:
-    inicio = texto.index("{", texto.index(seletor))
-    corpo = texto[inicio + 1 : texto.index("}", inicio)]
-    return dict(re.findall(r"(--[a-z0-9-]+)\s*:\s*([^;]+);", corpo))
+    """As cores de todo bloco com aquele seletor, em ordem: o último vence."""
+    cores: dict[str, str] = {}
+    inicio = texto.find(seletor)
+    while inicio >= 0:
+        abre = texto.index("{", inicio)
+        fecha = texto.index("}", abre)
+        for nome, valor in re.findall(r"(--[a-z0-9-]+)\s*:\s*([^;]+);", texto[abre + 1 : fecha]):
+            if valor.strip().startswith("#"):
+                cores[nome] = valor.strip()
+        inicio = texto.find(seletor, fecha)
+    return cores
 
 
 def _luminancia(cor: str) -> float:
@@ -124,7 +153,7 @@ def razao(a: str, b: str) -> float:
 def contraste() -> list[tuple[str, str, float, float, float]]:
     """(frente, fundo, mínimo, claro, escuro), de todos os pares."""
     assert abs(razao("#000000", "#ffffff") - 21) < 1e-9, "o instrumento não dá 21:1"
-    texto = TOKENS.read_text(encoding="utf-8")
+    texto = "".join(arquivo.read_text(encoding="utf-8") for arquivo in TOKENS)
     claro = _bloco(texto, ":root {")
     escuro = {**claro, **_bloco(texto, ':root[data-tema="escuro"]')}
     linhas = []
@@ -268,7 +297,7 @@ def telas(ids: dict) -> list[Tela]:
 # O que passa da borda direita da página fora de caixa com rolagem própria. Se a
 # página não rola e ainda assim há algo aqui, uma caixa com `overflow: hidden`
 # está cortando conteúdo — que a pessoa não tem como ver. O texto só para leitor
-# de tela (`.so-leitor`) fica de fora: ele é recortado de propósito.
+# de tela (`.sr-only`) fica de fora: ele é recortado de propósito.
 NOME = """(e) => e.tagName.toLowerCase() + (e.id ? "#" + e.id : "") +
   (e.classList.length ? "." + [...e.classList].join(".") : "")"""
 PASSAM_DA_BORDA = f"""() => {{
@@ -282,7 +311,7 @@ PASSAM_DA_BORDA = f"""() => {{
     return false;
   }};
   return [...document.querySelectorAll("body *")]
-    .filter((e) => !e.closest(".so-leitor"))
+    .filter((e) => !e.closest(".sr-only"))
     .filter((e) => e.getBoundingClientRect().right > largura + 1 && !rolavel(e))
     .slice(0, 5)
     .map(nome);

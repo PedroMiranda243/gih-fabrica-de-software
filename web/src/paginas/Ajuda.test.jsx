@@ -45,4 +45,15 @@ describe("a ajuda", () => {
     expect(screen.getByText(/O portal mostra só o seu comércio\./)).toBeInTheDocument();
     expect(chamadas().filter((c) => c.includes("/api/ajuda/regras"))).toEqual([]);
   });
+
+  it("se as regras não chegam, a tela diz isso e mantém o que o perfil pode fazer", async () => {
+    abrir("/ajuda", {
+      perfil: "GESTOR",
+      rotas: { "GET /api/ajuda/regras": { status: 503, corpo: { detail: "O banco não respondeu." } } },
+    });
+
+    expect(await screen.findByText(/A explicação dos segmentos e da estimativa depende das regras em vigor/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "O que você pode fazer" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Os segmentos" })).not.toBeInTheDocument();
+  });
 });
