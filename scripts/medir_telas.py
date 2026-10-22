@@ -478,8 +478,8 @@ def montar_relatorio(ambiente, pares, medidas: list[Medida], auditorias: list[Au
     if com_rolagem:
         linhas += [
             "",
-            "**O que rola na própria caixa** — e a página fica no lugar: a tabela larga e, a 768 "
-            "px, o menu, que vira uma faixa no topo.",
+            "**O que rola na própria caixa** — e a página fica no lugar: a tabela larga. A 768 px, "
+            "o menu vira gaveta e sai da tela.",
             "",
             "| Tela | Largura | Caixas |",
             "|---|--:|---|",
