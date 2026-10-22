@@ -1,8 +1,13 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/react";
+import { cleanup, configure } from "@testing-library/react";
 import { afterEach, expect, vi } from "vitest";
 
 import { violacoes } from "./acessibilidade";
+
+/* As telas são carregadas sob demanda. Na primeira abertura de cada uma, com a
+   suíte inteira rodando em paralelo, a importação passa de 1 s — a espera padrão
+   do findBy. 5 s dá folga sem esconder tela que nunca chega. */
+configure({ asyncUtilTimeout: 5000 });
 
 /* **Todo teste termina com a tela conferida pelo axe** (H76): rótulos, papéis e
    nomes acessíveis, no estado em que o teste a deixou — vazio, carregando, com

@@ -1,9 +1,10 @@
 import { render } from "@testing-library/react";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { MemoryRouter } from "react-router-dom";
 
 import { ProvedorDeSessao } from "../api/sessao";
 import App from "../App";
 import sessoes from "./amostras/sessao_de_cada_perfil.json";
+import Endereco from "./Endereco";
 import { simularApi } from "./preparar";
 
 /*
@@ -25,13 +26,7 @@ export function sessaoDe(perfil) {
 }
 
 /** Onde a aplicação está — para o teste conferir um redirecionamento. */
-let ondeEsta = null;
-function Endereco() {
-  const lugar = useLocation();
-  ondeEsta = lugar.pathname + lugar.search;
-  return null;
-}
-export const endereco = () => ondeEsta;
+export { endereco } from "./ondeEsta";
 
 /**
  * Abre a aplicação inteira num endereço — guarda, casca e rotas de verdade —, com

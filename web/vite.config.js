@@ -26,5 +26,6 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: "./src/testes/preparar.js",
     globals: true,
+    testTimeout: 15000,
   },
 });
