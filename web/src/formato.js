@@ -1,334 +1,203 @@
 /**
- * Formatação para leitura. **Nada aqui calcula** (regra 2.4).
- *
- * A API devolve os valores monetários como texto — "12500.40" — de propósito:
- * ponto flutuante perde centavo, e o backend guarda `Numeric`. Converter para
- * número aqui é só para exibir; nenhuma conta de negócio acontece na tela.
- *
- * O travessão aparece onde o valor é **nulo**, e nulo não é zero: zero diz "não
- * mudou", nulo diz "não dá para dizer". Desenhar 0% numa variação indefinida
- * afirmaria estabilidade que ninguém mediu.
+ * Como escrever o que a API mandou. Nada aqui calcula regra de negócio: só converte
+ * para exibir. Nulo vira travessão — e nulo não é zero.
  */
 
 export const TRACO = "—";
 
-const dinheiro = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-  maximumFractionDigits: 2,
-});
+const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const moedaInteira = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+const inteiro = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
+const decimal = (casas) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
 
-const dinheiroCompacto = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
+const nulo = (v) => v === null || v === undefined || v === "";
+const numero = (v) => (nulo(v) ? NaN : Number(v));
 
-const inteiro = new Intl.NumberFormat("pt-BR");
+export function comoDinheiro(valor, { semCentavos = false } = {}) {
+  const n = numero(valor);
+  if (Number.isNaN(n)) return TRACO;
+  return (semCentavos ? moedaInteira : moeda).format(n).replace(/ /g, " ");
+}
 
-export function comoDinheiro(valor, { compacto = false } = {}) {
-  if (valor === null || valor === undefined) return TRACO;
-  const numero = Number(valor);
-  if (Number.isNaN(numero)) return TRACO;
-  return compacto ? dinheiroCompacto.format(numero) : dinheiro.format(numero);
+/** Dinheiro partido para a tipografia: a parte inteira grande e os centavos menores. */
+export function partesDoDinheiro(valor) {
+  const n = numero(valor);
+  if (Number.isNaN(n)) return null;
+  const [inteiros, centavos] = decimal(2).format(Math.abs(n)).split(",");
+  return { sinal: n < 0 ? "−" : "", inteiros, centavos };
+}
+
+/** Dinheiro curto para eixo de gráfico: "1,84 mi", "820 mil", "R$ 950". */
+export function comoDinheiroCurto(valor) {
+  const n = numero(valor);
+  if (Number.isNaN(n)) return TRACO;
+  const abs = Math.abs(n);
+  if (abs >= 1e6) return `${decimal(2).format(n / 1e6)} mi`;
+  if (abs >= 1e3) return `${inteiro.format(Math.round(n / 1e3))} mil`;
+  return inteiro.format(Math.round(n));
 }
 
 export function comoInteiro(valor) {
-  if (valor === null || valor === undefined) return TRACO;
-  const numero = Number(valor);
-  return Number.isNaN(numero) ? TRACO : inteiro.format(numero);
+  const n = numero(valor);
+  return Number.isNaN(n) ? TRACO : inteiro.format(n);
 }
 
-export function comoPercentual(valor) {
-  if (valor === null || valor === undefined) return TRACO;
-  const numero = Number(valor);
-  if (Number.isNaN(numero)) return TRACO;
-  /* O sinal vem sempre, inclusive o de mais: "+12,50%" e "12,50%" são lidos
-     com esforços diferentes numa coluna cheia de variações. */
-  const sinal = numero > 0 ? "+" : "";
-  return `${sinal}${numero.toFixed(2).replace(".", ",")}%`;
+/** Variação que já chega em porcentagem ("-15.06"): sempre com sinal. */
+export function comoVariacao(valor) {
+  const n = numero(valor);
+  if (Number.isNaN(n)) return TRACO;
+  if (n === 0) return "0,00%";
+  return `${n > 0 ? "+" : "−"}${decimal(2).format(Math.abs(n))}%`;
 }
 
-/**
- * "sobe", "cai", "estavel" ou "indefinida" — o que decide seta, sinal e cor.
- *
- * **Estável e indefinida são coisas diferentes**, e a primeira versão desta
- * função as fundia: zero virava "indefinida" e a tela mostrava travessão com
- * "sem variação calculável" para um período que não mudou nada. Zero é uma
- * medição; nulo é a ausência dela.
- */
+/** "sobe", "cai", "estavel" ou "indefinida": zero é medição; nulo é ausência dela. */
 export function sentidoDa(valor) {
-  if (valor === null || valor === undefined) return "indefinida";
-  const numero = Number(valor);
-  if (Number.isNaN(numero)) return "indefinida";
-  if (numero === 0) return "estavel";
-  return numero > 0 ? "sobe" : "cai";
+  const n = numero(valor);
+  if (Number.isNaN(n)) return "indefinida";
+  if (n === 0) return "estavel";
+  return n > 0 ? "sobe" : "cai";
 }
 
-/** `2026-03-02` vira `02/03`. A data vem como texto ISO, sem fuso. */
-export function comoDiaMes(iso) {
-  if (!iso) return TRACO;
-  const [, mes, dia] = iso.split("-");
-  return `${dia}/${mes}`;
+/** Diferença de contagem: "8 a mais", "2 a menos", "igual". */
+export function comoDelta(valor) {
+  const n = numero(valor);
+  if (Number.isNaN(n)) return TRACO;
+  if (n === 0) return "igual";
+  return `${inteiro.format(Math.abs(n))} a ${n > 0 ? "mais" : "menos"}`;
 }
 
-/** `2026-03-02` vira `02/03/2026`. */
+/** Fração sem sinal: erro, taxa, cota — 0.0922 vira "9,2%". */
+export function comoFracao(valor, casas = 1) {
+  const n = numero(valor);
+  if (Number.isNaN(n)) return TRACO;
+  return `${decimal(casas).format(n * 100)}%`;
+}
+
+/** Chance estimada sem fingir certeza. */
+export function comoProbabilidade(valor) {
+  const n = numero(valor);
+  if (Number.isNaN(n)) return TRACO;
+  if (n < 0.005) return "menos de 1%";
+  if (n >= 0.995) return "mais de 99%";
+  return `${Math.round(n * 100)}%`;
+}
+
+export function comoDecimal(valor, casas = 3) {
+  const n = numero(valor);
+  return Number.isNaN(n) ? TRACO : decimal(casas).format(n);
+}
+
+/** Um tempo medido, com três algarismos onde importam. */
+export function comoTempo(segundos) {
+  const s = numero(segundos);
+  if (Number.isNaN(s)) return TRACO;
+  if (s < 1) {
+    const ms = s * 1000;
+    if (ms < 10) return `${decimal(1).format(ms)} ms`;
+    return `${inteiro.format(Math.round(ms))} ms`;
+  }
+  if (s < 10) return `${decimal(2).format(s)} s`;
+  if (s < 60) return `${decimal(1).format(s)} s`;
+  const minutos = Math.floor(s / 60);
+  const resto = Math.round(s - minutos * 60);
+  return resto ? `${minutos} min ${resto} s` : `${minutos} min`;
+}
+
+export const comoMilissegundos = (ms) => (nulo(ms) ? TRACO : comoTempo(Number(ms) / 1000));
+
+/** Fator de ganho: 8 → "8,0x", 135.4 → "135x". */
+export function comoVezes(fator) {
+  const f = numero(fator);
+  if (Number.isNaN(f)) return TRACO;
+  return f >= 100 ? `${inteiro.format(Math.round(f))}x` : `${decimal(1).format(f)}x`;
+}
+
+/** Dia de um período, sem fuso: "2026-09-21" → "21/09/2026". */
 export function comoData(iso) {
   if (!iso) return TRACO;
-  const [ano, mes, dia] = iso.split("-");
+  const [ano, mes, dia] = String(iso).slice(0, 10).split("-");
   return `${dia}/${mes}/${ano}`;
 }
 
-/**
- * Um instante, no relógio de quem está olhando: `21/09/2026 às 18:33`.
- *
- * Diferente de `comoData`, aqui o valor tem hora e fuso — é quando algo
- * aconteceu, e não o dia de um período. Mostrar em UTC faria uma importação da
- * noite aparecer no dia seguinte.
- */
-export function comoDataHora(iso) {
+export function comoDiaMes(iso) {
   if (!iso) return TRACO;
-  const instante = new Date(iso);
-  if (Number.isNaN(instante.getTime())) return TRACO;
-  const dia = instante.toLocaleDateString("pt-BR");
-  const hora = instante.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  return `${dia} às ${hora}`;
+  const [, mes, dia] = String(iso).slice(0, 10).split("-");
+  return `${dia}/${mes}`;
 }
 
-/** O perfil de acesso como as pessoas o chamam (RF04). */
-export const ROTULO_PERFIL = {
-  ADMINISTRADOR: "Administrador",
-  GESTOR: "Gestor",
-  ANALISTA: "Analista",
-  PARCEIRO: "Parceiro",
-};
-
-/** Por onde o relatório entrou — o nome que a tela de importação usa para cada caminho. */
-export const ROTULO_ORIGEM = {
-  TEXTO: "Texto colado",
-  CSV: "Arquivo CSV",
-};
-
-/** O período inteiro, como as pessoas falam dele. */
 export function comoPeriodo(periodo) {
   if (!periodo) return TRACO;
   return `${comoData(periodo.data_inicio)} a ${comoData(periodo.data_fim)}`;
 }
 
-/**
- * O rótulo de cada segmento, em texto.
- *
- * O rótulo é **neutro** de propósito: a cor do segmento vai no ponto ou na
- * barra ao lado, nunca no texto (`docs/09`, regra 1.1). "Top 15" repetido doze
- * vezes em cor é ruído puro — e cor como único canal reprovaria a RNF22.
- */
-export const ROTULO_SEGMENTO = {
-  /* Sem o número (#229): o tamanho do Top é configurável (RF21), e "Top 15" continuava
-     dizendo 15 com o limiar em 10. Onde o número importa, ele vem da API. */
-  TOP: "Top",
-  EM_ASCENSAO: "Em ascensão",
-  EM_RISCO: "Em risco",
-  RECEM_CHEGADO: "Recém-chegado",
-  PROSPECCAO: "Prospecção",
-  ESTAVEL: "Estável",
-};
-
-/**
- * O rótulo do status comercial.
- *
- * A tabela mostrava o valor interno — "PROSPECCAO", em caixa alta e sem
- * acento — como se fosse texto para o usuário ler. **Precisa bater com
- * `api/app/rotas/parceiros.py`**, que escreve os mesmos rótulos no CSV: o
- * usuário exporta o que está vendo.
- */
-export const ROTULO_STATUS = {
-  ATIVO: "Ativo",
-  PROSPECCAO: "Prospecção",
-  INATIVO: "Inativo",
-};
-
-/**
- * Uma diferença de contagem, em palavras: "6 a mais", "2 a menos", "igual".
- *
- * Contagem pede diferença absoluta, e não percentual: de 1 para 2 também é
- * +100%, e o gestor que lê "+100% em risco" entende outra coisa do que
- * aconteceu.
- */
-export function comoDelta(valor) {
-  if (valor === null || valor === undefined) return TRACO;
-  const numero = Number(valor);
-  if (Number.isNaN(numero)) return TRACO;
-  if (numero === 0) return "igual ao anterior";
-  return `${Math.abs(numero)} a ${numero > 0 ? "mais" : "menos"}`;
+/** Um instante, no relógio de quem olha: "21/09/2026 às 18:33". */
+export function comoDataHora(iso) {
+  if (!iso) return TRACO;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return TRACO;
+  const dia = d.toLocaleDateString("pt-BR");
+  const hora = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return `${dia} às ${hora}`;
 }
 
-/**
- * Uma fração como porcentagem, sem sinal: `0.0922` vira `9,2%`.
- *
- * Para erro e probabilidade, que a API manda em fração e não têm sentido de
- * "subiu" ou "caiu" — `comoPercentual` põe o sinal de mais, e "+9,2% de erro"
- * leria como piora.
- */
-export function comoFracao(valor, casas = 1) {
-  if (valor === null || valor === undefined) return TRACO;
-  const numero = Number(valor);
-  if (Number.isNaN(numero)) return TRACO;
-  return `${(numero * 100).toFixed(casas).replace(".", ",")}%`;
-}
+/** "1 período" / "3 períodos". */
+export const plural = (n, um, varios) => `${inteiro.format(n)} ${Number(n) === 1 ? um : varios}`;
 
-/** Um número com vírgula decimal e casas fixas: o Brier `0.1051` vira `0,105`. */
-export function comoDecimal(valor, casas = 3) {
-  if (valor === null || valor === undefined) return TRACO;
-  const numero = Number(valor);
-  return Number.isNaN(numero) ? TRACO : numero.toFixed(casas).replace(".", ",");
-}
+/* ---------- o que a pessoa digita, no formato da API ---------- */
 
-/** Abaixo de um segundo, em milissegundos: "0,1 s" esconderia a diferença entre os modos de execução. */
-export function comoDuracao(ms) {
-  if (ms === null || ms === undefined) return TRACO;
-  return ms < 1000 ? `${comoInteiro(ms)} ms` : `${comoDecimal(ms / 1000, 1)} s`;
-}
-
-/**
- * Um tempo medido, em segundos, com três algarismos onde eles importam: "7,3 ms",
- * "195 ms", "1,56 s", "26,3 s", "2 min 10 s".
- *
- * O benchmark vai de milissegundos da GPU a minutos do Python. Uma casa só,
- * como em `comoDuracao`, diria "0 ms" para a busca de 400 µs, e "7 ms" contra
- * "7 ms" para duas buscas que diferem 40%.
- */
-export function comoTempo(segundos) {
-  if (segundos === null || segundos === undefined) return TRACO;
-  const s = Number(segundos);
-  if (s < 1) {
-    const ms = s * 1000;
-    return `${ms < 10 ? comoDecimal(ms, 2) : ms < 100 ? comoDecimal(ms, 1) : comoInteiro(Math.round(ms))} ms`;
-  }
-  if (s < 60) return `${comoDecimal(s, s < 10 ? 2 : 1)} s`;
-  const minutos = Math.floor(s / 60);
-  return `${minutos} min ${Math.round(s - minutos * 60)} s`;
-}
-
-/** Um fator de ganho: `8` vira "8,0x", `135.4` vira "135x". */
-export function comoVezes(fator) {
-  if (fator === null || fator === undefined) return TRACO;
-  const f = Number(fator);
-  return `${f >= 100 ? comoInteiro(Math.round(f)) : comoDecimal(f, 1)}x`;
-}
-
-/**
- * As quatro colunas do benchmark (ADR-012), na ordem em que aparecem: o rótulo,
- * a cor da série no gráfico e o que cada uma é. A cor segue a coluna, e não a
- * posição: sem a GPU, o OpenMP continua laranja (`docs/09`).
- */
-export const COLUNAS_BENCHMARK = [
-  ["PYTHON", "Python", "var(--serie-1)", "O baseline do RNF02: o mesmo genético, em Python puro."],
-  ["CPP_SERIAL", "C++ serial", "var(--serie-4)", "O mesmo genético compilado, numa thread só: mostra quanto é do compilador."],
-  ["OPENMP", "OpenMP", "var(--serie-2)", "O C++ com os núcleos do processador em paralelo: o CPU paralelo da campanha."],
-  ["GPU", "GPU", "var(--serie-3)", "O C++ com CUDA, na placa de vídeo: o modo GPU da campanha."],
-];
-export const ROTULO_COLUNA = Object.fromEntries(COLUNAS_BENCHMARK.map(([c, rotulo]) => [c, rotulo]));
-export const COR_COLUNA = Object.fromEntries(COLUNAS_BENCHMARK.map(([c, , cor]) => [c, cor]));
-
-/**
- * Os modos de execução do otimizador (RF32), na ordem em que aceleram — a mesma
- * das séries do benchmark (docs/09): o rótulo, o nome no meio da frase e o que o
- * modo é.
- */
-export const MODOS_DE_EXECUCAO = [
-  ["SERIAL", "Serial", "serial", "A referência, em Python: o mesmo plano, em muito mais tempo. Serve para comparar."],
-  ["CPU_PARALELO", "CPU paralelo", "CPU paralelo", "O núcleo em C++, com os núcleos do processador em paralelo."],
-  ["GPU", "GPU", "GPU", "O núcleo em CUDA, na placa de vídeo. Leva uns décimos de segundo para começar: compensa nas campanhas grandes."],
-];
-export const ROTULO_MODO = Object.fromEntries(MODOS_DE_EXECUCAO.map(([modo, rotulo]) => [modo, rotulo]));
-export const NOME_MODO = Object.fromEntries(MODOS_DE_EXECUCAO.map(([modo, , nome]) => [modo, nome]));
-
-/**
- * As cotas por categoria que o gestor pediu, em texto: "Pizzaria: mín. 10%, máx. 40%".
- * O nome da categoria vem das cotas da execução; a categoria removida depois fica
- * pelo número.
- */
-export function cotasDoPedido(execucao) {
-  const nomes = Object.fromEntries(
-    (execucao.cotas ?? []).filter((c) => c.categoria_id !== null).map((c) => [c.categoria_id, c.nome]),
-  );
-  return execucao.parametros.cotas_categoria.map((c) => {
-    const limites = [
-      c.minimo !== null && c.minimo !== undefined && `mín. ${comoFracao(c.minimo, 0)}`,
-      c.maximo !== null && c.maximo !== undefined && `máx. ${comoFracao(c.maximo, 0)}`,
-    ].filter(Boolean);
-    return `${nomes[c.categoria_id] ?? `categoria ${c.categoria_id}`}: ${limites.join(", ")}`;
-  });
-}
-
-/**
- * A restrição que tornou a campanha inviável (RN07), pelo código da API — em
- * poucas palavras, para caber numa linha do histórico. A frase inteira, com o
- * quanto falta, vem da API no `motivo`.
- */
-export const ROTULO_RESTRICAO = {
-  orcamento: "orçamento",
-  maximo_acoes: "máximo de ações",
-  cauda_longa: "cota da cauda longa",
-  cota_categoria: "cota de categoria",
-  elegiveis_categoria: "elegíveis da categoria",
-};
-
-/** A situação de um treino do modelo (UC07). */
-export const ROTULO_SITUACAO_TREINO = {
-  EM_ANDAMENTO: "Em andamento",
-  CONCLUIDO: "Concluído",
-  FALHOU: "Falhou",
-};
-
-/**
- * De onde sai a previsão em uso (RN09, item 4): da rede treinada, ou das
- * contas simples, enquanto nenhuma versão da rede as superou.
- */
-export const ROTULO_ORIGEM_PREVISAO = {
-  MODELO: "Rede neural",
-  REFERENCIA: "Referência (contas simples)",
-};
-
-/**
- * Uma probabilidade estimada, sem fingir certeza: `0.24` vira `24%`, e os
- * extremos viram "menos de 1%" e "mais de 99%".
- *
- * Arredondar 0,998 para "100%" diria que o parceiro **vai** entrar em risco, e
- * 0,002 para "0%", que ele não tem como — nenhum dos dois é o que uma
- * estimativa sabe.
- */
-export function comoProbabilidade(valor) {
-  if (valor === null || valor === undefined) return TRACO;
-  const numero = Number(valor);
-  if (Number.isNaN(numero)) return TRACO;
-  if (numero < 0.005) return "menos de 1%";
-  if (numero >= 0.995) return "mais de 99%";
-  return `${Math.round(numero * 100)}%`;
-}
-
-/**
- * O que a pessoa digita num valor em reais, no formato que a API lê: "12.000,50"
- * vira "12000.50". Ponto é milhar e vírgula é decimal, como se escreve aqui.
- * Não valida: o que não for número segue como veio, e a API recusa com a
- * mensagem dela.
- */
+/** "12.000,50" → "12000.50". Não valida: o que não é número segue como veio. */
 export function lerReais(texto) {
-  const limpo = String(texto ?? "")
-    .replace(/R\$/g, "")
-    .replace(/\s/g, "")
-    .replace(/\./g, "")
-    .replace(",", ".");
-  return limpo;
+  return String(texto ?? "").replace(/R\$/g, "").replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
 }
 
-/** "30" (por cento) → "0.3000". Vazio é "sem cota"; texto que não é número vai como
-    veio, para a API recusar com a mensagem dela. */
+/** "30" (%) → "0.3000". Vazio é nulo; texto que não é número vai como veio. */
 export function paraFracao(percentual) {
   const texto = String(percentual ?? "").trim();
   if (texto === "") return null;
-  const numero = Number(texto.replace(",", "."));
-  if (Number.isNaN(numero)) return texto;
-  return (Math.round(numero * 100) / 10000).toFixed(4);
+  const n = Number(texto.replace(",", "."));
+  if (Number.isNaN(n)) return texto;
+  return (Math.round(n * 100) / 10000).toFixed(4);
+}
+
+/** "0.1400" → "14" (para preencher um campo em %). */
+export function deFracao(fracao) {
+  const n = numero(fracao);
+  if (Number.isNaN(n)) return "";
+  return String(Math.round(n * 10000) / 100).replace(".", ",");
+}
+
+/** "12000.5" → "12.000,50" (para preencher um campo em reais). */
+export function paraCampoDeReais(valor) {
+  const n = numero(valor);
+  return Number.isNaN(n) ? "" : decimal(2).format(n);
+}
+
+/* ---------- os rótulos: valor da API → o que se lê ---------- */
+
+export const ROTULO_PERFIL = { ADMINISTRADOR: "Administrador", GESTOR: "Gestor", ANALISTA: "Analista", PARCEIRO: "Parceiro" };
+export const ROTULO_SEGMENTO = { PROSPECCAO: "Prospecção", RECEM_CHEGADO: "Recém-chegado", EM_RISCO: "Em risco", TOP: "Top", EM_ASCENSAO: "Em ascensão", ESTAVEL: "Estável" };
+export const ORDEM_SEGMENTOS = ["PROSPECCAO", "RECEM_CHEGADO", "EM_RISCO", "TOP", "EM_ASCENSAO", "ESTAVEL"];
+export const ROTULO_STATUS = { ATIVO: "Ativo", PROSPECCAO: "Prospecção", INATIVO: "Inativo" };
+export const ROTULO_ORIGEM = { TEXTO: "Texto colado", CSV: "Arquivo CSV" };
+export const ROTULO_ORIGEM_PREVISAO = { MODELO: "Rede neural", REFERENCIA: "Referência (contas simples)" };
+export const ROTULO_MODO = { SERIAL: "Serial (a referência, em Python)", CPU_PARALELO: "CPU paralelo", GPU: "GPU" };
+export const ROTULO_MODO_CURTO = { SERIAL: "Serial", CPU_PARALELO: "CPU paralelo", GPU: "GPU" };
+export const ROTULO_COLUNA = { PYTHON: "Python", CPP_SERIAL: "C++ serial", OPENMP: "OpenMP", GPU: "GPU" };
+export const ORDEM_COLUNAS = ["PYTHON", "CPP_SERIAL", "OPENMP", "GPU"];
+export const ROTULO_REDATOR = { MODELO: "Assistente", MODELO_FIXO: "Modelo fixo" };
+export const ROTULO_SITUACAO_TREINO = { EM_ANDAMENTO: "Em andamento", CONCLUIDO: "Concluído", FALHOU: "Falhou" };
+export const ROTULO_RESTRICAO = { orcamento: "orçamento", maximo_acoes: "máximo de ações", cauda_longa: "cota da cauda longa", cota_categoria: "cota de categoria", elegiveis_categoria: "elegíveis da categoria" };
+export const ROTULO_PARAMETRO = { orcamento: "Orçamento", maximo_acoes: "Máximo de ações", cota_cauda_longa: "Cauda longa", cotas_categoria: "Cotas por categoria", aplicacao_inicio: "Início da aplicação", aplicacao_fim: "Fim da aplicação", modo: "Modo" };
+
+/** As cotas por categoria pedidas, em texto: "Pizzaria: mín. 10%, máx. 40%". */
+export function cotasDoPedido(execucao, nomesDasCategorias = {}) {
+  const nomes = { ...nomesDasCategorias };
+  for (const c of execucao?.cotas ?? []) if (c.categoria_id !== null) nomes[c.categoria_id] = c.nome;
+  return (execucao?.parametros?.cotas_categoria ?? []).map((c) => {
+    const limites = [
+      !nulo(c.minimo) && `mín. ${comoFracao(c.minimo, 0)}`,
+      !nulo(c.maximo) && `máx. ${comoFracao(c.maximo, 0)}`,
+    ].filter(Boolean);
+    return `${nomes[c.categoria_id] ?? `Categoria ${c.categoria_id}`}: ${limites.join(", ")}`;
+  });
 }

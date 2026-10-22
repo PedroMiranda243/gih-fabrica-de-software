@@ -1,81 +1,85 @@
 /**
- * Estado da sessão, num lugar só.
- *
- * A sessão tem estado **no servidor** (RF02): encerrar invalida de verdade, e
- * não apenas apaga o cookie do navegador. Por isso a interface nunca guarda o
- * usuário em `localStorage` — ela pergunta ao servidor quem está autenticado.
- * Confiar num usuário guardado localmente faria a tela continuar mostrando
- * sessão ativa depois de a senha ser trocada em outro lugar, que é exatamente
- * o cenário que a revogação no servidor existe para cobrir.
+ * A sessão de quem está usando. O servidor é a fonte: ao abrir, a interface
+ * pergunta `GET /api/sessao/atual`; nada fica guardado no navegador.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { aoEncerrarSessao, api } from "./cliente";
-import { ContextoSessao } from "./contextoSessao";
+import { aoEncerrarSessao, api, ErroDaApi } from "./cliente";
+
+const Contexto = createContext(null);
 
 export function ProvedorDeSessao({ children }) {
   const [usuario, setUsuario] = useState(null);
-  /* Três estados, não dois: "ainda não sei" é diferente de "não autenticado".
-     Sem isso a tela pisca o login antes de descobrir que havia sessão. */
   const [conferindo, setConferindo] = useState(true);
+  const [expirou, setExpirou] = useState(false);
+  const navegar = useNavigate();
+  const dentro = useRef(false);
 
   useEffect(() => {
     let vivo = true;
     api
       .get("/api/sessao/atual")
-      .then((atual) => vivo && setUsuario(atual))
-      .catch(() => vivo && setUsuario(null))
-      .finally(() => vivo && setConferindo(false));
+      .then((u) => {
+        if (!vivo) return;
+        dentro.current = true;
+        setUsuario(u);
+      })
+      .catch(() => {
+        if (vivo) setUsuario(null);
+      })
+      .finally(() => {
+        if (vivo) setConferindo(false);
+      });
     return () => {
       vivo = false;
     };
   }, []);
 
-  /* A sessão terminou com a tela aberta? (H96) Só vale para quem estava dentro:
-     o 401 da primeira conferência, de quem ainda não entrou, não é "a sua
-     sessão terminou" — é só "você não entrou". */
-  const [encerrada, setEncerrada] = useState(false);
-  const dentro = useRef(false);
-  useEffect(() => {
-    dentro.current = Boolean(usuario);
-  }, [usuario]);
-
-  /* Qualquer 401 vindo de qualquer requisição derruba o usuário local. A
-     sessão pode ter expirado ou sido revogada enquanto a aba estava aberta, e
-     a tela precisa acompanhar — e dizer por que a pessoa voltou ao login. */
+  /* A sessão que termina no meio: a casca leva à entrada com o aviso, guardando o
+     endereço (com os filtros) para devolver a pessoa ao mesmo lugar depois. */
   useEffect(
     () =>
       aoEncerrarSessao(() => {
-        if (dentro.current) setEncerrada(true);
+        if (!dentro.current) return;
+        dentro.current = false;
+        setExpirou(true);
         setUsuario(null);
       }),
     [],
   );
 
   const entrar = useCallback(async (login, senha) => {
-    const sessao = await api.post("/api/sessao", { login, senha });
-    setEncerrada(false);
-    setUsuario(sessao.usuario);
-    return sessao.usuario;
+    const resposta = await api.post("/api/sessao", { login, senha });
+    dentro.current = true;
+    setExpirou(false);
+    setUsuario(resposta.usuario);
+    return resposta.usuario;
   }, []);
 
   const sair = useCallback(async () => {
     try {
       await api.delete("/api/sessao");
-    } finally {
-      /* Mesmo que a chamada falhe, o usuário pediu para sair: a tela obedece.
-         O servidor já invalidou, ou invalidará na expiração. Sair de propósito
-         não é "a sessão terminou". */
-      dentro.current = false;
-      setEncerrada(false);
-      setUsuario(null);
+    } catch (erro) {
+      if (!(erro instanceof ErroDaApi)) throw erro;
     }
-  }, []);
+    dentro.current = false;
+    setExpirou(false);
+    setUsuario(null);
+    navegar("/entrar", { replace: true });
+  }, [navegar]);
 
-  const valor = useMemo(
-    () => ({ usuario, conferindo, encerrada, entrar, sair }),
-    [usuario, conferindo, encerrada, entrar, sair],
-  );
+  const valor = useMemo(() => ({ usuario, conferindo, expirou, entrar, sair, setUsuario }), [usuario, conferindo, expirou, entrar, sair]);
+  return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
+}
 
-  return <ContextoSessao.Provider value={valor}>{children}</ContextoSessao.Provider>;
+export function useSessao() {
+  return useContext(Contexto);
+}
+
+/** Se o perfil abre aquilo. Sem `telas` na sessão, a interface não adivinha: deixa a API responder. */
+export function tem(usuario, ...telas) {
+  if (!usuario) return false;
+  if (!Array.isArray(usuario.telas)) return true;
+  return telas.some((t) => usuario.telas.includes(t));
 }

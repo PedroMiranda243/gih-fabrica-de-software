@@ -1,64 +1,136 @@
-/* A folha impressa (RF48 · H88) — o PDF dos relatórios é o da impressão do navegador.
- *
- * Nenhuma biblioteca gera PDF aqui: "Imprimir ou salvar em PDF" é a impressão
- * do navegador, e esta folha é o que faz a página virar documento. Vale para a
- * aplicação inteira — quem imprime qualquer tela sai sem o menu —, mas foi
- * escrita para os relatórios, que são o que se leva para fora do sistema.
- *
- * O que ela faz:
- *   1. tira o que é da aplicação, e não do documento: o menu, o cabeçalho, os
- *      filtros, os botões e a trilha (`.nao-imprime`);
- *   2. mostra o que só o documento tem: a linha de emissão (`.so-impressao`);
- *   3. solta as tabelas da rolagem, e não corta linha entre duas páginas;
- *   4. imprime no tema claro, que é o que tem contraste no papel — o
- *      `impressao.js` troca o tema antes de imprimir e o devolve depois.
- *
- * Carregada por último em `main.jsx`: as regras daqui precisam ganhar das
- * folhas das telas.
+/*
+ * A folha impressa: sempre no tema claro, sem menu, cabeçalho, trilha, filtros e
+ * botões; tabelas inteiras, sem rolagem; e a linha de quem emitiu e quando.
  */
-
 @media print {
+  :root,
+  :root[data-tema="escuro"],
+  :root:not([data-tema="claro"]) {
+    color-scheme: light;
+    --chao: #ffffff;
+    --etiqueta: #ffffff;
+    --etiqueta-2: #f4f5f6;
+    --carbono: #111111;
+    --carbono-2: #444a51;
+    --carbono-3: #5f656c;
+    --fio: #cfd3d8;
+    --fio-forte: #8a9098;
+    --acao: #1d3fe0;
+    --acao-fundo: #eef1ff;
+    --erro: #b0141f;
+    --erro-fundo: #fdecee;
+    --sucesso: #0b6b45;
+    --sucesso-fundo: #e7f6ef;
+    --atencao: #7a4a00;
+    --atencao-fundo: #fff4d6;
+    --neutro-fundo: #f1f3f5;
+    --variacao-boa: #0b6b45;
+    --variacao-ruim: #a3261c;
+    --seg-prospeccao: #0b8f9a;
+    --seg-recem-chegado: #c2347a;
+    --seg-em-risco: #e5512d;
+    --seg-top: #7a4bd0;
+    --seg-em-ascensao: #13a05f;
+    --seg-estavel: #8d939b;
+    --serie-python: #c2347a;
+    --serie-cpp: #6b7178;
+    --seg-prospeccao-fundo: #dcf6f9;
+    --seg-prospeccao-tinta: #005b65;
+    --seg-recem-chegado-fundo: #ffe6f1;
+    --seg-recem-chegado-tinta: #871951;
+    --seg-em-risco-fundo: #ffe7de;
+    --seg-em-risco-tinta: #8d1d00;
+    --seg-top-fundo: #f2ebff;
+    --seg-top-tinta: #563495;
+    --seg-em-ascensao-fundo: #dcf9e5;
+    --seg-em-ascensao-tinta: #006228;
+    --seg-estavel-fundo: #eef0f3;
+    --seg-estavel-tinta: #484e54;
+    --rota-analise-forte: #006ca0;
+    --rota-analise-fundo: #e6f6ff;
+    --rota-previsao-forte: #894194;
+    --rota-previsao-fundo: #fbeffc;
+    --rota-otimizacao-forte: #9b4b00;
+    --rota-otimizacao-fundo: #fef1e4;
+    --rota-comunicacao-forte: #367500;
+    --rota-comunicacao-fundo: #edf7e8;
+    --rota-administracao-forte: #50657e;
+    --rota-administracao-fundo: #e9f5ff;
+    --serie-openmp: #7a4cd1;
+    --serie-gpu: #1d8f5a;
+    --grafico-linha: #111111;
+    --grafico-grade: #e3e5e8;
+    --grafico-estimativa: #444a51;
+    --sombra-etiqueta: none;
+  }
+
   @page {
-    size: A4;
     margin: 14mm 12mm;
   }
 
-  /* 1. O que é da aplicação fica de fora. */
+  body {
+    background: #ffffff;
+    font-size: 11pt;
+  }
+
+  .pular,
   .trilho,
+  .casca__veu,
   .cabecalho,
-  .nao-imprime {
+  .trilha,
+  .filtros,
+  .recorte,
+  .barra-acoes,
+  .nao-imprime,
+  .paginacao,
+  .ver-numeros__botao,
+  button,
+  .botao,
+  .nao-salvas {
     display: none !important;
   }
 
-  /* 2. O que só a folha tem. */
   .so-impressao {
     display: block;
   }
 
-  /* A casca é uma grade de duas colunas, com o menu na primeira; sem o menu,
-     o conteúdo ocupa a folha inteira. */
   .casca {
     display: block;
-    min-height: 0;
   }
 
-  body {
-    background: var(--surface);
-  }
-
-  .pagina {
+  .conteudo {
     padding: 0;
-    gap: var(--esp-12);
+    max-width: none;
   }
 
-  /* 3. As tabelas, inteiras. A caixa de rolagem cortaria as colunas que não
-     cabem na tela; na folha a tabela ocupa a largura dela. */
-  .tabela-rolagem {
+  .bloco,
+  .folha,
+  .kpi,
+  .filtros {
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .folha {
+    gap: 8mm;
+  }
+
+  .kpi {
+    border: 1px solid #cfd3d8;
+    padding: 3mm;
+    break-inside: avoid;
+  }
+
+  .kpi::before {
+    display: none;
+  }
+
+  .caixa-tabela,
+  .caixa-tabela--alta {
     overflow: visible;
+    max-height: none;
   }
 
-  /* O cabeçalho grudado da tela se repete em cada página, que é o que o
-     `table-header-group` faz — e `sticky` na impressão o deixa só na primeira. */
   .tabela thead {
     display: table-header-group;
   }
@@ -67,76 +139,44 @@
     position: static;
   }
 
-  .tabela tfoot {
-    display: table-row-group;
-  }
-
-  /* Nenhuma linha cortada entre duas páginas. */
-  .tabela tr,
-  .relatorio__resumo > div {
+  .tabela tr {
     break-inside: avoid;
   }
 
-  /* A tabela de oito colunas do relatório de risco não cabia na largura útil da
-     folha: o navegador encolhia a página inteira para ela caber, e aquele PDF
-     saía com a letra menor que a dos outros. Um passo abaixo na escala e menos
-     respiro entre as colunas fazem ela caber sem encolher nada. */
-  .tabela {
-    font-size: var(--txt-115);
-  }
-
-  .tabela th,
-  .tabela td {
-    padding: var(--esp-6);
-    white-space: normal;
-  }
-
-  /* O texto quebra para caber na folha; o número, não: "mais de 99%" em três
-     linhas, uma palavra em cada, foi o que saiu no primeiro PDF. */
-  .tabela td.numerica {
-    white-space: nowrap;
-  }
-
-  /* Na tela, o nome reserva 20 caracteres para as linhas terem a mesma altura
-     enquanto a lista rola. Na folha, essa reserva era a largura que faltava às
-     outras sete colunas: a tabela passava da borda do bloco. Aqui o nome ocupa
-     o que ele tem. */
-  .tabela .nome {
-    min-width: 0;
-  }
-
-  /* O título de um bloco não fica sozinho no pé da página, sem a tabela dele. */
-  .painel__cabecalho,
-  .relatorio__cabecalho {
-    break-after: avoid;
-  }
-
-  /* O painel pode quebrar: uma tabela longa não cabe numa página só. O bloco
-     curto — um resumo, uma tabela de grupos — pede para ir inteiro: partido,
-     sobrava uma linha sozinha na página seguinte, medido no primeiro PDF. */
-  .painel {
+  .folha__secao {
     break-inside: auto;
   }
 
-  .painel--inteiro {
-    break-inside: avoid;
+  .folha__subtitulo {
+    break-after: avoid;
   }
 
-  /* As barras e os pontos de segmento são fundo, e o navegador não imprime
-     fundo por padrão. Sem isto a coluna das barras sairia em branco. */
-  .contagem__trilho,
-  .contagem__barra,
-  .distribuicao__trilho,
-  .distribuicao__barra,
-  .segmento__ponto {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+  .folha__marca {
+    font-weight: 700;
+    font-size: 10pt;
+    letter-spacing: 0.04em;
   }
 
-  /* No papel, o link não responde a clique: sai como texto. */
-  a,
-  .nome__link {
+  .folha__emitido {
+    font-size: 9pt;
+    color: #444a51;
+  }
+
+  a {
     color: inherit;
     text-decoration: none;
+  }
+
+  .lacre {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .segmento__ponto,
+  .faixa-segmentos__parte,
+  .barras__barra,
+  .distribuicao__barra {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }

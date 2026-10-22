@@ -1,474 +1,392 @@
 /**
- * Importação de relatório (UC03).
- *
- * O fluxo é o que a API implementa: informar o período, colar o texto **ou**
- * enviar um arquivo, ver a **prévia**, e só então confirmar. A prévia não é
- * enfeite — é o que o RF11 pede, e é o que permite alguém conferir o que vai
- * entrar antes de entrar.
- *
- * Duas recusas do servidor aparecem como erro de negócio, e não como falha
- * genérica: sem período (RN03) e período já importado (RF12). As duas trazem
- * `ajuda` explicando o que fazer, e é essa explicação que a tela mostra.
- *
- * Abaixo do formulário, o **histórico** (RF13): quem trouxe cada período e o que
- * restou dele. O Administrador lê o histórico sem importar nada — para ele, a
- * tela é só essa parte.
+ * Importação — trazer o relatório da semana, conferindo antes de gravar.
+ * O formulário só para quem tem `importar`; o histórico para quem tem qualquer um.
  */
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { api } from "../api/cliente";
-import { useSessao } from "../api/contextoSessao";
-import { Esqueleto } from "../componentes/Carregando";
-import EstadoVazio from "../componentes/EstadoVazio";
-import {
-  comoDataHora,
-  comoDinheiro,
-  comoInteiro,
-  comoPeriodo,
-  ROTULO_ORIGEM,
-  TRACO,
-} from "../formato";
-import "../estilos/importacao.css";
+import { api, ErroDaApi } from "../api/cliente";
+import { useCarregar, useFiltros } from "../api/ganchos";
+import { tem, useSessao } from "../api/sessao";
+import Confirmacao from "../componentes/Confirmacao";
+import { Ausente } from "../componentes/Dados";
+import { Carregando, ErroDaTela, Nota, Sucesso, Vazio } from "../componentes/Estados";
+import { Campo, ResumoDeErros, useErrosDoFormulario } from "../componentes/Formulario";
+import Icone from "../componentes/Icone";
+import { CaixaDeTabela, Paginacao } from "../componentes/Lista";
+import { useTitulo } from "../componentes/Titulo";
+import { comoDataHora, comoDinheiro, comoInteiro, comoPeriodo, plural, ROTULO_ORIGEM } from "../formato";
 
-const VAZIO = { periodo_inicio: "", periodo_fim: "", texto: "" };
-const TAMANHO_HISTORICO = 10;
+const EXEMPLO = "Parceiro;Faturamento;Pedidos\nComércio Alfa;12500,40;312";
+const TAMANHO = 10;
 
 export default function Importacao() {
+  useTitulo("Importação de relatório", "Importação");
   const { usuario } = useSessao();
-  /* Quem importa vem das telas que o servidor mandou, e não de um `if` sobre o
-     perfil aqui (regra 2.4). Sessão sem `telas`, de antes da atualização, vê o
-     formulário como sempre viu — e a rota recusa se não puder. */
-  const podeImportar = !Array.isArray(usuario?.telas) || usuario.telas.includes("importar");
-
-  /* Cada importação gravada troca a chave do histórico: ele recarrega e volta
-     à primeira página, onde a importação nova aparece. */
-  const [gravadas, setGravadas] = useState(0);
+  const [filtros, mudar] = useFiltros();
+  const pagina = Number(filtros.pagina) || 1;
+  const historico = useCarregar(() => api.get("/api/importacoes", { pagina, tamanho: TAMANHO }), `h${pagina}`);
+  const podeImportar = tem(usuario, "importar");
 
   return (
-    <>
-      {podeImportar && <Formulario aoGravar={() => setGravadas((n) => n + 1)} />}
-      <Historico key={gravadas} />
-    </>
+    <div className="pagina pagina--importacao">
+      {podeImportar ? (
+        <FormularioDeImportacao aoGravar={() => historico.recarregar()} />
+      ) : (
+        <Nota titulo="O seu perfil consulta o histórico">Importar um relatório é do Gestor e do Analista. Abaixo estão todas as importações, com quem as trouxe e quando.</Nota>
+      )}
+      <Historico historico={historico} pagina={pagina} aoMudarPagina={(p) => mudar({ pagina: p > 1 ? p : null }, { manterPagina: true })} />
+    </div>
   );
 }
 
-function Formulario({ aoGravar }) {
-  const [form, setForm] = useState(VAZIO);
+function FormularioDeImportacao({ aoGravar }) {
+  const [inicio, setInicio] = useState("");
+  const [fim, setFim] = useState("");
+  const [modo, setModo] = useState("texto");
+  const [texto, setTexto] = useState("");
   const [arquivo, setArquivo] = useState(null);
   const [previa, setPrevia] = useState(null);
-  const [erro, setErro] = useState(null);
-  const [ocupado, setOcupado] = useState(false);
-  const [resultado, setResultado] = useState(null);
+  const [conflito, setConflito] = useState(null);
+  const [gravado, setGravado] = useState(null);
+  const [ocupado, setOcupado] = useState(null);
+  const { erros, receber, limpar, registrar } = useErrosDoFormulario();
+  const refArquivo = useRef(null);
+  const refPrevia = useRef(null);
 
-  const temPeriodo = form.periodo_inicio && form.periodo_fim;
-  const temConteudo = arquivo || form.texto.trim();
-
-  function campo(nome) {
-    return {
-      value: form[nome],
-      onChange: (e) => setForm((f) => ({ ...f, [nome]: e.target.value })),
-    };
-  }
-
-  /* O arquivo e o texto colado são caminhos alternativos. Manter os dois
-     preenchidos deixaria ambíguo o que será importado. */
-  function escolherArquivo(e) {
-    setArquivo(e.target.files?.[0] ?? null);
-    setForm((f) => ({ ...f, texto: "" }));
+  function mexeu() {
     setPrevia(null);
+    setConflito(null);
+    setGravado(null);
   }
 
-  function montarFormulario(extra = {}) {
-    const dados = new FormData();
-    dados.set("arquivo", arquivo);
-    dados.set("periodo_inicio", form.periodo_inicio);
-    dados.set("periodo_fim", form.periodo_fim);
-    Object.entries(extra).forEach(([chave, valor]) => dados.set(chave, String(valor)));
-    return dados;
-  }
-
-  async function executar(acao) {
-    setErro(null);
-    setOcupado(true);
-    try {
-      return await acao();
-    } catch (e) {
-      setErro(e);
-      return null;
-    } finally {
-      setOcupado(false);
+  function corpo(substituir = false) {
+    if (modo === "arquivo") {
+      const f = new FormData();
+      if (arquivo) f.append("arquivo", arquivo);
+      if (inicio) f.append("periodo_inicio", inicio);
+      if (fim) f.append("periodo_fim", fim);
+      if (substituir) f.append("substituir", "true");
+      return f;
     }
+    return { periodo_inicio: inicio || undefined, periodo_fim: fim || undefined, texto, ...(substituir ? { substituir: true } : {}) };
   }
 
   async function verPrevia(evento) {
     evento.preventDefault();
-    setResultado(null);
-    const resposta = await executar(() =>
-      arquivo
-        ? api.enviarArquivo("/api/importacoes/arquivo/previa", montarFormulario())
-        : api.post("/api/importacoes/previa", { ...form }),
-    );
-    if (resposta) setPrevia(resposta);
-  }
-
-  async function confirmar(substituir = false) {
-    const resposta = await executar(() =>
-      arquivo
-        ? api.enviarArquivo("/api/importacoes/arquivo", montarFormulario({ substituir }))
-        : api.post("/api/importacoes", { ...form, substituir }),
-    );
-    if (resposta) {
-      setResultado(resposta);
-      setPrevia(null);
-      setForm(VAZIO);
-      setArquivo(null);
-      aoGravar();
+    limpar();
+    mexeu();
+    setOcupado("previa");
+    try {
+      const r = modo === "arquivo" ? await api.enviarArquivo("/api/importacoes/arquivo/previa", corpo()) : await api.post("/api/importacoes/previa", corpo());
+      setPrevia(r);
+      requestAnimationFrame(() => refPrevia.current?.focus());
+    } catch (e) {
+      receber(e, { ordem: ["periodo_inicio", "periodo_fim", "texto", "arquivo"] });
+    } finally {
+      setOcupado(null);
     }
   }
 
-  /* O 409 do período repetido traz quantos registros seriam apagados e quem os
-     trouxe. A substituição só é oferecida depois disso — o padrão do RF12 é
-     cancelar, e destruir dado não pode ser um clique distraído. */
-  const conflito = erro?.status === 409 ? erro.corpo?.detail?.ja_existe : null;
+  async function gravar(substituir = false) {
+    limpar();
+    setOcupado(substituir ? "substituir" : "gravar");
+    try {
+      const r = modo === "arquivo" ? await api.enviarArquivo("/api/importacoes/arquivo", corpo(substituir)) : await api.post("/api/importacoes", corpo(substituir));
+      setGravado(r);
+      setPrevia(null);
+      setConflito(null);
+      aoGravar();
+    } catch (e) {
+      if (e instanceof ErroDaApi && e.status === 409 && e.detalhe?.ja_existe) setConflito(e);
+      else receber(e, { ordem: ["periodo_inicio", "periodo_fim", "texto", "arquivo"] });
+    } finally {
+      setOcupado(null);
+    }
+  }
+
+  const temConteudo = modo === "texto" ? texto.trim().length > 0 : Boolean(arquivo);
 
   return (
-    <>
-      {resultado && (
-        <div className="aviso aviso--sucesso" role="status">
-          <p className="aviso__titulo">
-            Importação concluída — {comoInteiro(resultado.total_gravado)} registros gravados.
+    <section className="bloco bloco--formulario" aria-labelledby="titulo-novo-relatorio">
+      <div className="bloco__cabeca">
+        <h2 id="titulo-novo-relatorio" className="bloco__titulo">
+          Relatório da semana
+        </h2>
+        <p className="bloco__sub">Confira na prévia o que será gravado antes de gravar.</p>
+      </div>
+
+      {gravado && (
+        <Sucesso foco>
+          <p>
+            Importação gravada: {plural(gravado.total_gravado, "registro", "registros")} do período {comoPeriodo(gravado.periodo)}
+            {gravado.total_rejeitado ? `, e ${plural(gravado.total_rejeitado, "linha rejeitada", "linhas rejeitadas")}` : ""}.
           </p>
-          <p className="aviso__ajuda">
-            {resultado.total_rejeitado > 0
-              ? `${comoInteiro(resultado.total_rejeitado)} linha(s) rejeitada(s) não entraram.`
-              : "Nenhuma linha rejeitada."}
-          </p>
-          {/* A importação termina segmentando a base, e o resultado disso está no
-              painel, não aqui. Sem o link, o passo seguinte ficava por conta de
-              achar o menu. */}
-          <p className="aviso__acao">
-            <Link to="/">Ver no painel</Link>
-          </p>
-        </div>
+          <Link to="/" className="link-seta">
+            Ver no painel <Icone nome="seta-direita" />
+          </Link>
+        </Sucesso>
       )}
 
-      <form className="painel importacao" onSubmit={verPrevia}>
-        <div className="painel__cabecalho">
-          <h2 className="painel__titulo">Relatório do período</h2>
-          <span className="painel__nota">Colar o texto ou enviar um arquivo CSV</span>
-        </div>
+      <form onSubmit={verPrevia} noValidate className="formulario">
+        <ResumoDeErros erros={erros} rotulos={{ periodo_inicio: "Início do período", periodo_fim: "Fim do período", texto: "Relatório", arquivo: "Arquivo" }} />
+        <fieldset className="grupo-campos grupo-campos--linha">
+          <legend className="grupo-campos__legenda">Período do relatório</legend>
+          <Campo nome="periodo_inicio" rotulo="Início do período" obrigatorio erro={erros.campos.periodo_inicio} largura="220px">
+            {(a) => <input {...a} ref={registrar("periodo_inicio")} type="date" className="entrada" value={inicio} onChange={(e) => (setInicio(e.target.value), mexeu())} />}
+          </Campo>
+          <Campo nome="periodo_fim" rotulo="Fim do período" obrigatorio erro={erros.campos.periodo_fim} largura="220px">
+            {(a) => <input {...a} ref={registrar("periodo_fim")} type="date" className="entrada" value={fim} onChange={(e) => (setFim(e.target.value), mexeu())} />}
+          </Campo>
+        </fieldset>
 
-        <div className="importacao__corpo">
-          <div className="importacao__periodo">
-            <div className="campo">
-              <label htmlFor="inicio">Início do período</label>
-              <input id="inicio" type="date" required {...campo("periodo_inicio")} />
-            </div>
-            <div className="campo">
-              <label htmlFor="fim">Fim do período</label>
-              <input id="fim" type="date" required {...campo("periodo_fim")} />
-            </div>
+        <fieldset className="grupo-campos">
+          <legend className="grupo-campos__legenda">Como o relatório chega</legend>
+          <div className="segmentado" role="radiogroup" aria-label="Como o relatório chega">
+            {[
+              ["texto", "Colar o texto"],
+              ["arquivo", "Enviar um arquivo CSV"],
+            ].map(([v, r]) => (
+              <label key={v} className={`segmentado__opcao${modo === v ? " segmentado__opcao--ativa" : ""}`}>
+                <input type="radio" name="modo" value={v} checked={modo === v} onChange={() => (setModo(v), mexeu())} />
+                {r}
+              </label>
+            ))}
           </div>
-
-          <p className="importacao__nota">
-            O relatório não traz datas. Sem o período, as métricas ficam órfãs na linha do tempo e a
-            segmentação por tendência classifica errado sem emitir erro — por isso ele é obrigatório.
-          </p>
-
-          <div className="campo">
-            <label htmlFor="texto">Colar o relatório</label>
-            <textarea
-              id="texto"
-              rows={8}
-              placeholder={"Parceiro;Faturamento;Pedidos\nComércio Alfa;12500,40;312"}
-              disabled={Boolean(arquivo)}
-              {...campo("texto")}
-            />
-          </div>
-
-          <div className="campo">
-            <label htmlFor="arquivo">…ou enviar um arquivo</label>
-            <input id="arquivo" type="file" accept=".csv,.txt,text/csv,text/plain" onChange={escolherArquivo} />
-            {arquivo && (
-              <span className="importacao__arquivo">
-                {arquivo.name}
-                <button
-                  type="button"
-                  className="importacao__remover"
-                  onClick={() => setArquivo(null)}
-                >
-                  remover
-                </button>
-              </span>
-            )}
-          </div>
-
-          {erro && (
-            <div className="aviso" role="alert">
-              <p className="aviso__titulo">{erro.message}</p>
-              {erro.ajuda && <p className="aviso__ajuda">{erro.ajuda}</p>}
-              {erro.campos?.map((c) => (
-                <p key={c.campo} className="aviso__ajuda">
-                  <strong>{c.campo}:</strong> {c.ajuda ?? c.mensagem}
-                </p>
-              ))}
-              {conflito && (
-                <div className="importacao__conflito">
-                  <p>
-                    Já existem <strong>{comoInteiro(conflito.metricas_que_serao_apagadas)}</strong>{" "}
-                    registros neste período, trazidos por {conflito.autor}. Substituir apaga todos
-                    eles.
-                  </p>
-                  <button
-                    type="button"
-                    className="botao"
-                    disabled={ocupado}
-                    onClick={() => confirmar(true)}
-                  >
-                    Substituir mesmo assim
-                  </button>
-                </div>
-              )}
-            </div>
+          {modo === "texto" ? (
+            <Campo nome="texto" rotulo="Relatório" obrigatorio erro={erros.campos.texto} ajuda="Uma linha por parceiro, com cabeçalho: nome, faturamento (vírgula nos centavos) e pedidos, separados por ponto e vírgula.">
+              {(a) => <textarea {...a} ref={registrar("texto")} className="entrada entrada--codigo" rows={9} placeholder={EXEMPLO} value={texto} onChange={(e) => (setTexto(e.target.value), mexeu())} spellCheck={false} />}
+            </Campo>
+          ) : (
+            <Campo nome="arquivo" rotulo="Arquivo CSV" obrigatorio erro={erros.campos.arquivo} ajuda="CSV ou texto, com cabeçalho. Planilha do Excel precisa ser exportada como CSV antes.">
+              {(a) =>
+                arquivo ? (
+                  <div className="arquivo-escolhido" id={a.id}>
+                    <Icone nome="arquivo" />
+                    <span className="arquivo-escolhido__nome">{arquivo.name}</span>
+                    <span className="arquivo-escolhido__tamanho">{comoInteiro(Math.ceil(arquivo.size / 1024))} KB</span>
+                    <button
+                      type="button"
+                      className="botao botao--fantasma botao--pequeno"
+                      onClick={() => {
+                        setArquivo(null);
+                        mexeu();
+                        requestAnimationFrame(() => refArquivo.current?.focus());
+                      }}
+                    >
+                      Remover
+                    </button>
+                  </div>
+                ) : (
+                  <input
+                    {...a}
+                    ref={(el) => {
+                      refArquivo.current = el;
+                      registrar("arquivo")(el);
+                    }}
+                    type="file"
+                    accept=".csv,.txt,text/csv,text/plain"
+                    className="entrada entrada--arquivo"
+                    onChange={(e) => (setArquivo(e.target.files?.[0] ?? null), mexeu())}
+                  />
+                )
+              }
+            </Campo>
           )}
+        </fieldset>
 
-          <button className="botao" type="submit" disabled={ocupado || !temPeriodo || !temConteudo}>
-            {ocupado ? "Lendo…" : "Ver a prévia"}
+        <div className="formulario__acoes">
+          <button type="submit" className="botao botao--primario" disabled={!temConteudo || ocupado !== null}>
+            {ocupado === "previa" ? "Conferindo…" : "Ver a prévia"}
           </button>
+          <span className="formulario__dica">A prévia não grava nada.</span>
         </div>
       </form>
 
-      {previa && <Previa previa={previa} ocupado={ocupado} aoConfirmar={() => confirmar(false)} />}
-    </>
-  );
-}
+      {conflito && (
+        <Confirmacao
+          perigo
+          texto={
+            <>
+              {conflito.message} Já existem <strong>{comoInteiro(conflito.detalhe.ja_existe.metricas_que_serao_apagadas)}</strong> registros deste período, importados por {conflito.detalhe.ja_existe.autor} em{" "}
+              {comoDataHora(conflito.detalhe.ja_existe.enviado_em)}.
+            </>
+          }
+          detalhe={conflito.ajuda}
+          acao="Substituir mesmo assim"
+          ocupado={ocupado === "substituir"}
+          aoConfirmar={() => gravar(true)}
+          aoCancelar={() => setConflito(null)}
+        />
+      )}
 
-/**
- * O que será gravado, antes de gravar.
- *
- * Os rejeitados vêm **com o motivo de cada um**: "3 linhas rejeitadas" não
- * permite corrigir nada, e o número da linha é o que deixa achar a célula errada
- * num relatório de duzentas.
- */
-function Previa({ previa, ocupado, aoConfirmar }) {
-  return (
-    <section className="painel" aria-labelledby="titulo-previa">
-      <div className="painel__cabecalho">
-        <h2 className="painel__titulo" id="titulo-previa">
-          Prévia
-        </h2>
-        <span className="painel__nota">
-          {comoInteiro(previa.total_reconhecido)} reconhecidas ·{" "}
-          {comoInteiro(previa.total_rejeitado)} rejeitadas
-        </span>
-      </div>
-
-      <div className="importacao__corpo">
-        {previa.parceiros_novos.length > 0 && (
-          <p className="importacao__nota">
-            <strong>{previa.parceiros_novos.length} parceiro(s) novo(s)</strong> serão cadastrados:{" "}
-            {previa.parceiros_novos.slice(0, 6).join(", ")}
-            {previa.parceiros_novos.length > 6 && "…"}
-          </p>
-        )}
-
-        {previa.rejeitados.length > 0 && (
-          <div className="tabela-rolagem">
-            <table className="tabela">
-              <caption className="so-leitor">Linhas rejeitadas, com o motivo</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Linha</th>
-                  <th scope="col">Conteúdo</th>
-                  <th scope="col">Motivo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {previa.rejeitados.map((r) => (
-                  <tr key={r.linha}>
-                    <td className="posicao">{r.linha}</td>
-                    <td className="secundaria num">{r.conteudo}</td>
-                    <td>{r.motivo}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {previa && (
+        <section className="previa" aria-labelledby="titulo-previa" tabIndex={-1} ref={refPrevia}>
+          <div className="previa__cabeca">
+            <h3 id="titulo-previa" className="bloco__titulo">
+              Prévia de {comoPeriodo(previa.periodo)}
+            </h3>
+            <p className="bloco__sub">
+              {plural(previa.total_reconhecido, "linha será gravada", "linhas serão gravadas")} · {plural(previa.total_rejeitado, "linha rejeitada", "linhas rejeitadas")}
+              {previa.parceiros_novos.length ? ` · ${plural(previa.parceiros_novos.length, "parceiro novo", "parceiros novos")}` : ""}
+            </p>
           </div>
-        )}
+          {previa.periodo_ja_importado && (
+            <Nota tipo="atencao">Este período já foi importado. Ao gravar, o sistema vai perguntar antes de substituir o que já existe.</Nota>
+          )}
 
-        {previa.reconhecidos.length > 0 && (
-          <div className="tabela-rolagem">
-            <table className="tabela">
-              <caption className="so-leitor">Linhas que serão gravadas</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Parceiro</th>
-                  <th scope="col" className="numerica">
-                    Faturamento
-                  </th>
-                  <th scope="col" className="numerica">
-                    Pedidos
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {previa.reconhecidos.slice(0, 20).map((linha) => (
-                  <tr key={linha.linha}>
-                    <td className="nome">{linha.nome}</td>
-                    <td className="numerica">{comoDinheiro(linha.faturamento)}</td>
-                    <td className="numerica">{comoInteiro(linha.pedidos)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="previa__grade">
+            <div>
+              <h4 className="bloco__subtitulo">Linhas que serão gravadas</h4>
+              {previa.reconhecidos.length ? (
+                <CaixaDeTabela rotulo="Linhas que serão gravadas" className="caixa-tabela--alta">
+                  <table className="tabela tabela--compacta">
+                    <caption className="sr-only">Linhas reconhecidas, que serão gravadas</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col" className="num">
+                          Linha
+                        </th>
+                        <th scope="col">Parceiro</th>
+                        <th scope="col" className="num">
+                          Faturamento
+                        </th>
+                        <th scope="col" className="num">
+                          Pedidos
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previa.reconhecidos.map((l) => (
+                        <tr key={l.linha}>
+                          <td className="num discreto">{l.linha}</td>
+                          <th scope="row" className="nome">
+                            {l.nome}
+                            {previa.parceiros_novos.includes(l.nome) && <span className="selo-texto">novo</span>}
+                          </th>
+                          <td className="num">{comoDinheiro(l.faturamento)}</td>
+                          <td className="num">{comoInteiro(l.pedidos)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </CaixaDeTabela>
+              ) : (
+                <Vazio titulo="Nenhuma linha aproveitável" compacto>
+                  Nada será gravado. Corrija as linhas rejeitadas e veja a prévia de novo.
+                </Vazio>
+              )}
+            </div>
+            <div>
+              <h4 className="bloco__subtitulo">Linhas rejeitadas, com o motivo</h4>
+              {previa.rejeitados.length ? (
+                <CaixaDeTabela rotulo="Linhas rejeitadas" className="caixa-tabela--alta">
+                  <table className="tabela tabela--compacta tabela--rejeitadas">
+                    <caption className="sr-only">Linhas rejeitadas e o motivo de cada uma</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col" className="num">
+                          Linha
+                        </th>
+                        <th scope="col">Conteúdo</th>
+                        <th scope="col">Motivo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previa.rejeitados.map((l) => (
+                        <tr key={l.linha}>
+                          <th scope="row" className="num">
+                            {l.linha}
+                          </th>
+                          <td>
+                            <code>{l.conteudo || <Ausente porque="linha vazia" />}</code>
+                          </td>
+                          <td>{l.motivo}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </CaixaDeTabela>
+              ) : (
+                <p className="linha-ok">
+                  <Icone nome="certo" /> Nenhuma linha rejeitada.
+                </p>
+              )}
+            </div>
           </div>
-        )}
 
-        <button
-          className="botao"
-          type="button"
-          onClick={aoConfirmar}
-          disabled={ocupado || previa.total_reconhecido === 0}
-        >
-          {ocupado ? "Gravando…" : `Gravar ${comoInteiro(previa.total_reconhecido)} registros`}
-        </button>
-      </div>
+          {previa.total_reconhecido > 0 && (
+            <div className="formulario__acoes">
+              <button type="button" className="botao botao--primario botao--grande" onClick={() => gravar(false)} disabled={ocupado !== null}>
+                {ocupado === "gravar" ? "Gravando…" : `Gravar ${plural(previa.total_reconhecido, "registro", "registros")}`}
+              </button>
+            </div>
+          )}
+        </section>
+      )}
     </section>
   );
 }
 
-/**
- * O histórico das importações (RF13, H29), da mais recente para a mais antiga.
- *
- * "Vigentes" é quanto daquela importação ainda está no banco, contado pela API.
- * Zero depois de ter gravado alguma coisa é o rastro de uma **substituição**: o
- * período foi trocado por uma importação mais nova. A tela diz isso com a
- * palavra, porque um zero sozinho pareceria importação vazia.
- */
-function Historico() {
-  const [pagina, setPagina] = useState(1);
-  const [estado, setEstado] = useState({ pagina: null, dados: null, erro: null });
-
-  useEffect(() => {
-    let vivo = true;
-    api
-      .get("/api/importacoes", { pagina, tamanho: TAMANHO_HISTORICO })
-      .then((dados) => vivo && setEstado({ pagina, dados, erro: null }))
-      .catch((erro) => vivo && setEstado({ pagina, dados: null, erro }));
-    return () => {
-      vivo = false;
-    };
-  }, [pagina]);
-
-  const atual = estado.pagina === pagina;
-  const dados = atual ? estado.dados : null;
-  const erro = atual ? estado.erro : null;
-  const total = dados?.total ?? 0;
-  const primeiro = (pagina - 1) * TAMANHO_HISTORICO + 1;
-  const ultimo = Math.min(pagina * TAMANHO_HISTORICO, total);
-
+function Historico({ historico, pagina, aoMudarPagina }) {
+  const h = historico.dados;
   return (
-    <section className="painel historico" aria-labelledby="titulo-historico">
-      <div className="painel__cabecalho">
-        <h2 className="painel__titulo" id="titulo-historico">
+    <section className="bloco" aria-labelledby="titulo-historico" aria-busy={historico.carregando}>
+      <div className="bloco__cabeca">
+        <h2 id="titulo-historico" className="bloco__titulo">
           Importações anteriores
         </h2>
-        {dados && <span className="painel__nota">{comoInteiro(total)} no total</span>}
+        <p className="bloco__sub">Da mais recente para a mais antiga</p>
       </div>
-
-      {erro && (
-        <div className="aviso" role="alert">
-          <p className="aviso__titulo">{erro.message}</p>
-          {erro.ajuda && <p className="aviso__ajuda">{erro.ajuda}</p>}
-        </div>
+      {historico.carregando && <Carregando rotulo="Carregando o histórico" linhas={5} />}
+      <ErroDaTela erro={historico.erro} />
+      {h && !h.itens.length && (
+        <Vazio titulo="Nenhuma importação ainda" compacto icone="importacao">
+          Cada relatório importado aparece aqui, com quem o trouxe e quando.
+        </Vazio>
       )}
-
-      {!dados && !erro && (
-        <div className="importacao__corpo" aria-hidden="true">
-          <Esqueleto altura={160} />
-        </div>
-      )}
-
-      {dados && total === 0 && (
-        <EstadoVazio
-          titulo="Nenhuma importação ainda"
-          texto="Cada relatório importado aparece aqui, com quem o trouxe e quando."
-        />
-      )}
-
-      {dados && total > 0 && (
+      {h && h.itens.length > 0 && (
         <>
-          <div className="tabela-rolagem">
+          <CaixaDeTabela rotulo="Importações anteriores">
             <table className="tabela">
-              <caption className="so-leitor">
-                Importações anteriores, da mais recente para a mais antiga
-              </caption>
+              <caption className="sr-only">Importações anteriores, da mais recente para a mais antiga</caption>
               <thead>
                 <tr>
                   <th scope="col">Período</th>
                   <th scope="col">Enviada em</th>
                   <th scope="col">Por</th>
                   <th scope="col">Origem</th>
-                  <th scope="col" className="numerica">
+                  <th scope="col" className="num">
                     Gravados
                   </th>
-                  <th scope="col" className="numerica">
+                  <th scope="col" className="num">
                     Rejeitados
                   </th>
-                  <th scope="col" className="numerica">
+                  <th scope="col" className="num">
                     Vigentes
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {dados.itens.map((i) => (
-                  <LinhaHistorico key={i.id} importacao={i} />
+                {h.itens.map((i) => (
+                  <tr key={i.id} className={i.metricas_vigentes === 0 && i.total_gravado > 0 ? "linha--apagada" : undefined}>
+                    <th scope="row" className="nome">
+                      {comoPeriodo(i.periodo)}
+                    </th>
+                    <td>{comoDataHora(i.enviado_em)}</td>
+                    <td>{i.autor?.nome}</td>
+                    <td>{ROTULO_ORIGEM[i.origem] ?? i.origem}</td>
+                    <td className="num">{comoInteiro(i.total_gravado)}</td>
+                    <td className="num">{comoInteiro(i.total_rejeitado)}</td>
+                    <td className="num">{i.metricas_vigentes === 0 && i.total_gravado > 0 ? <span className="selo-texto selo-texto--neutro">substituída</span> : comoInteiro(i.metricas_vigentes)}</td>
+                  </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-
-          <div className="paginacao">
-            <span className="paginacao__posicao num">
-              {comoInteiro(primeiro)}–{comoInteiro(ultimo)} de {comoInteiro(total)}
-            </span>
-            <button
-              type="button"
-              className="botao botao--secundario"
-              disabled={pagina <= 1}
-              onClick={() => setPagina((p) => p - 1)}
-            >
-              Anterior
-            </button>
-            <button
-              type="button"
-              className="botao botao--secundario"
-              disabled={ultimo >= total}
-              onClick={() => setPagina((p) => p + 1)}
-            >
-              Próxima
-            </button>
-          </div>
+          </CaixaDeTabela>
+          <Paginacao pagina={pagina} tamanho={TAMANHO} total={h.total} aoMudar={aoMudarPagina} rotulo="importações" />
         </>
       )}
     </section>
-  );
-}
-
-function LinhaHistorico({ importacao: i }) {
-  const substituida = i.metricas_vigentes === 0 && i.total_gravado > 0;
-  return (
-    <tr>
-      <td className="nome">{comoPeriodo(i.periodo)}</td>
-      <td className="secundaria quando">{comoDataHora(i.enviado_em)}</td>
-      <td>{i.autor?.nome ?? TRACO}</td>
-      <td className="secundaria">{ROTULO_ORIGEM[i.origem] ?? i.origem}</td>
-      <td className="numerica">{comoInteiro(i.total_gravado)}</td>
-      <td className="numerica">{comoInteiro(i.total_rejeitado)}</td>
-      <td className="numerica">
-        {substituida ? <span className="secundaria">substituída</span> : comoInteiro(i.metricas_vigentes)}
-      </td>
-    </tr>
   );
 }

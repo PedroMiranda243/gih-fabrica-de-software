@@ -1,191 +1,305 @@
 /*
- * Tokens do sistema visual — transcritos de `docs/09-sistema-visual.md`.
- *
- * Este arquivo é a única fonte de cor, tipo e espaço da aplicação. Nenhum
- * componente escreve um hexadecimal ou um pixel solto: se um valor não está
- * aqui, ele não existe no projeto.
- *
- * A razão não é organização. A paleta foi **validada**, não escolhida no olho:
- * o primeiro conjunto reprovou com ΔE 4,1 em deuteranopia entre "em risco" e
- * "em ascensão" — um daltônico não distinguiria os dois estados mais
- * consequentes do painel. A correção levou o par a ΔE 9,9. Um valor inventado
- * num componente escapa dessa validação sem ninguém perceber.
- *
- * Os dois avisos que sobraram na validação (turquesa a 2,82:1 de contraste no
- * claro, e ΔE 7,2 no escuro) têm a mesma mitigação, obrigatória em todo lugar:
- * **a cor de segmento nunca aparece sozinha**, sempre ao lado do rótulo em
- * texto. Nenhuma informação depende de distinguir a cor.
+ * Etiqueta e Lacre — os tokens do GIH. Tudo o que tem cor, tamanho ou espaço sai
+ * daqui. Claro: etiqueta térmica sobre balcão. Escuro: bolsa térmica. A impressão
+ * usa sempre o claro (impressao.css). Cada área do menu é uma rota, com a sua cor.
  */
-
 :root {
-  /* ---------------------------------------------------- neutros e ação */
-  /* Os neutros têm viés frio, escolhido para conversar com a rampa azul dos
-     gráficos. Cinza puro lê como não decidido. */
-  --ground: #f7f8fa;
-  --surface: #ffffff;
-  --surface-2: #f0f2f6;
-  --border: #e3e7ed;
-  /* A borda do que se preenche — campo, lista de escolha. A `--border` mede
-     1,24:1 e serve para separar painel de fundo, que é decoração; a borda de um
-     campo é o que diz onde ele está, e o AA pede 3:1 (WCAG 1.4.11, RNF22).
-     Medido: 3,19:1 no pior fundo, a `--surface-2`. */
-  --borda-controle: #7f8898;
-  --ink: #101826;
-  --ink-2: #5a6474;
-  --ink-3: #8a93a3;
+  color-scheme: light;
+  --fonte: "Atkinson Hyperlegible Next Variable", "Atkinson Hyperlegible Next", system-ui, sans-serif;
 
-  /* `--acao` significa "responde ao seu clique" — botão, link, foco, seleção.
-     Nada mais. Quando uma cor é marca, ação e dado ao mesmo tempo, ela deixa
-     de significar qualquer coisa. */
-  --acao: #d97706;
-  --acao-ink: #a1560a;
-  --acao-fraca: #fdf3e3;
-  /* Texto sobre o fundo de acao. Tinta escura **fixa nos dois temas**: branco
-     sobre o ambar mediu 3,19:1 no claro e 2,15:1 no escuro, e o AA pede 4,5.
-     Escuro sobre ambar mede 5,58 e 8,27. Nao pode ser `--ink`, que clareia no
-     modo escuro e voltaria a reprovar. */
-  --acao-sobre: #101826;
+  /* chão, superfícies e tinta */
+  --chao: #eef0f2;
+  --etiqueta: #ffffff;
+  --etiqueta-2: #f6f7f8;
+  --carbono: #141414;
+  --carbono-2: #50555c;
+  --carbono-3: #6b7178;
+  --fio: #d9dce0;
+  --fio-forte: #8a9098; /* borda de campo: 3:1 */
 
-  /* ------------------------------------------------------------ segmentos */
-  --seg-risco: #d03b3b;
-  --seg-ascensao: #1baf7a;
-  --seg-recem: #4a3aa7;
-  --seg-prosp: #eb6834;
-  --seg-top: #2a78d6;
-  /* Estável é cinza de propósito: sem tendência, sem atenção necessária.
-     Ausência de sinal é informação. */
-  --seg-estavel: #8a93a3;
+  /* marca, ação e trilho */
+  --lacre: #ffd400;
+  --lacre-tinta: #1a1500;
+  --acao: #1d3fe0;
+  --acao-forte: #142fb0;
+  --acao-fundo: #e8ecff;
+  --foco: #1d3fe0;
+  --nailon: #0e0f11;
+  --nailon-2: #1b1d21;
+  --nailon-tinta: #e6e8eb;
+  --nailon-tinta-2: #a3a9b1;
+  --refletivo: #c9cdd2;
+  --nailon-tinta-forte: #ffffff; /* texto e foco no trilho */
+  --nailon-fio: #3a3e44; /* fio tracejado e barra de rolagem sobre o náilon */
 
-  /* ------------------------------------------------- séries de gráfico */
-  /* Rampa fria própria: gráfico nunca usa `--acao` nem as cores de segmento. */
-  --serie-1: #2a78d6;
-  --serie-2: #eb6834;
-  --serie-3: #1baf7a;
-  /* A quarta, do C++ serial no benchmark (H57). O violeta dos segmentos passava
-     no claro e reprovava no escuro ao lado do azul (ΔE 1,9 em protanopia), e o
-     amarelo da paleta de referência, ao lado do laranja, nos dois. A orquídea
-     passou com todos os pares, porque as linhas se cruzam: ΔE 9,2 no pior
-     daltonismo no claro e 8,2 no escuro, e 18,4 no pior par em visão normal. */
-  --serie-4: #b0409a;
-  /* A referência contra a qual uma série se compara (modelo × contas simples):
-     cinza, porque o gráfico é de ênfase — a série fala, a referência é pano de
-     fundo. Validado contra `--serie-1` no validador de paleta: ΔE 16,2 em visão
-     normal e 13,9 no pior daltonismo, contraste acima de 3:1. */
-  --serie-referencia: #8a93a3;
-  --grade: #e8ecf3;
+  /* estados (não são dado) */
+  --erro: #c4162a;
+  --erro-fundo: #fdecee;
+  --erro-tinta: #ffffff; /* texto sobre o botão de perigo */
+  --sucesso: #0b7a4f;
+  --sucesso-fundo: #e7f6ef;
+  --atencao: #8a5300;
+  --atencao-fundo: #fff4d6;
+  --neutro-fundo: #eef1f5;
+  --variacao-boa: #0b7a4f;
+  --variacao-ruim: #b32a17;
 
-  /* ----------------------------------------------------------- tipografia */
-  --fonte-interface: "Fira Sans", system-ui, -apple-system, sans-serif;
-  /* Fira Code nos números não é enfeite: em tabela de ranking, dígito que não
-     alinha obriga o olho a reler. */
-  --fonte-dados: "Fira Code", ui-monospace, "Cascadia Code", monospace;
+  /* segmentos: uma cor cada, sempre com o nome ao lado */
+  --seg-prospeccao: #0b8f9a;
+  --seg-recem-chegado: #c2347a;
+  --seg-em-risco: #e5512d;
+  --seg-top: #7a4bd0;
+  --seg-em-ascensao: #13a05f;
+  --seg-estavel: #8d939b;
 
-  /* A escala. Fora dela, não existe. */
-  --txt-11: 0.6875rem;
-  --txt-115: 0.71875rem;
-  --txt-12: 0.75rem;
-  --txt-13: 0.8125rem;
-  --txt-135: 0.84375rem;
-  --txt-14: 0.875rem;
-  --txt-19: 1.1875rem;
-  --txt-22: 1.375rem;
+  /* segmentos em etiqueta: fundo leve e texto escuro do mesmo matiz */
+  --seg-prospeccao-fundo: #dcf6f9;
+  --seg-prospeccao-tinta: #005b65;
+  --seg-recem-chegado-fundo: #ffe6f1;
+  --seg-recem-chegado-tinta: #871951;
+  --seg-em-risco-fundo: #ffe7de;
+  --seg-em-risco-tinta: #8d1d00;
+  --seg-top-fundo: #f2ebff;
+  --seg-top-tinta: #563495;
+  --seg-em-ascensao-fundo: #dcf9e5;
+  --seg-em-ascensao-tinta: #006228;
+  --seg-estavel-fundo: #eef0f3;
+  --seg-estavel-tinta: #484e54;
 
-  /* 400 corpo · 500 rótulos · 600 nomes e títulos · 700 só título de página */
-  --peso-corpo: 400;
-  --peso-rotulo: 500;
-  --peso-nome: 600;
-  --peso-marca: 700;
+  /* rotas: cada área do menu tem uma cor, e ela nunca aparece sem o nome da área.
+     A cor viva é a linha do trilho, a faixa do cabeçalho e a etiqueta da área (com
+     texto escuro); a forte é o traço e o texto na cor da área sobre o claro. */
+  --rota-analise: #5abdf2;
+  --rota-analise-forte: #006ca0;
+  --rota-analise-fundo: #e6f6ff;
+  --rota-previsao: #da92e6;
+  --rota-previsao-forte: #894194;
+  --rota-previsao-fundo: #fbeffc;
+  --rota-otimizacao: #ef9d32;
+  --rota-otimizacao-forte: #9b4b00;
+  --rota-otimizacao-fundo: #fef1e4;
+  --rota-comunicacao: #86c660;
+  --rota-comunicacao-forte: #367500;
+  --rota-comunicacao-fundo: #edf7e8;
+  --rota-administracao: #9db4ce;
+  --rota-administracao-forte: #50657e;
+  --rota-administracao-fundo: #e9f5ff;
+  --rota-tinta: #0e0f11; /* texto sobre a cor viva da rota, nos dois temas */
 
-  /* ------------------------------------------------- espaçamento e forma */
-  /* Escala densa, apropriada a painel. */
-  --esp-4: 4px;
-  --esp-6: 6px;
-  --esp-8: 8px;
-  --esp-12: 12px;
-  --esp-15: 15px;
-  --esp-16: 16px;
-  --esp-20: 20px;
-  --esp-24: 24px;
+  /* benchmark: cor fixa por modo (e marcador próprio) */
+  --serie-python: #c2347a;
+  --serie-cpp: #6b7178;
+  --serie-openmp: #7a4cd1;
+  --serie-gpu: #1d8f5a;
 
-  --raio-controle: 6px;
-  --raio-painel: 8px;
+  /* gráficos */
+  --grafico-linha: #141414;
+  --grafico-grade: #e7e9ec;
+  --grafico-estimativa: #50555c;
 
-  --trilho: 208px;
+  --cor-barra-navegador: #0e0f11;
 
-  /* Transições de 150–300 ms (RNF22). O valor vira 0 sob
-     `prefers-reduced-motion`, mais abaixo — declarar como token permite
-     desligar tudo num lugar só. */
-  --transicao: 180ms ease;
+  /* escala tipográfica (rem fixo) */
+  --t-12: 0.75rem;
+  --t-13: 0.8125rem;
+  --t-14: 0.875rem;
+  --t-15: 0.9375rem;
+  --t-16: 1rem;
+  --t-18: 1.125rem;
+  --t-20: 1.25rem;
+  --t-24: 1.5rem;
+  --t-28: 1.75rem;
+  --t-30: 1.875rem;
+  --t-32: 2rem;
+  --t-36: 2.25rem;
+  --t-40: 2.5rem;
+  --t-48: 3rem;
+  --t-52: 3.25rem;
+
+  /* espaço: módulo de 8 */
+  --e-1: 4px;
+  --e-2: 8px;
+  --e-3: 12px;
+  --e-4: 16px;
+  --e-5: 24px;
+  --e-6: 32px;
+  --e-7: 48px;
+  --e-8: 64px;
+
+  --raio: 4px;
+  --raio-campo: 6px;
+  --sombra-etiqueta: 0 1px 0 rgb(0 0 0 / 0.06), 0 6px 14px -10px rgb(0 0 0 / 0.28);
+  --passo: 160ms; /* o único tempo de movimento: dois quadros secos */
 }
 
-/* ------------------------------------------------------------- modo escuro */
-/* Três estados, não dois: escolha explícita clara, escolha explícita escura, e
-   o padrão do sistema, que é o que a maioria vê. O `:not([data-tema="claro"])`
-   faz a escolha explícita do usuário vencer a do sistema operacional. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="claro"]) {
-    --ground: #0d1117;
-    --surface: #12161c;
-    --surface-2: #171c24;
-    --border: #262d38;
-    --borda-controle: #646e7d;
-    --ink: #eef1f6;
-    --ink-2: #a8b1bf;
-    --ink-3: #6f7987;
-
-    --acao: #f0a02a;
-    --acao-ink: #f0a02a;
-    --acao-fraca: #2a1f10;
-
-    --seg-risco: #d03b3b;
-    --seg-ascensao: #199e70;
-    --seg-recem: #9085e9;
-    --seg-prosp: #d95926;
-    --seg-top: #3987e5;
-    --seg-estavel: #6f7987;
-
-    --serie-1: #3987e5;
-    --serie-2: #d95926;
-    --serie-3: #199e70;
-    --serie-4: #c75fb4;
-    /* Mais escuro que o `--ink-3` do modo escuro de propósito: com ele, o par
-       com `--serie-1` mediu ΔE 14,5 em visão normal, abaixo do piso de 15. */
-    --serie-referencia: #5a6474;
-    --grade: #232a34;
+    color-scheme: dark;
+    --chao: #0b0c0e;
+    --etiqueta: #17191c;
+    --etiqueta-2: #1e2125;
+    --carbono: #f1f2f4;
+    --carbono-2: #a7adb5;
+    --carbono-3: #8d939b;
+    --fio: #2b2e33;
+    --fio-forte: #7b828b;
+    --acao: #8ea6ff;
+    --acao-forte: #b3c3ff;
+    --acao-fundo: #1c2547;
+    --foco: #8ea6ff;
+    --nailon: #050506;
+    --nailon-2: #121316;
+    --refletivo: #8b9097;
+    --erro: #ff7a85;
+    --erro-fundo: #3a1418;
+    --erro-tinta: #1a0507;
+    --sucesso: #5fd69c;
+    --sucesso-fundo: #0f2a1e;
+    --atencao: #f5c451;
+    --atencao-fundo: #2e2410;
+    --neutro-fundo: #1e2228;
+    --variacao-boa: #5fd69c;
+    --variacao-ruim: #ff8a73;
+    --seg-prospeccao: #2cc3cf;
+    --seg-recem-chegado: #f06aa9;
+    --seg-em-risco: #ff7350;
+    --seg-top: #a98bff;
+    --seg-em-ascensao: #3fd08a;
+    --seg-estavel: #9aa1aa;
+    --seg-prospeccao-fundo: #073236;
+    --seg-prospeccao-tinta: #a6e0e7;
+    --seg-recem-chegado-fundo: #421d2d;
+    --seg-recem-chegado-tinta: #ffbad7;
+    --seg-em-risco-fundo: #441f16;
+    --seg-em-risco-tinta: #ffbeaa;
+    --seg-top-fundo: #2e2546;
+    --seg-top-tinta: #d9c8ff;
+    --seg-em-ascensao-fundo: #0c341e;
+    --seg-em-ascensao-tinta: #a5e6bc;
+    --seg-estavel-fundo: #292b2e;
+    --seg-estavel-tinta: #d1d5da;
+    --rota-analise-forte: #5abdf2;
+    --rota-analise-fundo: #122733;
+    --rota-previsao-forte: #da92e6;
+    --rota-previsao-fundo: #2c1e2e;
+    --rota-otimizacao-forte: #ef9d32;
+    --rota-otimizacao-fundo: #2f2111;
+    --rota-comunicacao-forte: #86c660;
+    --rota-comunicacao-fundo: #1d2816;
+    --rota-administracao-forte: #9db4ce;
+    --rota-administracao-fundo: #172535;
+    --serie-python: #f06aa9;
+    --serie-cpp: #aab0b8;
+    --serie-openmp: #a98bff;
+    --serie-gpu: #3fd08a;
+    --grafico-linha: #f1f2f4;
+    --grafico-grade: #26292e;
+    --grafico-estimativa: #a7adb5;
+    --sombra-etiqueta: 0 1px 0 rgb(255 255 255 / 0.03), 0 8px 18px -12px rgb(0 0 0 / 0.8);
+    --cor-barra-navegador: #050506;
   }
 }
 
 :root[data-tema="escuro"] {
-  --ground: #0d1117;
-  --surface: #12161c;
-  --surface-2: #171c24;
-  --border: #262d38;
-  --borda-controle: #646e7d;
-  --ink: #eef1f6;
-  --ink-2: #a8b1bf;
-  --ink-3: #6f7987;
-
-  --acao: #f0a02a;
-  --acao-ink: #f0a02a;
-  --acao-fraca: #2a1f10;
-
-  --seg-risco: #d03b3b;
-  --seg-ascensao: #199e70;
-  --seg-recem: #9085e9;
-  --seg-prosp: #d95926;
-  --seg-top: #3987e5;
-  --seg-estavel: #6f7987;
-
-  --serie-1: #3987e5;
-  --serie-2: #d95926;
-  --serie-3: #199e70;
-  --serie-4: #c75fb4;
-  --serie-referencia: #5a6474;
-  --grade: #232a34;
+  color-scheme: dark;
+  --chao: #0b0c0e;
+  --etiqueta: #17191c;
+  --etiqueta-2: #1e2125;
+  --carbono: #f1f2f4;
+  --carbono-2: #a7adb5;
+  --carbono-3: #8d939b;
+  --fio: #2b2e33;
+  --fio-forte: #7b828b;
+  --acao: #8ea6ff;
+  --acao-forte: #b3c3ff;
+  --acao-fundo: #1c2547;
+  --foco: #8ea6ff;
+  --nailon: #050506;
+  --nailon-2: #121316;
+  --refletivo: #8b9097;
+  --erro: #ff7a85;
+  --erro-fundo: #3a1418;
+  --erro-tinta: #1a0507;
+  --sucesso: #5fd69c;
+  --sucesso-fundo: #0f2a1e;
+  --atencao: #f5c451;
+  --atencao-fundo: #2e2410;
+  --neutro-fundo: #1e2228;
+  --variacao-boa: #5fd69c;
+  --variacao-ruim: #ff8a73;
+  --seg-prospeccao: #2cc3cf;
+  --seg-recem-chegado: #f06aa9;
+  --seg-em-risco: #ff7350;
+  --seg-top: #a98bff;
+  --seg-em-ascensao: #3fd08a;
+  --seg-estavel: #9aa1aa;
+  --seg-prospeccao-fundo: #073236;
+  --seg-prospeccao-tinta: #a6e0e7;
+  --seg-recem-chegado-fundo: #421d2d;
+  --seg-recem-chegado-tinta: #ffbad7;
+  --seg-em-risco-fundo: #441f16;
+  --seg-em-risco-tinta: #ffbeaa;
+  --seg-top-fundo: #2e2546;
+  --seg-top-tinta: #d9c8ff;
+  --seg-em-ascensao-fundo: #0c341e;
+  --seg-em-ascensao-tinta: #a5e6bc;
+  --seg-estavel-fundo: #292b2e;
+  --seg-estavel-tinta: #d1d5da;
+  --rota-analise-forte: #5abdf2;
+  --rota-analise-fundo: #122733;
+  --rota-previsao-forte: #da92e6;
+  --rota-previsao-fundo: #2c1e2e;
+  --rota-otimizacao-forte: #ef9d32;
+  --rota-otimizacao-fundo: #2f2111;
+  --rota-comunicacao-forte: #86c660;
+  --rota-comunicacao-fundo: #1d2816;
+  --rota-administracao-forte: #9db4ce;
+  --rota-administracao-fundo: #172535;
+  --serie-python: #f06aa9;
+  --serie-cpp: #aab0b8;
+  --serie-openmp: #a98bff;
+  --serie-gpu: #3fd08a;
+  --grafico-linha: #f1f2f4;
+  --grafico-grade: #26292e;
+  --grafico-estimativa: #a7adb5;
+  --sombra-etiqueta: 0 1px 0 rgb(255 255 255 / 0.03), 0 8px 18px -12px rgb(0 0 0 / 0.8);
+  --cor-barra-navegador: #050506;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --transicao: 0ms;
-  }
+/* A rota da tela atual: a casca diz em que área a pessoa está (data-rota), e o
+   trilho pinta cada grupo com a sua. Fora das áreas do menu, a rota é neutra. */
+:root {
+  --rota: var(--fio-forte);
+  --rota-forte: var(--carbono-2);
+  --rota-fundo: var(--etiqueta-2);
+}
+
+[data-rota="analise"] {
+  --rota: var(--rota-analise);
+  --rota-forte: var(--rota-analise-forte);
+  --rota-fundo: var(--rota-analise-fundo);
+}
+
+[data-rota="previsao"] {
+  --rota: var(--rota-previsao);
+  --rota-forte: var(--rota-previsao-forte);
+  --rota-fundo: var(--rota-previsao-fundo);
+}
+
+[data-rota="otimizacao"] {
+  --rota: var(--rota-otimizacao);
+  --rota-forte: var(--rota-otimizacao-forte);
+  --rota-fundo: var(--rota-otimizacao-fundo);
+}
+
+[data-rota="comunicacao"] {
+  --rota: var(--rota-comunicacao);
+  --rota-forte: var(--rota-comunicacao-forte);
+  --rota-fundo: var(--rota-comunicacao-fundo);
+}
+
+[data-rota="administracao"] {
+  --rota: var(--rota-administracao);
+  --rota-forte: var(--rota-administracao-forte);
+  --rota-fundo: var(--rota-administracao-fundo);
 }

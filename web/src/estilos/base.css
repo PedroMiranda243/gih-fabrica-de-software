@@ -1,15 +1,15 @@
-/*
- * Base da aplicação: reset, elementos e as peças que se repetem em mais de uma
- * tela. Tudo aqui consome os tokens — nenhum valor literal de cor ou espaço.
- */
-
-@import "@fontsource/fira-sans/400.css";
-@import "@fontsource/fira-sans/500.css";
-@import "@fontsource/fira-sans/600.css";
-@import "@fontsource/fira-sans/700.css";
-@import "@fontsource/fira-code/400.css";
-@import "@fontsource/fira-code/500.css";
-@import "./tokens.css";
+/* Base: o que o navegador desenharia por conta própria, desenhado pelo GIH. */
+:root {
+  --acao-tinta: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --acao-tinta: #0b0c0e;
+  }
+}
+:root[data-tema="escuro"] {
+  --acao-tinta: #0b0c0e;
+}
 
 *,
 *::before,
@@ -17,355 +17,185 @@
   box-sizing: border-box;
 }
 
-/* `[hidden]` tem especificidade baixíssima, e qualquer classe com `display` o
-   anula. Num projeto anterior a tela de login continuou visível depois do
-   acesso por causa disso, e **os testes passavam**, porque validavam o atributo
-   em vez do que o usuário via. Este reset é a defesa. */
-[hidden] {
-  display: none !important;
-}
-
 html {
-  color-scheme: light dark;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scrollbar-color: var(--fio-forte) transparent;
 }
 
 body {
   margin: 0;
-  background: var(--ground);
-  color: var(--ink);
-  font-family: var(--fonte-interface);
-  font-size: var(--txt-13);
-  font-weight: var(--peso-corpo);
+  min-height: 100vh;
+  background: var(--chao);
+  color: var(--carbono);
+  font-family: var(--fonte);
+  font-size: var(--t-16);
   line-height: 1.5;
+  font-variation-settings: normal;
+  caret-color: var(--acao);
   -webkit-font-smoothing: antialiased;
 }
 
 h1,
 h2,
-h3 {
+h3,
+h4,
+p,
+dl,
+dd,
+figure,
+ul,
+ol {
   margin: 0;
-  line-height: 1.25;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1.15;
   text-wrap: balance;
 }
 
-/* Foco visível em **todo** controle: contorno de 2 px na tinta da ação. Remover
-   anel de foco é a falha de acessibilidade mais comum, e a mais fácil de
-   evitar. A tinta, e não o `--acao`: no claro, o âmbar mediu 2,84:1 sobre a
-   `--surface-2` e 2,998:1 sobre o `--ground`, abaixo dos 3:1 que o contorno
-   precisa (WCAG 1.4.11). A tinta mede 4,87:1 no pior fundo; no escuro, as duas
-   são a mesma cor. */
-:focus-visible {
-  outline: 2px solid var(--acao-ink);
-  outline-offset: 2px;
-  border-radius: var(--raio-controle);
+p {
+  text-wrap: pretty;
 }
 
-/* --------------------------------------------------------------- controles */
-.botao {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--esp-6);
-  /* Alvo de toque mínimo de 44 px de altura (RNF22). */
-  min-height: 44px;
-  padding: 0 var(--esp-16);
-  border: 1px solid transparent;
-  border-radius: var(--raio-controle);
-  background: var(--acao);
-  color: var(--acao-sobre);
-  font-family: inherit;
-  font-size: var(--txt-13);
-  font-weight: var(--peso-rotulo);
-  /* A classe também veste `<a>` — a exportação é um link, porque o navegador
-     já sabe baixar arquivo. Sem isto ele sai sublinhado, com cara de link de
-     texto no meio de uma fileira de botões. */
-  text-decoration: none;
+img,
+svg {
+  display: block;
+}
+
+.icone {
+  display: inline-block;
+  flex: none;
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -0.2em;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+}
+
+button {
   cursor: pointer;
-  transition: filter var(--transicao);
 }
 
-.botao:hover:not(:disabled) {
-  filter: brightness(1.06);
-}
-
-.botao:disabled {
-  opacity: 0.55;
+button:disabled {
   cursor: not-allowed;
 }
 
-.botao--secundario {
-  background: var(--surface);
-  border-color: var(--border);
-  color: var(--ink);
+a {
+  color: var(--acao);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
 }
 
-.botao--secundario:hover:not(:disabled) {
-  background: var(--surface-2);
-  filter: none;
+a:hover {
+  text-decoration-thickness: 2px;
 }
 
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--esp-6);
+::selection {
+  background: var(--acao);
+  color: var(--acao-tinta);
 }
 
-/* Rótulo visível, sempre. Placeholder como rótulo some assim que a pessoa
-   digita, e aí ninguém mais sabe o que aquele campo queria. */
-.campo > label {
-  font-size: var(--txt-12);
-  font-weight: var(--peso-rotulo);
-  color: var(--ink-2);
+:focus {
+  outline: none;
 }
 
-.campo > input,
-.campo > select,
-.campo > textarea,
-.senha > input {
-  min-height: 44px;
-  padding: var(--esp-8) var(--esp-12);
-  border: 1px solid var(--borda-controle);
-  border-radius: var(--raio-controle);
-  background: var(--surface);
-  color: var(--ink);
-  font-family: inherit;
-  font-size: var(--txt-13);
-  transition: border-color var(--transicao);
+:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
-.campo > textarea {
-  font-family: var(--fonte-dados);
-  font-size: var(--txt-12);
-  line-height: 1.6;
-  resize: vertical;
+/* Região ou título que recebe o foco pela tela (não é controle): um sinal neutro,
+   e não o cobalto, que é só do que responde ao clique. */
+[tabindex="-1"]:focus-visible {
+  outline: 2px solid var(--fio-forte);
+  outline-offset: 4px;
 }
 
-/* Mais escuro que a borda no claro, e mais claro no escuro: nos dois, o campo
-   ganha contraste ao receber o ponteiro, e não perde. */
-.campo > input:hover,
-.campo > textarea:hover,
-.senha > input:hover {
-  border-color: var(--ink-2);
+code {
+  font-family: ui-monospace, "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--etiqueta-2);
+  border: 1px solid var(--fio);
+  border-radius: 3px;
+  padding: 0.05em 0.35em;
+  overflow-wrap: anywhere;
 }
 
-/* O campo de senha com o botão de mostrar (H96): o campo ocupa o que sobra, e o
-   botão fica do tamanho da palavra, para "Mostrar" e "Ocultar" não empurrarem
-   o campo de um lado para o outro. */
-.senha {
-  display: flex;
-  gap: var(--esp-8);
-}
-
-.senha > input {
-  flex: 1;
-  min-width: 0;
-}
-
-.senha__botao {
-  flex: none;
-  min-width: 5.5rem;
-}
-
-/* ---------------------------------------------------------------- painéis */
-.painel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--raio-painel);
-}
-
-.painel__cabecalho {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--esp-12);
-  padding: var(--esp-15) var(--esp-16);
-  border-bottom: 1px solid var(--border);
-}
-
-.painel__titulo {
-  font-size: var(--txt-14);
-  font-weight: var(--peso-nome);
-}
-
-.painel__nota {
-  font-size: var(--txt-115);
-  /* `--ink-2`, e nao `--ink-3`: a terciaria mediu 3,10:1 e reprova para texto. */
-  color: var(--ink-2);
-}
-
-/* Ajuda, erro e marca de obrigatório de cada campo — e a confirmação na
-   própria página. Vieram da folha do cadastro de parceiro quando os limiares
-   e os usuários passaram a usar os mesmos componentes. */
-.campo__obrigatorio {
-  color: var(--ink-2);
-}
-
-.campo__ajuda,
-.campo__erro {
-  margin: 0;
-  font-size: var(--txt-12);
-  line-height: 1.5;
-}
-
-.campo__ajuda {
-  color: var(--ink-2);
-}
-
-/* O texto do erro é **neutro**, e a cor vai no ponto e na borda do campo — a
-   mesma regra dos segmentos (`docs/09`, 1.1). Vermelho em texto pequeno mede
-   mal em contraste, e cor sozinha não pode carregar a informação (RNF22). */
-.campo__erro {
-  display: flex;
-  gap: var(--esp-6);
-  color: var(--ink);
-}
-
-.campo__erro::before {
-  content: "";
-  flex: none;
-  width: 8px;
-  height: 8px;
-  margin-top: 0.3em;
-  border-radius: 50%;
-  background: var(--seg-risco);
-}
-
-/* Ação dentro do texto de ajuda — "Usar Pizzaria". Parece link porque é uma
-   oferta, e não o botão principal do formulário: na cor de ação, que é a de
-   "responde ao clique" (regra 1.1 do `docs/09`), sem borda nem fundo. */
-.campo__acao {
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--acao-ink);
-  font: inherit;
-  font-weight: var(--peso-rotulo);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  cursor: pointer;
-}
-
-.campo__erro-ajuda {
-  color: var(--ink-2);
-}
-
-.campo > [aria-invalid="true"],
-.senha > [aria-invalid="true"] {
-  border-color: var(--seg-risco);
-}
-
-.confirmacao {
-  padding: var(--esp-12) var(--esp-15);
-  border: 1px solid var(--border);
-  border-radius: var(--raio-controle);
-  background: var(--surface-2);
-}
-
-.confirmacao__texto {
-  margin: 0 0 var(--esp-8);
-  font-size: var(--txt-13);
-  font-weight: var(--peso-rotulo);
-}
-
-.confirmacao__acoes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--esp-8);
-}
-
-/* -------------------------------------------------------------- mensagens */
-.aviso {
-  padding: var(--esp-12) var(--esp-15);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--seg-risco);
-  border-radius: var(--raio-controle);
-  background: var(--surface);
-  font-size: var(--txt-13);
-}
-
-/* **Mora aqui, colada em `.aviso`, e não na folha da importação.** Lá ela era
-   carregada antes desta folha; com a mesma especificidade, o atalho
-   `border-left` de `.aviso`, que vem depois, apagava a cor — e todo aviso de
-   sucesso do sistema saía com a barra vermelha de erro. Medido no navegador:
-   `.aviso--sucesso` na folha 0, `.aviso` na folha 3, barra em rgb(208, 59, 59).
-   Na mesma folha, a ordem é a do arquivo e deixa de depender de quem importa
-   primeiro. */
-.aviso--sucesso {
-  border-left-color: var(--seg-ascensao);
-}
-
-/* Nem erro nem sucesso: um estado que a pessoa precisa saber — treino em
-   andamento, versão nova que não entrou em uso. A barra vermelha de erro diria
-   que algo deu errado, e não deu. */
-.aviso--informativo {
-  border-left-color: var(--ink-3);
-}
-
-.aviso__titulo {
-  font-weight: var(--peso-nome);
-  margin-bottom: var(--esp-4);
-}
-
-/* A API devolve `ajuda` junto do erro, em português e explicando o que fazer.
-   Reescrever a mensagem na tela perderia isso. */
-.aviso__ajuda {
-  color: var(--ink-2);
-  font-size: var(--txt-12);
-}
-
-/* O próximo passo, quando o aviso tem um. Mora aqui, e não na folha de quem o
-   usou primeiro, pelo mesmo motivo de `.aviso--sucesso`: o cadastro de parceiro
-   e a importação usam o mesmo aviso. O link vai na cor de tinta da ação — é a
-   cor que significa "responde ao clique" (regra 1.1 do `docs/09`). */
-.aviso__acao {
-  margin: var(--esp-8) 0 0;
-  font-size: var(--txt-13);
-}
-
-.aviso__acao a {
-  color: var(--acao-ink);
-  font-weight: var(--peso-rotulo);
-}
-
-/* ------------------------------------------------------------- paginação */
-/* Mora na base, e não na folha da lista de parceiros: a importação também
-   pagina o histórico, e estilo compartilhado na folha de quem o usou primeiro
-   já pintou de vermelho todo aviso de sucesso do sistema (`.aviso--sucesso`). */
-.paginacao {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--esp-8);
-  padding: var(--esp-12) var(--esp-16);
-  border-top: 1px solid var(--border);
-}
-
-/* A posição fica à esquerda dos botões e **empurra** os dois para a direita:
-   "51–100 de 500" antes de "Anterior" responde onde se está antes de oferecer
-   para onde ir. */
-.paginacao__posicao {
-  margin-right: auto;
-  font-size: var(--txt-13);
-  color: var(--ink-2);
-}
-
-/* ---------------------------------------------------------------- números */
-/* Toda coluna numérica. `tabular-nums` é o que faz os dígitos alinharem em
-   coluna; sem isso o olho precisa reler para comparar. */
-.num {
-  font-family: var(--fonte-dados);
+table {
   font-variant-numeric: tabular-nums;
 }
 
-/* ------------------------------------------------------------- utilitários */
-.so-leitor {
-  position: absolute;
+hr {
+  border: 0;
+  border-top: 1px solid var(--fio);
+  margin: var(--e-5) 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute !important;
   width: 1px;
   height: 1px;
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip: rect(0 0 0 0);
   white-space: nowrap;
   border: 0;
+}
+
+.pular {
+  position: fixed;
+  left: var(--e-4);
+  top: var(--e-3);
+  z-index: 100;
+  padding: var(--e-3) var(--e-4);
+  background: var(--acao);
+  color: var(--acao-tinta);
+  font-weight: 700;
+  border-radius: var(--raio-campo);
+  transform: translateY(-200%);
+}
+
+.pular:focus,
+.pular:focus-visible {
+  transform: none;
+  outline-color: var(--carbono);
+}
+
+.so-impressao {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
