@@ -1,0 +1,221 @@
+{
+ "itens": [
+  {
+   "id": 4,
+   "situacao": "CONCLUIDA",
+   "autor": "Medição Gestor",
+   "modo": "GPU",
+   "substituicao": null,
+   "threads": null,
+   "iniciada_em": "2026-10-05T07:57:36.084628Z",
+   "concluida_em": "2026-10-05T07:57:36.472656Z",
+   "parametros": {
+    "orcamento": "8000.00",
+    "maximo_acoes": 30,
+    "cota_cauda_longa": null,
+    "cotas_categoria": [],
+    "aplicacao_inicio": "2026-10-05",
+    "aplicacao_fim": "2026-10-11",
+    "modo": null
+   },
+   "periodo_base": {
+    "id": 12,
+    "data_inicio": "2026-09-28",
+    "data_fim": "2026-10-04"
+   },
+   "modelo_versao": "rede-1",
+   "viavel": true,
+   "restricao_violada": null,
+   "motivo": null,
+   "ajuda": null,
+   "uplift_total": "132875.95",
+   "custo_total": "7900.00",
+   "tempo_ms": 306,
+   "parcial": false,
+   "acoes": 30,
+   "elegiveis": 469,
+   "excluidos": {
+    "historico_curto": 31,
+    "fora_do_periodo": 0,
+    "sem_previsao": 0,
+    "inativos": 0,
+    "em_prospeccao": 0
+   },
+   "cotas": [],
+   "folga_orcamento": "100",
+   "folga_acoes": 0,
+   "ganho_guloso": "116299.48",
+   "itens": null
+  },
+  {
+   "id": 3,
+   "situacao": "CONCLUIDA",
+   "autor": "Medição Gestor",
+   "modo": "GPU",
+   "substituicao": null,
+   "threads": null,
+   "iniciada_em": "2026-10-05T07:57:34.978471Z",
+   "concluida_em": "2026-10-05T07:57:35.378974Z",
+   "parametros": {
+    "orcamento": "5000.00",
+    "maximo_acoes": 30,
+    "cota_cauda_longa": null,
+    "cotas_categoria": [],
+    "aplicacao_inicio": "2026-10-05",
+    "aplicacao_fim": "2026-10-11",
+    "modo": null
+   },
+   "periodo_base": {
+    "id": 12,
+    "data_inicio": "2026-09-28",
+    "data_fim": "2026-10-04"
+   },
+   "modelo_versao": "rede-1",
+   "viavel": true,
+   "restricao_violada": null,
+   "motivo": null,
+   "ajuda": null,
+   "uplift_total": "109714.18",
+   "custo_total": "4980.00",
+   "tempo_ms": 322,
+   "parcial": false,
+   "acoes": 28,
+   "elegiveis": 469,
+   "excluidos": {
+    "historico_curto": 31,
+    "fora_do_periodo": 0,
+    "sem_previsao": 0,
+    "inativos": 0,
+    "em_prospeccao": 0
+   },
+   "cotas": [],
+   "folga_orcamento": "20",
+   "folga_acoes": 2,
+   "ganho_guloso": "93284.4",
+   "itens": null
+  },
+  {
+   "id": 2,
+   "situacao": "CONCLUIDA",
+   "autor": "Gestora do Laboratório",
+   "modo": "GPU",
+   "substituicao": null,
+   "threads": null,
+   "iniciada_em": "2026-10-05T07:44:54.246806Z",
+   "concluida_em": "2026-10-05T07:44:54.612213Z",
+   "parametros": {
+    "orcamento": "5000.00",
+    "maximo_acoes": 30,
+    "cota_cauda_longa": "0.25",
+    "cotas_categoria": [],
+    "aplicacao_inicio": "2026-10-12",
+    "aplicacao_fim": "2026-10-18",
+    "modo": null
+   },
+   "periodo_base": {
+    "id": 12,
+    "data_inicio": "2026-09-28",
+    "data_fim": "2026-10-04"
+   },
+   "modelo_versao": "rede-1",
+   "viavel": true,
+   "restricao_violada": null,
+   "motivo": null,
+   "ajuda": null,
+   "uplift_total": "114600.15",
+   "custo_total": "4930.00",
+   "tempo_ms": 294,
+   "parcial": false,
+   "acoes": 25,
+   "elegiveis": 469,
+   "excluidos": {
+    "historico_curto": 31,
+    "fora_do_periodo": 0,
+    "sem_previsao": 0,
+    "inativos": 0,
+    "em_prospeccao": 0
+   },
+   "cotas": [
+    {
+     "categoria_id": null,
+     "nome": "Cauda longa",
+     "acoes": 14,
+     "minimo": 8,
+     "maximo": 30
+    }
+   ],
+   "folga_orcamento": "70",
+   "folga_acoes": 5,
+   "ganho_guloso": "106791.69",
+   "itens": null
+  },
+  {
+   "id": 1,
+   "situacao": "CONCLUIDA",
+   "autor": "Gestora do Laboratório",
+   "modo": "GPU",
+   "substituicao": null,
+   "threads": null,
+   "iniciada_em": "2026-10-05T07:44:52.083389Z",
+   "concluida_em": "2026-10-05T07:44:52.588093Z",
+   "parametros": {
+    "orcamento": "1500.00",
+    "maximo_acoes": 8,
+    "cota_cauda_longa": "0.25",
+    "cotas_categoria": [],
+    "aplicacao_inicio": "2026-10-12",
+    "aplicacao_fim": "2026-10-18",
+    "modo": null
+   },
+   "periodo_base": {
+    "id": 12,
+    "data_inicio": "2026-09-28",
+    "data_fim": "2026-10-04"
+   },
+   "modelo_versao": "rede-1",
+   "viavel": true,
+   "restricao_violada": null,
+   "motivo": null,
+   "ajuda": null,
+   "uplift_total": "63136.23",
+   "custo_total": "1500.00",
+   "tempo_ms": 367,
+   "parcial": false,
+   "acoes": 8,
+   "elegiveis": 469,
+   "excluidos": {
+    "historico_curto": 31,
+    "fora_do_periodo": 0,
+    "sem_previsao": 0,
+    "inativos": 0,
+    "em_prospeccao": 0
+   },
+   "cotas": [
+    {
+     "categoria_id": null,
+     "nome": "Cauda longa",
+     "acoes": 2,
+     "minimo": 2,
+     "maximo": 8
+    }
+   ],
+   "folga_orcamento": "0",
+   "folga_acoes": 0,
+   "ganho_guloso": "63136.23",
+   "itens": null
+  }
+ ],
+ "total": 4,
+ "pagina": 1,
+ "tamanho": 10,
+ "autores": [
+  {
+   "id": 3,
+   "nome": "Gestora do Laboratório"
+  },
+  {
+   "id": 6,
+   "nome": "Medição Gestor"
+  }
+ ]
+}

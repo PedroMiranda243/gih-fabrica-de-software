@@ -1,0 +1,71 @@
+{
+ "itens": [
+  {
+   "id": 204,
+   "usuario_id": 3,
+   "autor": "Gestora do Laboratório",
+   "autor_login": "lab.gestor",
+   "acao": "ACESSO_NEGADO",
+   "rotulo": "Acesso negado",
+   "resumo": "GET /api/auditoria, perfil GESTOR",
+   "detalhes": {
+    "metodo": "GET",
+    "perfil": "GESTOR",
+    "caminho": "/api/auditoria"
+   },
+   "origem": "172.20.0.1",
+   "ocorrido_em": "2026-10-05T08:26:03.661074Z"
+  },
+  {
+   "id": 203,
+   "usuario_id": 5,
+   "autor": "Parceiro do Laboratório",
+   "autor_login": "lab.parceiro",
+   "acao": "LOGIN_SUCESSO",
+   "rotulo": "Entrada no sistema",
+   "resumo": "",
+   "detalhes": null,
+   "origem": "172.20.0.1",
+   "ocorrido_em": "2026-10-05T08:25:57.191626Z"
+  },
+  {
+   "id": 202,
+   "usuario_id": 4,
+   "autor": "Analista do Laboratório",
+   "autor_login": "lab.analista",
+   "acao": "LOGIN_SUCESSO",
+   "rotulo": "Entrada no sistema",
+   "resumo": "",
+   "detalhes": null,
+   "origem": "172.20.0.1",
+   "ocorrido_em": "2026-10-05T08:25:54.777942Z"
+  },
+  {
+   "id": 201,
+   "usuario_id": 3,
+   "autor": "Gestora do Laboratório",
+   "autor_login": "lab.gestor",
+   "acao": "LOGIN_SUCESSO",
+   "rotulo": "Entrada no sistema",
+   "resumo": "",
+   "detalhes": null,
+   "origem": "172.20.0.1",
+   "ocorrido_em": "2026-10-05T08:25:52.436396Z"
+  },
+  {
+   "id": 200,
+   "usuario_id": 1,
+   "autor": "Administrador",
+   "autor_login": "admin",
+   "acao": "LOGIN_SUCESSO",
+   "rotulo": "Entrada no sistema",
+   "resumo": "",
+   "detalhes": null,
+   "origem": "172.20.0.1",
+   "ocorrido_em": "2026-10-05T08:25:50.117893Z"
+  }
+ ],
+ "total": 204,
+ "pagina": 1,
+ "tamanho": 5
+}

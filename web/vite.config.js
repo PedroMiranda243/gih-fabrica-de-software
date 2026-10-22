@@ -11,7 +11,7 @@ const API = process.env.GIH_API_URL || "http://localhost:8000";
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: true,
+    host: true, // acessível de fora do contêiner
     port: 5173,
     proxy: { "/api": { target: API, changeOrigin: false } },
   },
@@ -21,5 +21,10 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: false,
+  },
+  test: {
+    environment: "jsdom",
+    setupFiles: "./src/testes/preparar.js",
+    globals: true,
   },
 });

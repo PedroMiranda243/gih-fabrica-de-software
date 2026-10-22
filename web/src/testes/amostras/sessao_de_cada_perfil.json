@@ -1,0 +1,87 @@
+{
+ "ADMINISTRADOR": {
+  "id": 1,
+  "login": "admin",
+  "nome": "Administrador",
+  "perfil": "ADMINISTRADOR",
+  "ativo": true,
+  "parceiro_id": null,
+  "criado_em": "2026-10-05T07:44:17.253536Z",
+  "telas": [
+   "painel",
+   "historico_importacoes",
+   "usuarios",
+   "auditoria",
+   "configuracao",
+   "modelo",
+   "execucoes",
+   "benchmark",
+   "relatorio_operacoes",
+   "ajuda_regras"
+  ]
+ },
+ "GESTOR": {
+  "id": 3,
+  "login": "lab.gestor",
+  "nome": "Gestora do Laboratório",
+  "perfil": "GESTOR",
+  "ativo": true,
+  "parceiro_id": null,
+  "criado_em": "2026-10-05T07:44:44.858241Z",
+  "telas": [
+   "painel",
+   "painel_decisao",
+   "importar",
+   "historico_importacoes",
+   "parceiros",
+   "modelo",
+   "campanha",
+   "calcular_campanha",
+   "execucoes",
+   "execucao",
+   "benchmark",
+   "mensagens",
+   "aprovacao",
+   "decidir_mensagens",
+   "relatorios",
+   "assistente",
+   "ajuda_regras"
+  ]
+ },
+ "ANALISTA": {
+  "id": 4,
+  "login": "lab.analista",
+  "nome": "Analista do Laboratório",
+  "perfil": "ANALISTA",
+  "ativo": true,
+  "parceiro_id": null,
+  "criado_em": "2026-10-05T07:44:44.921638Z",
+  "telas": [
+   "painel",
+   "painel_decisao",
+   "importar",
+   "historico_importacoes",
+   "parceiros",
+   "campanha",
+   "execucoes",
+   "execucao",
+   "mensagens",
+   "aprovacao",
+   "relatorios",
+   "assistente",
+   "ajuda_regras"
+  ]
+ },
+ "PARCEIRO": {
+  "id": 5,
+  "login": "lab.parceiro",
+  "nome": "Parceiro do Laboratório",
+  "perfil": "PARCEIRO",
+  "ativo": true,
+  "parceiro_id": 246,
+  "criado_em": "2026-10-05T07:44:47.334180Z",
+  "telas": [
+   "meu_desempenho"
+  ]
+ }
+}

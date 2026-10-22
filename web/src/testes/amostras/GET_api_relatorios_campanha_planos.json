@@ -1,0 +1,30 @@
+[
+ {
+  "execucao_id": 4,
+  "concluida_em": "2026-10-05T07:57:36.472656Z",
+  "aplicacao_inicio": "2026-10-05",
+  "aplicacao_fim": "2026-10-11",
+  "modelo_versao": "rede-1"
+ },
+ {
+  "execucao_id": 3,
+  "concluida_em": "2026-10-05T07:57:35.378974Z",
+  "aplicacao_inicio": "2026-10-05",
+  "aplicacao_fim": "2026-10-11",
+  "modelo_versao": "rede-1"
+ },
+ {
+  "execucao_id": 2,
+  "concluida_em": "2026-10-05T07:44:54.612213Z",
+  "aplicacao_inicio": "2026-10-12",
+  "aplicacao_fim": "2026-10-18",
+  "modelo_versao": "rede-1"
+ },
+ {
+  "execucao_id": 1,
+  "concluida_em": "2026-10-05T07:44:52.588093Z",
+  "aplicacao_inicio": "2026-10-12",
+  "aplicacao_fim": "2026-10-18",
+  "modelo_versao": "rede-1"
+ }
+]

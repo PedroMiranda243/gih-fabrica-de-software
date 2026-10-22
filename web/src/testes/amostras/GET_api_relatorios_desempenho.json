@@ -1,0 +1,164 @@
+{
+ "periodo": {
+  "id": 12,
+  "data_inicio": "2026-09-28",
+  "data_fim": "2026-10-04"
+ },
+ "periodo_anterior": {
+  "id": 11,
+  "data_inicio": "2026-09-21",
+  "data_fim": "2026-09-27"
+ },
+ "categoria": null,
+ "segmento": null,
+ "mesmos_parceiros": false,
+ "segmentado": true,
+ "total": {
+  "chave": null,
+  "rotulo": "Total",
+  "parceiros": 500,
+  "faturamento": "1839707.96",
+  "pedidos": 41974,
+  "ticket_medio": "43.83",
+  "variacao_percentual": "-0.12"
+ },
+ "por_categoria": [
+  {
+   "chave": "2",
+   "rotulo": "Lanchonete",
+   "parceiros": 121,
+   "faturamento": "426146.48",
+   "pedidos": 13144,
+   "ticket_medio": "32.42",
+   "variacao_percentual": "-0.04"
+  },
+  {
+   "chave": "1",
+   "rotulo": "Restaurante",
+   "parceiros": 103,
+   "faturamento": "407239.70",
+   "pedidos": 8553,
+   "ticket_medio": "47.61",
+   "variacao_percentual": "-4.19"
+  },
+  {
+   "chave": "5",
+   "rotulo": "Mercado",
+   "parceiros": 43,
+   "faturamento": "223125.83",
+   "pedidos": 2788,
+   "ticket_medio": "80.03",
+   "variacao_percentual": "-5.48"
+  },
+  {
+   "chave": "4",
+   "rotulo": "Padaria",
+   "parceiros": 52,
+   "faturamento": "168927.36",
+   "pedidos": 6230,
+   "ticket_medio": "27.12",
+   "variacao_percentual": "5.55"
+  },
+  {
+   "chave": "3",
+   "rotulo": "Pizzaria",
+   "parceiros": 58,
+   "faturamento": "134802.37",
+   "pedidos": 2096,
+   "ticket_medio": "64.31",
+   "variacao_percentual": "9.11"
+  },
+  {
+   "chave": "8",
+   "rotulo": "Bebidas",
+   "parceiros": 23,
+   "faturamento": "115938.57",
+   "pedidos": 1596,
+   "ticket_medio": "72.64",
+   "variacao_percentual": "-1.39"
+  },
+  {
+   "chave": "7",
+   "rotulo": "Farmácia",
+   "parceiros": 28,
+   "faturamento": "103622.80",
+   "pedidos": 1778,
+   "ticket_medio": "58.28",
+   "variacao_percentual": "4.69"
+  },
+  {
+   "chave": "6",
+   "rotulo": "Açaí e sorvetes",
+   "parceiros": 31,
+   "faturamento": "98396.88",
+   "pedidos": 3426,
+   "ticket_medio": "28.72",
+   "variacao_percentual": "-3.31"
+  },
+  {
+   "chave": "10",
+   "rotulo": "Petshop",
+   "parceiros": 24,
+   "faturamento": "96232.69",
+   "pedidos": 1650,
+   "ticket_medio": "58.32",
+   "variacao_percentual": "2.39"
+  },
+  {
+   "chave": "9",
+   "rotulo": "Gás e água",
+   "parceiros": 17,
+   "faturamento": "65275.28",
+   "pedidos": 713,
+   "ticket_medio": "91.55",
+   "variacao_percentual": "11.37"
+  }
+ ],
+ "por_segmento": [
+  {
+   "chave": "ESTAVEL",
+   "rotulo": "Estável",
+   "parceiros": 272,
+   "faturamento": "782399.94",
+   "pedidos": 18223,
+   "ticket_medio": "42.93",
+   "variacao_percentual": "-0.48"
+  },
+  {
+   "chave": "EM_RISCO",
+   "rotulo": "Em risco",
+   "parceiros": 104,
+   "faturamento": "344051.45",
+   "pedidos": 6961,
+   "ticket_medio": "49.43",
+   "variacao_percentual": "-12.42"
+  },
+  {
+   "chave": "TOP",
+   "rotulo": "Top",
+   "parceiros": 14,
+   "faturamento": "343734.24",
+   "pedidos": 7732,
+   "ticket_medio": "44.46",
+   "variacao_percentual": "-0.69"
+  },
+  {
+   "chave": "EM_ASCENSAO",
+   "rotulo": "Em ascensão",
+   "parceiros": 89,
+   "faturamento": "297793.28",
+   "pedidos": 7270,
+   "ticket_medio": "40.96",
+   "variacao_percentual": "10.70"
+  },
+  {
+   "chave": "RECEM_CHEGADO",
+   "rotulo": "Recém-chegado",
+   "parceiros": 21,
+   "faturamento": "71729.05",
+   "pedidos": 1788,
+   "ticket_medio": "40.12",
+   "variacao_percentual": "-6.34"
+  }
+ ]
+}

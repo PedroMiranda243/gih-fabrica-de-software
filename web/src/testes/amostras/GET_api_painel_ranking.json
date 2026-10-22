@@ -1,0 +1,148 @@
+{
+ "periodo": {
+  "id": 12,
+  "data_inicio": "2026-09-28",
+  "data_fim": "2026-10-04"
+ },
+ "periodo_anterior": {
+  "id": 11,
+  "data_inicio": "2026-09-21",
+  "data_fim": "2026-09-27"
+ },
+ "categoria": null,
+ "itens": [
+  {
+   "parceiro_id": 246,
+   "nome": "Ponto Azul 2",
+   "categoria": "Mercado",
+   "segmento": "EM_RISCO",
+   "posicao": 1,
+   "posicao_anterior": 1,
+   "faturamento": "79410.29",
+   "pedidos": 1070,
+   "ticket_medio": "74.22",
+   "variacao_percentual": "-15.06",
+   "estreante": false
+  },
+  {
+   "parceiro_id": 460,
+   "nome": "Quintal Verde 2",
+   "categoria": "Restaurante",
+   "segmento": "TOP",
+   "posicao": 2,
+   "posicao_anterior": 2,
+   "faturamento": "57841.79",
+   "pedidos": 1129,
+   "ticket_medio": "51.23",
+   "variacao_percentual": "-14.11",
+   "estreante": false
+  },
+  {
+   "parceiro_id": 214,
+   "nome": "Villa da Praça",
+   "categoria": "Petshop",
+   "segmento": "TOP",
+   "posicao": 3,
+   "posicao_anterior": 3,
+   "faturamento": "31039.82",
+   "pedidos": 513,
+   "ticket_medio": "60.51",
+   "variacao_percentual": "-3.04",
+   "estreante": false
+  },
+  {
+   "parceiro_id": 181,
+   "nome": "Celeiro do Chef",
+   "categoria": "Bebidas",
+   "segmento": "TOP",
+   "posicao": 4,
+   "posicao_anterior": 4,
+   "faturamento": "28667.26",
+   "pedidos": 382,
+   "ticket_medio": "75.05",
+   "variacao_percentual": "-4.56",
+   "estreante": false
+  },
+  {
+   "parceiro_id": 74,
+   "nome": "Espaço do Chef",
+   "categoria": "Lanchonete",
+   "segmento": "TOP",
+   "posicao": 5,
+   "posicao_anterior": 6,
+   "faturamento": "27668.36",
+   "pedidos": 955,
+   "ticket_medio": "28.97",
+   "variacao_percentual": "0.90",
+   "estreante": false
+  },
+  {
+   "parceiro_id": 381,
+   "nome": "Esquina do Vale 3",
+   "categoria": "Lanchonete",
+   "segmento": "TOP",
+   "posicao": 6,
+   "posicao_anterior": 7,
+   "faturamento": "25429.22",
+   "pedidos": 743,
+   "ticket_medio": "34.23",
+   "variacao_percentual": "-7.03",
+   "estreante": false
+  },
+  {
+   "parceiro_id": 484,
+   "nome": "Casa Caseiro 2",
+   "categoria": "Açaí e sorvetes",
+   "segmento": "TOP",
+   "posicao": 7,
+   "posicao_anterior": 8,
+   "faturamento": "25139.17",
+   "pedidos": 847,
+   "ticket_medio": "29.68",
+   "variacao_percentual": "0.84",
+   "estreante": false
+  },
+  {
+   "parceiro_id": 339,
+   "nome": "Forno da Serra 2",
+   "categoria": "Gás e água",
+   "segmento": "TOP",
+   "posicao": 8,
+   "posicao_anterior": 11,
+   "faturamento": "24224.99",
+   "pedidos": 275,
+   "ticket_medio": "88.09",
+   "variacao_percentual": "48.08",
+   "estreante": false
+  },
+  {
+   "parceiro_id": 152,
+   "nome": "Quintal da Serra",
+   "categoria": "Restaurante",
+   "segmento": "TOP",
+   "posicao": 9,
+   "posicao_anterior": 5,
+   "faturamento": "23741.23",
+   "pedidos": 515,
+   "ticket_medio": "46.10",
+   "variacao_percentual": "-19.67",
+   "estreante": false
+  },
+  {
+   "parceiro_id": 7,
+   "nome": "Parada Central",
+   "categoria": "Farmácia",
+   "segmento": "TOP",
+   "posicao": 10,
+   "posicao_anterior": 13,
+   "faturamento": "20358.11",
+   "pedidos": 370,
+   "ticket_medio": "55.02",
+   "variacao_percentual": "34.86",
+   "estreante": false
+  }
+ ],
+ "total": 500,
+ "pagina": 1,
+ "tamanho": 10
+}

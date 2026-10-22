@@ -1,0 +1,511 @@
+{
+ "a": {
+  "id": 4,
+  "situacao": "CONCLUIDA",
+  "autor": "Medição Gestor",
+  "modo": "GPU",
+  "substituicao": null,
+  "threads": null,
+  "iniciada_em": "2026-10-05T07:57:36.084628Z",
+  "concluida_em": "2026-10-05T07:57:36.472656Z",
+  "parametros": {
+   "orcamento": "8000.00",
+   "maximo_acoes": 30,
+   "cota_cauda_longa": null,
+   "cotas_categoria": [],
+   "aplicacao_inicio": "2026-10-05",
+   "aplicacao_fim": "2026-10-11",
+   "modo": null
+  },
+  "periodo_base": {
+   "id": 12,
+   "data_inicio": "2026-09-28",
+   "data_fim": "2026-10-04"
+  },
+  "modelo_versao": "rede-1",
+  "viavel": true,
+  "restricao_violada": null,
+  "motivo": null,
+  "ajuda": null,
+  "uplift_total": "132875.95",
+  "custo_total": "7900.00",
+  "tempo_ms": 306,
+  "parcial": false,
+  "acoes": 30,
+  "elegiveis": 469,
+  "excluidos": {
+   "historico_curto": 31,
+   "fora_do_periodo": 0,
+   "sem_previsao": 0,
+   "inativos": 0,
+   "em_prospeccao": 0
+  },
+  "cotas": [],
+  "folga_orcamento": "100",
+  "folga_acoes": 0,
+  "ganho_guloso": "116299.48",
+  "itens": null
+ },
+ "b": {
+  "id": 3,
+  "situacao": "CONCLUIDA",
+  "autor": "Medição Gestor",
+  "modo": "GPU",
+  "substituicao": null,
+  "threads": null,
+  "iniciada_em": "2026-10-05T07:57:34.978471Z",
+  "concluida_em": "2026-10-05T07:57:35.378974Z",
+  "parametros": {
+   "orcamento": "5000.00",
+   "maximo_acoes": 30,
+   "cota_cauda_longa": null,
+   "cotas_categoria": [],
+   "aplicacao_inicio": "2026-10-05",
+   "aplicacao_fim": "2026-10-11",
+   "modo": null
+  },
+  "periodo_base": {
+   "id": 12,
+   "data_inicio": "2026-09-28",
+   "data_fim": "2026-10-04"
+  },
+  "modelo_versao": "rede-1",
+  "viavel": true,
+  "restricao_violada": null,
+  "motivo": null,
+  "ajuda": null,
+  "uplift_total": "109714.18",
+  "custo_total": "4980.00",
+  "tempo_ms": 322,
+  "parcial": false,
+  "acoes": 28,
+  "elegiveis": 469,
+  "excluidos": {
+   "historico_curto": 31,
+   "fora_do_periodo": 0,
+   "sem_previsao": 0,
+   "inativos": 0,
+   "em_prospeccao": 0
+  },
+  "cotas": [],
+  "folga_orcamento": "20",
+  "folga_acoes": 2,
+  "ganho_guloso": "93284.4",
+  "itens": null
+ },
+ "parametros_diferentes": [
+  "orcamento"
+ ],
+ "mesmas_previsoes": true,
+ "diferenca_uplift": "-23161.77",
+ "diferenca_custo": "-2920.00",
+ "diferenca_acoes": -2,
+ "resumo": {
+  "mudaram": 5,
+  "so_a": 12,
+  "so_b": 10,
+  "iguais": 13
+ },
+ "itens": [
+  {
+   "parceiro_id": 339,
+   "parceiro": "Forno da Serra 2",
+   "segmento": "TOP",
+   "situacao": "MUDOU",
+   "acao_a": "Campanha de categoria",
+   "acao_b": "Cupom de primeira compra",
+   "ganho_a": "4980.76",
+   "ganho_b": "1811.19"
+  },
+  {
+   "parceiro_id": 7,
+   "parceiro": "Parada Central",
+   "segmento": "TOP",
+   "situacao": "MUDOU",
+   "acao_a": "Campanha de categoria",
+   "acao_b": "Cupom de primeira compra",
+   "ganho_a": "4098.91",
+   "ganho_b": "1490.51"
+  },
+  {
+   "parceiro_id": 263,
+   "parceiro": "Parada Mineiro 2",
+   "segmento": "TOP",
+   "situacao": "MUDOU",
+   "acao_a": "Campanha de categoria",
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": "4122.22",
+   "ganho_b": "1586.48"
+  },
+  {
+   "parceiro_id": 310,
+   "parceiro": "Ponto Central 3",
+   "segmento": "EM_RISCO",
+   "situacao": "MUDOU",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": "Cupom de primeira compra",
+   "ganho_a": "1980.44",
+   "ganho_b": "1086.64"
+  },
+  {
+   "parceiro_id": 14,
+   "parceiro": "Casa Verde",
+   "segmento": "TOP",
+   "situacao": "MUDOU",
+   "acao_a": "Campanha de categoria",
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": "3982.25",
+   "ganho_b": "3421.87"
+  },
+  {
+   "parceiro_id": 382,
+   "parceiro": "Cantina Popular 3",
+   "segmento": "EM_RISCO",
+   "situacao": "SO_A",
+   "acao_a": "Campanha de categoria",
+   "acao_b": null,
+   "ganho_a": "3488.07",
+   "ganho_b": null
+  },
+  {
+   "parceiro_id": 235,
+   "parceiro": "Espaço do Vale 2",
+   "segmento": "TOP",
+   "situacao": "SO_A",
+   "acao_a": "Campanha de categoria",
+   "acao_b": null,
+   "ganho_a": "3253.63",
+   "ganho_b": null
+  },
+  {
+   "parceiro_id": 375,
+   "parceiro": "Varanda Express 4",
+   "segmento": "ESTAVEL",
+   "situacao": "SO_A",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": null,
+   "ganho_a": "2834.59",
+   "ganho_b": null
+  },
+  {
+   "parceiro_id": 226,
+   "parceiro": "Esquina do Vale 2",
+   "segmento": "ESTAVEL",
+   "situacao": "SO_A",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": null,
+   "ganho_a": "2646.51",
+   "ganho_b": null
+  },
+  {
+   "parceiro_id": 442,
+   "parceiro": "Esquina do Chef 3",
+   "segmento": "ESTAVEL",
+   "situacao": "SO_A",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": null,
+   "ganho_a": "2405.46",
+   "ganho_b": null
+  },
+  {
+   "parceiro_id": 425,
+   "parceiro": "Parada Azul 2",
+   "segmento": "ESTAVEL",
+   "situacao": "SO_A",
+   "acao_a": "Frete subsidiado",
+   "acao_b": null,
+   "ganho_a": "2404.51",
+   "ganho_b": null
+  },
+  {
+   "parceiro_id": 388,
+   "parceiro": "Villa do Vale 2",
+   "segmento": "EM_RISCO",
+   "situacao": "SO_A",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": null,
+   "ganho_a": "1682.14",
+   "ganho_b": null
+  },
+  {
+   "parceiro_id": 13,
+   "parceiro": "Parada Bom Prato",
+   "segmento": "EM_RISCO",
+   "situacao": "SO_A",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": null,
+   "ganho_a": "1529.90",
+   "ganho_b": null
+  },
+  {
+   "parceiro_id": 356,
+   "parceiro": "Espaço Real 3",
+   "segmento": "ESTAVEL",
+   "situacao": "SO_A",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": null,
+   "ganho_a": "1479.58",
+   "ganho_b": null
+  },
+  {
+   "parceiro_id": 256,
+   "parceiro": "Espaço Caseiro 2",
+   "segmento": "ESTAVEL",
+   "situacao": "SO_A",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": null,
+   "ganho_a": "1452.12",
+   "ganho_b": null
+  },
+  {
+   "parceiro_id": 84,
+   "parceiro": "Villa do Sol",
+   "segmento": "ESTAVEL",
+   "situacao": "SO_A",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": null,
+   "ganho_a": "1394.44",
+   "ganho_b": null
+  },
+  {
+   "parceiro_id": 469,
+   "parceiro": "Villa Express 4",
+   "segmento": "ESTAVEL",
+   "situacao": "SO_A",
+   "acao_a": "Frete subsidiado",
+   "acao_b": null,
+   "ganho_a": "1377.69",
+   "ganho_b": null
+  },
+  {
+   "parceiro_id": 412,
+   "parceiro": "Celeiro da Serra 3",
+   "segmento": "ESTAVEL",
+   "situacao": "SO_B",
+   "acao_a": null,
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": null,
+   "ganho_b": "2594.72"
+  },
+  {
+   "parceiro_id": 143,
+   "parceiro": "Cantina do Vale",
+   "segmento": "ESTAVEL",
+   "situacao": "SO_B",
+   "acao_a": null,
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": null,
+   "ganho_b": "2408.90"
+  },
+  {
+   "parceiro_id": 360,
+   "parceiro": "Quintal Mineiro 3",
+   "segmento": "ESTAVEL",
+   "situacao": "SO_B",
+   "acao_a": null,
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": null,
+   "ganho_b": "2018.89"
+  },
+  {
+   "parceiro_id": 399,
+   "parceiro": "Espaço Dourado 3",
+   "segmento": "ESTAVEL",
+   "situacao": "SO_B",
+   "acao_a": null,
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": null,
+   "ganho_b": "1888.78"
+  },
+  {
+   "parceiro_id": 396,
+   "parceiro": "Recanto Bom Prato 4",
+   "segmento": "ESTAVEL",
+   "situacao": "SO_B",
+   "acao_a": null,
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": null,
+   "ganho_b": "1632.47"
+  },
+  {
+   "parceiro_id": 148,
+   "parceiro": "Recanto Azul",
+   "segmento": "ESTAVEL",
+   "situacao": "SO_B",
+   "acao_a": null,
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": null,
+   "ganho_b": "754.99"
+  },
+  {
+   "parceiro_id": 455,
+   "parceiro": "Casa Verde 4",
+   "segmento": "ESTAVEL",
+   "situacao": "SO_B",
+   "acao_a": null,
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": null,
+   "ganho_b": "594.53"
+  },
+  {
+   "parceiro_id": 280,
+   "parceiro": "Parada Express 2",
+   "segmento": "EM_RISCO",
+   "situacao": "SO_B",
+   "acao_a": null,
+   "acao_b": "Cupom de primeira compra",
+   "ganho_a": null,
+   "ganho_b": "359.54"
+  },
+  {
+   "parceiro_id": 176,
+   "parceiro": "Quintal do Sol",
+   "segmento": "EM_ASCENSAO",
+   "situacao": "SO_B",
+   "acao_a": null,
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": null,
+   "ganho_b": "258.84"
+  },
+  {
+   "parceiro_id": 95,
+   "parceiro": "Recanto do Vale",
+   "segmento": "EM_RISCO",
+   "situacao": "SO_B",
+   "acao_a": null,
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": null,
+   "ganho_b": "43.10"
+  },
+  {
+   "parceiro_id": 246,
+   "parceiro": "Ponto Azul 2",
+   "segmento": "EM_RISCO",
+   "situacao": "IGUAL",
+   "acao_a": "Campanha de categoria",
+   "acao_b": "Campanha de categoria",
+   "ganho_a": "20258.30",
+   "ganho_b": "20258.30"
+  },
+  {
+   "parceiro_id": 460,
+   "parceiro": "Quintal Verde 2",
+   "segmento": "TOP",
+   "situacao": "IGUAL",
+   "acao_a": "Campanha de categoria",
+   "acao_b": "Campanha de categoria",
+   "ganho_a": "14950.60",
+   "ganho_b": "14950.60"
+  },
+  {
+   "parceiro_id": 214,
+   "parceiro": "Villa da Praça",
+   "segmento": "TOP",
+   "situacao": "IGUAL",
+   "acao_a": "Campanha de categoria",
+   "acao_b": "Campanha de categoria",
+   "ganho_a": "7673.63",
+   "ganho_b": "7673.63"
+  },
+  {
+   "parceiro_id": 152,
+   "parceiro": "Quintal da Serra",
+   "segmento": "TOP",
+   "situacao": "IGUAL",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": "7596.23",
+   "ganho_b": "7596.23"
+  },
+  {
+   "parceiro_id": 181,
+   "parceiro": "Celeiro do Chef",
+   "segmento": "TOP",
+   "situacao": "IGUAL",
+   "acao_a": "Campanha de categoria",
+   "acao_b": "Campanha de categoria",
+   "ganho_a": "7125.68",
+   "ganho_b": "7125.68"
+  },
+  {
+   "parceiro_id": 484,
+   "parceiro": "Casa Caseiro 2",
+   "segmento": "TOP",
+   "situacao": "IGUAL",
+   "acao_a": "Campanha de categoria",
+   "acao_b": "Campanha de categoria",
+   "ganho_a": "6121.04",
+   "ganho_b": "6121.04"
+  },
+  {
+   "parceiro_id": 381,
+   "parceiro": "Esquina do Vale 3",
+   "segmento": "TOP",
+   "situacao": "IGUAL",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": "6081.52",
+   "ganho_b": "6081.52"
+  },
+  {
+   "parceiro_id": 74,
+   "parceiro": "Espaço do Chef",
+   "segmento": "TOP",
+   "situacao": "IGUAL",
+   "acao_a": "Campanha de categoria",
+   "acao_b": "Campanha de categoria",
+   "ganho_a": "5773.82",
+   "ganho_b": "5773.82"
+  },
+  {
+   "parceiro_id": 314,
+   "parceiro": "Quintal do Sol 3",
+   "segmento": "ESTAVEL",
+   "situacao": "IGUAL",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": "3912.23",
+   "ganho_b": "3912.23"
+  },
+  {
+   "parceiro_id": 266,
+   "parceiro": "Varanda Express 3",
+   "segmento": "ESTAVEL",
+   "situacao": "IGUAL",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": "2988.88",
+   "ganho_b": "2988.88"
+  },
+  {
+   "parceiro_id": 377,
+   "parceiro": "Forno Real 2",
+   "segmento": "ESTAVEL",
+   "situacao": "IGUAL",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": "1804.12",
+   "ganho_b": "1804.12"
+  },
+  {
+   "parceiro_id": 118,
+   "parceiro": "Villa da Serra",
+   "segmento": "ESTAVEL",
+   "situacao": "IGUAL",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": "1764.40",
+   "ganho_b": "1764.40"
+  },
+  {
+   "parceiro_id": 82,
+   "parceiro": "Espaço da Praça",
+   "segmento": "ESTAVEL",
+   "situacao": "IGUAL",
+   "acao_a": "Visita de relacionamento",
+   "acao_b": "Visita de relacionamento",
+   "ganho_a": "1712.28",
+   "ganho_b": "1712.28"
+  }
+ ]
+}

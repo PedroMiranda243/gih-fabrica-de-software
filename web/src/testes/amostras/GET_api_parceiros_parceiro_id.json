@@ -1,0 +1,22 @@
+{
+ "id": 246,
+ "nome": "Ponto Azul 2",
+ "categoria": {
+  "id": 5,
+  "nome": "Mercado",
+  "ativa": true
+ },
+ "origem_categoria": "MANUAL",
+ "status": "ATIVO",
+ "contato": null,
+ "ativo": true,
+ "criado_em": "2026-10-05T07:44:37.245985Z",
+ "desempenho": {
+  "segmento": "EM_RISCO",
+  "faturamento": "79410.29",
+  "pedidos": 1070,
+  "ticket_medio": "74.22",
+  "variacao_percentual": "-15.06"
+ },
+ "risco_queda": 0.23553469215055362
+}

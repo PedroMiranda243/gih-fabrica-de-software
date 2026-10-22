@@ -1,0 +1,225 @@
+[
+ {
+  "pedido": {
+   "texto": "Como foi a rede na última semana?"
+  },
+  "resposta": {
+   "situacao": "INDISPONIVEL",
+   "tipo": null,
+   "texto": "O assistente está indisponível agora. O serviço do modelo de linguagem não respondeu. O painel e as outras telas seguem funcionando.",
+   "fonte": null,
+   "redator": "MODELO_FIXO",
+   "motivo": null,
+   "fatos": [],
+   "candidatos": []
+  }
+ },
+ {
+  "pedido": {
+   "texto": "Qual a média de faturamento das pizzarias?"
+  },
+  "resposta": {
+   "situacao": "ABSTENCAO",
+   "tipo": "fora_do_catalogo",
+   "texto": "Essa pergunta pede uma conta — soma, média, diferença ou total de várias semanas —, e o assistente não faz contas: ele responde com os números que o sistema já calculou. Pergunte por um parceiro ou pela rede numa semana, ou veja o painel.",
+   "fonte": null,
+   "redator": "MODELO_FIXO",
+   "motivo": null,
+   "fatos": [],
+   "candidatos": []
+  }
+ },
+ {
+  "pedido": {
+   "texto": "Como foi a rede na última semana?"
+  },
+  "resposta": {
+   "situacao": "RESPONDIDA",
+   "tipo": "resumo_do_periodo",
+   "texto": "No último período, de 28/09/2026 a 04/10/2026, a rede registrou um faturamento de R$ 1.839.707,96 com uma queda de 0,12% em comparação ao período anterior. Houve também uma pequena diminuição nos pedidos (-0,06%) e no ticket médio (-0,07%).",
+   "fonte": {
+    "texto": "Relatórios de 21/09/2026 a 27/09/2026 e de 28/09/2026 a 04/10/2026.",
+    "relatorios": [
+     {
+      "periodo": {
+       "id": 11,
+       "data_inicio": "2026-09-21",
+       "data_fim": "2026-09-27"
+      },
+      "importado_em": "2026-10-05T07:44:37.245985Z",
+      "importado_por": "Gerador de dados",
+      "origem": "CSV"
+     },
+     {
+      "periodo": {
+       "id": 12,
+       "data_inicio": "2026-09-28",
+       "data_fim": "2026-10-04"
+      },
+      "importado_em": "2026-10-05T07:44:37.245985Z",
+      "importado_por": "Gerador de dados",
+      "origem": "CSV"
+     }
+    ],
+    "modelo_versao": null,
+    "execucao_id": null
+   },
+   "redator": "MODELO",
+   "motivo": null,
+   "fatos": [
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento",
+     "valor": "R$ 1.839.707,96"
+    },
+    {
+     "fato": "Pedidos",
+     "valor": "41.974"
+    },
+    {
+     "fato": "Parceiros com movimento",
+     "valor": "500"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 43,83"
+    },
+    {
+     "fato": "Variação de faturamento",
+     "valor": "-0,12%"
+    },
+    {
+     "fato": "Variação de pedidos",
+     "valor": "-0,06%"
+    },
+    {
+     "fato": "Variação de ticket médio",
+     "valor": "-0,07%"
+    },
+    {
+     "fato": "Período anterior",
+     "valor": "21/09/2026 a 27/09/2026"
+    },
+    {
+     "fato": "Em risco",
+     "valor": "104"
+    }
+   ],
+   "candidatos": []
+  }
+ },
+ {
+  "pedido": {
+   "texto": "Quem saiu do Top nesta semana?"
+  },
+  "resposta": {
+   "situacao": "RESPONDIDA",
+   "tipo": "mobilidade_do_top",
+   "texto": "De 21/09/2026 a 27/09/2026 para 28/09/2026 a 04/10/2026, entraram no Top 15: Parada Real (13º), Forno da Serra 3 (15º); e saíram: Quintal do Sol 3 (agora em 17º), Ponto Bom Prato (agora em 28º).",
+   "fonte": {
+    "texto": "Relatórios de 21/09/2026 a 27/09/2026 e de 28/09/2026 a 04/10/2026.",
+    "relatorios": [
+     {
+      "periodo": {
+       "id": 11,
+       "data_inicio": "2026-09-21",
+       "data_fim": "2026-09-27"
+      },
+      "importado_em": "2026-10-05T07:44:37.245985Z",
+      "importado_por": "Gerador de dados",
+      "origem": "CSV"
+     },
+     {
+      "periodo": {
+       "id": 12,
+       "data_inicio": "2026-09-28",
+       "data_fim": "2026-10-04"
+      },
+      "importado_em": "2026-10-05T07:44:37.245985Z",
+      "importado_por": "Gerador de dados",
+      "origem": "CSV"
+     }
+    ],
+    "modelo_versao": null,
+    "execucao_id": null
+   },
+   "redator": "MODELO_FIXO",
+   "motivo": null,
+   "fatos": [
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Top",
+     "valor": "Top 15"
+    },
+    {
+     "fato": "Período anterior",
+     "valor": "21/09/2026 a 27/09/2026"
+    },
+    {
+     "fato": "Entrou",
+     "valor": "Parada Real (13º)"
+    },
+    {
+     "fato": "Entrou",
+     "valor": "Forno da Serra 3 (15º)"
+    },
+    {
+     "fato": "Saiu",
+     "valor": "Quintal do Sol 3 (agora em 17º)"
+    },
+    {
+     "fato": "Saiu",
+     "valor": "Ponto Bom Prato (agora em 28º)"
+    }
+   ],
+   "candidatos": []
+  }
+ },
+ {
+  "pedido": {
+   "texto": "Quanto o Ponto faturou na última semana?"
+  },
+  "resposta": {
+   "situacao": "PRECISAO",
+   "tipo": "desempenho_do_parceiro",
+   "texto": "Há 32 parceiros com \"Ponto\" no nome. De qual deles?",
+   "fonte": null,
+   "redator": "MODELO_FIXO",
+   "motivo": null,
+   "fatos": [
+    {
+     "fato": "Parceiros com o termo no nome",
+     "valor": "32"
+    }
+   ],
+   "candidatos": [
+    "Ponto Azul",
+    "Ponto Azul 2",
+    "Ponto Azul 3",
+    "Ponto Bom Prato",
+    "Ponto Bom Prato 2"
+   ]
+  }
+ },
+ {
+  "pedido": {
+   "texto": "Qual a capital da França?"
+  },
+  "resposta": {
+   "situacao": "ABSTENCAO",
+   "tipo": "fora_do_catalogo",
+   "texto": "Essa pergunta está fora do que o assistente sabe responder. Ele responde sobre o desempenho, a evolução, a posição, o segmento e a previsão de um parceiro; o ranking, os segmentos e o Top de um período; o resumo da rede; e o último plano de campanha.",
+   "fonte": null,
+   "redator": "MODELO_FIXO",
+   "motivo": null,
+   "fatos": [],
+   "candidatos": []
+  }
+ }
+]

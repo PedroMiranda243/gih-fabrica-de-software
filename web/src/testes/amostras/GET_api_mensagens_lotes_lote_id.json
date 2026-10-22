@@ -1,0 +1,1703 @@
+{
+ "id": 2,
+ "situacao": "CONCLUIDA",
+ "autor": "Analista do Laboratório",
+ "publico": {
+  "tipo": "PLANO",
+  "segmento": null,
+  "categoria_id": null,
+  "execucao_id": 4,
+  "parceiros": null
+ },
+ "descricao": "Plano de campanha de 05/10/2026 a 11/10/2026",
+ "iniciado_em": "2026-10-05T08:24:24.884715Z",
+ "concluido_em": "2026-10-05T08:25:46.353526Z",
+ "total": 30,
+ "geradas": 30,
+ "pelo_modelo": 30,
+ "falhas": [],
+ "modelo": "qwen2.5:7b",
+ "motivo": null,
+ "mensagens": [
+  {
+   "id": 9,
+   "parceiro_id": 246,
+   "parceiro": "Ponto Azul 2",
+   "segmento": "EM_RISCO",
+   "acao": "Campanha de categoria",
+   "texto": "Olá, Ponto Azul 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 79.410,29 em faturamento com 1.070 pedidos, mantendo um ticket médio de R$ 74,22. Considerando a variação do faturamento no período anterior, oferecemos uma campanha de categoria para auxiliar na retomada das vendas a partir de 05/10/2026. Estamos aqui para ajudar!",
+   "texto_gerado": "Olá, Ponto Azul 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 79.410,29 em faturamento com 1.070 pedidos, mantendo um ticket médio de R$ 74,22. Considerando a variação do faturamento no período anterior, oferecemos uma campanha de categoria para auxiliar na retomada das vendas a partir de 05/10/2026. Estamos aqui para ajudar!",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Ponto Azul 2"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 79.410,29"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "1.070"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 74,22"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-15,06%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Campanha de categoria"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:24:28.275538Z",
+   "categoria": "Mercado",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 10,
+   "parceiro_id": 460,
+   "parceiro": "Quintal Verde 2",
+   "segmento": "TOP",
+   "acao": "Campanha de categoria",
+   "texto": "Olá, Quintal Verde 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 57.841,79 em faturamento e atenderam 1.129 pedidos com um ticket médio de R$ 51,23. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026 para reforçar nossa parceria.",
+   "texto_gerado": "Olá, Quintal Verde 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 57.841,79 em faturamento e atenderam 1.129 pedidos com um ticket médio de R$ 51,23. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026 para reforçar nossa parceria.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Quintal Verde 2"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 57.841,79"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "1.129"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 51,23"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-14,11%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Campanha de categoria"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:24:31.114925Z",
+   "categoria": "Restaurante",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 11,
+   "parceiro_id": 214,
+   "parceiro": "Villa da Praça",
+   "segmento": "TOP",
+   "acao": "Campanha de categoria",
+   "texto": "Olá, Villa da Praça, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 31.039,82 em faturamento com 513 pedidos, mantendo um ticket médio de R$ 60,51. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Villa da Praça, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 31.039,82 em faturamento com 513 pedidos, mantendo um ticket médio de R$ 60,51. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Villa da Praça"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 31.039,82"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "513"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 60,51"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-3,04%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Campanha de categoria"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:24:33.670757Z",
+   "categoria": "Petshop",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 12,
+   "parceiro_id": 152,
+   "parceiro": "Quintal da Serra",
+   "segmento": "TOP",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Quintal da Serra, vocês realizaram R$ 23.741,23 em faturamento e atenderam 515 pedidos no período de 28/09/2026 a 04/10/2026. Estamos oferecendo uma visita de relacionamento para fortalecer ainda mais nossa parceria.",
+   "texto_gerado": "Olá, Quintal da Serra, vocês realizaram R$ 23.741,23 em faturamento e atenderam 515 pedidos no período de 28/09/2026 a 04/10/2026. Estamos oferecendo uma visita de relacionamento para fortalecer ainda mais nossa parceria.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Quintal da Serra"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 23.741,23"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "515"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 46,10"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-19,67%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:24:35.631437Z",
+   "categoria": "Restaurante",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 13,
+   "parceiro_id": 181,
+   "parceiro": "Celeiro do Chef",
+   "segmento": "TOP",
+   "acao": "Campanha de categoria",
+   "texto": "Olá, Celeiro do Chef, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 28.667,26 em faturamento com 382 pedidos, atingindo um ticket médio de R$ 75,05. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Celeiro do Chef, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 28.667,26 em faturamento com 382 pedidos, atingindo um ticket médio de R$ 75,05. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Celeiro do Chef"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 28.667,26"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "382"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 75,05"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-4,56%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Campanha de categoria"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:24:38.159518Z",
+   "categoria": "Bebidas",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 14,
+   "parceiro_id": 484,
+   "parceiro": "Casa Caseiro 2",
+   "segmento": "TOP",
+   "acao": "Campanha de categoria",
+   "texto": "Olá, Casa Caseiro 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 25.139,17 em faturamento com 847 pedidos, mantendo um ticket médio de R$ 29,68 e uma variação positiva de +0,84% comparado ao período anterior. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Casa Caseiro 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 25.139,17 em faturamento com 847 pedidos, mantendo um ticket médio de R$ 29,68 e uma variação positiva de +0,84% comparado ao período anterior. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Casa Caseiro 2"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 25.139,17"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "847"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 29,68"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "+0,84%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Campanha de categoria"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:24:41.063445Z",
+   "categoria": "Açaí e sorvetes",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 15,
+   "parceiro_id": 381,
+   "parceiro": "Esquina do Vale 3",
+   "segmento": "TOP",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Esquina do Vale 3, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 25.429,22 em faturamento com 743 pedidos, mantendo um ticket médio de R$ 34,23. Estamos agendando uma visita de relacionamento para o período de 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Esquina do Vale 3, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 25.429,22 em faturamento com 743 pedidos, mantendo um ticket médio de R$ 34,23. Estamos agendando uma visita de relacionamento para o período de 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Esquina do Vale 3"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 25.429,22"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "743"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 34,23"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-7,03%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:24:43.631795Z",
+   "categoria": "Lanchonete",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 16,
+   "parceiro_id": 74,
+   "parceiro": "Espaço do Chef",
+   "segmento": "TOP",
+   "acao": "Campanha de categoria",
+   "texto": "Olá, Espaço do Chef, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 27.668,36 em faturamento com 955 pedidos, mantendo o ticket médio em R$ 28,97 e um crescimento de +0,90% no faturamento comparado ao período anterior. Estamos oferecendo uma campanha de categoria para os dias 05/10/2026 a 11/10/2026 para reforçar ainda mais essa parceria.",
+   "texto_gerado": "Olá, Espaço do Chef, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 27.668,36 em faturamento com 955 pedidos, mantendo o ticket médio em R$ 28,97 e um crescimento de +0,90% no faturamento comparado ao período anterior. Estamos oferecendo uma campanha de categoria para os dias 05/10/2026 a 11/10/2026 para reforçar ainda mais essa parceria.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Espaço do Chef"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 27.668,36"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "955"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 28,97"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "+0,90%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Campanha de categoria"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:24:46.772721Z",
+   "categoria": "Lanchonete",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 17,
+   "parceiro_id": 339,
+   "parceiro": "Forno da Serra 2",
+   "segmento": "TOP",
+   "acao": "Campanha de categoria",
+   "texto": "Olá, Forno da Serra 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 24.224,99 em faturamento com 275 pedidos, o que representa um aumento de +48,08% no faturamento comparado ao período anterior. Estamos oferecendo uma campanha de categoria para os dias 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Forno da Serra 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 24.224,99 em faturamento com 275 pedidos, o que representa um aumento de +48,08% no faturamento comparado ao período anterior. Estamos oferecendo uma campanha de categoria para os dias 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Forno da Serra 2"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 24.224,99"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "275"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 88,09"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "+48,08%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Campanha de categoria"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:24:49.502069Z",
+   "categoria": "Gás e água",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 18,
+   "parceiro_id": 263,
+   "parceiro": "Parada Mineiro 2",
+   "segmento": "TOP",
+   "acao": "Campanha de categoria",
+   "texto": "Olá, Parada Mineiro 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 19.699,93 em faturamento com 536 pedidos, mantendo o ticket médio em R$ 36,75 e um crescimento de +0,37% no faturamento comparado ao período anterior. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Parada Mineiro 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 19.699,93 em faturamento com 536 pedidos, mantendo o ticket médio em R$ 36,75 e um crescimento de +0,37% no faturamento comparado ao período anterior. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Parada Mineiro 2"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 19.699,93"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "536"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 36,75"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "+0,37%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Campanha de categoria"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:24:52.491592Z",
+   "categoria": "Lanchonete",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 19,
+   "parceiro_id": 7,
+   "parceiro": "Parada Central",
+   "segmento": "TOP",
+   "acao": "Campanha de categoria",
+   "texto": "Olá, Parada Central, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 20.358,11 em faturamento com 370 pedidos, atingindo um ticket médio de R$ 55,02 e crescendo 34,86% comparado ao período anterior. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Parada Central, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 20.358,11 em faturamento com 370 pedidos, atingindo um ticket médio de R$ 55,02 e crescendo 34,86% comparado ao período anterior. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Parada Central"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 20.358,11"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "370"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 55,02"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "+34,86%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Campanha de categoria"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:24:55.365273Z",
+   "categoria": "Farmácia",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 20,
+   "parceiro_id": 14,
+   "parceiro": "Casa Verde",
+   "segmento": "TOP",
+   "acao": "Campanha de categoria",
+   "texto": "Olá, Casa Verde, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 14.927,34 em faturamento com 341 pedidos, mantendo um ticket médio de R$ 43,78. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026 para reforçar nossa parceria.",
+   "texto_gerado": "Olá, Casa Verde, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 14.927,34 em faturamento com 341 pedidos, mantendo um ticket médio de R$ 43,78. Estamos oferecendo uma campanha de categoria para o período de 05/10/2026 a 11/10/2026 para reforçar nossa parceria.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Casa Verde"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 14.927,34"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "341"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 43,78"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-15,56%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Campanha de categoria"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:24:58.047622Z",
+   "categoria": "Restaurante",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 21,
+   "parceiro_id": 314,
+   "parceiro": "Quintal do Sol 3",
+   "segmento": "ESTAVEL",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Quintal do Sol 3, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 13.863,15 em faturamento com 335 pedidos, com um ticket médio de R$ 41,38. Estamos à disposição para uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Quintal do Sol 3, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 13.863,15 em faturamento com 335 pedidos, com um ticket médio de R$ 41,38. Estamos à disposição para uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Quintal do Sol 3"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 13.863,15"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "335"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 41,38"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-2,83%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:00.571891Z",
+   "categoria": "Restaurante",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 22,
+   "parceiro_id": 382,
+   "parceiro": "Cantina Popular 3",
+   "segmento": "EM_RISCO",
+   "acao": "Campanha de categoria",
+   "texto": "Olá, Cantina Popular 3, vocês realizaram R$ 13.593,87 em faturamento com 317 pedidos no período de 28/09/2026 a 04/10/2026. Estamos aqui para apoiar vocês na retomada das vendas oferecendo uma campanha de categoria nos dias 5 a 11 de outubro.",
+   "texto_gerado": "Olá, Cantina Popular 3, vocês realizaram R$ 13.593,87 em faturamento com 317 pedidos no período de 28/09/2026 a 04/10/2026. Estamos aqui para apoiar vocês na retomada das vendas oferecendo uma campanha de categoria nos dias 5 a 11 de outubro.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Cantina Popular 3"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 13.593,87"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "317"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 42,88"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-1,65%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Campanha de categoria"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:02.825358Z",
+   "categoria": "Restaurante",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 23,
+   "parceiro_id": 235,
+   "parceiro": "Espaço do Vale 2",
+   "segmento": "TOP",
+   "acao": "Campanha de categoria",
+   "texto": "Olá, Espaço do Vale 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 15.527,72 em faturamento com 210 pedidos, o que representa um ticket médio de R$ 73,94 e uma variação positiva de +9,63% comparado ao período anterior. Estamos oferecendo uma campanha de categoria para os dias 5 a 11/10/2026.",
+   "texto_gerado": "Olá, Espaço do Vale 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 15.527,72 em faturamento com 210 pedidos, o que representa um ticket médio de R$ 73,94 e uma variação positiva de +9,63% comparado ao período anterior. Estamos oferecendo uma campanha de categoria para os dias 5 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Espaço do Vale 2"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 15.527,72"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "210"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 73,94"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "+9,63%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Campanha de categoria"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:05.611899Z",
+   "categoria": "Mercado",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 24,
+   "parceiro_id": 266,
+   "parceiro": "Varanda Express 3",
+   "segmento": "ESTAVEL",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Varanda Express 3, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 12.092,29 em faturamento com 351 pedidos, tendo um ticket médio de R$ 34,45. Estamos à disposição para uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Varanda Express 3, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 12.092,29 em faturamento com 351 pedidos, tendo um ticket médio de R$ 34,45. Estamos à disposição para uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Varanda Express 3"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 12.092,29"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "351"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 34,45"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-3,53%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:08.126078Z",
+   "categoria": "Lanchonete",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 25,
+   "parceiro_id": 375,
+   "parceiro": "Varanda Express 4",
+   "segmento": "ESTAVEL",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Varanda Express 4, vocês realizaram R$ 10.928,18 em faturamento com 175 pedidos no período de 28/09/2026 a 04/10/2026. Estamos à disposição para uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Varanda Express 4, vocês realizaram R$ 10.928,18 em faturamento com 175 pedidos no período de 28/09/2026 a 04/10/2026. Estamos à disposição para uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Varanda Express 4"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 10.928,18"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "175"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 62,45"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-5,23%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:10.349775Z",
+   "categoria": "Farmácia",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 26,
+   "parceiro_id": 226,
+   "parceiro": "Esquina do Vale 2",
+   "segmento": "ESTAVEL",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Esquina do Vale 2, vocês realizaram R$ 11.946,44 em faturamento com 343 pedidos no período de 28/09/2026 a 04/10/2026. Estamos à disposição para uma visita de relacionamento nos dias 5 a 11 de outubro.",
+   "texto_gerado": "Olá, Esquina do Vale 2, vocês realizaram R$ 11.946,44 em faturamento com 343 pedidos no período de 28/09/2026 a 04/10/2026. Estamos à disposição para uma visita de relacionamento nos dias 5 a 11 de outubro.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Esquina do Vale 2"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 11.946,44"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "343"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 34,83"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-11,09%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:12.308393Z",
+   "categoria": "Lanchonete",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 27,
+   "parceiro_id": 442,
+   "parceiro": "Esquina do Chef 3",
+   "segmento": "ESTAVEL",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Esquina do Chef 3, durante o período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 8.889,86 em faturamento com 132 pedidos, tendo um ticket médio de R$ 67,35. Estamos oferecendo uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026 para fortalecer ainda mais nossa parceria.",
+   "texto_gerado": "Olá, Esquina do Chef 3, durante o período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 8.889,86 em faturamento com 132 pedidos, tendo um ticket médio de R$ 67,35. Estamos oferecendo uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026 para fortalecer ainda mais nossa parceria.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Esquina do Chef 3"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 8.889,86"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "132"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 67,35"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-3,33%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:15.023900Z",
+   "categoria": "Bebidas",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 28,
+   "parceiro_id": 425,
+   "parceiro": "Parada Azul 2",
+   "segmento": "ESTAVEL",
+   "acao": "Frete subsidiado",
+   "texto": "Olá, Parada Azul 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 9.947,68 em faturamento com 311 pedidos, e o ticket médio foi de R$ 31,99. Estamos à disposição para discutir a ação de frete subsidiado que começa no dia 05/10/2026.",
+   "texto_gerado": "Olá, Parada Azul 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 9.947,68 em faturamento com 311 pedidos, e o ticket médio foi de R$ 31,99. Estamos à disposição para discutir a ação de frete subsidiado que começa no dia 05/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Parada Azul 2"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 9.947,68"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "311"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 31,99"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-11,49%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Frete subsidiado"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:17.480862Z",
+   "categoria": "Lanchonete",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 29,
+   "parceiro_id": 310,
+   "parceiro": "Ponto Central 3",
+   "segmento": "EM_RISCO",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Ponto Central 3, vocês realizaram R$ 11.593,39 em faturamento com 268 pedidos no período de 28/09/2026 a 04/10/2026. A equipe está à disposição para uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Ponto Central 3, vocês realizaram R$ 11.593,39 em faturamento com 268 pedidos no período de 28/09/2026 a 04/10/2026. A equipe está à disposição para uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Ponto Central 3"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 11.593,39"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "268"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 43,26"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-11,30%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:19.713359Z",
+   "categoria": "Restaurante",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 30,
+   "parceiro_id": 377,
+   "parceiro": "Forno Real 2",
+   "segmento": "ESTAVEL",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Forno Real 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 7.473,96 em faturamento com 181 pedidos, tendo um ticket médio de R$ 41,29. Estamos oferecendo uma visita de relacionamento nos dias 5 a 11/10/2026 para fortalecer nosso trabalho juntos.",
+   "texto_gerado": "Olá, Forno Real 2, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 7.473,96 em faturamento com 181 pedidos, tendo um ticket médio de R$ 41,29. Estamos oferecendo uma visita de relacionamento nos dias 5 a 11/10/2026 para fortalecer nosso trabalho juntos.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Forno Real 2"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 7.473,96"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "181"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 41,29"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-8,08%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:22.184955Z",
+   "categoria": "Restaurante",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 31,
+   "parceiro_id": 118,
+   "parceiro": "Villa da Serra",
+   "segmento": "ESTAVEL",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Villa da Serra, durante o período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 10.292,59 em faturamento e atenderam 428 pedidos com um ticket médio de R$ 24,05. Estamos à disposição para uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Villa da Serra, durante o período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 10.292,59 em faturamento e atenderam 428 pedidos com um ticket médio de R$ 24,05. Estamos à disposição para uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Villa da Serra"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 10.292,59"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "428"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 24,05"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-4,41%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:24.740844Z",
+   "categoria": "Padaria",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 32,
+   "parceiro_id": 82,
+   "parceiro": "Espaço da Praça",
+   "segmento": "ESTAVEL",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Espaço da Praça, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 7.208,65 em faturamento com 115 pedidos, o que resultou em um ticket médio de R$ 62,68. Estamos oferecendo uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026 para fortalecer ainda mais nossa parceria.",
+   "texto_gerado": "Olá, Espaço da Praça, no período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 7.208,65 em faturamento com 115 pedidos, o que resultou em um ticket médio de R$ 62,68. Estamos oferecendo uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026 para fortalecer ainda mais nossa parceria.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Espaço da Praça"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 7.208,65"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "115"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 62,68"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-8,31%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:27.639806Z",
+   "categoria": "Farmácia",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 33,
+   "parceiro_id": 388,
+   "parceiro": "Villa do Vale 2",
+   "segmento": "EM_RISCO",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Villa do Vale 2, durante o período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 10.512,02 em faturamento com 127 pedidos, tendo um ticket médio de R$ 82,77. Vamos agendar uma visita de relacionamento para o período de 05/10/2026 a 11/10/2026 para conversarmos sobre como podemos melhorar as vendas.",
+   "texto_gerado": "Olá, Villa do Vale 2, durante o período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 10.512,02 em faturamento com 127 pedidos, tendo um ticket médio de R$ 82,77. Vamos agendar uma visita de relacionamento para o período de 05/10/2026 a 11/10/2026 para conversarmos sobre como podemos melhorar as vendas.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Villa do Vale 2"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 10.512,02"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "127"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 82,77"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-4,69%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:30.811525Z",
+   "categoria": "Bebidas",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 34,
+   "parceiro_id": 13,
+   "parceiro": "Parada Bom Prato",
+   "segmento": "EM_RISCO",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Parada Bom Prato, vocês realizaram R$ 12.800,34 em faturamento e atenderam 392 pedidos no período de 28/09/2026 a 04/10/2026. Estamos oferecendo uma visita de relacionamento para reforçar nosso apoio e ajudar na retomada das vendas durante o período de 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Parada Bom Prato, vocês realizaram R$ 12.800,34 em faturamento e atenderam 392 pedidos no período de 28/09/2026 a 04/10/2026. Estamos oferecendo uma visita de relacionamento para reforçar nosso apoio e ajudar na retomada das vendas durante o período de 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Parada Bom Prato"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 12.800,34"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "392"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 32,65"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-2,27%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:34.290460Z",
+   "categoria": "Lanchonete",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 35,
+   "parceiro_id": 356,
+   "parceiro": "Espaço Real 3",
+   "segmento": "ESTAVEL",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Espaço Real 3, vocês realizaram R$ 7.454,24 em faturamento com 264 pedidos no período de 28/09/2026 a 04/10/2026. Estamos à disposição para uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Espaço Real 3, vocês realizaram R$ 7.454,24 em faturamento com 264 pedidos no período de 28/09/2026 a 04/10/2026. Estamos à disposição para uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Espaço Real 3"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 7.454,24"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "264"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 28,24"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-13,63%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:37.155921Z",
+   "categoria": "Padaria",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 36,
+   "parceiro_id": 256,
+   "parceiro": "Espaço Caseiro 2",
+   "segmento": "ESTAVEL",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Espaço Caseiro 2, vocês realizaram R$ 5.034,03 em faturamento com 161 pedidos no período de 28/09/2026 a 04/10/2026. Estamos à disposição para uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Espaço Caseiro 2, vocês realizaram R$ 5.034,03 em faturamento com 161 pedidos no período de 28/09/2026 a 04/10/2026. Estamos à disposição para uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Espaço Caseiro 2"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 5.034,03"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "161"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 31,27"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-15,53%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:39.836772Z",
+   "categoria": "Padaria",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 37,
+   "parceiro_id": 84,
+   "parceiro": "Villa do Sol",
+   "segmento": "ESTAVEL",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Villa do Sol, durante o período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 7.481,97 em faturamento com 144 pedidos, tendo um ticket médio de R$ 51,96. Estamos oferecendo uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026 para fortalecer nosso trabalho juntos.",
+   "texto_gerado": "Olá, Villa do Sol, durante o período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 7.481,97 em faturamento com 144 pedidos, tendo um ticket médio de R$ 51,96. Estamos oferecendo uma visita de relacionamento nos dias 05/10/2026 a 11/10/2026 para fortalecer nosso trabalho juntos.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Villa do Sol"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 7.481,97"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "144"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 51,96"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-17,10%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:43.158393Z",
+   "categoria": "Pizzaria",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 38,
+   "parceiro_id": 469,
+   "parceiro": "Villa Express 4",
+   "segmento": "ESTAVEL",
+   "acao": "Frete subsidiado",
+   "texto": "Olá, Villa Express 4, durante o período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 5.506,38 em faturamento com 146 pedidos, e o ticket médio foi de R$ 37,71. Estamos à disposição para ajudar durante a ação de frete subsidiado no período de 05/10/2026 a 11/10/2026.",
+   "texto_gerado": "Olá, Villa Express 4, durante o período de 28/09/2026 a 04/10/2026, vocês realizaram R$ 5.506,38 em faturamento com 146 pedidos, e o ticket médio foi de R$ 37,71. Estamos à disposição para ajudar durante a ação de frete subsidiado no período de 05/10/2026 a 11/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO",
+   "modelo": "qwen2.5:7b",
+   "motivo_redator": null,
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Villa Express 4"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 5.506,38"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "146"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 37,71"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-7,96%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Frete subsidiado"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "05/10/2026 a 11/10/2026"
+    }
+   ],
+   "lote_id": 2,
+   "gerada_em": "2026-10-05T08:25:46.349840Z",
+   "categoria": "Lanchonete",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  }
+ ]
+}

@@ -1,0 +1,52 @@
+[
+ {
+  "id": 6,
+  "nome": "Açaí e sorvetes",
+  "ativa": true
+ },
+ {
+  "id": 8,
+  "nome": "Bebidas",
+  "ativa": true
+ },
+ {
+  "id": 7,
+  "nome": "Farmácia",
+  "ativa": true
+ },
+ {
+  "id": 9,
+  "nome": "Gás e água",
+  "ativa": true
+ },
+ {
+  "id": 2,
+  "nome": "Lanchonete",
+  "ativa": true
+ },
+ {
+  "id": 5,
+  "nome": "Mercado",
+  "ativa": true
+ },
+ {
+  "id": 4,
+  "nome": "Padaria",
+  "ativa": true
+ },
+ {
+  "id": 10,
+  "nome": "Petshop",
+  "ativa": true
+ },
+ {
+  "id": 3,
+  "nome": "Pizzaria",
+  "ativa": true
+ },
+ {
+  "id": 1,
+  "nome": "Restaurante",
+  "ativa": true
+ }
+]

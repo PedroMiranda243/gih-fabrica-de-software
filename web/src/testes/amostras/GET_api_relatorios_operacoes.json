@@ -1,0 +1,135 @@
+{
+ "de": "2026-09-06",
+ "ate": "2026-10-05",
+ "autor": null,
+ "acao": null,
+ "total": 211,
+ "pessoas": 11,
+ "por_acao": [
+  {
+   "chave": "ACESSO_NEGADO",
+   "rotulo": "Acesso negado",
+   "total": 128
+  },
+  {
+   "chave": "LOGIN_SUCESSO",
+   "rotulo": "Entrada no sistema",
+   "total": 48
+  },
+  {
+   "chave": "USUARIO_CRIADO",
+   "rotulo": "Usuário criado",
+   "total": 9
+  },
+  {
+   "chave": "LOGOUT",
+   "rotulo": "Saída do sistema",
+   "total": 7
+  },
+  {
+   "chave": "OTIMIZACAO_EXECUTADA",
+   "rotulo": "Campanha calculada",
+   "total": 6
+  },
+  {
+   "chave": "USUARIO_DESATIVADO",
+   "rotulo": "Usuário desativado",
+   "total": 6
+  },
+  {
+   "chave": "MENSAGENS_GERADAS",
+   "rotulo": "Mensagens geradas",
+   "total": 2
+  },
+  {
+   "chave": "BENCHMARK_EXECUTADO",
+   "rotulo": "Benchmark executado",
+   "total": 1
+  },
+  {
+   "chave": "MENSAGEM_APROVADA",
+   "rotulo": "Mensagem aprovada",
+   "total": 1
+  },
+  {
+   "chave": "MENSAGEM_EDITADA",
+   "rotulo": "Mensagem editada",
+   "total": 1
+  },
+  {
+   "chave": "MENSAGEM_REJEITADA",
+   "rotulo": "Mensagem rejeitada",
+   "total": 1
+  },
+  {
+   "chave": "MODELO_TREINADO",
+   "rotulo": "Modelo treinado",
+   "total": 1
+  }
+ ],
+ "por_usuario": [
+  {
+   "chave": "3",
+   "rotulo": "Gestora do Laboratório (lab.gestor)",
+   "total": 81
+  },
+  {
+   "chave": "4",
+   "rotulo": "Analista do Laboratório (lab.analista)",
+   "total": 44
+  },
+  {
+   "chave": "5",
+   "rotulo": "Parceiro do Laboratório (lab.parceiro)",
+   "total": 37
+  },
+  {
+   "chave": "1",
+   "rotulo": "Administrador (admin)",
+   "total": 32
+  },
+  {
+   "chave": "6",
+   "rotulo": "Medição Gestor (t29645.gestor)",
+   "total": 4
+  },
+  {
+   "chave": "9",
+   "rotulo": "Medição Gestor (t03223.gestor)",
+   "total": 4
+  },
+  {
+   "chave": "7",
+   "rotulo": "Medição Administrador (t29645.admin)",
+   "total": 2
+  },
+  {
+   "chave": "10",
+   "rotulo": "Medição Administrador (t03223.admin)",
+   "total": 2
+  },
+  {
+   "chave": "11",
+   "rotulo": "Medição Parceiro (t03223.parceiro)",
+   "total": 2
+  },
+  {
+   "chave": "8",
+   "rotulo": "Medição Parceiro (t29645.parceiro)",
+   "total": 2
+  },
+  {
+   "chave": null,
+   "rotulo": "sem usuário",
+   "total": 1
+  }
+ ],
+ "outras_pessoas": null,
+ "por_dia": [
+  {
+   "chave": "2026-10-05",
+   "rotulo": "2026-10-05",
+   "total": 211
+  }
+ ]
+}

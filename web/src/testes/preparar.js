@@ -1,0 +1,73 @@
+import "@testing-library/jest-dom/vitest";
+import { cleanup } from "@testing-library/react";
+import { afterEach, expect, vi } from "vitest";
+
+import { violacoes } from "./acessibilidade";
+
+/* **Todo teste termina com a tela conferida pelo axe** (H76): rótulos, papéis e
+   nomes acessíveis, no estado em que o teste a deixou — vazio, carregando, com
+   erro, com dados. Um teste por página conferiria um estado só; aqui, cada
+   estado que a suíte monta é também um estado verificado. A conferência vem
+   antes do `cleanup`, que esvazia a tela. */
+afterEach(async () => {
+  const achadas = document.body.childElementCount ? await violacoes(document.body) : [];
+  cleanup();
+  vi.restoreAllMocks();
+  expect(achadas, "violações de acessibilidade na tela do teste").toEqual([]);
+});
+
+/* O jsdom não implementa `matchMedia`, a rolagem nem a impressão. Sem isto o
+   tema quebraria em todo teste que renderiza a casca, e a troca de tela, que
+   rola para o topo, encheria o console de "Not implemented". */
+if (!window.matchMedia) {
+  window.matchMedia = () => ({
+    matches: false,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  });
+}
+window.scrollTo = () => {};
+window.print = () => {};
+Element.prototype.scrollIntoView = function scrollIntoView() {};
+
+/**
+ * Responde às chamadas da API a partir de uma tabela de rotas.
+ *
+ * Simula no nível do `fetch`, e não do módulo `cliente.js`: assim o teste passa
+ * pelo mesmo caminho que a aplicação — credenciais, tratamento de 401, leitura
+ * do erro — em vez de pular exatamente a parte que costuma quebrar.
+ */
+export function simularApi(rotas) {
+  return vi.spyOn(globalThis, "fetch").mockImplementation(async (url, opcoes = {}) => {
+    const metodo = opcoes.method ?? "GET";
+    const caminho = String(url).split("?")[0];
+    const chave = `${metodo} ${caminho}`;
+    /* "GET /api/parceiros/:id" responde por qualquer identificador. */
+    const resposta =
+      rotas[chave] ??
+      Object.entries(rotas).find(([modelo]) =>
+        modelo.includes("/:") && new RegExp(`^${modelo.replace(/:[a-z_]+/g, "[^/]+")}$`).test(chave),
+      )?.[1];
+
+    if (!resposta) {
+      return new Response(JSON.stringify({ detail: `rota não simulada: ${chave}` }), {
+        status: 404,
+      });
+    }
+
+    /* A resposta pode ser uma promessa: o teste a segura para ver a tela esperando. */
+    const { status = 200, corpo = null } = typeof resposta === "function" ? await resposta(url, opcoes) : resposta;
+    return new Response(status === 204 ? null : JSON.stringify(corpo), { status });
+  });
+}
+
+/**
+ * O navegador avisaria antes de fechar a aba? É o que a tela pede enquanto há
+ * alteração não salva (H97) — e serve de prova, em cada tela, de que ela ligou
+ * o aviso ao que de fato está alterado.
+ */
+export function avisariaAoFechar() {
+  const evento = new Event("beforeunload", { cancelable: true });
+  window.dispatchEvent(evento);
+  return evento.defaultPrevented;
+}
