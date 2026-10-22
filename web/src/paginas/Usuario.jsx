@@ -9,11 +9,12 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { api, ErroDaApi } from "../api/cliente";
 import { useAtraso, useCarregar } from "../api/ganchos";
-import { useSessao } from "../api/sessao";
+import { useSessao } from "../api/contextoSessao";
 import AlteracoesNaoSalvas from "../componentes/AlteracoesNaoSalvas";
 import Confirmacao from "../componentes/Confirmacao";
 import { Carregando, ErroDaAcao, ErroDaTela, Nota, Sucesso, Vazio } from "../componentes/Estados";
-import { Campo, ResumoDeErros, Senha, useErrosDoFormulario } from "../componentes/Formulario";
+import { Campo, ResumoDeErros, Senha } from "../componentes/Formulario";
+import { useErrosDoFormulario } from "../componentes/useErrosDoFormulario";
 import Icone from "../componentes/Icone";
 import { Trilha } from "../componentes/Lista";
 import { useTitulo } from "../componentes/Titulo";

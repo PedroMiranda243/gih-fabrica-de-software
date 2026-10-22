@@ -5,7 +5,7 @@
 import { lazy, Suspense, useEffect, useRef } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
-import { tem, useSessao } from "./api/sessao";
+import { tem, useSessao } from "./api/contextoSessao";
 import Casca from "./componentes/Casca";
 import Conferindo from "./componentes/Conferindo";
 import { Carregando } from "./componentes/Estados";

@@ -3,10 +3,11 @@ import { useParams } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { useCarregar } from "../api/ganchos";
-import { useSessao } from "../api/sessao";
+import { useSessao } from "../api/contextoSessao";
 import { Carregando, ErroDaTela, Nota, Vazio } from "../componentes/Estados";
 import Icone from "../componentes/Icone";
 import { Trilha } from "../componentes/Lista";
+import { Emitido } from "../componentes/FolhaDeRelatorio";
 import PlanoDeCampanha from "../componentes/PlanoDeCampanha";
 import { useTitulo } from "../componentes/Titulo";
 import { comoData, comoDataHora, comoDinheiro, comoFracao, comoInteiro, cotasDoPedido, ROTULO_MODO_CURTO } from "../formato";
@@ -59,9 +60,7 @@ export default function Execucao() {
           <p className="folha__recorte">
             Calculada por {e.autor ?? "pelo terminal"} · previsões da {e.modelo_versao}
           </p>
-          <p className="so-impressao folha__emitido">
-            Emitido em {comoDataHora(new Date().toISOString())} por {usuario?.nome}.
-          </p>
+          <Emitido quem={usuario?.nome} />
         </header>
         <section className="folha__secao" aria-labelledby="t-pedido">
           <h3 id="t-pedido" className="folha__subtitulo">

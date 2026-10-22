@@ -8,7 +8,7 @@ import { Link, useLocation } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { useCarregar } from "../api/ganchos";
-import { tem, useSessao } from "../api/sessao";
+import { tem, useSessao } from "../api/contextoSessao";
 import { Estimativa, Segmento } from "../componentes/Dados";
 import { Carregando, Nota } from "../componentes/Estados";
 import Icone from "../componentes/Icone";

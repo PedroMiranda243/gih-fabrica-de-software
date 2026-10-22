@@ -4,7 +4,9 @@
  * Exportar CSV e Imprimir ou salvar em PDF. Na impressão sai uma linha que a tela
  * não tem: quando foi emitido e por quem.
  */
-import { tem, useSessao } from "../api/sessao";
+import { useState } from "react";
+
+import { tem, useSessao } from "../api/contextoSessao";
 import { comoDataHora } from "../formato";
 import Icone from "./Icone";
 import { Trilha } from "./Lista";
@@ -38,13 +40,22 @@ export default function FolhaDeRelatorio({ nome, filtros, recorte, csv, children
             {nome}
           </h2>
           {recorte && <p className="folha__recorte">{recorte}</p>}
-          <p className="so-impressao folha__emitido">
-            Emitido em {comoDataHora(new Date().toISOString())} por {usuario?.nome}.
-          </p>
+          <Emitido quem={usuario?.nome} />
           {notaDaImpressao && <p className="so-impressao folha__emitido">{notaDaImpressao}</p>}
         </header>
         {children}
       </article>
     </div>
+  );
+}
+
+/** Quando a folha foi emitida e por quem — a linha que só a impressão tem. A hora é
+    a de quando a folha abriu, e não muda a cada nova renderização. */
+export function Emitido({ quem }) {
+  const [quando] = useState(() => new Date().toISOString());
+  return (
+    <p className="so-impressao folha__emitido">
+      Emitido em {comoDataHora(quando)} por {quem}.
+    </p>
   );
 }

@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 
-import { tem, useSessao } from "../api/sessao";
+import { tem, useSessao } from "../api/contextoSessao";
 import { ROTULO_PERFIL } from "../formato";
 import { grupoDe, itemAtivo, MENU } from "../navegacao/telas";
 import { useTema } from "../tema";
@@ -39,7 +39,12 @@ export default function Casca() {
   const tituloDoMenu = area?.itens.find((i) => i.para === ativo)?.rotulo ?? "GIH";
   const volta = trilha?.filter((p) => p.para).at(-1) ?? null;
 
-  useEffect(() => setGaveta(false), [pathname]);
+  /* Trocar de tela fecha a gaveta do menu (ajuste na própria renderização). */
+  const [caminhoVisto, setCaminhoVisto] = useState(pathname);
+  if (pathname !== caminhoVisto) {
+    setCaminhoVisto(pathname);
+    setGaveta(false);
+  }
   useEffect(() => {
     if (!gaveta) return undefined;
     painelMenu.current?.querySelector("a")?.focus();

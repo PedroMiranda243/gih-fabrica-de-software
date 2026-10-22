@@ -5,9 +5,10 @@
 import { useRef, useState } from "react";
 
 import { api, ErroDaApi } from "../api/cliente";
-import { useSessao } from "../api/sessao";
+import { useSessao } from "../api/contextoSessao";
 import { Sucesso } from "../componentes/Estados";
-import { Campo, ResumoDeErros, Senha, useErrosDoFormulario } from "../componentes/Formulario";
+import { Campo, ResumoDeErros, Senha } from "../componentes/Formulario";
+import { useErrosDoFormulario } from "../componentes/useErrosDoFormulario";
 import Icone from "../componentes/Icone";
 import { useTitulo } from "../componentes/Titulo";
 import { comoDataHora, ROTULO_PERFIL } from "../formato";

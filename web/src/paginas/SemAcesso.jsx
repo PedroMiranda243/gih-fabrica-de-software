@@ -1,7 +1,7 @@
 /** O perfil não abre esta tela: diz qual perfil, qual endereço, e não chama a API. */
 import { Link, useLocation } from "react-router-dom";
 
-import { useSessao } from "../api/sessao";
+import { useSessao } from "../api/contextoSessao";
 import Icone from "../componentes/Icone";
 import { useTitulo } from "../componentes/Titulo";
 import { ROTULO_PERFIL } from "../formato";

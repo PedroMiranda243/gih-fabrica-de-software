@@ -2,12 +2,11 @@
  * A sessão de quem está usando. O servidor é a fonte: ao abrir, a interface
  * pergunta `GET /api/sessao/atual`; nada fica guardado no navegador.
  */
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { aoEncerrarSessao, api, ErroDaApi } from "./cliente";
-
-const Contexto = createContext(null);
+import { Contexto } from "./contextoSessao";
 
 export function ProvedorDeSessao({ children }) {
   const [usuario, setUsuario] = useState(null);
@@ -74,15 +73,4 @@ export function ProvedorDeSessao({ children }) {
 
   const valor = useMemo(() => ({ usuario, conferindo, expirou, entrar, sair, setUsuario }), [usuario, conferindo, expirou, entrar, sair]);
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
-}
-
-export function useSessao() {
-  return useContext(Contexto);
-}
-
-/** Se o perfil abre aquilo. Sem `telas` na sessão, a interface não adivinha: deixa a API responder. */
-export function tem(usuario, ...telas) {
-  if (!usuario) return false;
-  if (!Array.isArray(usuario.telas)) return true;
-  return telas.some((t) => usuario.telas.includes(t));
 }

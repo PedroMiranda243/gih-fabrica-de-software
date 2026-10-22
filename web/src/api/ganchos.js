@@ -91,31 +91,31 @@ export function useFiltros() {
  * que o estado do servidor trouxe.
  */
 export function useAcompanhar(id, buscar, aoTerminar) {
-  const [atual, setAtual] = useState(null);
-  const [erro, setErro] = useState(null);
+  /* O que chegou, junto do id de que veio: ao trocar de operação, a anterior não
+     aparece como se fosse a nova. */
+  const [estado, setEstado] = useState({ id: null, atual: null, erro: null });
   const buscarRef = useRef(buscar);
   const terminarRef = useRef(aoTerminar);
-  buscarRef.current = buscar;
-  terminarRef.current = aoTerminar;
+  /* As funções mais recentes de quem chama, sem refazer a consulta quando elas mudam. */
+  useEffect(() => {
+    buscarRef.current = buscar;
+    terminarRef.current = aoTerminar;
+  });
 
   useEffect(() => {
-    if (id === null || id === undefined) {
-      setAtual(null);
-      return undefined;
-    }
+    if (id === null || id === undefined) return undefined;
     let vivo = true;
     let relogio = null;
     async function consultar() {
       try {
         const r = await buscarRef.current(id);
         if (!vivo) return;
-        setAtual(r);
-        setErro(null);
+        setEstado({ id, atual: r, erro: null });
         if (r?.situacao === "EM_ANDAMENTO") relogio = setTimeout(consultar, 2000);
         else terminarRef.current?.(r);
       } catch (e) {
         if (!vivo) return;
-        setErro(e);
+        setEstado((anterior) => ({ id, atual: anterior.id === id ? anterior.atual : null, erro: e }));
         if (e?.status !== 401 && e?.status !== 404) relogio = setTimeout(consultar, 4000);
       }
     }
@@ -126,7 +126,8 @@ export function useAcompanhar(id, buscar, aoTerminar) {
     };
   }, [id]);
 
-  return { atual, erro };
+  const desta = id !== null && id !== undefined && estado.id === id;
+  return { atual: desta ? estado.atual : null, erro: desta ? estado.erro : null };
 }
 
 /** Espera a digitação parar antes de consultar. */
@@ -142,11 +143,15 @@ export function useAtraso(valor, ms = 350) {
 /** Conta os segundos enquanto `ativo`. */
 export function useSegundos(ativo) {
   const [segundos, setSegundos] = useState(0);
+  const [estavaAtivo, setEstavaAtivo] = useState(ativo);
+  /* Ao parar ou começar de novo, a conta volta a zero — ajustada na própria
+     renderização, e não num efeito, que desenharia o número velho uma vez. */
+  if (ativo !== estavaAtivo) {
+    setEstavaAtivo(ativo);
+    setSegundos(0);
+  }
   useEffect(() => {
-    if (!ativo) {
-      setSegundos(0);
-      return undefined;
-    }
+    if (!ativo) return undefined;
     const inicio = Date.now();
     const t = setInterval(() => setSegundos(Math.floor((Date.now() - inicio) / 1000)), 250);
     return () => clearInterval(t);

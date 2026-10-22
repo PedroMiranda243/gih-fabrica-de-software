@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 
 import { api, comConsulta } from "../api/cliente";
 import { useCarregar, useFiltros } from "../api/ganchos";
-import { tem, useSessao } from "../api/sessao";
+import { tem, useSessao } from "../api/contextoSessao";
 import { Ausente, Chance, Delta, Dinheiro, Estimativa, Segmento, Variacao } from "../componentes/Dados";
 import { Carregando, ErroDaTela, Vazio } from "../componentes/Estados";
 import Icone from "../componentes/Icone";
@@ -15,7 +15,7 @@ import Lacre from "../componentes/Lacre";
 import { CaixaDeTabela, Paginacao } from "../componentes/Lista";
 import Serie from "../componentes/Serie";
 import { useTitulo } from "../componentes/Titulo";
-import { comoData, comoDiaMes, comoDinheiro, comoInteiro, comoPeriodo, plural, ROTULO_ORIGEM_PREVISAO, ROTULO_SEGMENTO } from "../formato";
+import { comoData, comoDinheiro, comoInteiro, comoPeriodo, plural, ROTULO_ORIGEM_PREVISAO, ROTULO_SEGMENTO } from "../formato";
 
 const TAMANHO_RANKING = 25;
 

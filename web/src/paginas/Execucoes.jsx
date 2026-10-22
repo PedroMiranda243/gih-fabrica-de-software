@@ -8,7 +8,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { useCarregar, useFiltros } from "../api/ganchos";
-import { tem, useSessao } from "../api/sessao";
+import { tem, useSessao } from "../api/contextoSessao";
 import { Carregando, ErroDaTela, Vazio } from "../componentes/Estados";
 import Icone from "../componentes/Icone";
 import { CaixaDeTabela, Paginacao } from "../componentes/Lista";

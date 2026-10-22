@@ -5,7 +5,7 @@
  */
 import { Link } from "react-router-dom";
 
-import { tem, useSessao } from "../api/sessao";
+import { tem, useSessao } from "../api/contextoSessao";
 import { comoData, comoDinheiro, comoInteiro, comoMilissegundos, ROTULO_MODO_CURTO, ROTULO_RESTRICAO } from "../formato";
 import { Ausente, Dinheiro, Estimativa, Segmento } from "./Dados";
 import { ErroDaAcao, Nota, Vazio } from "./Estados";

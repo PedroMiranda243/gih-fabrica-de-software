@@ -1,7 +1,7 @@
 /** A lista dos relatórios: só o que o perfil abre, cada um com o que responde. */
 import { Link } from "react-router-dom";
 
-import { tem, useSessao } from "../api/sessao";
+import { tem, useSessao } from "../api/contextoSessao";
 import { Vazio } from "../componentes/Estados";
 import Icone from "../componentes/Icone";
 import { useTitulo } from "../componentes/Titulo";

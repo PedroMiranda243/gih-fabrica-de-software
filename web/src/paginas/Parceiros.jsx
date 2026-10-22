@@ -6,7 +6,7 @@ import { Link, useLocation } from "react-router-dom";
 
 import { api, comConsulta } from "../api/cliente";
 import { useCarregar, useFiltros } from "../api/ganchos";
-import { tem, useSessao } from "../api/sessao";
+import { tem, useSessao } from "../api/contextoSessao";
 import Busca from "../componentes/Busca";
 import Seletor from "../componentes/Seletor";
 import { Ausente, Chance, Estimativa, Segmento, Variacao } from "../componentes/Dados";

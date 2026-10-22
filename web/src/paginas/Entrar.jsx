@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { ErroDaApi } from "../api/cliente";
-import { useSessao } from "../api/sessao";
+import { useSessao } from "../api/contextoSessao";
 import Conferindo from "../componentes/Conferindo";
 import { Campo, Senha } from "../componentes/Formulario";
 import Icone from "../componentes/Icone";

@@ -7,12 +7,13 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { api, ErroDaApi } from "../api/cliente";
 import { useCarregar } from "../api/ganchos";
-import { tem, useSessao } from "../api/sessao";
+import { tem, useSessao } from "../api/contextoSessao";
 import AlteracoesNaoSalvas from "../componentes/AlteracoesNaoSalvas";
 import Confirmacao from "../componentes/Confirmacao";
-import { Ausente, Chance, Dinheiro, Estimativa, Segmento, Variacao } from "../componentes/Dados";
+import { Chance, Dinheiro, Estimativa, Segmento, Variacao } from "../componentes/Dados";
 import { Carregando, ErroDaAcao, ErroDaTela, Sucesso, Vazio } from "../componentes/Estados";
-import { Campo, ResumoDeErros, useErrosDoFormulario } from "../componentes/Formulario";
+import { Campo, ResumoDeErros } from "../componentes/Formulario";
+import { useErrosDoFormulario } from "../componentes/useErrosDoFormulario";
 import Icone from "../componentes/Icone";
 import { Trilha } from "../componentes/Lista";
 import Serie from "../componentes/Serie";

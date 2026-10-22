@@ -9,7 +9,8 @@ import { useCarregar } from "../api/ganchos";
 import AlteracoesNaoSalvas from "../componentes/AlteracoesNaoSalvas";
 import Confirmacao from "../componentes/Confirmacao";
 import { Carregando, ErroDaTela, Sucesso } from "../componentes/Estados";
-import { Campo, ResumoDeErros, useErrosDoFormulario } from "../componentes/Formulario";
+import { Campo, ResumoDeErros } from "../componentes/Formulario";
+import { useErrosDoFormulario } from "../componentes/useErrosDoFormulario";
 import Lacre from "../componentes/Lacre";
 import { useTitulo } from "../componentes/Titulo";
 

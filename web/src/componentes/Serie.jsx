@@ -20,8 +20,8 @@ export default function Serie({ pontos, rotulo, estimativa = null, altura = 280,
   }
   const linhas = pontos.map((p) => [
     comoPeriodo(p.periodo),
-    p.faturamento === null ? <Ausente porque="sem medição no período" /> : comoDinheiro(p.faturamento),
-    p.pedidos === null || p.pedidos === undefined ? <Ausente porque="sem medição no período" /> : comoInteiro(p.pedidos),
+    p.faturamento === null ? <Ausente key="faturamento" porque="sem medição no período" /> : comoDinheiro(p.faturamento),
+    p.pedidos === null || p.pedidos === undefined ? <Ausente key="pedidos" porque="sem medição no período" /> : comoInteiro(p.pedidos),
   ]);
   if (estimativa) linhas.push([`Próximo período (estimativa do modelo)`, comoDinheiro(estimativa.valor), <Ausente key="e" porque="o modelo não estima pedidos" />]);
   return (

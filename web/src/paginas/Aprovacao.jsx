@@ -8,7 +8,7 @@ import { Link, useLocation } from "react-router-dom";
 
 import { api, comConsulta, ErroDaApi } from "../api/cliente";
 import { useCarregar, useFiltros } from "../api/ganchos";
-import { tem, useSessao } from "../api/sessao";
+import { tem, useSessao } from "../api/contextoSessao";
 import AlteracoesNaoSalvas from "../componentes/AlteracoesNaoSalvas";
 import CartaoMensagem from "../componentes/CartaoMensagem";
 import Confirmacao from "../componentes/Confirmacao";
@@ -46,14 +46,19 @@ export default function Aprovacao() {
   const [sujos, setSujos] = useState({});
   const titulos = useRef({});
 
-  useEffect(() => {
+  /* Trocar de aba apaga o anúncio da anterior; uma lista nova da API troca os
+     itens e desmarca tudo — ajustes feitos na própria renderização. */
+  const [estadoVisto, setEstadoVisto] = useState(estado);
+  if (estado !== estadoVisto) {
+    setEstadoVisto(estado);
     setAnuncio(null);
-  }, [estado]);
-
-  useEffect(() => {
+  }
+  const [dadosVistos, setDadosVistos] = useState(null);
+  if (lista.dados !== dadosVistos) {
+    setDadosVistos(lista.dados);
     if (lista.dados) setItens(lista.dados.itens);
     setSelecionadas([]);
-  }, [lista.dados]);
+  }
 
   function sairDaFila(id, frase) {
     setItens((atual) => {

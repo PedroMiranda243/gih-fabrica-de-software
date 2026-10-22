@@ -7,7 +7,7 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { useCarregar } from "../api/ganchos";
-import { tem, useSessao } from "../api/sessao";
+import { tem, useSessao } from "../api/contextoSessao";
 import { Segmento } from "../componentes/Dados";
 import { Carregando, ErroDaTela, Nota, Vazio } from "../componentes/Estados";
 import { CaixaDeTabela, Trilha } from "../componentes/Lista";

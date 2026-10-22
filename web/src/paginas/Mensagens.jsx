@@ -8,7 +8,7 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { useAcompanhar, useAtraso, useCarregar } from "../api/ganchos";
-import { tem, useSessao } from "../api/sessao";
+import { tem, useSessao } from "../api/contextoSessao";
 import CartaoMensagem from "../componentes/CartaoMensagem";
 import { Ausente, Segmento } from "../componentes/Dados";
 import { Carregando, ErroDaAcao, ErroDaTela, Nota, Sucesso, Vazio } from "../componentes/Estados";
@@ -34,7 +34,8 @@ export default function Mensagens() {
   const [escolhidos, setEscolhidos] = useState([]);
   const [previa, setPrevia] = useState(null);
   const [erroPrevia, setErroPrevia] = useState(null);
-  const [ocupado, setOcupado] = useState(null);
+  /* Vindo de um plano, a prévia já começa a ser pedida ao abrir (o efeito abaixo). */
+  const [ocupado, setOcupado] = useState(planoDoEndereco ? "previa" : null);
   const [erroGerar, setErroGerar] = useState(null);
   const [acompanhando, setAcompanhando] = useState(null);
   const [terminados, setTerminados] = useState([]);
@@ -53,9 +54,13 @@ export default function Mensagens() {
       estado.recarregar();
     },
   );
-  useEffect(() => {
+  /* As mensagens que já ficaram prontas no lote acompanhado: ajustadas na própria
+     renderização quando chega uma consulta nova. */
+  const [loteVisto, setLoteVisto] = useState(null);
+  if (lote.atual !== loteVisto) {
+    setLoteVisto(lote.atual);
     if (lote.atual?.mensagens) setProntas(lote.atual.mensagens);
-  }, [lote.atual]);
+  }
 
   /* A última geração, com as mensagens dela, quando não há nenhuma rodando. */
   const ultimoId = estado.dados?.ultimo?.id;
@@ -68,18 +73,19 @@ export default function Mensagens() {
   }, [tipo, plano, escolhidos, segmento, categoria]);
 
   /* Mudar o público apaga a prévia: ela era de outro público. */
-  useEffect(() => {
+  const [publicoVisto, setPublicoVisto] = useState(publico);
+  if (publico !== publicoVisto) {
+    setPublicoVisto(publico);
     setPrevia(null);
     setErroPrevia(null);
     setErroGerar(null);
-  }, [publico]);
+  }
 
   /* Vindo da Campanha ou de uma execução, o público já está escolhido: a prévia
      vem junto, sem mais um clique. */
   useEffect(() => {
     if (!planoDoEndereco) return undefined;
     let vivo = true;
-    setOcupado("previa");
     api
       .post("/api/mensagens/publico", { tipo: "PLANO", execucao_id: Number(planoDoEndereco) })
       .then((r) => vivo && setPrevia(r))
