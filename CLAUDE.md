@@ -292,24 +292,29 @@ existir CSS. Num projeto anterior deste mesmo domínio, "tema escuro e elegante"
 especificação suficiente; o redesign inteiro foi rejeitado depois de pronto e ~500 linhas de CSS foram
 descartadas. Validar antes custa uma conversa; validar depois custa o trabalho inteiro.
 
-### Sistema visual: duas regras que não se negociam
+### Sistema visual: as regras que não se negociam
 
-Vieram da correção daquele redesign rejeitado. Valem desde a primeira tela.
+Vieram da correção daquele redesign rejeitado, e a versão 2 da interface ("Etiqueta e Lacre", H103) as
+manteve. O detalhe está em [`docs/09-sistema-visual.md`](docs/09-sistema-visual.md).
 
-**1. Cada cor tem um trabalho só.** A cor de ação significa *"responde ao seu clique"* — botão, link, foco,
-seleção — e nada mais. No projeto anterior ela era marca, ação **e** dado ao mesmo tempo, usada 18 vezes
-incluindo todas as barras de categoria. Quando uma cor significa tudo, não significa nada.
+**1. Cada cor tem um trabalho só.** A cor de ação (o cobalto, `--acao`) significa *"responde ao seu clique"* —
+botão, link, foco, seleção — e nada mais. No projeto anterior ela era marca, ação **e** dado ao mesmo tempo,
+usada 18 vezes incluindo todas as barras de categoria. Quando uma cor significa tudo, não significa nada.
 
-- As cores semânticas (risco, ascensão, Top, recém-chegado, prospecção) aparecem só como **ponto ou barra**
-- O rótulo do segmento é **neutro** — "Top 15" repetido doze vezes em cor é ruído puro
-- Gráficos usam uma **rampa fria própria**, nunca a cor de ação nem as semânticas
+- O **lacre** amarelo é decisão gravada ou valor medido — nunca estimativa, fundo ou enfeite
+- A **cor da rota** é a área do sistema, e nunca aparece sem o nome da área
+- A **cor do segmento** nunca aparece sem o nome do segmento: com o nome, ela é etiqueta tingida
+- Erro é vermelho; abstenção, vazio e indisponível não são erro
 
 Se você for acrescentar a cor de ação em algo que não responde a clique, é sinal de que a cor errada está
 sendo usada.
 
-**2. Hierarquia vem do peso e da superfície, não do contraste.** Passar no teste de contraste não faz o
-olho achar nada. Na tabela de parceiros, o nome deve ser o **único** elemento em peso alto e tinta cheia.
-A escada de superfícies precisa de degraus largos o bastante para serem percebidos.
+**2. Medido é lacrado; estimativa é tracejada.** Toda previsão do modelo aparece com a etiqueta "Estimativa",
+em tracejado — no bloco, no indicador e no gráfico. Cor diferente sozinha não basta.
+
+**3. Hierarquia vem do tamanho do número e da rota, não do contraste.** Passar no teste de contraste não faz
+o olho achar nada. Na tabela de parceiros, o nome deve ser o **único** elemento em peso alto da linha; o
+número principal do painel é o maior da tela.
 
 ### Antes de abrir o Pull Request
 
@@ -454,9 +459,14 @@ frente com alguma, a resposta já está aqui.
 - **Todo teste da interface passa pelo axe, e toda cor de texto, pelo contraste.** O
   `web/src/testes/preparar.js` roda o axe-core no fim de cada teste: uma tela nova sem rótulo ou sem nome
   acessível reprova o teste que a monta. E o `web/src/estilos/contraste.test.js` reprova a cor de texto que
-  não está na tabela dele — um `color: var(--ink-3)` novo, a 2,76:1, não passa. Precisa de uma tinta ou de
-  um fundo novo? Ponha o par na tabela e deixe o teste medir. Campo novo leva a `--borda-controle`, e não a
-  `--border`.
+  não está na tabela dele — o `--carbono-3` sobre o `--chao`, a 4,32:1, não passa. Precisa de uma tinta ou de
+  um fundo novo? Ponha o par na tabela e deixe o teste medir. Campo novo leva a `--fio-forte`, e não o `--fio`.
+
+- **O axe de uma tela solta não vê a página inteira.** As regras de página — o nome único de cada região, o
+  conteúdo fora de região, o título de nível 1 — ficam desligadas no teste de uma tela, que não tem a casca. Foi
+  assim que a interface nova chegou do laboratório com duas regiões "Ranking de parceiros" (a seção e a caixa
+  de rolagem da tabela) passando em todo teste e reprovando em 16 de 60 auditorias no navegador. O
+  `web/src/App.acessibilidade.test.jsx` abre a aplicação inteira, com a casca, e liga essas regras.
 
 - **Teste da tela com a API simulada não prova o contrato.** A tela da Campanha lia `pode_editar_catalogo`, que a
   API nunca mandou, e um `pode_executar` que a API calculava sem olhar o perfil. Os testes da tela passavam, porque

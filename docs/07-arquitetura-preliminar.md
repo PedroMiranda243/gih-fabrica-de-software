@@ -1,7 +1,7 @@
 # 07 — Arquitetura
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Versão:** 2.2 — 04/10/2026, o acesso remoto por rede privada, na ADR-014 (2.1 — 30/09/2026, o dado entre os módulos; 2.0 — 28/09/2026, o sistema construído; 1.0 — 03/09/2026, a arquitetura preliminar da Sprint 1)
+**Versão:** 2.3 — 22/10/2026, a interface refeita (ADR-015) (2.2 — 04/10/2026, o acesso remoto por rede privada, na ADR-014; 2.1 — 30/09/2026, o dado entre os módulos; 2.0 — 28/09/2026, o sistema construído; 1.0 — 03/09/2026, a arquitetura preliminar da Sprint 1)
 
 > **O sistema como está, e as decisões que o trouxeram até aqui.** Este documento começou como a arquitetura
 > preliminar da Sprint 1. Cada decisão tomada na construção entrou como uma ADR, na seção 5, com a data e o
@@ -144,8 +144,8 @@ o último plano reservou.
 | API | **Python 3.11 + FastAPI** | Linguagem prioritária; integra nativamente com PyTorch, e chama o núcleo em C++ como executável (ADR-012); documentação de API gerada automaticamente |
 | Banco | **PostgreSQL 16** | Relacional, recomendado pela disciplina, adequado a séries por período |
 | Migrações | **Alembic** | Esquema versionado e reproduzível |
-| Interface | **React + Vite** | Recomendado pela disciplina; separação clara de responsabilidade no time |
-| Gráficos | **Recharts** | Integra com React sem dependência pesada |
+| Interface | **React + Vite** | Recomendado pela disciplina; separação clara de responsabilidade no time. Sem biblioteca de componentes; CSS próprio, em tokens, e a fonte Atkinson Hyperlegible Next no pacote (ADR-015) |
+| Gráficos | **SVG desenhado no próprio código** (`web/src/graficos/`) | Série, barras e o benchmark em escala logarítmica, com a tabela dos números a um clique; nenhuma biblioteca de gráfico |
 | Assistente | **LLM local via Ollama** (`qwen2.5:7b`, Apache 2.0) | Executa na máquina; papel restrito à redação, e opcional (ADR-013) |
 | Testes | **pytest** e **Vitest** | Cobertura do núcleo e da interface |
 | Empacotamento | **Docker Compose** | Ambiente reproduzível com um comando |
@@ -1055,8 +1055,6 @@ Uma sonda contra o `qwen2.5:7b`, na RTX 4060, mediu o que segue (issue #154).
   relação ao período anterior"), e não a semana perguntada; a pergunta com mês, ano ou data — "a última semana
   de agosto" é outra semana; e a previsão e o último plano, que não escolhem período.
 
----
-
 ### ADR-014 — O acesso de fora da máquina é por rede privada, e nunca por link público
 
 **Status:** Decidido
@@ -1128,6 +1126,60 @@ pelo log, sem chave em arquivo.
 a ser por pessoa. O comentário de `origem_de` diz a condição — o proxy ser confiável e reescrever o cabeçalho —,
 e ela agora existe; mas mexe no RNF11, e não é preciso para cinco pessoas numa rede privada. Se o acesso remoto
 crescer, é a primeira coisa a fazer.
+
+### ADR-015 — A interface refeita: "Etiqueta e Lacre", com a suíte de testes refeita junto
+
+**Status:** Proposto — aguardando a aprovação da equipe na issue da H103
+**Data:** 22/10/2026
+
+**Situação:** a interface da versão 1 funcionava e passava em toda medição — 0 de 60 telas com rolagem ou
+violação do axe, 405 testes —, mas não se lia bem: a letra condensada cansava em lista longa, os rótulos em
+maiúsculas espaçadas competiam com o dado, e a pessoa não sabia em que área do sistema estava. Refazer a
+camada visual no próprio repositório, tela por tela, arriscava a base da equipe e a `main` a três semanas da
+gravação dos vídeos. As interfaces candidatas foram feitas fora do repositório, num laboratório com API e banco
+próprios (500 parceiros sintéticos, uma conta de cada perfil), a partir de um kit: o pedido com cada tela e
+cada regra, o contrato da API e respostas reais dela. Cada candidata passou pela mesma bateria: inspeção das
+dependências e do código antes de rodar, a abertura de cada endereço com cada perfil (114), a medição das 30
+telas a 768 e a 1.440 px nos dois temas, a entrada pela tela com os quatro perfis e os fluxos inteiros.
+
+**Alternativas:**
+
+| | O que é | Por que não, ou por que sim |
+|---|---|---|
+| Manter a versão 1 | Nada a refazer | Não resolve a leitura nem a orientação, que eram o problema |
+| Candidata 01, "Sala de controle" | O código da versão 1 com a camada visual refeita | Os 405 testes continuam valendo, mas a navegação é a mesma: a pessoa continuaria sem saber onde está |
+| **Candidata 02, "Etiqueta e Lacre"** | Código novo, para os mesmos 29 endereços e as mesmas 78 operações da API | Resolve a leitura (Atkinson Hyperlegible Next, letra normal) e a orientação (cada área uma rota com a sua cor e o seu nome, o cabeçalho com o caminho de volta); chegou sem nenhum teste |
+
+**Decisão:** adotar a candidata 02, com três condições, cumpridas antes do PR:
+
+- **As correções que o laboratório pegou.** As regiões de nome repetido (16 de 60 auditorias no navegador);
+  Mensagens aberta a partir de um plano sem a prévia, que a versão 1 trazia sozinha; a guarda dos endereços e
+  o menu com duas listas de permissão, o defeito da H94 voltando; o risco mínimo no endereço em fração, que
+  mandaria `14` à API pelos links antigos; o título da página vazio enquanto a tela carregava; a confirmação
+  da campanha escrevendo "?" no campo em branco.
+- **Uma suíte de testes própria**, com a mesma base da versão 1 (o axe no fim de todo teste, a API simulada no
+  `fetch`) e uma suíte por tela que o `docs/11` cita. As telas são abertas pela aplicação inteira — rota,
+  guarda e casca de verdade —, com as respostas reais da API como dado. Cada correção acima tem o teste que
+  reprova sem ela.
+- **Zero avisos do lint**, como a versão 1: os 21 que a candidata trouxe foram corrigidos no código.
+
+**Consequências:**
+
+- **A suíte da versão 1 sai com ela.** Os 405 testes testavam componentes que não existem mais; ficam na
+  etiqueta `interface-v1`. A nova tem 241: não é o mesmo número, e não precisa ser — cada requisito que a
+  matriz cita tem o teste dele, e o `test_rastreabilidade.py` confere.
+- **A fonte muda**, e a licença não: a Atkinson Hyperlegible Next é OFL-1.1, como a Fira da versão 1, e vem no
+  pacote. Nada é carregado de fora.
+- **As cores categóricas novas não passam no validador de daltonismo** (`docs/09`, seção 3). A interface não
+  depende delas — o nome do segmento e o da área estão sempre ao lado da cor, e cada modo do benchmark tem o
+  seu marcador —, mas trocar os tons é uma decisão em aberto, da aprovação.
+- **O sistema visual passa à versão 2** (`docs/09`), e as regras do `CLAUDE.md` mudam com ele: o segmento
+  vira etiqueta tingida com o nome, e o lacre e a rota ganham trabalho próprio.
+- **As ferramentas leem a interface nova:** o `scripts/medir_telas.py` (os tokens e o `.sr-only`), o
+  `scripts/registrar_testes.py` (os exemplos nomeados) e o `test_rastreabilidade.py`, que passa a aceitar a rota
+  declarada relativa à casca.
+- **A lição vira teste:** o axe de uma tela solta não vê as regras da página inteira. O
+  `web/src/App.acessibilidade.test.jsx` abre a aplicação com a casca, para cada perfil, e as liga.
 
 ---
 

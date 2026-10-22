@@ -1,149 +1,184 @@
 # 09 — Sistema Visual
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Sprint:** 3 — história **H08**
-**Versão:** 1.0 — 15/09/2026
-**Status:** ⏳ aguardando aprovação da equipe
+**Sprint:** pós-S08 — história **H103** (a versão 1, da H08, ficou na etiqueta `interface-v1`)
+**Versão:** 2.0 — 22/10/2026 · o sistema "Etiqueta e Lacre", que substitui o da versão 1 (1.0 — 15/09/2026)
+**Status:** ⏳ aguardando aprovação da equipe, na issue da H103
 
-> **Este documento é portão.** Nenhuma linha de CSS entra em `web/` antes de a equipe aprovar a direção
-> visual aqui. Num projeto anterior do mesmo domínio, "tema escuro e elegante" foi tratado como
-> especificação suficiente e o redesign inteiro foi rejeitado depois de pronto — cerca de 500 linhas de CSS
-> descartadas. Validar antes custa uma conversa.
+> **Este documento é portão.** A interface nova só entra na `main` com a direção visual aprovada pela equipe,
+> registrada na issue da H103 — como a primeira foi, na #8. Num projeto anterior do mesmo domínio, "tema
+> escuro e elegante" foi tratado como especificação suficiente e o redesign inteiro foi rejeitado depois de
+> pronto. Validar antes custa uma conversa.
 
-**Protótipo navegável:** [`docs/prototipo/index.html`](prototipo/index.html) — quatro telas: painel,
-importação, campanha e aprovação.
+**Por que uma versão 2.** A interface da versão 1 funcionava, e passava em toda medição; o problema era o que
+ela não dizia ao olho. A letra condensada cansava quem lê muito, o rótulo em maiúsculas espaçadas competia
+com o dado, e a pessoa se perdia entre as telas: nada dizia em que área do sistema ela estava. A versão 2
+mantém o comportamento — os mesmos 29 endereços, as mesmas 78 operações da API, as mesmas permissões — e troca
+a camada visual inteira. Ela foi testada antes de chegar aqui, num laboratório fora do repositório, com a API
+de verdade e uma conta de cada perfil.
+
+**Como ver.** A versão 2 é a própria `web/`; as capturas de cada tela, nos dois temas, estão em
+[`docs/medicoes/telas/`](medicoes/telas/). A versão 1 volta com `git checkout interface-v1 -- web/`.
 
 ---
 
-## 1. As duas regras que não se negociam
+## 1. As regras que não se negociam
 
 ### 1.1 Cada cor tem um trabalho só
 
-O **âmbar** significa *"responde ao seu clique"* — botão, link, foco, item de menu selecionado. Nada mais.
-Quando uma cor é marca, ação **e** dado ao mesmo tempo, ela deixa de significar qualquer coisa.
+| Cor | Significa | E nada mais |
+|---|---|---|
+| **Cobalto** (`--acao`) | responde ao seu clique: botão, link, seleção, foco do controle | não é dado, gráfico, área, título nem estado |
+| **Amarelo lacre** (`--lacre`) | decisão gravada ou valor medido que a pessoa precisa reconhecer | nunca em estimativa, fundo de bloco, botão ou enfeite |
+| **Cor da rota** (`--rota-*`) | a área do sistema: Análise, Previsão, Otimização, Comunicação, Administração | nunca aparece sem o nome da área; não é dado nem estado |
+| **Cor do segmento** (`--seg-*`) | o segmento do parceiro, um dos seis da RN01 | nunca aparece sem o nome do segmento |
+| **Vermelho** (`--erro`) | erro | abstenção, vazio e indisponível não são erro, e não são vermelhos |
 
-- As cores de **segmento** aparecem **apenas como ponto ou barra**, nunca como fundo de linha ou texto
-- O rótulo do segmento é **texto neutro** — "Top 15" repetido doze vezes em cor é ruído puro
-- Os **gráficos** usam uma rampa fria própria, nunca o âmbar nem as cores de segmento
+**O que mudou da versão 1.** Lá, o segmento era um ponto colorido e um rótulo neutro, e a cor de segmento
+nunca ia para o fundo. Aqui, o segmento é uma **etiqueta tingida**: o fundo claro do matiz, a tinta escura do
+mesmo matiz e o ponto na cor plena. A regra que importa continua: a cor nunca aparece sozinha — o nome do
+segmento está sempre escrito dentro dela, e a etiqueta tem o mesmo desenho para os seis. A mudança veio de quem
+usa: numa lista de 25 parceiros, o tom da etiqueta deixa achar os "Em risco" de relance, e o nome confirma.
 
 Se você for acrescentar `--acao` em algo que não responde a clique, a cor errada está sendo usada.
 
-### 1.2 Hierarquia vem do peso e da superfície
+### 1.2 Medido é lacrado; estimativa é tracejada
 
-Passar no teste de contraste não faz o olho achar nada. Na tabela de parceiros, **o nome do parceiro é o
-único elemento em peso 600 e tinta cheia** (`--ink`). Todo o resto da linha é `--ink-2`.
+O que foi medido ou decidido — o plano calculado, a mensagem aprovada, os limiares em vigor, a versão do modelo
+em uso — sai com o **lacre**: o número, quem e quando. O que é previsão do modelo sai **sem lacre**: contorno
+tracejado no bloco e no indicador, a etiqueta "Estimativa", trecho tracejado e marcador vazado no gráfico.
+Cor diferente sozinha não bastaria (H44).
 
-A escada de superfícies é `--ground` → `--surface` → `--surface-2` → `--raise`, com degraus largos o
-suficiente para serem percebidos sem precisar de borda em tudo.
+### 1.3 Hierarquia vem do tamanho do número e da rota, e não de camadas
+
+As superfícies são planas e pousadas: o chão cinza-frio, as etiquetas brancas com uma sombra curta, e nada
+flutua. O que guia o olho é o número principal em 750, grande, a faixa na cor da rota no topo do indicador
+e o cabeçalho, que diz em que área a pessoa está e o caminho de volta. Na tabela de parceiros, o nome é o único
+elemento em peso alto da linha.
 
 ---
 
 ## 2. Cor
 
-### Neutros e ação
+Os valores saem de `web/src/estilos/tokens.css` (e a tinta sobre o cobalto, de `base.css`). O escuro é o lado
+de dentro da bolsa térmica: o chão quase preto, as etiquetas em grafite; o lacre e as cores vivas das rotas
+não mudam. O escuro do sistema e o escuro escolhido são a mesma paleta — o teste de contraste confere.
+
+### Superfícies, tinta e ação
 
 | Papel | Token | Claro | Escuro |
 |---|---|---|---|
-| Fundo da página | `--ground` | `#f7f8fa` | `#0d1117` |
-| Superfície (cartão, tabela) | `--surface` | `#ffffff` | `#12161c` |
-| Superfície elevada (hover) | `--surface-2` | `#f0f2f6` | `#171c24` |
-| Borda | `--border` | `#e3e7ed` | `#262d38` |
-| Tinta principal | `--ink` | `#101826` | `#eef1f6` |
-| Tinta secundária | `--ink-2` | `#5a6474` | `#a8b1bf` |
-| Tinta terciária | `--ink-3` | `#8a93a3` | `#6f7987` |
-| **Ação** | `--acao` | `#d97706` | `#f0a02a` |
-| Ação sobre claro (texto) | `--acao-ink` | `#a1560a` | `#f0a02a` |
-| Ação, fundo fraco | `--acao-fraca` | `#fdf3e3` | `#2a1f10` |
+| Chão da página (o balcão) | `--chao` | `#eef0f2` | `#0b0c0e` |
+| Etiqueta: bloco, indicador, folha, campo | `--etiqueta` | `#ffffff` | `#17191c` |
+| Etiqueta sombreada: hover de linha, desativado | `--etiqueta-2` | `#f6f7f8` | `#1e2125` |
+| Tinta principal | `--carbono` | `#141414` | `#f1f2f4` |
+| Tinta de apoio | `--carbono-2` | `#50555c` | `#a7adb5` |
+| Tinta de ausente e desativado | `--carbono-3` | `#6b7178` | `#8d939b` |
+| Fio: divisória e linha de tabela | `--fio` | `#d9dce0` | `#2b2e33` |
+| Fio forte: borda de campo (3:1) | `--fio-forte` | `#8a9098` | `#7b828b` |
+| **Ação** — só o que responde ao clique | `--acao` | `#1d3fe0` | `#8ea6ff` |
+| Ação sob o ponteiro | `--acao-forte` | `#142fb0` | `#b3c3ff` |
+| Ação, fundo fraco | `--acao-fundo` | `#e8ecff` | `#1c2547` |
+| Texto sobre a ação | `--acao-tinta` | `#ffffff` | `#0b0c0e` |
+| Anel de foco | `--foco` | `#1d3fe0` | `#8ea6ff` |
+| **Lacre** — decisão gravada | `--lacre` | `#ffd400` | `#ffd400` |
+| Texto sobre o lacre | `--lacre-tinta` | `#1a1500` | `#1a1500` |
+| Trilho (náilon) | `--nailon` | `#0e0f11` | `#050506` |
+| Tinta do trilho | `--nailon-tinta` | `#e6e8eb` | `#e6e8eb` |
+| Dica do item do menu | `--nailon-tinta-2` | `#a3a9b1` | `#a3a9b1` |
 
-Os neutros têm viés frio, escolhido para conversar com a rampa azul dos gráficos. Cinza puro lê como
-não decidido.
+### Estados (não são dado)
+
+| Papel | Token | Claro | Escuro |
+|---|---|---|---|
+| Erro | `--erro` | `#c4162a` | `#ff7a85` |
+| Erro, fundo | `--erro-fundo` | `#fdecee` | `#3a1418` |
+| Sucesso | `--sucesso` | `#0b7a4f` | `#5fd69c` |
+| Sucesso, fundo | `--sucesso-fundo` | `#e7f6ef` | `#0f2a1e` |
+| Atenção | `--atencao` | `#8a5300` | `#f5c451` |
+| Atenção, fundo | `--atencao-fundo` | `#fff4d6` | `#2e2410` |
+| Neutro (vazio, indisponível), fundo | `--neutro-fundo` | `#eef1f5` | `#1e2228` |
+| Variação que é boa notícia | `--variacao-boa` | `#0b7a4f` | `#5fd69c` |
+| Variação que é má notícia | `--variacao-ruim` | `#b32a17` | `#ff8a73` |
 
 ### Segmentos
 
-| Segmento | Token | Claro | Escuro |
+Na ordem de precedência da RN01. Com o nome, viram etiqueta tingida: o fundo, a tinta do mesmo matiz e o ponto na cor plena.
+
+| Segmento | Cor plena (claro · escuro) | Fundo da etiqueta | Tinta da etiqueta |
 |---|---|---|---|
-| Em risco | `--seg-risco` | `#d03b3b` | `#d03b3b` |
-| Em ascensão | `--seg-ascensao` | `#1baf7a` | `#199e70` |
-| Recém-chegado | `--seg-recem` | `#4a3aa7` | `#9085e9` |
-| Prospecção | `--seg-prosp` | `#eb6834` | `#d95926` |
-| Top | `--seg-top` | `#2a78d6` | `#3987e5` |
-| Estável | `--seg-estavel` | `#8a93a3` | `#6f7987` |
+| Prospecção | `#0b8f9a` · `#2cc3cf` | `#dcf6f9` · `#073236` | `#005b65` · `#a6e0e7` |
+| Recém-chegado | `#c2347a` · `#f06aa9` | `#ffe6f1` · `#421d2d` | `#871951` · `#ffbad7` |
+| Em risco | `#e5512d` · `#ff7350` | `#ffe7de` · `#441f16` | `#8d1d00` · `#ffbeaa` |
+| Top | `#7a4bd0` · `#a98bff` | `#f2ebff` · `#2e2546` | `#563495` · `#d9c8ff` |
+| Em ascensão | `#13a05f` · `#3fd08a` | `#dcf9e5` · `#0c341e` | `#006228` · `#a5e6bc` |
+| Estável | `#8d939b` · `#9aa1aa` | `#eef0f3` · `#292b2e` | `#484e54` · `#d1d5da` |
 
-**Estável é cinza de propósito:** sem tendência, sem atenção necessária. Ausência de sinal é informação.
+### Rotas (áreas do menu)
 
-### Séries de gráfico
+A cor viva é a mesma nos dois temas; a forte é o traço e o texto na cor da área sobre o claro (no escuro, a própria viva).
+
+| Área | Viva | Forte (claro · escuro) | Fundo (claro · escuro) |
+|---|---|---|---|
+| Análise | `#5abdf2` | `#006ca0` · `#5abdf2` | `#e6f6ff` · `#122733` |
+| Previsão | `#da92e6` | `#894194` · `#da92e6` | `#fbeffc` · `#2c1e2e` |
+| Otimização | `#ef9d32` | `#9b4b00` · `#ef9d32` | `#fef1e4` · `#2f2111` |
+| Comunicação | `#86c660` | `#367500` · `#86c660` | `#edf7e8` · `#1d2816` |
+| Administração | `#9db4ce` | `#50657e` · `#9db4ce` | `#e9f5ff` · `#172535` |
+
+Texto sobre a cor viva: `--rota-tinta`, `#0e0f11` nos dois temas.
+
+### Séries do benchmark (a cor segue o modo, com marcador próprio)
 
 | Papel | Token | Claro | Escuro |
 |---|---|---|---|
-| Série 1 (serial em Python, linha única) | `--serie-1` | `#2a78d6` | `#3987e5` |
-| Série 2 (CPU paralelo, OpenMP) | `--serie-2` | `#eb6834` | `#d95926` |
-| Série 3 (GPU) | `--serie-3` | `#1baf7a` | `#199e70` |
-| Série 4 (C++ serial, só no benchmark) | `--serie-4` | `#b0409a` | `#c75fb4` |
-| Grade | `--grade` | `#e8ecf3` | `#232a34` |
+| Python (círculo) | `--serie-python` | `#c2347a` | `#f06aa9` |
+| C++ serial (quadrado) | `--serie-cpp` | `#6b7178` | `#aab0b8` |
+| OpenMP (losango) | `--serie-openmp` | `#7a4cd1` | `#a98bff` |
+| GPU (triângulo) | `--serie-gpu` | `#1d8f5a` | `#3fd08a` |
+| Linha da série | `--grafico-linha` | `#141414` | `#f1f2f4` |
+| Grade | `--grafico-grade` | `#e7e9ec` | `#26292e` |
+| Estimativa (tracejado) | `--grafico-estimativa` | `#50555c` | `#a7adb5` |
 
 ---
 
-## 3. A paleta foi validada, não escolhida no olho
+## 3. A paleta foi medida — e o que a medida diz
 
-Rodada no validador de daltonismo e contraste, nos dois modos.
+Dois instrumentos, e os dois rodam de novo a cada mudança de cor.
 
-**O primeiro conjunto reprovou.** `Em risco` em vermelho e `Em ascensão` em verde mediram **ΔE 4,1 em
-deuteranopia** — um daltônico não distinguiria os dois estados mais consequentes do painel. É o erro mais
-comum em dashboards, e teria passado despercebido numa escolha por gosto.
+**O contraste de texto passa inteiro.** São 77 pares de tinta e fundo, nos dois temas, medidos do `tokens.css`
+por `web/src/estilos/contraste.test.js` a cada PR, e de novo pelo `scripts/medir_telas.py`: todos passam de
+4,5:1, e a borda do campo e o anel de foco, de 3:1. A medida mudou um lugar do desenho: o **carbono claro**
+(`--carbono-3`, o do travessão de ausente) dá 4,32:1 sobre o chão cinza, e por isso só aparece sobre a
+etiqueta (4,93:1) e a etiqueta sombreada (4,60:1). O nome na faixa refletiva da entrada passa no tom mais
+escuro dela.
 
-A correção foi trocar o verde por **turquesa**, o que levou o par crítico a **ΔE 9,9**, acima da meta de 8.
+**A separação das cores categóricas não passa, e a interface não depende dela.** O validador de paletas da
+referência de visualização (`validate_palette.js`) mede quanto duas cores se distinguem com daltonismo e com
+visão normal. As três famílias da versão 2 reprovam:
 
-| Verificação | Claro | Escuro |
-|---|---|---|
-| Faixa de luminosidade | ✅ | ✅ |
-| Piso de croma | ✅ | ✅ |
-| Separação sob daltonismo | ✅ 9,9 (pior par: risco ↔ ascensão) | ⚠️ 7,2 |
-| Piso de visão normal | ✅ 31,9 | ✅ 24,6 |
-| Contraste com a superfície | ⚠️ turquesa 2,82:1 | ✅ |
+| Família | Pior par, daltonismo | Pior par, visão normal | O que distingue sem a cor |
+|---|---|---|---|
+| Segmentos, os cinco com cor (claro) | Recém-chegado ↔ Prospecção, ΔE 5,2 | Em risco ↔ Recém-chegado, ΔE 14,7 | o nome, escrito dentro de toda etiqueta |
+| Segmentos (escuro) | Recém-chegado ↔ Prospecção, ΔE 5,8 | Em risco ↔ Recém-chegado, ΔE 12,8 | o mesmo |
+| Séries do benchmark, todos os pares (claro) | C++ ↔ Python, ΔE 2,7 | GPU ↔ C++, ΔE 13,3 | um marcador por modo (círculo, quadrado, losango, triângulo), a legenda, o nome no fim da linha e a tabela "Ver os números" |
+| Rotas, todos os pares | Análise ↔ Previsão, ΔE 2,7 | Administração ↔ Análise, ΔE 7,7 | o nome da área, sempre ao lado da cor |
 
-**Os dois avisos têm a mesma mitigação, já obrigatória pela regra 1.1:** a cor de segmento nunca aparece
-sozinha — sempre ao lado do rótulo em texto. Nenhuma informação depende de distinguir a cor.
+A meta do validador é ΔE 8 com daltonismo e 15 com visão normal. Nenhuma informação da interface depende
+de distinguir essas cores: a cor orienta, e o nome ou o marcador identifica — é a regra 1.1, e a medida das
+telas (axe, nos dois temas) não acusa nenhum caso de cor sozinha. Ainda assim, o número fica registrado aqui
+porque é o que a versão 1 media: lá, o primeiro conjunto também reprovou, e a equipe trocou o verde por
+turquesa até o par crítico chegar a ΔE 9,9. **Trocar os tons da versão 2 para passar é uma decisão em aberto,
+da aprovação da H103** — o custo é mexer na identidade que foi aprovada no laboratório; o ganho é o gráfico
+do benchmark legível para quem não distingue magenta de cinza sem olhar o marcador.
 
-Houve um trade-off explícito: um turquesa mais escuro passaria no contraste, mas cairia para ΔE 7,2 em
-daltonismo no modo claro. Escolhemos proteger o daltonismo, que é mais difícil de compensar do que
-visibilidade — e a compensação da visibilidade já existe.
-
-### A quarta série, do benchmark (H57)
-
-O benchmark tem quatro colunas (ADR-012): Python, C++ serial, OpenMP e GPU. As três primeiras cores já
-tinham dono — o serial da campanha é o Python, o CPU paralelo é o OpenMP —, e **a cor segue o modo**, em
-qualquer tela e em qualquer execução: sem a GPU, o OpenMP continua laranja. Faltava a do C++ serial.
-
-**Validada com todos os pares, e não só com os vizinhos**, porque no gráfico de escalabilidade as linhas se
-cruzam. Duas candidatas reprovaram antes:
-
-- o **violeta** dos segmentos passava no claro, mas no escuro ficava a ΔE 1,9 do azul em protanopia;
-- o **amarelo**, a quarta cor da paleta de referência da skill de visualização, ficava a ΔE 13,7 do laranja
-  em visão normal no claro, e a 4,8 em deuteranopia no escuro.
-
-A **orquídea** passou nos dois modos:
-
-| Verificação | Claro | Escuro |
-|---|---|---|
-| Faixa de luminosidade | ✅ | ✅ |
-| Piso de croma | ✅ | ✅ |
-| Separação sob daltonismo, todos os pares | ✅ 9,2 (turquesa ↔ laranja) | ✅ 8,2 (orquídea ↔ azul) |
-| Piso de visão normal, todos os pares | ✅ 22,0 | ✅ 18,4 |
-| Contraste com a superfície | ⚠️ turquesa 2,82:1 | ✅ |
-
-O aviso de contraste é o mesmo turquesa de sempre, com a mesma mitigação: no gráfico, a legenda fica acima,
-o nome do modo vai no fim da linha quando cabe, a dica lista os tempos e a tabela dos números está a um
-clique. Nenhum texto usa a cor da série.
+**Para reproduzir** (o validador vem com a referência de visualização de dados; a superfície é a etiqueta):
 
 ```bash
-node validate_palette.js "#2a78d6,#b0409a,#eb6834,#1baf7a" --mode light --surface "#ffffff" --pairs all
-node validate_palette.js "#3987e5,#c75fb4,#d95926,#199e70" --mode dark --surface "#12161c" --pairs all
-```
-
-**Para reproduzir:**
-
-```bash
-node validate_palette.js "#d03b3b,#1baf7a,#4a3aa7,#eb6834,#2a78d6" --mode light --surface "#ffffff"
+node validate_palette.js "#0b8f9a,#c2347a,#e5512d,#7a4bd0,#13a05f" --mode light --surface "#ffffff"
+node validate_palette.js "#2cc3cf,#f06aa9,#ff7350,#a98bff,#3fd08a" --mode dark --surface "#17191c"
+node validate_palette.js "#c2347a,#6b7178,#7a4cd1,#1d8f5a" --mode light --surface "#ffffff" --pairs all
+node validate_palette.js "#5abdf2,#da92e6,#ef9d32,#86c660,#9db4ce" --mode light --surface "#ffffff" --pairs all
 ```
 
 ---
@@ -152,92 +187,103 @@ node validate_palette.js "#d03b3b,#1baf7a,#4a3aa7,#eb6834,#2a78d6" --mode light 
 
 | Papel | Família | Uso |
 |---|---|---|
-| Interface | **Fira Sans** | Títulos, rótulos, corpo, botões |
-| Dados | **Fira Code** | Toda coluna numérica, com `font-variant-numeric: tabular-nums` |
+| Interface e números | **Atkinson Hyperlegible Next** | Tudo: títulos, rótulos, corpo, botões, números de tabela e de indicador |
+| Código | a mono do sistema (`ui-monospace`, Cascadia Mono, Consolas) | Só código: o conteúdo gravado na auditoria, a fórmula da Ajuda, `code` |
 
-Fira Code nos números não é enfeite: em tabela de ranking, dígito que não alinha obriga o olho a reler.
+A Atkinson Hyperlegible Next, do Braille Institute, foi desenhada para quem enxerga pouco: nenhuma letra se
+confunde com outra, e o zero é cortado. Vem no pacote, por `@fontsource-variable/atkinson-hyperlegible-next`
+(OFL-1.1, a mesma licença da Fira da versão 1, registrada na issue da H103); nada é carregado de fora.
 
-**Escala:** 11 · 11,5 · 12 · 13 · 13,5 · 14 · 19 · 22 px. Fora dela, não existe.
-
-**Pesos:** 400 corpo · 500 rótulos · 600 nomes e títulos · 700 apenas o título da página e a marca.
+- **Leitura fácil:** nenhum texto se estreita, e nada se escreve em maiúsculas espaçadas — rótulos, grupos do
+  menu e cabeçalhos de tabela ficam em letra normal. Só a sigla GIH e as iniciais do avatar são maiúsculas.
+- **Número tabular:** todo número que se compara usa algarismos tabulares (`font-variant-numeric:
+  tabular-nums`), sem fonte mono — a coluna alinha e a letra continua a mesma.
+- **Escala**, em rem fixo: 12 · 13 · 14 · 15 · 16 · 18 · 20 · 24 · 28 · 30 · 32 · 36 · 40 · 48 · 52 px.
+- **Pesos:** 400 no texto corrido; 600 a 800 para ênfase — 750 nos números de indicador, 700 nos rótulos e
+  botões, 800 só na sigla.
 
 ---
 
-## 5. Espaçamento e layout
+## 5. Espaço e layout
 
-Escala densa, apropriada a painel: **4 · 6 · 8 · 12 · 15 · 16 · 20 · 24 px**.
+Módulo de 8 com meio passo: **4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 px**.
 
-- **Trilho lateral** de 208 px com as quatro telas; vira barra horizontal rolável abaixo de 860 px
-- **Resumo antes do detalhe**: indicadores no topo, gráficos, depois a tabela
-- Tabelas largas rolam no próprio container (`overflow-x: auto`) — a página nunca rola na horizontal
-- Raio de 6 px em controles, 8 px em painéis
-- Layout funcional a partir de **768 px** (RNF21)
+- **O trilho** tem 248 px — 242 de náilon preto e 6 de faixa refletiva — e é um **mapa de rotas**: uma linha
+  por área, na cor dela, uma parada por tela, cada item com uma dica de uma linha do que há lá dentro.
+- **O cabeçalho** é fixo, com no mínimo 72 px e uma faixa de 4 px na cor da rota: a etiqueta da área, o caminho
+  de volta e o título da tela.
+- **O conteúdo** vai até 1.600 px. Resumo antes do detalhe: indicadores, gráfico, depois a tabela.
+- **Tabelas largas rolam na própria caixa** (`overflow-x: auto`), com uma sombra na borda que diz que há mais
+  para o lado; a página nunca rola na horizontal.
+- **Quebras:** 1.279 px (os botões do cabeçalho viram só ícone), 1.179 px (o trilho vira gaveta, aberta pelo
+  botão do cabeçalho), 899 px (indicadores em duas colunas, o caminho vira só o botão de voltar), 599 px.
+- **Cantos** quase retos: 4 px em blocos, indicadores e etiquetas; 6 px em botões e campos.
+- Layout funcional a partir de **768 px** (RNF21), medido.
 
 ---
 
 ## 6. Estados vazios
 
-Tela vazia sem explicação é defeito. Os três previstos:
+Tela vazia sem explicação é defeito. Todo estado vazio diz por que está vazio e oferece a saída:
 
 | Situação | O que mostrar |
 |---|---|
-| Base sem dados | "Nenhum dado importado ainda" + botão que leva à importação |
+| Base sem dados | "Nenhum dado importado ainda" + o link para a importação, a quem importa |
 | Período único | Valores absolutos, avisando que variação e tendência exigem histórico |
-| Otimização inviável | Qual restrição foi violada e quanto falta — nunca plano parcial (RN07) |
+| Otimização inviável | Qual restrição não fechou e o porquê que a API mandou — nunca plano parcial (RN07) |
+| Assistente sem base, ou fora do ar | É resposta, e não erro: carbono, e não vermelho |
 
 ---
 
 ## 7. Acessibilidade
 
-- Contraste mínimo **AA (4,5:1)** para texto (RNF22) — medido com ferramenta, não presumido
-- Foco visível em todo controle: contorno de 2 px na **tinta** da ação (`--acao-ink`)
-- A borda de todo campo em `--borda-controle`, a 3:1 do fundo; a `--border` é decoração
-- Alvo de toque mínimo de 44 × 44 px
-- Ícones em SVG, nunca emoji
-- Transições de 150–300 ms; `prefers-reduced-motion` respeitado
-- Nenhuma informação transmitida apenas por cor
+- Contraste mínimo **AA (4,5:1)** para texto (RNF22) e 3:1 para borda de campo e foco — medido, não presumido
+- Foco visível em todo controle: anel de 3 px na cor de foco, ou a borda do campo, que vira cobalto. O título
+  da tela e o conteúdo, que recebem o foco por programa, não levam anel
+- Alvo mínimo de 40 px de altura em botões e campos (34 no botão pequeno)
+- Ícones em SVG desenhados no código, com traço de 1,8; nunca emoji
+- Movimento seco, em dois quadros (`steps(2)`), em 160 ms; some com `prefers-reduced-motion`
+- Nenhuma informação transmitida apenas por cor (seção 3)
 
-**Medido, e não presumido (H76).** Três verificações, em três lugares:
+**Medido, e não presumido (H76).** Quatro verificações, em quatro lugares:
 
 | O quê | Onde | Quando |
 |---|---|---|
-| O contraste de cada par de tinta e fundo, nos dois temas, lido do `tokens.css`; e toda cor de texto, anel de foco e borda de campo da CSS conferidos contra esses pares | `web/src/estilos/contraste.test.js` | A cada PR |
-| Rótulos, papéis e nomes acessíveis, pelo axe-core, no fim de **todo** teste da interface — cada estado que a suíte monta é um estado verificado | `web/src/testes/preparar.js` | A cada PR |
-| Cada tela a 768 e a 1440 px: sem rolagem horizontal da página, sem conteúdo cortado, o axe com o contraste do que está desenhado, e a captura | `scripts/medir_telas.py` → [`docs/medicoes/acessibilidade.md`](medicoes/acessibilidade.md) | Ao mudar a interface |
+| O contraste de cada par de tinta e fundo, nos dois temas, lido dos tokens; e toda cor de texto, anel de foco e borda de campo da CSS conferidos contra esses pares | `web/src/estilos/contraste.test.js` | A cada PR |
+| Rótulos, papéis e nomes acessíveis, pelo axe-core, no fim de **todo** teste da interface | `web/src/testes/preparar.js` | A cada PR |
+| A aplicação inteira, com a casca, pelo axe com as regras da página — o `main`, o título de nível 1, conteúdo fora de região e o nome único de cada região — para cada perfil | `web/src/App.acessibilidade.test.jsx` | A cada PR |
+| Cada tela a 768 e a 1.440 px: sem rolagem horizontal da página, sem conteúdo cortado, o axe com o contraste do que está desenhado, e a captura | `scripts/medir_telas.py` → [`docs/medicoes/acessibilidade.md`](medicoes/acessibilidade.md) | Ao mudar a interface |
 
-A medição corrigiu duas coisas que a validação da paleta não pegava, porque não são texto — e o AA pede 3:1
-também para o que identifica um controle (WCAG 1.4.11):
-
-- **O anel de foco em âmbar** mediu 2,84:1 sobre a `--surface-2` e 2,998:1 sobre o `--ground`, no claro.
-  Passou para a `--acao-ink`, a 4,87:1 no pior fundo; no escuro, as duas são a mesma cor.
-- **A borda dos campos** usava a `--border`, a 1,24:1: o campo se distinguia do fundo pelo rótulo, e não por
-  ele mesmo. Ganhou um token próprio, a `--borda-controle`: 3,19:1 no pior fundo do claro, e 3,31:1 no do
-  escuro. Painéis, avisos e cartões continuam com a `--border`, que é separação, e não controle.
+A terceira linha é nova, e veio de uma falha. A interface chegou do laboratório passando no axe de cada teste,
+e a medição no navegador acusou 16 de 60 auditorias: a caixa de rolagem de cada tabela tinha o mesmo nome da
+seção em volta (duas regiões "Ranking de parceiros", e o leitor de tela não as distingue), e o texto da frente
+da entrada ficava fora de qualquer região. As duas regras são da página inteira, e o teste de uma tela solta as
+desliga. Agora a caixa se chama "Tabela: …", e o teste da aplicação inteira prova que pega o defeito: com a
+correção desfeita, ele reprova.
 
 **O axe-core é MPL-2.0** — copyleft fraco, por arquivo —, e fica só nos testes e na medição: não entra no que
-a aplicação distribui. A regra 2.8 pede licença permissiva para o que o sistema usa; para a ferramenta de
-teste, a escolha fica registrada aqui. O navegador da medição é o Edge da máquina, pelo Playwright (Apache
-2.0), sem nenhum navegador baixado.
+a aplicação distribui. O navegador da medição é o Edge da máquina, pelo Playwright (Apache 2.0).
 
 > **Ao medir contraste, desconfie do instrumento.** Numa auditoria anterior, um regex esperando `rgb()`
 > leu cores em outro formato como zeros e acusou falha catastrófica inexistente. Por isso o teste lê só
 > hexadecimais de seis dígitos e reprova alto qualquer outra forma, e confere a fórmula contra 21:1 e 4,54:1
-> antes de medir. As verificações também provam que acham o que existe: o axe precisa acusar um botão sem
-> nome, e o teste da CSS, um texto em `--ink-3`.
+> antes de medir.
 
 ---
 
 ## 8. Como aprovar
 
-Abra o [protótipo](prototipo/index.html), percorra as quatro telas e responda:
+Abra a interface — a `web/` do PR da H103, ou as capturas em [`docs/medicoes/telas/`](medicoes/telas/) —,
+entre com um perfil de cada vez e responda:
 
-1. A hierarquia funciona? O nome do parceiro salta na tabela?
-2. As cores de segmento são distinguíveis à primeira vista?
-3. O âmbar aparece **só** onde se clica?
-4. Os gráficos são legíveis sem esforço?
-5. Algo parece decorativo em vez de informativo?
+1. A letra se lê sem esforço, numa tabela de 25 linhas?
+2. Dá para saber, em qualquer tela, em que área do sistema se está?
+3. O cobalto aparece **só** onde se clica? O lacre, só no que foi medido ou decidido?
+4. Toda estimativa está tracejada e escrita "Estimativa"?
+5. Os gráficos se leem sem esforço — e o benchmark, sem distinguir as cores (seção 3)?
+6. Algo parece decorativo em vez de informativo?
 
-Aprovação registrada na issue **#8**. Só depois disso começa o CSS em `web/`.
+Aprovação registrada na issue da **H103**. A versão 1 foi aprovada na #8.
 
 ---
 
@@ -265,7 +311,7 @@ flowchart TD
     Relatorios["Relatórios<br/>/relatorios"]
     DaRede["Desempenho · Risco · Campanha<br/>/relatorios/…"]
     Operacoes["Operações do sistema<br/>/relatorios/operacoes"]
-    Configuracao["Limiares<br/>/configuracao"]
+    Configuracao["Configuração<br/>/configuracao"]
     Modelo["Modelo preditivo<br/>/modelo"]
     Campanha["Campanha<br/>/campanha"]
     Execucoes["Execuções do otimizador<br/>/execucoes"]
@@ -365,10 +411,11 @@ caminhos que **a própria tela** oferece.
 **O menu se agrupa pelos módulos do produto, na ordem do fluxo** (H79): **Análise** (Painel, Importação,
 Parceiros, Assistente, Relatórios), **Previsão** (Modelo), **Otimização** (Campanha, Execuções, Benchmark),
 **Comunicação** (Mensagens, Aprovação) e, por último e à parte, **Administração** (Usuários, Auditoria, Operações,
-Limiares). Até a
-Sprint 06 eram itens soltos, na ordem em que foram construídos, e a pessoa precisava conhecer o sistema para
-achar o módulo. O título do grupo é rótulo, e não item: não responde a clique e não usa a cor de ação. Abaixo
-de 860 px o menu vira barra horizontal, os títulos ficam só para o leitor de tela e um fio separa os grupos.
+Configuração). Até a Sprint 06 eram itens soltos, na ordem em que foram construídos, e a pessoa precisava conhecer
+o sistema para achar o módulo. Na versão 2, o menu é um **mapa de rotas**: cada grupo é uma linha na cor da área,
+com o nome dela em cima, e cada item diz em uma linha o que há lá dentro ("Calcular o plano com a verba"). O nome
+do grupo é rótulo, e não item: não responde a clique e não usa a cor de ação. Abaixo de 1.180 px o trilho vira
+gaveta, aberta pelo botão do cabeçalho; ela fecha com Esc, devolvendo o foco ao botão, e ao trocar de tela.
 
 **O menu mostra só o que o perfil abre**, e grupo sem nenhuma tela do perfil não aparece. A lista vem do
 servidor — a sessão traz as telas do perfil, lidas das permissões das próprias rotas —, e a interface só
@@ -383,6 +430,10 @@ endereço direto vê a página "Sem acesso", e quem chama a rota recebe a recusa
 
 Os comportamentos que o desenho não mostra, e que valem para todas as telas:
 
+- **O cabeçalho diz onde se está** (H103). A etiqueta da área, com o nome e a cor dela, o caminho de volta
+  ("Análise › Parceiros › Ponto Azul 2") e o título da tela, sobre uma faixa na cor da rota. Enquanto uma tela
+  carregada sob demanda ainda não disse o título, ele mostra o nome dela no menu — título vazio, o leitor de
+  tela anuncia como nada.
 - **Sessão encerrada leva ao login, e o login devolve ao lugar de antes.** Quem abre um link direto sem
   estar autenticado entra e cai na tela que pediu, e não no painel genérico. Quando é o servidor que encerra
   a sessão com a tela aberta — ela expirou, ou a senha foi redefinida —, o login diz "A sua sessão terminou"
@@ -422,8 +473,8 @@ Os comportamentos que o desenho não mostra, e que valem para todas as telas:
   aparece. A folha sai sempre no tema claro: o escuro é para a tela, e no papel o texto claro some. Vale
   para quem imprime pelo atalho do teclado também.
 - **Barra e número, e não só barra.** No relatório de operações, cada grupo tem a barra, que dá a proporção
-  de relance, e a contagem em texto ao lado. A barra usa a primeira cor da rampa dos gráficos — é
-  quantidade, e não categoria —, fica fora da leitura de quem usa leitor de tela, e a folha continua
+  de relance, e a contagem em texto ao lado. A barra usa a cor da área — é quantidade, e não categoria —,
+  fica fora da leitura de quem usa leitor de tela, e a folha continua
   legível sem ela. Na tela vêm as quinze pessoas que mais fizeram e, numa linha, a soma das outras; o
   arquivo traz todas.
 - **O cadastro volta para de onde a pessoa veio.** Aberto do painel, a trilha diz "Painel" e o botão, "Voltar
@@ -451,7 +502,8 @@ Os comportamentos que o desenho não mostra, e que valem para todas as telas:
   o escolhido fica escrito embaixo do campo. Sem duas letras, a tela não pede nada — a API recusaria.
 - **Estimativa não se veste de medição.** A previsão do modelo aparece com a etiqueta "Estimativa", o
   período de onde parte e a versão que a produziu — e o ganho esperado do plano de campanha também; na série do parceiro, o trecho até o próximo período é
-  tracejado, com marcador vazado e legenda — cor diferente sozinha não bastaria (H44).
+  tracejado, com marcador vazado e legenda — cor diferente sozinha não bastaria (H44). O que foi medido ou
+  decidido leva o lacre, com o número, quem e quando (seção 1.2).
 - **Toda tela vazia oferece a saída.** Base sem dados leva à importação; parceiro ou usuário inexistente
   leva de volta à lista — nunca uma tela em branco sem explicação (seção 6).
 - **Endereço que não existe diz que não existe** (H79). A página "não encontrada" mostra o endereço pedido,
@@ -460,8 +512,8 @@ Os comportamentos que o desenho não mostra, e que valem para todas as telas:
 - **A tela que o perfil não abre diz isso** (H94). O endereço de uma tela de outro perfil mostra a página
   "Sem acesso": o perfil de quem está usando, o endereço pedido e a volta ao início, com o menu ao lado.
   Antes, a tela era montada assim mesmo — os filtros, o título e, no meio, a recusa da API —, e não dava para
-  saber se era defeito ou falta de permissão. O menu e a guarda das rotas leem a mesma tabela
-  (`web/src/navegacao/telas.js`): o item que o menu esconde é a tela que o endereço não monta. Não é controle
+  saber se era defeito ou falta de permissão. O menu e a guarda das rotas leem a mesma tabela (`EXIGE`, em
+  `web/src/navegacao/telas.js`): o item que o menu esconde é a tela que o endereço não monta. Não é controle
   de acesso; é a interface deixando de pedir o que ela já sabe que vai ser recusado.
 - **O teclado chega ao conteúdo sem atravessar o menu** (H96). O primeiro Tab de toda tela é "Pular para o
   conteúdo", que só aparece ao receber o foco. Ao trocar de tela, o foco vai para o título dela: o leitor de
@@ -487,7 +539,7 @@ Os comportamentos que o desenho não mostra, e que valem para todas as telas:
   do Top. O Parceiro lê só a ajuda do portal dele, e a tela nem pede as regras da rede (RF26).
 - **Do termo até a explicação, um link** (H95). "O que é cada segmento?" na distribuição do painel, "O que é
   estimativa?" na lista e no cadastro do parceiro e "Como se chega ao ganho esperado?" no plano levam ao
-  bloco da ajuda, que recebe o foco. São links, na tinta da ação, e não a etiqueta "Estimativa" clicável: a
+  bloco da ajuda, que recebe o foco. São links, no cobalto da ação, e não a etiqueta "Estimativa" clicável: a
   etiqueta é rótulo, e rótulo não responde a clique.
 - **Cada aba diz onde está** (H79). O título vai do mais específico ao mais geral — "Ponto Azul 2 · Parceiros
   · GIH" —, que é o que aparece com a aba estreita e no histórico do botão voltar. Antes, toda aba dizia
