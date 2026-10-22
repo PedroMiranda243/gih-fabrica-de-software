@@ -3,7 +3,7 @@
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** pós-S08 — história **H103** (a versão 1, da H08, ficou na etiqueta `interface-v1`)
 **Versão:** 2.0 — 22/10/2026 · o sistema "Etiqueta e Lacre", que substitui o da versão 1 (1.0 — 15/09/2026)
-**Status:** ⏳ aguardando aprovação da equipe, na issue #241 (H103)
+**Status:** ✅ aprovado pela equipe em 22/10/2026, na issue #241 (H103)
 
 > **Este documento é portão.** A interface nova só entra na `main` com a direção visual aprovada pela equipe,
 > registrada na issue #241 (H103) — como a primeira foi, na #8. Num projeto anterior do mesmo domínio, "tema
@@ -261,6 +261,12 @@ seção em volta (duas regiões "Ranking de parceiros", e o leitor de tela não 
 da entrada ficava fora de qualquer região. As duas regras são da página inteira, e o teste de uma tela solta as
 desliga. Agora a caixa se chama "Tabela: …", e o teste da aplicação inteira prova que pega o defeito: com a
 correção desfeita, ele reprova.
+
+**A versão do axe muda o que se mede.** O laboratório mediu com o axe-core 4.13, e a medição oficial, com o 4.14, que
+passou a conferir a regra *label in name* (WCAG 2.5.3): o nome de um link precisa conter o texto que se vê nele,
+porque quem usa comando de voz fala o que está escrito. O link da conta e as linhas da distribuição por segmento
+tinham nome próprio, com pontuação que a tela não mostra, e reprovaram 58 de 60 auditorias. Agora o nome vem do
+texto visível, com o complemento só para o leitor de tela, e um teste confere a regra nos dois.
 
 **O axe-core é MPL-2.0** — copyleft fraco, por arquivo —, e fica só nos testes e na medição: não entra no que
 a aplicação distribui. O navegador da medição é o Edge da máquina, pelo Playwright (Apache 2.0).

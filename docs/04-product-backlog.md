@@ -258,8 +258,8 @@ Detalhamento e datas em [05 — Cronograma](05-cronograma.md).
 > **Depois da Sprint 08, 22/10/2026.** A interface funcionava, mas não se lia bem: a letra condensada cansava
 > em lista longa, e a pessoa não sabia em que área do sistema estava. A H103 troca a camada visual inteira,
 > sem mudar nenhuma tela de lugar nem nenhuma rota da API, e refaz a suíte de testes da interface junto — o
-> porquê da escolha está na ADR-015, e o sistema visual novo, no `docs/09`. Entra depois do congelamento só com a
-> exceção da equipe registrada no cronograma. O escopo passa de 476 para 484 pontos.
+> porquê da escolha está na ADR-015, e o sistema visual novo, no `docs/09`. Entra depois do congelamento, com a
+> exceção que a equipe aprovou em 22/10 (`docs/05`). O escopo passa de 476 para 484 pontos.
 
 ## Primeiro corte, se o prazo apertar
 

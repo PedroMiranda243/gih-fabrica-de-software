@@ -1,7 +1,7 @@
 # 05 — Cronograma
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Versão:** 3.4 — 04/10/2026 · a H102, do acesso remoto (3.3 — 02/10/2026, a Sprint 08 da disciplina; 3.2 — 01/10/2026, a Sprint 07; 3.1 — 30/09/2026, a Sprint 06; 3.0 — 28/09/2026, o calendário real; 2.1 — 16/09/2026, o plano em sprints semanais)
+**Versão:** 3.5 — 22/10/2026 · a exceção ao congelamento, para a H103 (3.4 — 04/10/2026, a H102, do acesso remoto; 3.3 — 02/10/2026, a Sprint 08 da disciplina; 3.2 — 01/10/2026, a Sprint 07; 3.1 — 30/09/2026, a Sprint 06; 3.0 — 28/09/2026, o calendário real; 2.1 — 16/09/2026, o plano em sprints semanais)
 **Datas oficiais da disciplina:** entrega da Sprint 1 em **05/09/2026** · entrega final em **05/12/2026**
 
 ---
@@ -62,6 +62,13 @@ e o UC16 entraram em `docs/02` e `docs/03` antes do código. O escopo passou de 
 máquina de demonstração a partir dos aparelhos da equipe, por rede privada. Não é funcionalidade do produto —
 nenhuma tela e nenhuma rota mudam —, e entrou antes do congelamento de 25/10. O link público foi avaliado e
 recusado; o RNF30 e a ADR-014 dizem por quê. O escopo passou de 473 para 476 pontos.
+
+**A única exceção ao congelamento: a interface refeita**, a H103 (8 pontos, `docs/04`), aprovada pela equipe em
+22/10, na issue #241. A interface funcionava e passava em toda medição, mas não se lia bem, e a troca é da camada
+visual inteira — nenhuma tela muda de lugar e nenhuma rota da API muda (ADR-015). A exceção tem duas condições:
+o PR entra **depois** do envio da Sprint 08, em 27/10, para o repositório entregue continuar igual ao PDF; e
+**antes** da gravação dos vídeos, em 09/11, para os vídeos mostrarem a interface que fica. Ela chegou com a suíte
+de testes refeita e medida contra a base da equipe. O escopo passou de 476 para 484 pontos.
 
 **A segunda entrega cobre quatro das nossas sprints, e não uma.** A equipe está adiantada em relação ao
 calendário da disciplina: na data da entrega de arquitetura e modelagem, o banco já está criado e migrado,
@@ -129,6 +136,7 @@ validação numa máquina limpa, por outro integrante.
 |---|---|---|
 | **H72** — subir o sistema do zero numa máquina limpa, só com o README, e registrar o que travar | Thiago ou João Pedro | até 25/10 |
 | **Congelamento de funcionalidades** — a partir dele, só correção, documentação e vídeo | equipe | 25/10 |
+| **H103** — o PR da interface refeita, a única exceção ao congelamento (#241) | Pedro e Ingryd | 28/10 – 08/11 |
 | Roteiros dos vídeos; a base de demonstração final (a rede, o modelo treinado, um plano, mensagens na fila e o benchmark com a GPU) | equipe | 26/10 – 08/11 |
 | **Transferência do núcleo** (R4): o otimizador, a GPU e o benchmark apresentados à equipe; as perguntas prováveis da banca em `docs/banca.md` | Pedro e equipe | 26/10 – 08/11 |
 | **H74** e **H75** — a gravação dos dois vídeos | equipe | 09/11 – 04/12 |

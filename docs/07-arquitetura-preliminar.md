@@ -1129,7 +1129,7 @@ crescer, é a primeira coisa a fazer.
 
 ### ADR-015 — A interface refeita: "Etiqueta e Lacre", com a suíte de testes refeita junto
 
-**Status:** Proposto — aguardando a aprovação da equipe na issue #241 (H103)
+**Status:** Decidido — aprovado pela equipe em 22/10/2026, na issue #241 (H103), com a exceção ao congelamento (`docs/05`)
 **Data:** 22/10/2026
 
 **Situação:** a interface da versão 1 funcionava e passava em toda medição — 0 de 60 telas com rolagem ou
@@ -1166,7 +1166,7 @@ telas a 768 e a 1.440 px nos dois temas, a entrada pela tela com os quatro perfi
 **Consequências:**
 
 - **A suíte da versão 1 sai com ela.** Os 405 testes testavam componentes que não existem mais; ficam na
-  etiqueta `interface-v1`. A nova tem 241: não é o mesmo número, e não precisa ser — cada requisito que a
+  etiqueta `interface-v1`. A nova tem 243: não é o mesmo número, e não precisa ser — cada requisito que a
   matriz cita tem o teste dele, e o `test_rastreabilidade.py` confere.
 - **A fonte muda**, e a licença não: a Atkinson Hyperlegible Next é OFL-1.1, como a Fira da versão 1, e vem no
   pacote. Nada é carregado de fora.

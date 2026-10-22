@@ -468,6 +468,12 @@ frente com alguma, a resposta já está aqui.
   de rolagem da tabela) passando em todo teste e reprovando em 16 de 60 auditorias no navegador. O
   `web/src/App.acessibilidade.test.jsx` abre a aplicação inteira, com a casca, e liga essas regras.
 
+- **A versão do axe muda o que se mede.** O laboratório media com o axe 4.13 e passava; a medição oficial, no
+  4.14, reprovou 58 de 60 auditorias, por uma regra que o 4.13 não aplicava: o nome do link precisa conter o
+  texto que se vê nele (WCAG 2.5.3). Um `aria-label` com pontuação que a tela não mostra — "Fulana, Gestor"
+  onde se lê "Fulana Gestor" — já basta para reprovar. Prefira o nome vindo do texto visível, com o
+  complemento em `.sr-only`; e compare medições só com a mesma versão do instrumento.
+
 - **Teste da tela com a API simulada não prova o contrato.** A tela da Campanha lia `pode_editar_catalogo`, que a
   API nunca mandou, e um `pode_executar` que a API calculava sem olhar o perfil. Os testes da tela passavam, porque
   o `simularApi` mandava os dois campos certos; na tela de verdade, o gestor não editava o catálogo e o analista via
