@@ -75,7 +75,16 @@ describe("a casca", () => {
   it("quem está dentro aparece no cabeçalho, com o perfil por extenso, e leva a Minha conta", async () => {
     abrir("/ajuda", { perfil: "GESTOR", rotas: { "GET /api/ajuda/regras": { corpo: amostra("GET_api_ajuda_regras") } } });
 
-    expect(await screen.findByRole("link", { name: "Gestora do Laboratório, Gestor — Minha conta" })).toHaveAttribute("href", "/conta");
+    expect(await screen.findByRole("link", { name: "Minha conta: Gestora do Laboratório Gestor" })).toHaveAttribute("href", "/conta");
+  });
+
+  it("o nome do link da conta contém o que está escrito nele, para quem usa comando de voz (WCAG 2.5.3)", async () => {
+    abrir("/conta", { perfil: "GESTOR" });
+
+    const link = await screen.findByRole("link", { name: /^Minha conta: / });
+    const visivel = [...link.querySelectorAll(".quem__nome, .quem__perfil")].map((e) => e.textContent).join(" ");
+    expect(link).not.toHaveAttribute("aria-label");
+    expect(link).toHaveAccessibleName(expect.stringContaining(visivel));
   });
 
   it("o tema troca pelo botão do cabeçalho, que diz o que vai fazer", async () => {

@@ -69,6 +69,19 @@ describe("o painel", () => {
     expect((await screen.findAllByText("Estimativa")).length).toBeGreaterThan(0);
   });
 
+  it("cada segmento da distribuição leva à lista filtrada, e o nome do link é o que se lê nele (WCAG 2.5.3)", async () => {
+    abrir("/", { rotas: rotasDoPainel() });
+
+    const links = await screen.findAllByRole("link", { name: /parceiros — ver na lista$/ });
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) {
+      const visivel = `${link.querySelector(".segmento").textContent.trim()} ${link.querySelector(".distribuicao__total").textContent}`;
+      expect(link).not.toHaveAttribute("aria-label");
+      expect(link).toHaveAccessibleName(expect.stringContaining(visivel));
+      expect(link.getAttribute("href")).toMatch(/^\/parceiros\?segmento=/);
+    }
+  });
+
   it("base vazia explica por quê e oferece o primeiro passo a quem importa", async () => {
     const rotas = rotasDoPainel();
     rotas["GET /api/painel/recortes"] = { corpo: { periodos: [], categorias: [] } };

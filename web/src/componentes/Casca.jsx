@@ -141,7 +141,11 @@ export default function Casca() {
               </h1>
             </div>
             <div className="cabecalho__acoes">
-              <Link to="/conta" className="quem" aria-label={`${usuario.nome}, ${ROTULO_PERFIL[usuario.perfil] ?? usuario.perfil} — Minha conta`}>
+              {/* O nome do link é o texto que se vê, precedido de "Minha conta" para quem
+                  ouve: quem usa comando de voz fala o que está escrito (WCAG 2.5.3). Na tela
+                  estreita, o nome some e o link continua se chamando "Minha conta". */}
+              <Link to="/conta" className="quem">
+                <span className="sr-only">Minha conta:</span>{" "}
                 <span className="quem__avatar" aria-hidden="true">
                   {usuario.nome
                     .split(/\s+/)
@@ -152,7 +156,7 @@ export default function Casca() {
                     .toUpperCase() || usuario.nome[0]}
                 </span>
                 <span className="quem__texto">
-                  <span className="quem__nome">{usuario.nome}</span>
+                  <span className="quem__nome">{usuario.nome}</span>{" "}
                   <span className="quem__perfil">{ROTULO_PERFIL[usuario.perfil] ?? usuario.perfil}</span>
                 </span>
               </Link>

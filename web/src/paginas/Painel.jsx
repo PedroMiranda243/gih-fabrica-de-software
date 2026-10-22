@@ -15,7 +15,7 @@ import Lacre from "../componentes/Lacre";
 import { CaixaDeTabela, Paginacao } from "../componentes/Lista";
 import Serie from "../componentes/Serie";
 import { useTitulo } from "../componentes/Titulo";
-import { comoData, comoDinheiro, comoInteiro, comoPeriodo, plural, ROTULO_ORIGEM_PREVISAO, ROTULO_SEGMENTO } from "../formato";
+import { comoData, comoDinheiro, comoInteiro, comoPeriodo, plural, ROTULO_ORIGEM_PREVISAO } from "../formato";
 
 const TAMANHO_RANKING = 25;
 
@@ -277,7 +277,7 @@ function Distribuicao({ segmentos, categoriaId, maisRecente, podeVer }) {
             {d.itens.map((i) => {
               const conteudo = (
                 <>
-                  <Segmento codigo={i.segmento} />
+                  <Segmento codigo={i.segmento} />{" "}
                   <span className="distribuicao__trilho" aria-hidden="true">
                     <span className={`distribuicao__barra segmento-fundo--${i.segmento.toLowerCase().replace(/_/g, "-")}`} style={{ width: `${(i.total / topo) * 100}%` }} />
                   </span>
@@ -287,8 +287,10 @@ function Distribuicao({ segmentos, categoriaId, maisRecente, podeVer }) {
               return (
                 <li key={i.segmento}>
                   {podeVer && maisRecente ? (
-                    <Link className="distribuicao__linha distribuicao__linha--link" to={comConsulta("/parceiros", { segmento: i.segmento, categoria_id: categoriaId })} aria-label={`${ROTULO_SEGMENTO[i.segmento]}: ${i.total} parceiros — ver na lista`}>
-                      {conteudo}
+                    /* O nome do link é o que se vê ("Em risco 104"), e o resto só para quem ouve. */
+                    <Link className="distribuicao__linha distribuicao__linha--link" to={comConsulta("/parceiros", { segmento: i.segmento, categoria_id: categoriaId })}>
+                      {conteudo}{" "}
+                      <span className="sr-only">parceiros — ver na lista</span>
                     </Link>
                   ) : (
                     <span className="distribuicao__linha">{conteudo}</span>
