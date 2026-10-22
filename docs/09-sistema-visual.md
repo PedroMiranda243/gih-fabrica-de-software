@@ -168,9 +168,10 @@ A meta do validador é ΔE 8 com daltonismo e 15 com visão normal. Nenhuma info
 de distinguir essas cores: a cor orienta, e o nome ou o marcador identifica — é a regra 1.1, e a medida das
 telas (axe, nos dois temas) não acusa nenhum caso de cor sozinha. Ainda assim, o número fica registrado aqui
 porque é o que a versão 1 media: lá, o primeiro conjunto também reprovou, e a equipe trocou o verde por
-turquesa até o par crítico chegar a ΔE 9,9. **Trocar os tons da versão 2 para passar é uma decisão em aberto,
-da aprovação da H103** — o custo é mexer na identidade que foi aprovada no laboratório; o ganho é o gráfico
-do benchmark legível para quem não distingue magenta de cinza sem olhar o marcador.
+turquesa até o par crítico chegar a ΔE 9,9. **Na versão 2, a decisão foi outra (22/10/2026): os tons ficam
+como estão.** Trocá-los para passar no validador mexeria na identidade aprovada no laboratório, e a interface
+já não depende deles — a cor orienta, e o nome ou o marcador identifica. Se alguém relatar dificuldade, o
+primeiro par a rever é o C++ ↔ Python do benchmark, o mais próximo com daltonismo.
 
 **Para reproduzir** (o validador vem com a referência de visualização de dados; a superfície é a etiqueta):
 

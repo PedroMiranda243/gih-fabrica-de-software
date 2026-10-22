@@ -1172,7 +1172,7 @@ telas a 768 e a 1.440 px nos dois temas, a entrada pela tela com os quatro perfi
   pacote. Nada é carregado de fora.
 - **As cores categóricas novas não passam no validador de daltonismo** (`docs/09`, seção 3). A interface não
   depende delas — o nome do segmento e o da área estão sempre ao lado da cor, e cada modo do benchmark tem o
-  seu marcador —, mas trocar os tons é uma decisão em aberto, da aprovação.
+  seu marcador —, e a decisão, em 22/10/2026, foi manter os tons.
 - **O sistema visual passa à versão 2** (`docs/09`), e as regras do `CLAUDE.md` mudam com ele: o segmento
   vira etiqueta tingida com o nome, e o lacre e a rota ganham trabalho próprio.
 - **As ferramentas leem a interface nova:** o `scripts/medir_telas.py` (os tokens e o `.sr-only`), o
