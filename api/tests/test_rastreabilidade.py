@@ -192,8 +192,13 @@ def test_os_perfis_do_requisito_sao_os_das_rotas_dele(rf):
 
 # --------------------------------------------------------------------- telas
 def test_toda_tela_citada_e_um_endereco_da_interface():
-    enderecos = set(re.findall(r'path="([^"]+)"', ROTAS_DA_INTERFACE.read_text(encoding="utf-8")))
-    enderecos.add("/")  # a rota inicial é declarada como `index`, sem `path`
+    # As rotas moram dentro da casca, que fica na raiz: `path="parceiros"` é o
+    # endereço /parceiros. A rota inicial é declarada como `index`, sem `path`.
+    enderecos = {
+        caminho if caminho.startswith("/") else f"/{caminho}"
+        for caminho in re.findall(r'path="([^"]+)"', ROTAS_DA_INTERFACE.read_text(encoding="utf-8"))
+    }
+    enderecos.add("/")
 
     citadas = {
         tela
