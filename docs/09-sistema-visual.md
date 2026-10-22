@@ -3,10 +3,10 @@
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** pós-S08 — história **H103** (a versão 1, da H08, ficou na etiqueta `interface-v1`)
 **Versão:** 2.0 — 22/10/2026 · o sistema "Etiqueta e Lacre", que substitui o da versão 1 (1.0 — 15/09/2026)
-**Status:** ⏳ aguardando aprovação da equipe, na issue da H103
+**Status:** ⏳ aguardando aprovação da equipe, na issue #241 (H103)
 
 > **Este documento é portão.** A interface nova só entra na `main` com a direção visual aprovada pela equipe,
-> registrada na issue da H103 — como a primeira foi, na #8. Num projeto anterior do mesmo domínio, "tema
+> registrada na issue #241 (H103) — como a primeira foi, na #8. Num projeto anterior do mesmo domínio, "tema
 > escuro e elegante" foi tratado como especificação suficiente e o redesign inteiro foi rejeitado depois de
 > pronto. Validar antes custa uma conversa.
 
@@ -192,7 +192,7 @@ node validate_palette.js "#5abdf2,#da92e6,#ef9d32,#86c660,#9db4ce" --mode light 
 
 A Atkinson Hyperlegible Next, do Braille Institute, foi desenhada para quem enxerga pouco: nenhuma letra se
 confunde com outra, e o zero é cortado. Vem no pacote, por `@fontsource-variable/atkinson-hyperlegible-next`
-(OFL-1.1, a mesma licença da Fira da versão 1, registrada na issue da H103); nada é carregado de fora.
+(OFL-1.1, a mesma licença da Fira da versão 1, registrada na issue #241); nada é carregado de fora.
 
 - **Leitura fácil:** nenhum texto se estreita, e nada se escreve em maiúsculas espaçadas — rótulos, grupos do
   menu e cabeçalhos de tabela ficam em letra normal. Só a sigla GIH e as iniciais do avatar são maiúsculas.
@@ -283,7 +283,7 @@ entre com um perfil de cada vez e responda:
 5. Os gráficos se leem sem esforço — e o benchmark, sem distinguir as cores (seção 3)?
 6. Algo parece decorativo em vez de informativo?
 
-Aprovação registrada na issue da **H103**. A versão 1 foi aprovada na #8.
+Aprovação registrada na issue **#241** (H103). A versão 1 foi aprovada na #8.
 
 ---
 

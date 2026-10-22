@@ -1129,7 +1129,7 @@ crescer, é a primeira coisa a fazer.
 
 ### ADR-015 — A interface refeita: "Etiqueta e Lacre", com a suíte de testes refeita junto
 
-**Status:** Proposto — aguardando a aprovação da equipe na issue da H103
+**Status:** Proposto — aguardando a aprovação da equipe na issue #241 (H103)
 **Data:** 22/10/2026
 
 **Situação:** a interface da versão 1 funcionava e passava em toda medição — 0 de 60 telas com rolagem ou
