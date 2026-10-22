@@ -16,7 +16,7 @@ import Icone from "../componentes/Icone";
 import { CaixaDeTabela } from "../componentes/Lista";
 import PlanoDeCampanha from "../componentes/PlanoDeCampanha";
 import { useTitulo } from "../componentes/Titulo";
-import { comoDinheiro, comoFracao, comoInteiro, comoPeriodo, deFracao, lerReais, paraCampoDeReais, paraFracao, plural, ROTULO_MODO_CURTO } from "../formato";
+import { comoDinheiro, comoFracao, comoInteiro, comoPeriodo, deFracao, lerReais, paraCampoDeReais, paraFracao, plural, ROTULO_MODO_CURTO, TRACO } from "../formato";
 
 function diaSeguinte(iso, dias) {
   const [a, m, d] = iso.split("-").map(Number);
@@ -323,7 +323,7 @@ function Restricoes({ estado, calculando, aoCalcular }) {
 
         {confirmando ? (
           <Confirmacao
-            texto={`Calcular o plano com orçamento de ${comoDinheiro(lerReais(valores.orcamento)) === "—" ? valores.orcamento || "(vazio)" : comoDinheiro(lerReais(valores.orcamento))} e até ${valores.maximo_acoes || "?"} ações?`}
+            texto={`Calcular o plano com orçamento de ${comoDinheiro(lerReais(valores.orcamento)) === TRACO ? valores.orcamento || TRACO : comoDinheiro(lerReais(valores.orcamento))} e até ${valores.maximo_acoes || TRACO} ações?`}
             detalhe="O cálculo roda em segundo plano; o plano aparece ao lado quando ele terminar."
             acao="Calcular plano"
             ocupado={enviando}
