@@ -31,6 +31,9 @@ const REPOSITORIO = 'https://github.com/PedroMiranda243/gih-fabrica-de-software'
    geração da Sprint 06, ela fechava em 03/10 e levava esse trabalho junto. */
 /* A da Sprint 06 fecha do mesmo jeito, no PR do PDF dela (#195): o prazo era
    17/10, e o trabalho da Sprint 07 começou em 01/10, no mesmo dia do PDF. */
+/* A da Sprint 08 também, no PR do PDF dela (#238), de 02/10: o acesso remoto
+   (#240) e a interface nova (#242) entraram depois do PDF, e são da Sprint 09.
+   Até a geração da Sprint 09, ela ia até o prazo, 31/10. */
 const JANELAS = [
   { rotulo: 'Sprint 01 — até 05/09', ate: '2026-09-05' },
   { rotulo: 'Sprints 02 e 03 — 06/09 a 19/09', ate: '2026-09-19' },
@@ -38,7 +41,8 @@ const JANELAS = [
   { rotulo: 'Sprint 05 — 22/09 a 25/09, até o PR do PDF (#112)', atePr: 112 },
   { rotulo: 'Sprint 06 — 25/09, depois do PDF, a 01/10, até o PR do PDF (#195)', atePr: 195 },
   { rotulo: 'Sprint 07 — 01/10, depois do PDF, a 02/10, até o PR do PDF (#215)', atePr: 215 },
-  { rotulo: 'Sprint 08 — 02/10, depois do PDF, a 31/10', ate: '2026-10-31' },
+  { rotulo: 'Sprint 08 — 02/10, depois do PDF, até o PR do PDF (#238)', atePr: 238 },
+  { rotulo: 'Sprint 09 — 03/10 a 07/11', ate: '2026-11-07' },
 ];
 
 // Separadores de controle: nenhum deles aparece em mensagem de commit.
