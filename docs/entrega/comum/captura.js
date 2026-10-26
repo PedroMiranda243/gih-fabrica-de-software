@@ -167,7 +167,8 @@ async function paginaDe(navegador, login, senha) {
      Sem aceitar, a navegação seguinte do roteiro ficaria esperando para sempre. */
   pagina.on('dialog', (dialogo) => dialogo.accept().catch(() => {}));
   try {
-    await ir(pagina, '/entrar', '#login');
+    /* O campo da interface v2 (H103); a v1 o chamava `#login`. */
+    await ir(pagina, '/entrar', '#campo-login');
   } catch {
     throw new Error(`A interface não respondeu em ${WEB}. Suba com: docker compose up -d`);
   }

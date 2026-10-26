@@ -68,6 +68,9 @@ def secoes(corpo: str) -> dict[str, str]:
     # O GitHub devolve o corpo com `\r\n`; sem normalizar, a nota de rodapé não
     # se separava e entrava colada na última seção.
     corpo = corpo.replace("\r\n", "\n").split("\n---\n")[0]
+    # As instruções do modelo da issue ficam em comentário HTML, que o GitHub não
+    # mostra; quem preenche nem sempre as apaga, e elas entrariam no registro.
+    corpo = re.sub(r"<!--.*?-->", "", corpo, flags=re.DOTALL)
     for bloco in re.split(r"^## ", corpo, flags=re.MULTILINE)[1:]:
         titulo, _, texto = bloco.partition("\n")
         chave = SECOES.get(titulo.strip())
