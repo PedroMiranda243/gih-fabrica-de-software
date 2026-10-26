@@ -1,14 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- A linha ascendente do painel, em tinta neutra. O âmbar é a cor de ação e
-       não vira marca: foi esse o erro do projeto anterior (docs/09, regra 1.1). -->
-  <rect width="32" height="32" rx="7" fill="#101826" />
-  <path
-    d="M7 21.5 12.5 15l4 3.5L25 9"
-    fill="none"
-    stroke="#eef1f6"
-    stroke-width="2.6"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  />
-  <circle cx="25" cy="9" r="2.6" fill="#eef1f6" />
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="6" y="10" width="52" height="44" rx="6" fill="#ffd400"/><g fill="#0e0f11"><circle cx="6" cy="18" r="3"/><circle cx="6" cy="28" r="3"/><circle cx="6" cy="38" r="3"/><circle cx="6" cy="48" r="3"/><circle cx="58" cy="18" r="3"/><circle cx="58" cy="28" r="3"/><circle cx="58" cy="38" r="3"/><circle cx="58" cy="48" r="3"/></g><text x="32" y="41" text-anchor="middle" font-family="Arial Narrow, Arial, sans-serif" font-weight="900" font-size="20" fill="#1a1500">GIH</text></svg>

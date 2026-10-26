@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 08 acadêmica — história **H98**
-**Versão:** 1.1 — 04/10/2026 · o RNF30, do acesso remoto por rede privada (1.0 — 02/10/2026)
+**Versão:** 1.2 — 22/10/2026 · as citações de teste da interface apontam para a suíte da interface nova (H103) (1.1 — 04/10/2026, o RNF30, do acesso remoto por rede privada; 1.0 — 02/10/2026)
 
 > **Para que serve.** "Todas as funcionalidades implementadas" é uma frase que qualquer documento escreve.
 > Esta matriz a transforma em algo que se confere: para cada requisito, **onde** ele está — o caso de uso, a
@@ -45,7 +45,7 @@ O que o teste **não** prova: que o teste citado é bom. Isso é da revisão de 
 
 | ID | Perfis | Caso de uso | Rotas | Telas | Testes | Situação |
 |---|---|---|---|---|---|---|
-| **RF01** | todos | UC01 | `POST /api/sessao`<br>`GET /api/sessao/atual` | `/entrar` | `api/tests/test_autenticacao.py::test_autentica_com_credenciais_validas`<br>`web/src/paginas/Login.test.jsx` | Implementado |
+| **RF01** | todos | UC01 | `POST /api/sessao`<br>`GET /api/sessao/atual` | `/entrar` | `api/tests/test_autenticacao.py::test_autentica_com_credenciais_validas`<br>`web/src/paginas/Entrar.test.jsx` | Implementado |
 | **RF02** | todos | UC01 | `DELETE /api/sessao` | cabeçalho de toda tela | `api/tests/test_autenticacao.py::test_encerrar_invalida_a_sessao_no_servidor`<br>`web/src/App.teclado.test.jsx` | Implementado |
 | **RF03** | ADM | UC02 | `GET /api/usuarios`<br>`POST /api/usuarios`<br>`GET /api/usuarios/{usuario_id}`<br>`PATCH /api/usuarios/{usuario_id}` | `/usuarios`<br>`/usuarios/novo`<br>`/usuarios/:id` | `api/tests/test_usuarios.py::test_desativar_derruba_as_sessoes_abertas`<br>`web/src/paginas/Usuarios.test.jsx`<br>`web/src/paginas/Usuario.test.jsx` | Implementado |
 | **RF04** | ADM | UC02 | `POST /api/usuarios`<br>`PATCH /api/usuarios/{usuario_id}` | `/usuarios/novo`<br>`/usuarios/:id` | `api/tests/test_usuarios.py::test_troca_de_perfil_vale_na_requisicao_seguinte`<br>`web/src/paginas/Usuario.test.jsx` | Implementado |
@@ -73,7 +73,7 @@ O que o teste **não** prova: que o teste citado é bom. Isso é da revisão de 
 |---|---|---|---|---|---|---|
 | **RF17** | GES, ANL, ADM | UC05 | `GET /api/painel/indicadores`<br>`GET /api/painel/recortes` | `/` | `api/tests/test_painel.py::test_indicadores_consolidam_o_periodo_mais_recente`<br>`web/src/paginas/Painel.test.jsx` | Implementado; perfis ajustados (nota 4) |
 | **RF18** | GES, ANL, ADM | UC05 | `GET /api/painel/ranking` | `/` | `api/tests/test_painel.py::test_ranking_traz_posicao_anterior_e_variacao`<br>`web/src/paginas/Painel.test.jsx` | Implementado; perfis ajustados (nota 4) |
-| **RF19** | GES, ANL, ADM, PAR | UC05, UC13 | `GET /api/painel/series`<br>`GET /api/meu-desempenho` | `/`<br>`/parceiros/:id`<br>`/meu-desempenho` | `api/tests/test_painel.py::test_serie_do_parceiro_traz_so_o_dele`<br>`web/src/componentes/SerieHistorica.test.jsx` | Implementado; perfis ajustados (nota 4) |
+| **RF19** | GES, ANL, ADM, PAR | UC05, UC13 | `GET /api/painel/series`<br>`GET /api/meu-desempenho` | `/`<br>`/parceiros/:id`<br>`/meu-desempenho` | `api/tests/test_painel.py::test_serie_do_parceiro_traz_so_o_dele`<br>`web/src/componentes/Serie.test.jsx` | Implementado; perfis ajustados (nota 4) |
 | **RF20** | GES, ANL, ADM | UC05 | `GET /api/parceiros`<br>`GET /api/painel/segmentos` | `/parceiros`<br>`/` | `api/tests/test_segmentacao.py::test_top_em_queda_sai_como_em_risco`<br>`api/tests/test_segmentacao.py::test_a_ordem_do_enum_e_a_ordem_em_que_a_regra_decide` | Implementado; perfis ajustados (nota 4) |
 | **RF21** | ADM | UC05, UC06 | `GET /api/configuracao/segmentacao`<br>`PUT /api/configuracao/segmentacao` | `/configuracao` | `api/tests/test_configuracao.py::test_alterar_reclassifica_o_periodo_mais_recente`<br>`web/src/paginas/Configuracao.test.jsx` | Implementado |
 | **RF22** | GES, ANL, ADM | UC06 | `GET /api/painel/mobilidade` | `/` | `api/tests/test_painel.py::test_top_em_queda_nao_aparece_como_saida`<br>`web/src/paginas/Painel.test.jsx` | Implementado; perfis ajustados (nota 4) |

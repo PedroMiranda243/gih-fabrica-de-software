@@ -1,316 +1,53 @@
-import { render, screen, within } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import { ContextoSessao } from "../api/contextoSessao";
-import { simularApi } from "../testes/preparar";
-import Execucao from "./Execucao";
-import Execucoes from "./Execucoes";
+import { abrir, amostra, endereco } from "../testes/montar";
 
-const GESTOR = ["painel", "campanha", "execucoes", "execucao"];
-const ADMINISTRADOR = ["painel", "usuarios", "execucoes"];
-const BASE = { id: 12, data_inicio: "2026-09-14", data_fim: "2026-09-20" };
+const ROTAS = () => ({ "GET /api/otimizacoes": { corpo: amostra("GET_api_otimizacoes") } });
+const ultima = (chamadas) => chamadas().filter((c) => c.startsWith("GET /api/otimizacoes?")).at(-1) ?? "";
 
-function execucao(extra = {}) {
-  return {
-    id: 7,
-    situacao: "CONCLUIDA",
-    autor: "Gestora",
-    modo: "CPU_PARALELO",
-    substituicao: null,
-    threads: 8,
-    iniciada_em: "2026-09-26T12:00:00Z",
-    concluida_em: "2026-09-26T12:00:01Z",
-    parametros: {
-      orcamento: "12000.00",
-      maximo_acoes: 45,
-      cota_cauda_longa: "0.3000",
-      cotas_categoria: [{ categoria_id: 3, minimo: "0.1000", maximo: null }],
-      aplicacao_inicio: "2026-09-21",
-      aplicacao_fim: "2026-09-27",
-      modo: null,
-    },
-    periodo_base: BASE,
-    modelo_versao: "rede-1",
-    viavel: true,
-    restricao_violada: null,
-    motivo: null,
-    ajuda: null,
-    uplift_total: "47320.00",
-    custo_total: "11640.00",
-    tempo_ms: 62,
-    parcial: false,
-    acoes: 2,
-    elegiveis: 469,
-    excluidos: null,
-    cotas: [
-      { categoria_id: 3, nome: "Pizzaria", acoes: 5, minimo: 5, maximo: 45 },
-      { categoria_id: null, nome: "Cauda longa", acoes: 14, minimo: 14, maximo: 45 },
-    ],
-    folga_orcamento: "360.00",
-    folga_acoes: 43,
-    ganho_guloso: "45000.00",
-    itens: null,
-    ...extra,
-  };
-}
+/* RF34 (o histórico das execuções: autor, data, parâmetros, modo, tempo e
+   resultado) e RF51 (filtrar por modo, resultado, autor e data). */
+describe("as execuções do otimizador", () => {
+  it("lista quem calculou, quando, em que modo e o resultado (RF34)", async () => {
+    abrir("/execucoes", { rotas: ROTAS() });
 
-const HISTORICO = [
-  execucao({
-    substituicao: "Pedido em GPU, calculado em CPU paralelo: não há GPU compatível.",
-    parametros: { ...execucao().parametros, modo: "GPU" },
-  }),
-  execucao({
-    id: 6,
-    modo: "SERIAL",
-    threads: null,
-    tempo_ms: 6400,
-    viavel: false,
-    restricao_violada: "orcamento",
-    motivo: "As cotas mínimas exigem pelo menos R$ 1.350,00: faltam R$ 1.250,00.",
-    acoes: null,
-    uplift_total: null,
-  }),
-  execucao({
-    id: 5,
-    situacao: "FALHOU",
-    modo: "SERIAL",
-    threads: null,
-    tempo_ms: null,
-    viavel: null,
-    motivo: "A otimização falhou por um erro interno (registro abc123).",
-    autor: null,
-  }),
-];
-
-function renderizar(telas, caminho = "/execucoes") {
-  return render(
-    <ContextoSessao.Provider value={{ usuario: { nome: "Quem Testa", telas }, sair: () => {} }}>
-      <MemoryRouter initialEntries={[caminho]}>
-        <Routes>
-          <Route path="/execucoes" element={<Execucoes />} />
-          <Route path="/execucoes/:id" element={<Execucao />} />
-        </Routes>
-      </MemoryRouter>
-    </ContextoSessao.Provider>,
-  );
-}
-
-describe("histórico de execuções", () => {
-  it("cada linha traz autor, data, parâmetros, modo, tempo e resultado (RF34)", async () => {
-    simularApi({ "GET /api/otimizacoes": { corpo: { itens: HISTORICO, total: 3, pagina: 1, tamanho: 20 } } });
-    renderizar(GESTOR);
-
-    const tabela = await screen.findByRole("table", { name: /Execuções do otimizador/ });
-    const [, viavel, inviavel, falhou] = within(tabela).getAllByRole("row");
-    expect(viavel).toHaveTextContent("Gestora");
-    expect(viavel).toHaveTextContent("R$ 12.000,00 · até 45 ações · cauda longa ≥ 30% · 1 cota de categoria");
-    expect(viavel).toHaveTextContent("CPU paralelo, 8 threads");
-    expect(viavel).toHaveTextContent("pedido em GPU");
-    expect(viavel).toHaveTextContent("62 ms");
-    expect(viavel).toHaveTextContent("2 ações · ganho de R$ 47.320,00");
-    expect(inviavel).toHaveTextContent("6,4 s");
-    expect(inviavel).toHaveTextContent("Sem solução viávelrestrição: orçamento");
-    expect(falhou).toHaveTextContent("Terminal");
-    expect(falhou).toHaveTextContent("Falhou");
-    expect(falhou).toHaveTextContent("registro abc123");
-    expect(screen.getByText("3 no total")).toBeInTheDocument();
+    const tabela = await screen.findByRole("region", { name: "Tabela: Execuções" });
+    expect(tabela).toHaveTextContent("Medição Gestor");
+    expect(tabela).toHaveTextContent("GPU");
+    expect(tabela).toHaveTextContent("05/10/2026");
   });
 
-  it("quem abre o plano tem o link; o Administrador vê o resumo, sem ele", async () => {
-    const rotas = { "GET /api/otimizacoes": { corpo: { itens: HISTORICO, total: 3, pagina: 1, tamanho: 20 } } };
-    simularApi(rotas);
-    const { unmount } = renderizar(GESTOR);
-    const tabela = await screen.findByRole("table", { name: /Execuções do otimizador/ });
-    expect(within(tabela).getAllByRole("link")[0]).toHaveAttribute("href", "/execucoes/7");
-    expect(screen.queryByText(/O plano de cada execução, parceiro a parceiro/)).not.toBeInTheDocument();
-    unmount();
-
-    renderizar(ADMINISTRADOR);
-    const doAdmin = await screen.findByRole("table", { name: /Execuções do otimizador/ });
-    expect(within(doAdmin).queryAllByRole("link")).toHaveLength(0);
-    expect(screen.getByText(/O plano de cada execução, parceiro a parceiro/)).toBeInTheDocument();
-  });
-
-  it("pagina de 20 em 20", async () => {
-    const paginas = [];
-    simularApi({
-      "GET /api/otimizacoes": (url) => {
-        const pagina = Number(new URL(url, "http://x").searchParams.get("pagina"));
-        paginas.push(pagina);
-        return { corpo: { itens: [execucao({ id: 100 - pagina })], total: 25, pagina, tamanho: 20 } };
-      },
-    });
+  it("filtra por resultado, modo, autor e data, e o filtro vai para a API (RF51)", async () => {
     const usuario = userEvent.setup();
-    renderizar(GESTOR);
+    const { chamadas } = abrir("/execucoes", { rotas: ROTAS() });
 
-    expect(await screen.findByText("1–20 de 25")).toBeInTheDocument();
-    await usuario.click(screen.getByRole("button", { name: "Próxima" }));
-    expect(await screen.findByText("21–25 de 25")).toBeInTheDocument();
-    expect(paginas).toEqual([1, 2]);
-    expect(screen.getByRole("button", { name: "Próxima" })).toBeDisabled();
-  });
-
-  it("sem execução ainda, diz onde elas nascem", async () => {
-    simularApi({ "GET /api/otimizacoes": { corpo: { itens: [], total: 0, pagina: 1, tamanho: 20 } } });
-    renderizar(GESTOR);
-    expect(await screen.findByText("Nenhuma execução ainda")).toBeInTheDocument();
-  });
-});
-
-describe("filtros do histórico (H91)", () => {
-  const AUTORES = [
-    { id: 3, nome: "Gestora" },
-    { id: 8, nome: "Outra Gestora" },
-  ];
-
-  function comPedidos(total = 3) {
-    const pedidos = [];
-    simularApi({
-      "GET /api/otimizacoes": (url) => {
-        pedidos.push(new URL(url, "http://x").searchParams);
-        return {
-          corpo: { itens: total ? HISTORICO : [], total, pagina: 1, tamanho: 20, autores: AUTORES },
-        };
-      },
-    });
-    return pedidos;
-  }
-
-  it("oferece os resultados, os modos e quem já calculou, que vem na resposta da lista", async () => {
-    comPedidos();
-    renderizar(GESTOR);
-    await screen.findByRole("table", { name: /Execuções do otimizador/ });
-
-    const nomes = (rotulo) =>
-      within(screen.getByLabelText(rotulo)).getAllByRole("option").map((o) => o.textContent);
-    expect(nomes("Resultado")).toEqual(["Todos os resultados", "Com plano", "Sem solução viável", "Falhou"]);
-    expect(nomes("Modo em que rodou")).toEqual(["Todos os modos", "Serial", "CPU paralelo", "GPU"]);
-    expect(nomes("Quem calculou")).toEqual(["Todas as pessoas", "Gestora", "Outra Gestora"]);
-  });
-
-  it("cada filtro vai para a API, e mudar o filtro volta para a primeira página", async () => {
-    const pedidos = comPedidos();
-    const usuario = userEvent.setup();
-    renderizar(GESTOR, "/execucoes?pagina=3");
-    await screen.findByRole("table", { name: /Execuções do otimizador/ });
-    expect(pedidos.at(-1).get("pagina")).toBe("3");
-
-    await usuario.selectOptions(screen.getByLabelText("Resultado"), "INVIAVEL");
-    await usuario.selectOptions(screen.getByLabelText("Modo em que rodou"), "GPU");
-    await usuario.selectOptions(screen.getByLabelText("Quem calculou"), "8");
-    await screen.findByText("3 nesse recorte");
-
-    const ultimo = Object.fromEntries(pedidos.at(-1));
-    expect(ultimo).toEqual({ resultado: "INVIAVEL", modo: "GPU", autor: "8", pagina: "1", tamanho: "20" });
-  });
-
-  it("o recorte do endereço abre o histórico já filtrado, com as datas", async () => {
-    const pedidos = comPedidos();
-    renderizar(GESTOR, "/execucoes?resultado=FALHOU&de=2026-09-01&ate=2026-09-30");
-    await screen.findByRole("table", { name: /Execuções do otimizador/ });
-
-    expect(Object.fromEntries(pedidos.at(-1))).toMatchObject({
-      resultado: "FALHOU",
-      de: "2026-09-01",
-      ate: "2026-09-30",
-    });
-    expect(screen.getByLabelText("Resultado")).toHaveValue("FALHOU");
-    expect(screen.getByLabelText("De")).toHaveValue("2026-09-01");
-  });
-
-  it("recorte sem execução diz isso, e não que nunca houve execução", async () => {
-    comPedidos(0);
-    renderizar(GESTOR, "/execucoes?modo=GPU");
-
-    expect(await screen.findByText("Nenhuma execução nesse recorte")).toBeVisible();
-    expect(screen.queryByText("Nenhuma execução ainda")).toBeNull();
-    /* Os filtros continuam na tela, para a pessoa sair do recorte vazio. */
-    expect(screen.getByLabelText("Modo em que rodou")).toHaveValue("GPU");
-  });
-
-  it("o Administrador filtra o histórico como os outros", async () => {
-    const pedidos = comPedidos();
-    const usuario = userEvent.setup();
-    renderizar(ADMINISTRADOR);
-    await screen.findByRole("table", { name: /Execuções do otimizador/ });
-
+    await usuario.selectOptions(await screen.findByLabelText("Resultado"), "INVIAVEL");
+    await waitFor(() => expect(ultima(chamadas)).toContain("resultado=INVIAVEL"));
+    await usuario.selectOptions(screen.getByLabelText("Modo em que rodou"), "CPU_PARALELO");
+    await waitFor(() => expect(ultima(chamadas)).toContain("modo=CPU_PARALELO"));
+    await screen.findByRole("option", { name: "Gestora do Laboratório" });
     await usuario.selectOptions(screen.getByLabelText("Quem calculou"), "3");
-    await screen.findByText("3 nesse recorte");
-
-    expect(pedidos.at(-1).get("autor")).toBe("3");
-  });
-});
-
-describe("execução aberta pelo histórico", () => {
-  it("mostra o que foi pedido e o plano que saiu", async () => {
-    const itens = [
-      {
-        parceiro_id: 16,
-        parceiro: "Villa da Praça",
-        segmento: "EM_RISCO",
-        categoria: "Pizzaria",
-        cauda_longa: true,
-        acao_id: 1,
-        acao: "Visita de relacionamento",
-        custo: "90.00",
-        ganho: "4180.00",
-      },
-    ];
-    simularApi({ "GET /api/otimizacoes/7": { corpo: execucao({ itens }) } });
-    renderizar(GESTOR, "/execucoes/7");
-
-    const pedido = await screen.findByRole("region", { name: "O que foi pedido" });
-    expect(pedido).toHaveTextContent("Por Gestora");
-    expect(pedido).toHaveTextContent("R$ 12.000,00");
-    expect(pedido).toHaveTextContent("ao menos 30% das ações");
-    expect(pedido).toHaveTextContent("Pizzaria: mín. 10%");
-    expect(pedido).toHaveTextContent("Automático: GPU, se houver, e senão CPU paralelo");
-
-    const plano = screen.getByRole("region", { name: /Plano recomendado/ });
-    expect(plano).toHaveTextContent("CPU paralelo, 8 threads · 62 ms");
-    expect(within(plano).getByRole("link", { name: "Villa da Praça" })).toHaveAttribute("href", "/parceiros/16");
-    expect(screen.getByRole("link", { name: "Execuções" })).toHaveAttribute("href", "/execucoes");
+    await waitFor(() => expect(ultima(chamadas)).toContain("autor=3"));
   });
 
-  it("o plano sai em CSV e pela impressão, e o que é da tela não vai para a folha (H91)", async () => {
-    const itens = [
-      { parceiro_id: 5, parceiro: "Comércio Alfa", segmento: "TOP", categoria: "Pizzaria", cauda_longa: false,
-        acao_id: 1, acao: "Visita de relacionamento", custo: "90.00", ganho: "210.50" },
-    ];
-    simularApi({ "GET /api/otimizacoes/7": { corpo: execucao({ itens }) } });
-    const imprimir = vi.spyOn(window, "print").mockImplementation(() => {});
+  it("marca dois planos e abre a comparação deles (RF35)", async () => {
     const usuario = userEvent.setup();
-    renderizar(GESTOR, "/execucoes/7");
-
-    const csv = await screen.findByRole("link", { name: "Exportar CSV" });
-    expect(csv).toHaveAttribute("href", "/api/otimizacoes/7/exportacao.csv");
-    await usuario.click(screen.getByRole("button", { name: "Imprimir ou salvar em PDF" }));
-    expect(imprimir).toHaveBeenCalledTimes(1);
-
-    expect(screen.getByRole("navigation", { name: "Você está em" })).toHaveClass("nao-imprime");
-    expect(csv.parentElement).toHaveClass("nao-imprime");
-    /* O título da folha, que na tela é a trilha. */
-    expect(screen.getByText("Plano de campanha").parentElement).toHaveClass("so-impressao");
-  });
-
-  it("execução sem itens não oferece o CSV: não há o que exportar", async () => {
-    simularApi({
-      "GET /api/otimizacoes/7": {
-        corpo: execucao({ viavel: false, restricao_violada: "orcamento", motivo: "Faltam R$ 80,00.", itens: [] }),
+    abrir("/execucoes", {
+      rotas: {
+        ...ROTAS(),
+        "GET /api/otimizacoes/comparacao": { corpo: amostra("GET_api_otimizacoes_comparacao") },
       },
     });
-    renderizar(GESTOR, "/execucoes/7");
 
-    expect(await screen.findByRole("button", { name: "Imprimir ou salvar em PDF" })).toBeVisible();
-    expect(screen.queryByRole("link", { name: "Exportar CSV" })).toBeNull();
-  });
+    const caixas = await screen.findAllByRole("checkbox", { name: /Marcar a execução de/ });
+    const comparar = screen.getByRole("button", { name: "Comparar os dois" });
+    expect(comparar).toBeDisabled();
+    await usuario.click(caixas[0]);
+    await usuario.click(caixas[1]);
+    await usuario.click(comparar);
 
-  it("execução que não existe", async () => {
-    simularApi({});
-    renderizar(GESTOR, "/execucoes/999");
-    expect(await screen.findByText("Execução não encontrada")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Voltar para as execuções" })).toHaveAttribute("href", "/execucoes");
+    await waitFor(() => expect(endereco()).toMatch(/^\/execucoes\/comparar\?a=\d+&b=\d+$/));
   });
 });

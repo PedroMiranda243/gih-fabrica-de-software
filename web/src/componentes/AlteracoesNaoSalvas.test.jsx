@@ -1,151 +1,75 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useState } from "react";
-import { Link, MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { MemoryRouter, Link, Route, Routes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
+import { avisariaAoFechar } from "../testes/preparar";
 import AlteracoesNaoSalvas from "./AlteracoesNaoSalvas";
 
-function Formulario() {
-  const [nome, setNome] = useState("");
-  const [salvo, setSalvo] = useState("");
+function Tela({ alterado }) {
   return (
-    <>
-      <nav aria-label="Seções">
-        <Link to="/outra" state={{ de: "formulário" }}>
-          Outra tela
-        </Link>
-        <Link to="/formulario?pagina=2">Mesma tela, outro filtro</Link>
-        <a href="#campo-nome">Ir para o campo</a>
-      </nav>
-      <AlteracoesNaoSalvas quando={nome !== salvo} />
-      <label htmlFor="campo-nome">Nome</label>
-      <input id="campo-nome" value={nome} onChange={(e) => setNome(e.target.value)} />
-      <button type="button" onClick={() => setSalvo(nome)}>
-        Salvar
-      </button>
-    </>
-  );
-}
-
-function Outra() {
-  const { state } = useLocation();
-  return <p>Outra tela aberta, vindo de: {state?.de ?? "lugar nenhum"}</p>;
-}
-
-function renderizar() {
-  return render(
-    <MemoryRouter initialEntries={["/formulario"]}>
+    <MemoryRouter initialEntries={["/parceiros/1"]}>
       <Routes>
-        <Route path="/formulario" element={<Formulario />} />
-        <Route path="/outra" element={<Outra />} />
+        <Route
+          path="/parceiros/1"
+          element={
+            <main>
+              <h1>Cadastro</h1>
+              <Link to="/parceiros">Voltar para a lista</Link>
+              <a href="#contato">Ir para o contato</a>
+              <Link to="/parceiros/1?aba=historico">Ver o histórico</Link>
+              <AlteracoesNaoSalvas quando={alterado} />
+            </main>
+          }
+        />
+        <Route path="/parceiros" element={<h1>Lista de parceiros</h1>} />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
-const pergunta = () => screen.queryByText(/Há alterações que não foram salvas/);
-
-describe("aviso de alterações não salvas", () => {
-  it("sem nada alterado, o link leva à outra tela sem perguntar", async () => {
+/* H97 — sair com alteração não salva para numa pergunta, e só quando há o que perder. */
+describe("as alterações não salvas", () => {
+  it("sem nada alterado, nada pergunta", async () => {
     const usuario = userEvent.setup();
-    renderizar();
+    render(<Tela alterado={false} />);
 
-    await usuario.click(screen.getByRole("link", { name: "Outra tela" }));
-
-    expect(screen.getByText(/Outra tela aberta/)).toBeInTheDocument();
+    expect(avisariaAoFechar()).toBe(false);
+    await usuario.click(screen.getByRole("link", { name: "Voltar para a lista" }));
+    expect(screen.getByRole("heading", { name: "Lista de parceiros" })).toBeInTheDocument();
   });
 
-  it("com o campo alterado, o link para na pergunta, e ela recebe o foco", async () => {
+  it("com alteração, o link para outra tela pergunta antes; 'Continuar editando' fica", async () => {
     const usuario = userEvent.setup();
-    renderizar();
+    render(<Tela alterado />);
 
-    await usuario.type(screen.getByLabelText("Nome"), "Ana");
-    await usuario.click(screen.getByRole("link", { name: "Outra tela" }));
-
-    expect(screen.queryByText(/Outra tela aberta/)).not.toBeInTheDocument();
-    const aviso = screen.getByRole("alert");
-    expect(aviso).toHaveTextContent("Há alterações que não foram salvas.");
-    expect(aviso).toHaveFocus();
-    // O que a pessoa digitou continua lá.
-    expect(screen.getByLabelText("Nome")).toHaveValue("Ana");
-  });
-
-  it("'Continuar editando' fecha a pergunta e deixa a pessoa onde estava", async () => {
-    const usuario = userEvent.setup();
-    renderizar();
-
-    await usuario.type(screen.getByLabelText("Nome"), "Ana");
-    await usuario.click(screen.getByRole("link", { name: "Outra tela" }));
+    await usuario.click(screen.getByRole("link", { name: "Voltar para a lista" }));
+    expect(screen.getByText(/Há alterações que não foram salvas/)).toBeInTheDocument();
     await usuario.click(screen.getByRole("button", { name: "Continuar editando" }));
-
-    expect(pergunta()).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Nome")).toHaveValue("Ana");
+    expect(screen.getByRole("heading", { name: "Cadastro" })).toBeInTheDocument();
+    expect(screen.queryByText(/Há alterações que não foram salvas/)).not.toBeInTheDocument();
   });
 
-  it("'Sair sem salvar' segue o link que foi clicado, com o que ele carregava", async () => {
+  it("'Sair sem salvar' segue para onde a pessoa ia", async () => {
     const usuario = userEvent.setup();
-    renderizar();
+    render(<Tela alterado />);
 
-    await usuario.type(screen.getByLabelText("Nome"), "Ana");
-    await usuario.click(screen.getByRole("link", { name: "Outra tela" }));
+    await usuario.click(screen.getByRole("link", { name: "Voltar para a lista" }));
     await usuario.click(screen.getByRole("button", { name: "Sair sem salvar" }));
-
-    expect(screen.getByText("Outra tela aberta, vindo de: formulário")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Lista de parceiros" })).toBeInTheDocument();
   });
 
-  it("depois de salvar, o link volta a levar direto", async () => {
-    const usuario = userEvent.setup();
-    renderizar();
-
-    await usuario.type(screen.getByLabelText("Nome"), "Ana");
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
-    await usuario.click(screen.getByRole("link", { name: "Outra tela" }));
-
-    expect(screen.getByText(/Outra tela aberta/)).toBeInTheDocument();
+  it("fechar a aba ou recarregar passa pelo aviso do navegador", () => {
+    render(<Tela alterado />);
+    expect(avisariaAoFechar()).toBe(true);
   });
 
-  it("salvar com a pergunta na tela a retira, e ela não volta sozinha na próxima alteração", async () => {
+  it("âncora e mudança só de filtro, na mesma tela, não perguntam", async () => {
     const usuario = userEvent.setup();
-    renderizar();
+    render(<Tela alterado />);
 
-    await usuario.type(screen.getByLabelText("Nome"), "Ana");
-    await usuario.click(screen.getByRole("link", { name: "Outra tela" }));
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
-    expect(pergunta()).not.toBeInTheDocument();
-
-    await usuario.type(screen.getByLabelText("Nome"), " Lima");
-    expect(pergunta()).not.toBeInTheDocument();
-  });
-
-  it("o que não sai da tela não pergunta: a âncora da página e o mesmo endereço com outro filtro", async () => {
-    const usuario = userEvent.setup();
-    renderizar();
-
-    await usuario.type(screen.getByLabelText("Nome"), "Ana");
-    await usuario.click(screen.getByRole("link", { name: "Ir para o campo" }));
-    expect(pergunta()).not.toBeInTheDocument();
-
-    await usuario.click(screen.getByRole("link", { name: "Mesma tela, outro filtro" }));
-    expect(pergunta()).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Nome")).toHaveValue("Ana");
-  });
-
-  it("fechar a aba ou recarregar passa pelo aviso do navegador, só com algo alterado", async () => {
-    const usuario = userEvent.setup();
-    renderizar();
-    const fechar = () => {
-      const evento = new Event("beforeunload", { cancelable: true });
-      window.dispatchEvent(evento);
-      return evento.defaultPrevented;
-    };
-
-    expect(fechar()).toBe(false);
-
-    await usuario.type(screen.getByLabelText("Nome"), "Ana");
-    expect(fechar()).toBe(true);
-
-    await usuario.click(screen.getByRole("button", { name: "Salvar" }));
-    expect(fechar()).toBe(false);
+    await usuario.click(screen.getByRole("link", { name: "Ir para o contato" }));
+    await usuario.click(screen.getByRole("link", { name: "Ver o histórico" }));
+    expect(screen.queryByText(/Há alterações que não foram salvas/)).not.toBeInTheDocument();
   });
 });

@@ -1,0 +1,31 @@
+{
+ "assistente": {
+  "disponivel": true,
+  "modelo": "qwen2.5:7b",
+  "motivo": null
+ },
+ "em_andamento": null,
+ "ultimo": {
+  "id": 2,
+  "situacao": "CONCLUIDA",
+  "autor": "Analista do Laboratório",
+  "publico": {
+   "tipo": "PLANO",
+   "segmento": null,
+   "categoria_id": null,
+   "execucao_id": 4,
+   "parceiros": null
+  },
+  "descricao": "Plano de campanha de 05/10/2026 a 11/10/2026",
+  "iniciado_em": "2026-10-05T08:24:24.884715Z",
+  "concluido_em": "2026-10-05T08:25:46.353526Z",
+  "total": 30,
+  "geradas": 30,
+  "pelo_modelo": 30,
+  "falhas": [],
+  "modelo": "qwen2.5:7b",
+  "motivo": null,
+  "mensagens": null
+ },
+ "maximo": 500
+}

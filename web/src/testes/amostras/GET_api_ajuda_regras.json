@@ -1,0 +1,19 @@
+{
+ "segmentos": [
+  "PROSPECCAO",
+  "RECEM_CHEGADO",
+  "EM_RISCO",
+  "TOP",
+  "EM_ASCENSAO",
+  "ESTAVEL"
+ ],
+ "top_n": 15,
+ "periodos_tendencia": 2,
+ "periodos_novato": 3,
+ "previsao": {
+  "versao_em_uso": "rede-1",
+  "origem": "MODELO",
+  "periodos_minimos_do_treino": 8,
+  "periodos_minimos_do_parceiro": 4
+ }
+}

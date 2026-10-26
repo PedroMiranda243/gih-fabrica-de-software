@@ -1,174 +1,113 @@
 /**
- * Minha conta (UC01-A4 · RF07 · H92): os dados de quem está usando o sistema, e a
- * troca da própria senha.
- *
- * A rota de troca existe desde a H19, mas nunca teve tela: a senha só se trocava
- * pela API. **A validação é do servidor** (regra 2.4) — a senha atual que não
- * confere e a nova que é fraca voltam como erro do campo, e a tela as mostra
- * embaixo dele. A única conferência daqui é a das duas digitações da senha
- * nova, que o servidor não tem como fazer: ele só recebe uma.
+ * Minha conta — os seus dados (só leitura) e a troca da própria senha. A única
+ * conferência da tela é a das duas digitações; o resto é o servidor quem diz.
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 
-import { api } from "../api/cliente";
+import { api, ErroDaApi } from "../api/cliente";
 import { useSessao } from "../api/contextoSessao";
-import Campo from "../componentes/Campo";
-import EntradaDeSenha from "../componentes/EntradaDeSenha";
-import { ROTULO_PERFIL } from "../formato";
-import "../estilos/usuarios.css";
-
-const VAZIO = { senha_atual: "", senha_nova: "", confirmacao: "" };
-const ORDEM = ["senha_atual", "senha_nova", "confirmacao"];
+import { Sucesso } from "../componentes/Estados";
+import { Campo, ResumoDeErros, Senha } from "../componentes/Formulario";
+import { useErrosDoFormulario } from "../componentes/useErrosDoFormulario";
+import Icone from "../componentes/Icone";
+import { useTitulo } from "../componentes/Titulo";
+import { comoDataHora, ROTULO_PERFIL } from "../formato";
 
 export default function MinhaConta() {
+  useTitulo("Minha conta");
   const { usuario } = useSessao();
-  const [form, setForm] = useState(VAZIO);
-  const [erro, setErro] = useState(null);
+  const [atual, setAtual] = useState("");
+  const [nova, setNova] = useState("");
+  const [deNovo, setDeNovo] = useState("");
   const [diferentes, setDiferentes] = useState(false);
-  const [trocada, setTrocada] = useState(false);
   const [enviando, setEnviando] = useState(false);
-
-  const erroDoCampo = Object.fromEntries((erro?.campos ?? []).map((c) => [c.campo, c]));
-  if (diferentes) erroDoCampo.confirmacao = { mensagem: "As duas digitações da senha nova não são iguais." };
-
-  function mudar(campo, valor) {
-    setForm((f) => ({ ...f, [campo]: valor }));
-    setTrocada(false);
-    if (campo !== "senha_atual") setDiferentes(false);
-  }
+  const [sucesso, setSucesso] = useState(null);
+  const { erros, receber, limpar, limparCampo, registrar } = useErrosDoFormulario();
+  const refDeNovo = useRef(null);
 
   async function trocar(evento) {
     evento.preventDefault();
-    setErro(null);
-    setTrocada(false);
-    if (form.senha_nova !== form.confirmacao) {
+    limpar();
+    setSucesso(null);
+    if (nova !== deNovo) {
       setDiferentes(true);
-      document.getElementById("campo-confirmacao")?.focus();
+      refDeNovo.current?.focus();
       return;
     }
+    setDiferentes(false);
     setEnviando(true);
     try {
-      await api.post("/api/sessao/senha", {
-        senha_atual: form.senha_atual,
-        senha_nova: form.senha_nova,
-      });
-      setForm(VAZIO);
-      setTrocada(true);
+      await api.post("/api/sessao/senha", { senha_atual: atual, senha_nova: nova });
+      setAtual("");
+      setNova("");
+      setDeNovo("");
+      setSucesso("Senha trocada. As outras sessões desta conta foram encerradas; esta continua aberta.");
     } catch (e) {
-      setErro(e);
-      const primeiro = ORDEM.find((c) => e.campos?.some((x) => x.campo === c));
-      if (primeiro) document.getElementById(`campo-${primeiro}`)?.focus();
+      if (e instanceof ErroDaApi) receber(e, { ordem: ["senha_atual", "senha_nova"] });
+      else throw e;
     } finally {
       setEnviando(false);
     }
   }
 
   return (
-    <>
-      <section className="painel" aria-labelledby="titulo-dados">
-        <div className="painel__cabecalho">
-          <h2 className="painel__titulo" id="titulo-dados">
+    <div className="pagina conta-pessoal">
+      <section className="bloco" aria-labelledby="t-dados">
+        <div className="bloco__cabeca">
+          <h2 id="t-dados" className="bloco__titulo">
             Seus dados
           </h2>
-          <span className="painel__nota">quem muda o nome e o perfil é o administrador</span>
+          <p className="bloco__sub">Quem muda o nome e o perfil é o administrador.</p>
         </div>
-        <dl className="conta-dados">
+        <dl className="pares pares--leitura">
           <div>
             <dt>Nome</dt>
             <dd>{usuario.nome}</dd>
           </div>
           <div>
             <dt>Login</dt>
-            <dd className="num">{usuario.login}</dd>
+            <dd>
+              <code>{usuario.login}</code>
+            </dd>
           </div>
           <div>
             <dt>Perfil</dt>
             <dd>{ROTULO_PERFIL[usuario.perfil] ?? usuario.perfil}</dd>
           </div>
+          {usuario.criado_em && (
+            <div>
+              <dt>Conta criada em</dt>
+              <dd>{comoDataHora(usuario.criado_em)}</dd>
+            </div>
+          )}
         </dl>
       </section>
 
-      <section className="painel" aria-labelledby="titulo-senha">
-        <div className="painel__cabecalho">
-          <h2 className="painel__titulo" id="titulo-senha">
+      <section className="bloco" aria-labelledby="t-trocar">
+        <div className="bloco__cabeca">
+          <h2 id="t-trocar" className="bloco__titulo">
             Trocar a senha
           </h2>
-          <span className="painel__nota">* obrigatório</span>
         </div>
-
-        <form className="conta conta--coluna" onSubmit={trocar} noValidate>
-          {trocada && (
-            <div className="aviso aviso--sucesso conta__aviso" role="status">
-              <p className="aviso__titulo">Senha trocada.</p>
-              <p className="aviso__ajuda">
-                As outras sessões desta conta foram encerradas; esta continua aberta.
-              </p>
-            </div>
-          )}
-
-          {/* O erro que não é de um campo — o serviço fora do ar, por exemplo. */}
-          {erro && !erro.campos?.length && (
-            <div className="aviso conta__aviso" role="alert">
-              <p className="aviso__titulo">{erro.message}</p>
-              {erro.ajuda && <p className="aviso__ajuda">{erro.ajuda}</p>}
-            </div>
-          )}
-
-          <Campo
-            id="senha_atual"
-            rotulo="Senha atual"
-            obrigatorio
-            erro={erroDoCampo.senha_atual}
-            ajuda="A senha com que você entrou."
-          >
-            <EntradaDeSenha
-              id="campo-senha_atual"
-              de="a senha atual"
-              autoComplete="current-password"
-              value={form.senha_atual}
-              onChange={(e) => mudar("senha_atual", e.target.value)}
-            />
+        <form className="formulario" onSubmit={trocar} noValidate>
+          {sucesso && <Sucesso foco>{sucesso}</Sucesso>}
+          <ResumoDeErros erros={erros} rotulos={{ senha_atual: "Senha atual", senha_nova: "Senha nova" }} />
+          <Campo nome="senha_atual" rotulo="Senha atual" obrigatorio erro={erros.campos.senha_atual} ajuda="A senha com que você entrou.">
+            {(a) => <Senha {...a} ref={registrar("senha_atual")} valor={atual} aoMudar={(x) => (setAtual(x), limparCampo("senha_atual"))} />}
           </Campo>
-
-          <Campo
-            id="senha_nova"
-            rotulo="Senha nova"
-            obrigatorio
-            erro={erroDoCampo.senha_nova}
-            ajuda="O servidor confere a força; depois de salva, ninguém a vê."
-          >
-            <EntradaDeSenha
-              id="campo-senha_nova"
-              de="a senha nova"
-              autoComplete="new-password"
-              value={form.senha_nova}
-              onChange={(e) => mudar("senha_nova", e.target.value)}
-            />
+          <Campo nome="senha_nova" rotulo="Senha nova" obrigatorio erro={erros.campos.senha_nova} ajuda="O servidor confere a força; depois de salva, ninguém a vê.">
+            {(a) => <Senha {...a} ref={registrar("senha_nova")} valor={nova} aoMudar={(x) => (setNova(x), limparCampo("senha_nova"), setDiferentes(false))} autoComplete="new-password" />}
           </Campo>
-
-          <Campo
-            id="confirmacao"
-            rotulo="Senha nova, de novo"
-            obrigatorio
-            erro={erroDoCampo.confirmacao}
-            ajuda="Para pegar o erro de digitação antes de ele trancar a sua conta."
-          >
-            <EntradaDeSenha
-              id="campo-confirmacao"
-              de="a senha nova, de novo"
-              autoComplete="new-password"
-              value={form.confirmacao}
-              onChange={(e) => mudar("confirmacao", e.target.value)}
-            />
+          <Campo nome="senha_de_novo" rotulo="Senha nova, de novo" obrigatorio erro={diferentes ? { mensagem: "As duas digitações da senha nova não são iguais." } : null} ajuda="Para pegar o erro de digitação antes de ele trancar a sua conta.">
+            {(a) => <Senha {...a} ref={refDeNovo} valor={deNovo} aoMudar={(x) => (setDeNovo(x), setDiferentes(false))} autoComplete="new-password" />}
           </Campo>
-
-          <div className="conta__acoes">
-            <button className="botao" type="submit" disabled={enviando}>
-              {enviando ? "Trocando…" : "Trocar a senha"}
+          <div className="formulario__acoes">
+            <button type="submit" className="botao botao--primario" disabled={enviando || !atual || !nova || !deNovo}>
+              <Icone nome="trava" /> {enviando ? "Trocando…" : "Trocar a senha"}
             </button>
           </div>
         </form>
       </section>
-    </>
+    </div>
   );
 }

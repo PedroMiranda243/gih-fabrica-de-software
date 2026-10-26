@@ -1,338 +1,180 @@
 /**
- * O relatório de desempenho de um período (UC15 · RF44 · H84).
- *
- * Como a rede foi, por categoria e por segmento, com o total — que é o
- * indicador do painel no mesmo período. Os filtros vivem no endereço, e o CSV é
- * a mesma consulta em outro formato.
- *
- * **Nenhum cálculo acontece aqui** (regra 2.4): as somas, o ticket médio e as
- * variações vêm prontos de `/api/relatorios/desempenho`. A tela escreve o
- * recorte que **a API devolveu**, e não o que está no endereço.
- *
- * **Duas variações, e a tela diz qual é qual.** Por categoria e no total, é a
- * do painel: o grupo contra ele mesmo no período anterior. Por segmento, é a
- * dos mesmos parceiros — o segmento muda de um período para o outro, e comparar
- * o de agora com o de antes mediria quem entrou e quem saiu dele. A API manda
- * `mesmos_parceiros` quando o filtro de segmento faz o total e as categorias
- * virarem também a dos mesmos parceiros.
+ * Desempenho por período — por categoria e por segmento. Duas variações
+ * diferentes, e a tela diz qual é qual.
  */
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 import { api, comConsulta } from "../api/cliente";
-import { Esqueleto } from "../componentes/Carregando";
-import EstadoVazio from "../componentes/EstadoVazio";
-import Relatorio, { ErroDoRelatorio, Variacao } from "../componentes/Relatorio";
-import Segmento from "../componentes/Segmento";
-import { comoDinheiro, comoInteiro, comoPeriodo, ROTULO_SEGMENTO } from "../formato";
-
-const DOS_MESMOS_PARCEIROS =
-  "A variação é a dos mesmos parceiros: o que os parceiros do grupo que venderam nos dois " +
-  "períodos faturaram agora, contra o que faturaram antes.";
+import { useCarregar, useFiltros } from "../api/ganchos";
+import { tem, useSessao } from "../api/contextoSessao";
+import { Ausente, Segmento, Variacao } from "../componentes/Dados";
+import { Carregando, ErroDaTela, Vazio } from "../componentes/Estados";
+import FolhaDeRelatorio from "../componentes/FolhaDeRelatorio";
+import Kpi from "../componentes/Kpi";
+import { CaixaDeTabela } from "../componentes/Lista";
+import Seletor from "../componentes/Seletor";
+import { useTitulo } from "../componentes/Titulo";
+import { comoDinheiro, comoInteiro, comoPeriodo, ORDEM_SEGMENTOS, ROTULO_SEGMENTO } from "../formato";
+import { Dinheiro } from "../componentes/Dados";
 
 export default function RelatorioDesempenho() {
-  const [parametros, setParametros] = useSearchParams();
-  const periodo = parametros.get("periodo") ?? "";
-  const categoria = parametros.get("categoria") ?? "";
-  const segmento = parametros.get("segmento") ?? "";
-  const filtros = { periodo_id: periodo, categoria_id: categoria, segmento };
-  const consulta = JSON.stringify(filtros);
+  useTitulo("Desempenho por período", "Relatórios");
+  const { usuario } = useSessao();
+  const lugar = useLocation();
+  const [filtros, mudar] = useFiltros();
+  const consulta = { periodo_id: filtros.periodo_id, categoria_id: filtros.categoria_id, segmento: filtros.segmento };
+  const recortes = useCarregar(() => api.get("/api/painel/recortes"), "rec");
+  const rel = useCarregar(() => api.get("/api/relatorios/desempenho", consulta), lugar.search);
+  const r = rel.dados;
 
-  const [recortes, setRecortes] = useState(null);
-  const [estado, setEstado] = useState({ consulta: null, dados: null, erro: null });
+  const filtrosForm = (
+    <>
+      <Seletor id="f-periodo" rotulo="Período" valor={filtros.periodo_id} aoMudar={(v) => mudar({ periodo_id: v })} todos="O mais recente" opcoes={(recortes.dados?.periodos ?? []).map((p) => [p.id, comoPeriodo(p)])} />
+      <Seletor id="f-categoria" rotulo="Categoria" valor={filtros.categoria_id} aoMudar={(v) => mudar({ categoria_id: v })} todos="Todas as categorias" opcoes={(recortes.dados?.categorias ?? []).map((c) => [c.id, c.nome])} />
+      <Seletor id="f-segmento" rotulo="Segmento" valor={filtros.segmento} aoMudar={(v) => mudar({ segmento: v })} todos="Todos os segmentos" opcoes={ORDEM_SEGMENTOS.map((s) => [s, ROTULO_SEGMENTO[s]])} />
+    </>
+  );
 
-  useEffect(() => {
-    /* As opções dos filtros. Se falharem, o relatório abre no período mais
-       recente, sem os seletores. */
-    api
-      .get("/api/painel/recortes")
-      .then(setRecortes)
-      .catch(() => setRecortes(null));
-  }, []);
-
-  useEffect(() => {
-    let vivo = true;
-    api
-      .get("/api/relatorios/desempenho", JSON.parse(consulta))
-      .then((dados) => vivo && setEstado({ consulta, dados, erro: null }))
-      .catch((erro) => vivo && setEstado({ consulta, dados: null, erro }));
-    return () => {
-      vivo = false;
-    };
-  }, [consulta]);
-
-  function ajustar(mudancas) {
-    const proximos = new URLSearchParams(parametros);
-    Object.entries(mudancas).forEach(([chave, valor]) =>
-      valor ? proximos.set(chave, valor) : proximos.delete(chave),
-    );
-    setParametros(proximos, { replace: true });
-  }
-
-  const atual = estado.consulta === consulta;
-  const dados = atual ? estado.dados : null;
-  const erro = atual ? estado.erro : null;
-  const maisRecente = recortes?.periodos[0];
+  const recorte = r ? [r.periodo ? `Período de ${comoPeriodo(r.periodo)}` : null, r.categoria?.nome ?? "Todas as categorias", r.segmento ? ROTULO_SEGMENTO[r.segmento] : "Todos os segmentos"].filter(Boolean).join(" · ") : null;
+  const semBase = recortes.dados && !recortes.dados.periodos.length;
+  const semMovimento = r && (!r.total || r.total.parceiros === 0);
 
   return (
-    <>
-      <Relatorio
-        titulo="Desempenho por período"
-        recorte={dados?.periodo ? recorteDe(dados) : []}
-        csv={dados?.periodo ? comConsulta("/api/relatorios/desempenho/exportacao.csv", filtros) : null}
-        filtros={
-          maisRecente && (
-            <div className="filtros">
-              <div className="campo">
-                <label htmlFor="periodo">Período</label>
-                <select
-                  id="periodo"
-                  value={periodo || String(maisRecente.id)}
-                  onChange={(e) =>
-                    ajustar({ periodo: e.target.value === String(maisRecente.id) ? "" : e.target.value })
-                  }
-                >
-                  {recortes.periodos.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {comoPeriodo(p)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="campo">
-                <label htmlFor="categoria">Categoria</label>
-                <select
-                  id="categoria"
-                  value={categoria}
-                  onChange={(e) => ajustar({ categoria: e.target.value })}
-                >
-                  <option value="">Todas as categorias</option>
-                  {recortes.categorias.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nome}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="campo">
-                <label htmlFor="segmento">Segmento</label>
-                <select
-                  id="segmento"
-                  value={segmento}
-                  onChange={(e) => ajustar({ segmento: e.target.value })}
-                >
-                  <option value="">Todos os segmentos</option>
-                  {Object.entries(ROTULO_SEGMENTO).map(([valor, rotulo]) => (
-                    <option key={valor} value={valor}>
-                      {rotulo}
-                    </option>
-                  ))}
-                </select>
-              </div>
+    <FolhaDeRelatorio nome="Desempenho por período" filtros={filtrosForm} recorte={recorte} csv={r && !semMovimento ? comConsulta("/api/relatorios/desempenho/exportacao.csv", consulta) : null}>
+      {rel.carregando && <Carregando rotulo="Carregando o relatório" linhas={8} />}
+      <ErroDaTela erro={rel.erro}>
+        <p>Os filtros continuam acima para escolher outro recorte.</p>
+      </ErroDaTela>
+      {semBase && (
+        <Vazio titulo="Nenhum dado importado ainda" acao={tem(usuario, "importar") ? "Importar um relatório" : undefined} para="/importacao" icone="importacao">
+          O relatório mostra a rede a partir dos relatórios importados.
+        </Vazio>
+      )}
+      {r && !semBase && semMovimento && (
+        <Vazio titulo="Nenhum parceiro com movimento nesse recorte" icone="busca">
+          Não houve faturamento com esses filtros neste período. Troque a categoria, o segmento ou o período.
+        </Vazio>
+      )}
+      {r && !semMovimento && (
+        <>
+          <section aria-labelledby="t-total" className="folha__secao">
+            <h3 id="t-total" className="folha__subtitulo">
+              Total do recorte
+            </h3>
+            <div className="faixa-kpi__grade faixa-kpi__grade--quatro">
+              <Kpi rotulo="Faturamento" principal>
+                <Dinheiro valor={r.total.faturamento} grande />
+              </Kpi>
+              <Kpi rotulo="Pedidos">{comoInteiro(r.total.pedidos)}</Kpi>
+              <Kpi rotulo="Ticket médio">
+                <Dinheiro valor={r.total.ticket_medio} grande />
+              </Kpi>
+              <Kpi rotulo="Variação do faturamento">
+                <Variacao valor={r.total.variacao_percentual} semBase="sem variação calculável" />
+              </Kpi>
             </div>
-          )
-        }
-      >
-        <ErroDoRelatorio erro={erro} />
-
-        {!dados && !erro && (
-          <div role="status" aria-label="Carregando o relatório">
-            <Esqueleto altura={96} style={{ marginBottom: "var(--esp-12)" }} />
-            <Esqueleto altura={280} />
-          </div>
-        )}
-
-        {dados && !dados.periodo && (
-          <section className="painel">
-            <EstadoVazio
-              titulo="Nenhum dado importado ainda"
-              texto="O relatório resume o desempenho da rede a partir dos relatórios importados."
-              acao={{ para: "/importacao", rotulo: "Importar um relatório" }}
-            />
-          </section>
-        )}
-
-        {dados?.periodo && dados.total.parceiros === 0 && (
-          <section className="painel">
-            <EstadoVazio
-              titulo="Nenhum parceiro com movimento nesse recorte"
-              texto="Não houve faturamento com esses filtros neste período. Troque a categoria, o segmento ou o período."
-            />
-          </section>
-        )}
-
-        {dados?.periodo && dados.total.parceiros > 0 && <Conteudo dados={dados} />}
-      </Relatorio>
-    </>
-  );
-}
-
-/** O recorte como a folha o diz, a partir do que a API devolveu. */
-function recorteDe(dados) {
-  return [
-    `Período de ${comoPeriodo(dados.periodo)}`,
-    dados.periodo_anterior
-      ? `comparado com ${comoPeriodo(dados.periodo_anterior)}`
-      : "primeiro período importado, sem com o que comparar",
-    dados.categoria ? `categoria ${dados.categoria.nome}` : "todas as categorias",
-    dados.segmento ? `segmento ${ROTULO_SEGMENTO[dados.segmento] ?? dados.segmento}` : "todos os segmentos",
-  ];
-}
-
-function Conteudo({ dados }) {
-  const { total } = dados;
-
-  return (
-    <>
-      <section className="painel painel--inteiro" aria-labelledby="titulo-total">
-        <div className="painel__cabecalho">
-          <h3 className="painel__titulo" id="titulo-total">
-            Total do recorte
-          </h3>
-          <span className="painel__nota">
-            {comoInteiro(total.parceiros)} {total.parceiros === 1 ? "parceiro" : "parceiros"} com
-            movimento
-          </span>
-        </div>
-        <dl className="relatorio__resumo">
-          <div>
-            <dt>Faturamento</dt>
-            <dd className="num relatorio__principal">{comoDinheiro(total.faturamento)}</dd>
-          </div>
-          <div>
-            <dt>Pedidos</dt>
-            <dd className="num">{comoInteiro(total.pedidos)}</dd>
-          </div>
-          <div>
-            <dt>Ticket médio</dt>
-            <dd className="num">{comoDinheiro(total.ticket_medio)}</dd>
-          </div>
-          <div>
-            <dt>Variação do faturamento</dt>
-            <dd className="num">
-              <Variacao valor={total.variacao_percentual} />
-            </dd>
-          </div>
-        </dl>
-        {dados.mesmos_parceiros && <p className="relatorio__nota">{DOS_MESMOS_PARCEIROS}</p>}
-      </section>
-
-      <section className="painel painel--inteiro" aria-labelledby="titulo-por-categoria">
-        <div className="painel__cabecalho">
-          <h3 className="painel__titulo" id="titulo-por-categoria">
-            Por categoria
-          </h3>
-          <span className="painel__nota">
-            {dados.por_categoria.length}{" "}
-            {dados.por_categoria.length === 1 ? "categoria" : "categorias"}
-          </span>
-        </div>
-        <Grupos
-          legenda="Desempenho do período por categoria"
-          coluna="Categoria"
-          linhas={dados.por_categoria}
-          total={total}
-          celula={(linha) => linha.rotulo}
-        />
-        <p className="relatorio__nota">
-          {dados.mesmos_parceiros
-            ? DOS_MESMOS_PARCEIROS
-            : "A variação é a do faturamento da categoria contra o dela mesma no período anterior, como no painel."}
-        </p>
-      </section>
-
-      <section className="painel painel--inteiro" aria-labelledby="titulo-por-segmento">
-        <div className="painel__cabecalho">
-          <h3 className="painel__titulo" id="titulo-por-segmento">
-            Por segmento
-          </h3>
-          {dados.segmentado && (
-            <span className="painel__nota">
-              {dados.por_segmento.length}{" "}
-              {dados.por_segmento.length === 1 ? "segmento" : "segmentos"}
-            </span>
-          )}
-        </div>
-        {dados.segmentado ? (
-          <>
-            <Grupos
-              legenda="Desempenho do período por segmento"
-              coluna="Segmento"
-              linhas={dados.por_segmento}
-              total={total}
-              celula={(linha) => (linha.chave ? <Segmento valor={linha.chave} /> : linha.rotulo)}
-            />
-            <p className="relatorio__nota">
-              {DOS_MESMOS_PARCEIROS} O segmento muda de um período para o outro, e comparar o de
-              agora com o de antes mediria quem entrou e quem saiu dele.
-              {!dados.mesmos_parceiros && " Por isso a variação do total, que é a do painel, não é a soma destas."}
+            <p className="bloco__nota">
+              {r.mesmos_parceiros
+                ? "Com o filtro de segmento, a variação do total e das categorias é a dos mesmos parceiros no período anterior: o segmento muda de um período para o outro."
+                : `A variação é a do faturamento contra o mesmo recorte no período anterior${r.periodo_anterior ? ` (${comoPeriodo(r.periodo_anterior)})` : ""}, como no painel.`}
             </p>
-          </>
-        ) : (
-          <EstadoVazio
-            titulo="Segmentação ainda não calculada para este período"
-            texto="A classificação por segmento roda junto com a importação."
+          </section>
+
+          <TabelaDeGrupos
+            id="t-categoria"
+            titulo="Por categoria"
+            nota={r.mesmos_parceiros ? "A variação é a dos mesmos parceiros, como no total." : "A variação é a do faturamento da categoria contra o dela mesma no período anterior, como no painel."}
+            linhas={r.por_categoria}
+            total={r.total}
+            rotuloColuna="Categoria"
           />
-        )}
-      </section>
-    </>
+
+          {r.segmentado ? (
+            <TabelaDeGrupos
+              id="t-segmento"
+              titulo="Por segmento"
+              nota="A variação é a dos mesmos parceiros no período anterior: o segmento muda de um período para o outro, e comparar o grupo de agora com o de antes mediria quem entrou e quem saiu dele."
+              linhas={r.por_segmento}
+              total={r.total}
+              rotuloColuna="Segmento"
+              segmento
+            />
+          ) : (
+            <section className="folha__secao" aria-labelledby="t-segmento-vazio">
+              <h3 id="t-segmento-vazio" className="folha__subtitulo">
+                Por segmento
+              </h3>
+              <Vazio titulo="Segmentação ainda não calculada para este período" compacto>
+                A classificação por segmento roda junto com a importação.
+              </Vazio>
+            </section>
+          )}
+        </>
+      )}
+    </FolhaDeRelatorio>
   );
 }
 
-function Grupos({ legenda, coluna, linhas, total, celula }) {
+function TabelaDeGrupos({ id, titulo, nota, linhas, total, rotuloColuna, segmento = false }) {
   return (
-    <div className="tabela-rolagem">
-      <table className="tabela">
-        <caption className="so-leitor">{legenda}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{coluna}</th>
-            <th scope="col" className="numerica">
-              Parceiros
-            </th>
-            <th scope="col" className="numerica">
-              Faturamento
-            </th>
-            <th scope="col" className="numerica">
-              Pedidos
-            </th>
-            <th scope="col" className="numerica">
-              Ticket médio
-            </th>
-            <th scope="col" className="numerica">
-              Variação
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {linhas.map((linha) => (
-            <tr key={linha.chave ?? linha.rotulo}>
-              <th scope="row" className="nome">
-                {celula(linha)}
+    <section className="folha__secao" aria-labelledby={id}>
+      <h3 id={id} className="folha__subtitulo">
+        {titulo}
+      </h3>
+      <CaixaDeTabela rotulo={titulo}>
+        <table className="tabela">
+          <caption className="sr-only">{titulo}: parceiros, faturamento, pedidos, ticket médio e variação</caption>
+          <thead>
+            <tr>
+              <th scope="col">{rotuloColuna}</th>
+              <th scope="col" className="num">
+                Parceiros
               </th>
-              <td className="numerica">{comoInteiro(linha.parceiros)}</td>
-              <td className="numerica">{comoDinheiro(linha.faturamento)}</td>
-              <td className="numerica">{comoInteiro(linha.pedidos)}</td>
-              <td className="numerica secundaria">{comoDinheiro(linha.ticket_medio)}</td>
-              <td className="numerica">
-                <Variacao valor={linha.variacao_percentual} />
-              </td>
+              <th scope="col" className="num">
+                Faturamento
+              </th>
+              <th scope="col" className="num">
+                Pedidos
+              </th>
+              <th scope="col" className="num">
+                Ticket médio
+              </th>
+              <th scope="col" className="num">
+                Variação
+              </th>
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <th scope="row">Total</th>
-            <td className="numerica">{comoInteiro(total.parceiros)}</td>
-            <td className="numerica">{comoDinheiro(total.faturamento)}</td>
-            <td className="numerica">{comoInteiro(total.pedidos)}</td>
-            <td className="numerica">{comoDinheiro(total.ticket_medio)}</td>
-            {/* A variação do total está no resumo, com a nota de que grupo ela é:
-                repetida aqui, pareceria a soma das linhas de cima. */}
-            <td className="numerica" />
-          </tr>
-        </tfoot>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {linhas.map((l) => (
+              <tr key={l.chave ?? l.rotulo}>
+                <th scope="row">{segmento && l.chave ? <Segmento codigo={l.chave} /> : l.rotulo}</th>
+                <td className="num">{comoInteiro(l.parceiros)}</td>
+                <td className="num">{comoDinheiro(l.faturamento)}</td>
+                <td className="num">{comoInteiro(l.pedidos)}</td>
+                <td className="num">{l.ticket_medio === null ? <Ausente porque="sem pedidos" /> : comoDinheiro(l.ticket_medio)}</td>
+                <td className="num">
+                  <Variacao valor={l.variacao_percentual} semBase="sem variação calculável" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          {total && (
+            <tfoot>
+              <tr>
+                <th scope="row">Total</th>
+                <td className="num">{comoInteiro(total.parceiros)}</td>
+                <td className="num">{comoDinheiro(total.faturamento)}</td>
+                <td className="num">{comoInteiro(total.pedidos)}</td>
+                <td className="num">{comoDinheiro(total.ticket_medio)}</td>
+                <td className="num">
+                  <Variacao valor={total.variacao_percentual} semBase="sem variação calculável" />
+                </td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </CaixaDeTabela>
+      <p className="bloco__nota">{nota}</p>
+    </section>
   );
 }

@@ -1,716 +1,516 @@
 /**
- * A campanha — UC08, RF29 a RF32, histórias H48 a H52 e H55.
- *
- * O Gestor configura as restrições e calcula o plano; o Analista consulta o
- * último plano e o catálogo. **Quem pode o quê vem da API** (regras 2.4 e 2.5):
- * a tela recebe `pode_executar` e `pode_editar_catalogo` prontos, com o porquê.
- *
- * **O cálculo não roda na requisição** (ADR-011): "Calcular plano" recebe `202`
- * com a execução em andamento, e a tela consulta a cada 2 s até ela terminar,
- * como na tela do modelo. O resultado é o plano, ou a campanha inviável com a
- * restrição e quanto falta (RN07) — nunca um plano parcial.
- *
- * **A tela só traduz o que a pessoa digita**: "30" na cota vira a fração 0,3 e
- * "12.000,00" vira 12000.00. Se é viável, quanto cabe e quem entra, quem
- * responde é a API. O mesmo vale para o modo de execução (RF32): quais existem
- * nesta instalação, e qual roda sem escolha, vêm da API.
+ * Campanha — quanto há para gastar e com que restrições; o otimizador devolve o
+ * plano. Quem pode o quê vem do estado (`pode_executar`, `pode_editar_catalogo`).
+ * A tela só traduz o que a pessoa digita (% → fração, "12.000,50" → "12000.50").
  */
-import { useEffect, useId, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { api } from "../api/cliente";
+import { api, ErroDaApi } from "../api/cliente";
+import { useAcompanhar, useCarregar } from "../api/ganchos";
 import AlteracoesNaoSalvas from "../componentes/AlteracoesNaoSalvas";
-import Campo from "../componentes/Campo";
-import { Esqueleto } from "../componentes/Carregando";
 import Confirmacao from "../componentes/Confirmacao";
-import EstadoVazio from "../componentes/EstadoVazio";
+import { Carregando, ErroDaAcao, ErroDaTela, Nota, Sucesso, Vazio } from "../componentes/Estados";
+import { Campo, ResumoDeErros } from "../componentes/Formulario";
+import { useErrosDoFormulario } from "../componentes/useErrosDoFormulario";
+import Icone from "../componentes/Icone";
+import { CaixaDeTabela } from "../componentes/Lista";
 import PlanoDeCampanha from "../componentes/PlanoDeCampanha";
-import {
-  comoDataHora,
-  comoDinheiro,
-  comoFracao,
-  comoInteiro,
-  comoPeriodo,
-  lerReais,
-  MODOS_DE_EXECUCAO,
-  NOME_MODO,
-  paraFracao,
-  TRACO,
-} from "../formato";
-import "../estilos/campanha.css";
+import { useTitulo } from "../componentes/Titulo";
+import { comoDinheiro, comoFracao, comoInteiro, comoPeriodo, deFracao, lerReais, paraCampoDeReais, paraFracao, plural, ROTULO_MODO_CURTO, TRACO } from "../formato";
 
-/* Mesmo intervalo da tela do modelo: a busca serial leva segundos na base de
-   demonstração (`docs/medicoes/otimizador.md`). */
-export const INTERVALO_MS = 2000;
-
-/* Cada linha de cota ganha uma chave ao nascer: a posição mudaria ao remover
-   uma do meio, e o React reaproveitaria o campo errado. */
-let proximaChave = 0;
-const novaCota = () => ({ chave: ++proximaChave, categoria_id: "", minimo: "", maximo: "" });
-
-const MOTIVOS_FORA = [
-  ["historico_curto", "com histórico curto"],
-  ["fora_do_periodo", "sem dado no período das previsões"],
-  ["sem_previsao", "sem previsão da versão em uso"],
-  ["inativos", "inativos"],
-  ["em_prospeccao", "em prospecção"],
-];
-
-function paraPercentual(fracao) {
-  if (fracao === null || fracao === undefined) return "";
-  return String(Math.round(Number(fracao) * 10000) / 100).replace(".", ",");
+function diaSeguinte(iso, dias) {
+  const [a, m, d] = iso.split("-").map(Number);
+  const data = new Date(Date.UTC(a, m - 1, d + dias));
+  return data.toISOString().slice(0, 10);
 }
 
-/** A campanha vale para o período seguinte ao das previsões: é o que elas estimam. */
-function periodoSeguinte(periodo) {
-  if (!periodo?.data_fim) return { inicio: "", fim: "" };
-  const dia = (iso, mais) => {
-    const d = new Date(`${iso}T12:00:00Z`);
-    d.setUTCDate(d.getUTCDate() + mais);
-    return d.toISOString().slice(0, 10);
-  };
-  return { inicio: dia(periodo.data_fim, 1), fim: dia(periodo.data_fim, 7) };
-}
-
-function valoresIniciais(estado) {
-  const { inicio, fim } = periodoSeguinte(estado?.periodo_base);
-  return { orcamento: "", maximo_acoes: "", cauda: "", cotas: [], inicio, fim, modo: "" };
-}
-
-function corpoDo(valores) {
-  return {
-    orcamento: lerReais(valores.orcamento),
-    maximo_acoes: valores.maximo_acoes === "" ? null : Number(valores.maximo_acoes),
-    cota_cauda_longa: paraFracao(valores.cauda),
-    cotas_categoria: valores.cotas
-      .filter((c) => c.categoria_id !== "")
-      .map((c) => ({
-        categoria_id: Number(c.categoria_id),
-        minimo: paraFracao(c.minimo),
-        maximo: paraFracao(c.maximo),
-      })),
-    aplicacao_inicio: valores.inicio,
-    aplicacao_fim: valores.fim,
-    modo: valores.modo || null,
-  };
-}
+const EXCLUIDOS = {
+  historico_curto: ["com histórico curto", "com histórico curto"],
+  fora_do_periodo: ["sem dado no período das previsões", "sem dado no período das previsões"],
+  sem_previsao: ["sem previsão na versão em uso", "sem previsão na versão em uso"],
+  inativos: ["desativado", "desativados"],
+  em_prospeccao: ["em prospecção", "em prospecção"],
+};
 
 export default function Campanha() {
-  const [estado, setEstado] = useState(null);
-  const [erroCarga, setErroCarga] = useState(null);
-  const [recarga, setRecarga] = useState(0);
-  const [valores, setValores] = useState(null);
+  useTitulo("Campanha");
+  const estado = useCarregar(() => api.get("/api/campanha"), "campanha");
   const [acompanhando, setAcompanhando] = useState(null);
+  const [terminados, setTerminados] = useState([]);
   const [resultado, setResultado] = useState(null);
+
+  const emAndamento = estado.dados?.em_andamento;
+  const id = acompanhando ?? (emAndamento && !terminados.includes(emAndamento.id) ? emAndamento.id : null);
+  const calculo = useAcompanhar(id, (x) => api.get(`/api/otimizacoes/${x}`), (e) => {
+    setResultado(e);
+    setTerminados((l) => [...l, e.id]);
+    setAcompanhando(null);
+    estado.recarregar();
+  });
+
+  if (estado.carregando) return <Carregando rotulo="Carregando a campanha" linhas={10} />;
+  if (estado.erro) return <ErroDaTela erro={estado.erro} />;
+  const c = estado.dados;
+  const calculando = id !== null && (!calculo.atual || calculo.atual.situacao === "EM_ANDAMENTO");
+  const plano = resultado ?? c.ultima;
+
+  if (!c.modelo_versao) {
+    return (
+      <div className="pagina">
+        <Vazio titulo={c.motivo_bloqueio ?? "Ainda não há modelo treinado."} icone="modelo" acao="Ir para o Modelo" para="/modelo">
+          O plano parte da previsão de cada parceiro.
+        </Vazio>
+        <Catalogo estado={c} aoMudar={estado.recarregar} />
+      </div>
+    );
+  }
+
+  const fora = Object.entries(c.excluidos ?? {}).filter(([, n]) => n > 0);
+
+  return (
+    <div className="pagina">
+      <p className="sr-only" role="status" aria-live="polite">
+        {calculando ? "Calculando o plano." : resultado ? anuncio(resultado) : ""}
+      </p>
+      <div className="campanha-topo">
+        <p className="campanha-topo__previsoes">
+          Previsões da <strong>{c.modelo_versao}</strong>, com dados até {comoPeriodo(c.periodo_base)}
+        </p>
+        <p className="campanha-topo__quem">
+          <strong className="numero-destaque">{comoInteiro(c.elegiveis)}</strong> parceiros podem receber ação.
+          {fora.length > 0 && <> Ficam fora {fora.map(([k, n], i) => `${i ? (i === fora.length - 1 ? " e " : ", ") : ""}${comoInteiro(n)} ${EXCLUIDOS[k]?.[n === 1 ? 0 : 1] ?? k}`).join("")}.</>}
+        </p>
+      </div>
+
+      <div className="campanha-grade">
+        <Restricoes estado={c} calculando={calculando} aoCalcular={(idNovo) => (setResultado(null), setAcompanhando(idNovo))} />
+
+        <section className="bloco bloco--plano" aria-labelledby="t-plano" aria-busy={calculando}>
+          <div className="bloco__cabeca bloco__cabeca--linha">
+            <h2 id="t-plano" className="bloco__titulo">
+              {resultado ? "O plano recomendado" : "O último plano"}
+            </h2>
+            <Link to="/execucoes" className="link-seta">
+              Ver as execuções anteriores <Icone nome="seta-direita" />
+            </Link>
+          </div>
+          {calculando && (
+            <div className="andamento" role="status">
+              <span className="andamento__barra andamento__barra--indeterminada" aria-hidden="true" />
+              <p>
+                <strong>Calculando…</strong> O otimizador está montando o plano no servidor. Você pode sair desta tela: ao voltar, ela reencontra o cálculo.
+              </p>
+            </div>
+          )}
+          {!calculando && resultado && (
+            <div className={`resultado resultado--${resultado.situacao === "FALHOU" ? "falha" : resultado.viavel ? "ok" : "inviavel"}`}>
+              <p className="resultado__frase">{anuncio(resultado)}</p>
+            </div>
+          )}
+          {!calculando && plano && <PlanoDeCampanha execucao={plano} novo={Boolean(resultado)} />}
+          {!calculando && !plano && (
+            <Vazio titulo="Nenhum plano de campanha calculado ainda" compacto icone="campanha">
+              Preencha as restrições e calcule: o plano diz quais parceiros recebem qual ação.
+            </Vazio>
+          )}
+        </section>
+      </div>
+
+      <Catalogo estado={c} aoMudar={estado.recarregar} />
+    </div>
+  );
+}
+
+function anuncio(e) {
+  if (e.situacao === "FALHOU") return `O cálculo falhou.${e.motivo ? ` ${e.motivo}` : ""}`;
+  if (e.viavel === false) return `Sem solução viável.${e.motivo ? ` ${e.motivo}` : ""}`;
+  return `Plano calculado: ${plural(e.acoes ?? 0, "ação", "ações")}, ganho esperado de ${comoDinheiro(e.uplift_total)}.`;
+}
+
+let proximaCota = 1;
+
+function Restricoes({ estado, calculando, aoCalcular }) {
+  const base = estado.periodo_base;
+  const [valores, setValores] = useState(() => ({
+    orcamento: "",
+    maximo_acoes: "",
+    cota_cauda_longa: "",
+    aplicacao_inicio: base ? diaSeguinte(base.data_fim, 1) : "",
+    aplicacao_fim: base ? diaSeguinte(base.data_fim, 7) : "",
+    modo: "",
+  }));
+  const [cotas, setCotas] = useState([]);
+  const [erroCotas, setErroCotas] = useState(null);
   const [confirmando, setConfirmando] = useState(false);
   const [enviando, setEnviando] = useState(false);
-  const [erro, setErro] = useState(null);
+  const [recusa, setRecusa] = useState(null);
+  const { erros, receber, limpar, limparCampo, registrar } = useErrosDoFormulario();
 
-  useEffect(() => {
-    let vivo = true;
-    api
-      .get("/api/campanha")
-      .then((dados) => {
-        if (!vivo) return;
-        setEstado(dados);
-        setValores((v) => v ?? valoresIniciais(dados));
-        /* Cálculo disparado em outra aba, ou antes de a pessoa sair e voltar. */
-        if (dados.em_andamento) setAcompanhando(dados.em_andamento);
-      })
-      .catch((e) => vivo && setErroCarga(e));
-    return () => {
-      vivo = false;
-    };
-  }, [recarga]);
+  function mudar(campo, valor) {
+    setValores((v) => ({ ...v, [campo]: valor }));
+    limparCampo(campo);
+  }
 
-  const idAcompanhado = acompanhando?.id;
-  useEffect(() => {
-    if (!idAcompanhado) return undefined;
-    const relogio = setInterval(() => {
-      api
-        .get(`/api/otimizacoes/${idAcompanhado}`)
-        .then((execucao) => {
-          if (execucao.situacao === "EM_ANDAMENTO") return;
-          setAcompanhando(null);
-          setResultado(execucao);
-          setErro(null);
-          setRecarga((r) => r + 1);
-        })
-        /* Uma consulta que falha não encerra o acompanhamento: a próxima tenta
-           de novo, e o cálculo continua no servidor de qualquer jeito. */
-        .catch(() => {});
-    }, INTERVALO_MS);
-    return () => clearInterval(relogio);
-  }, [idAcompanhado]);
+  function conferirCotas() {
+    const vistas = new Set();
+    for (const c of cotas) {
+      if (!c.categoria_id) continue;
+      if (vistas.has(c.categoria_id)) return false;
+      vistas.add(c.categoria_id);
+      const min = Number(String(c.minimo).replace(",", "."));
+      const max = Number(String(c.maximo).replace(",", "."));
+      if (c.minimo !== "" && c.maximo !== "" && !Number.isNaN(min) && !Number.isNaN(max) && min > max) return false;
+    }
+    return true;
+  }
+
+  function pedir(evento) {
+    evento.preventDefault();
+    setRecusa(null);
+    limpar();
+    if (!conferirCotas()) {
+      setErroCotas("Confira as cotas: o mínimo não pode passar do máximo, e cada categoria entra uma vez.");
+      return;
+    }
+    setErroCotas(null);
+    setConfirmando(true);
+  }
 
   async function calcular() {
     setEnviando(true);
-    setErro(null);
-    setResultado(null);
     try {
-      const execucao = await api.post("/api/otimizacoes", corpoDo(valores));
-      setAcompanhando(execucao);
-      setRecarga((r) => r + 1);
+      const corpo = {
+        orcamento: lerReais(valores.orcamento),
+        maximo_acoes: valores.maximo_acoes === "" ? null : Number.isNaN(Number(valores.maximo_acoes)) ? valores.maximo_acoes : Number(valores.maximo_acoes),
+        cota_cauda_longa: paraFracao(valores.cota_cauda_longa),
+        cotas_categoria: cotas.filter((c) => c.categoria_id).map((c) => ({ categoria_id: Number(c.categoria_id), minimo: paraFracao(c.minimo), maximo: paraFracao(c.maximo) })),
+        aplicacao_inicio: valores.aplicacao_inicio || null,
+        aplicacao_fim: valores.aplicacao_fim || null,
+        modo: valores.modo || null,
+      };
+      const e = await api.post("/api/otimizacoes", corpo);
+      setConfirmando(false);
+      aoCalcular(e.id);
     } catch (e) {
-      setErro(e);
-      /* A recusa mais comum é "já há uma otimização em andamento": reler o
-         estado faz a tela encontrá-la e acompanhá-la (como no modelo, #108). */
-      setRecarga((r) => r + 1);
+      setConfirmando(false);
+      if (e instanceof ErroDaApi && e.status === 409) {
+        setRecusa(e);
+        if (e.detalhe?.em_andamento) aoCalcular(e.detalhe.em_andamento);
+      } else if (e instanceof ErroDaApi && e.campos) {
+        receber(e, { ordem: ["orcamento", "maximo_acoes", "cota_cauda_longa", "aplicacao_inicio", "aplicacao_fim", "modo"] });
+      } else {
+        setRecusa(e);
+      }
     } finally {
       setEnviando(false);
-      setConfirmando(false);
     }
   }
 
-  if (erroCarga) {
-    return (
-      <div className="aviso" role="alert">
-        <p className="aviso__titulo">{erroCarga.message}</p>
-        {erroCarga.ajuda && <p className="aviso__ajuda">{erroCarga.ajuda}</p>}
+  const categoriasUsadas = cotas.map((c) => c.categoria_id);
+  const modoAuto = ROTULO_MODO_CURTO[estado.modo_automatico] ?? estado.modo_automatico;
+  const modoEscolhido = estado.modos.find((m) => m.modo === valores.modo);
+
+  return (
+    <section className="bloco bloco--restricoes" aria-labelledby="t-restricoes">
+      <div className="bloco__cabeca">
+        <h2 id="t-restricoes" className="bloco__titulo">
+          Restrições
+        </h2>
+        <p className="bloco__sub">O que o otimizador precisa respeitar. Se é viável, quem responde é o servidor.</p>
       </div>
-    );
-  }
-
-  if (!estado || !valores) {
-    return (
-      <section className="painel" aria-busy="true" aria-label="Carregando a campanha">
-        <div className="campanha__corpo">
-          <Esqueleto altura={260} />
+      <form className="formulario" onSubmit={pedir} noValidate>
+        <ResumoDeErros erros={erros} rotulos={{ orcamento: "Orçamento", maximo_acoes: "Máximo de ações", cota_cauda_longa: "Cota da cauda longa", aplicacao_inicio: "Início da aplicação", aplicacao_fim: "Fim da aplicação", modo: "Modo de execução" }} />
+        <ErroDaAcao erro={recusa} />
+        <div className="grupo-campos grupo-campos--duas">
+          <Campo nome="orcamento" rotulo="Orçamento" obrigatorio erro={erros.campos.orcamento} ajuda="Em reais, com vírgula nos centavos (ex.: 12.000,00).">
+            {(a) => (
+              <div className="entrada-com-prefixo">
+                <span aria-hidden="true">R$</span>
+                <input {...a} ref={registrar("orcamento")} className="entrada" inputMode="decimal" value={valores.orcamento} onChange={(e) => mudar("orcamento", e.target.value)} onBlur={() => valores.orcamento && !Number.isNaN(Number(lerReais(valores.orcamento))) && mudar("orcamento", paraCampoDeReais(lerReais(valores.orcamento)))} />
+              </div>
+            )}
+          </Campo>
+          <Campo nome="maximo_acoes" rotulo="Máximo de ações" obrigatorio erro={erros.campos.maximo_acoes} ajuda="Quantas a equipe consegue executar no período.">
+            {(a) => <input {...a} ref={registrar("maximo_acoes")} className="entrada" inputMode="numeric" value={valores.maximo_acoes} onChange={(e) => mudar("maximo_acoes", e.target.value)} />}
+          </Campo>
         </div>
-      </section>
-    );
-  }
-
-  const plano = resultado ?? estado.ultima;
-  const erroDoCampo = Object.fromEntries((erro?.campos ?? []).map((c) => [c.campo, c]));
-
-  return (
-    <>
-      <p className="so-leitor" role="status">
-        {anuncio(acompanhando, resultado)}
-      </p>
-
-      {erro && (
-        <div className="aviso" role="alert">
-          <p className="aviso__titulo">{erro.message}</p>
-          {erro.ajuda && <p className="aviso__ajuda">{erro.ajuda}</p>}
+        <Campo nome="cota_cauda_longa" rotulo="Cota mínima da cauda longa (%)" erro={erros.campos.cota_cauda_longa} ajuda={`Das ações, quantas vão para quem está fora do Top ${estado.top_n} (ex.: 30). Em branco, sem cota.`}>
+          {(a) => <input {...a} ref={registrar("cota_cauda_longa")} className="entrada entrada--numero" inputMode="decimal" value={valores.cota_cauda_longa} onChange={(e) => mudar("cota_cauda_longa", e.target.value)} />}
+        </Campo>
+        <div className="grupo-campos grupo-campos--duas">
+          <Campo nome="aplicacao_inicio" rotulo="Início da aplicação" obrigatorio erro={erros.campos.aplicacao_inicio}>
+            {(a) => <input {...a} ref={registrar("aplicacao_inicio")} type="date" className="entrada" value={valores.aplicacao_inicio} onChange={(e) => mudar("aplicacao_inicio", e.target.value)} />}
+          </Campo>
+          <Campo nome="aplicacao_fim" rotulo="Fim da aplicação" obrigatorio erro={erros.campos.aplicacao_fim}>
+            {(a) => <input {...a} ref={registrar("aplicacao_fim")} type="date" className="entrada" value={valores.aplicacao_fim} onChange={(e) => mudar("aplicacao_fim", e.target.value)} />}
+          </Campo>
         </div>
-      )}
+        <p className="campo__ajuda">O período seguinte ao das previsões, já sugerido.</p>
 
-      <section className="painel" aria-labelledby="titulo-restricoes">
-        <div className="painel__cabecalho">
-          <h2 className="painel__titulo" id="titulo-restricoes">
-            Restrições
-          </h2>
-          <span className="painel__nota">
-            {estado.modelo_versao
-              ? `Previsões da ${estado.modelo_versao}, com dados até ${comoPeriodo(estado.periodo_base)}`
-              : "Sem modelo treinado"}
-          </span>
-        </div>
+        <fieldset className="grupo-campos cotas">
+          <legend className="grupo-campos__legenda">Cotas por categoria</legend>
+          <p className="campo__ajuda">
+            Em % do máximo de ações. Só conta a categoria confirmada{estado.sem_categoria > 0 ? `: ${plural(estado.sem_categoria, "elegível sem categoria confirmada recebe", "elegíveis sem categoria confirmada recebem")} ação, mas não entra${estado.sem_categoria === 1 ? "" : "m"} em cota` : ""}.
+          </p>
+          {cotas.map((cota, i) => (
+            <div key={cota.id} className="cota" role="group" aria-label={`Cota ${i + 1}`}>
+              <div className="campo">
+                <label className="campo__rotulo" htmlFor={`cota-cat-${cota.id}`}>
+                  Categoria
+                </label>
+                <select id={`cota-cat-${cota.id}`} className="entrada" value={cota.categoria_id} onChange={(e) => (setCotas((l) => l.map((x) => (x.id === cota.id ? { ...x, categoria_id: e.target.value } : x))), setErroCotas(null))}>
+                  <option value="">Escolha a categoria</option>
+                  {estado.categorias.map((cat) => (
+                    <option key={cat.id} value={cat.id} disabled={categoriasUsadas.includes(String(cat.id)) && String(cat.id) !== cota.categoria_id}>
+                      {cat.nome} · {comoInteiro(cat.elegiveis)} elegíveis
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="campo">
+                <label className="campo__rotulo" htmlFor={`cota-min-${cota.id}`}>
+                  mín. %
+                </label>
+                <input id={`cota-min-${cota.id}`} className="entrada" inputMode="decimal" value={cota.minimo} onChange={(e) => (setCotas((l) => l.map((x) => (x.id === cota.id ? { ...x, minimo: e.target.value } : x))), setErroCotas(null))} />
+              </div>
+              <div className="campo">
+                <label className="campo__rotulo" htmlFor={`cota-max-${cota.id}`}>
+                  máx. %
+                </label>
+                <input id={`cota-max-${cota.id}`} className="entrada" inputMode="decimal" value={cota.maximo} onChange={(e) => (setCotas((l) => l.map((x) => (x.id === cota.id ? { ...x, maximo: e.target.value } : x))), setErroCotas(null))} />
+              </div>
+              <button type="button" className="botao botao--fantasma botao--pequeno cota__remover" onClick={() => setCotas((l) => l.filter((x) => x.id !== cota.id))} aria-label={`Remover a cota ${i + 1}`}>
+                Remover
+              </button>
+            </div>
+          ))}
+          {erroCotas && (
+            <p className="campo__erro" role="alert">
+              <Icone nome="erro" />
+              <span>{erroCotas}</span>
+            </p>
+          )}
+          <button type="button" className="botao botao--secundario botao--pequeno cotas__adicionar" onClick={() => setCotas((l) => [...l, { id: proximaCota++, categoria_id: "", minimo: "", maximo: "" }])}>
+            <Icone nome="mais" /> Adicionar cota de categoria
+          </button>
+        </fieldset>
 
-        {!estado.modelo_versao ? (
-          <EstadoVazio titulo={estado.motivo_bloqueio} texto="O plano parte da previsão de cada parceiro." />
-        ) : (
-          <Restricoes
-            estado={estado}
-            valores={valores}
-            erroDoCampo={erroDoCampo}
-            acompanhando={acompanhando}
-            confirmando={confirmando}
-            enviando={enviando}
-            aoMudar={(v) => {
-              setValores(v);
-              setConfirmando(false);
-            }}
-            aoPedir={() => {
-              setErro(null);
-              setConfirmando(true);
-            }}
-            aoConfirmar={calcular}
-            aoCancelar={() => setConfirmando(false)}
-          />
-        )}
-      </section>
-
-      {acompanhando && <Andamento execucao={acompanhando} />}
-      {!acompanhando && plano && <PlanoDeCampanha execucao={plano} origem="Campanha" />}
-      {estado.ultima && (
-        <p className="campanha__historico">
-          <Link to="/execucoes">Ver as execuções anteriores</Link>, com quem calculou, os parâmetros e o
-          resultado de cada uma — e comparar dois planos lado a lado.
-        </p>
-      )}
-
-      <Catalogo estado={estado} aoMudar={() => setRecarga((r) => r + 1)} />
-    </>
-  );
-}
-
-function Restricoes({
-  estado,
-  valores,
-  erroDoCampo,
-  acompanhando,
-  confirmando,
-  enviando,
-  aoMudar,
-  aoPedir,
-  aoConfirmar,
-  aoCancelar,
-}) {
-  const mudar = (nome, valor) => aoMudar({ ...valores, [nome]: valor });
-  const fora = MOTIVOS_FORA.filter(([chave]) => estado.excluidos?.[chave]);
-  const erroNasCotas = Object.keys(erroDoCampo).some((c) => c.startsWith("cotas_categoria"));
-
-  return (
-    <form
-      className="campanha__corpo campanha__restricoes"
-      noValidate
-      onSubmit={(e) => {
-        e.preventDefault();
-        aoPedir();
-      }}
-    >
-      <p className="campanha__nota">
-        <strong className="num">{comoInteiro(estado.elegiveis)}</strong> parceiros podem receber ação:
-        ativos e com previsão (RN11).
-        {fora.length > 0 &&
-          ` Ficam fora ${fora.map(([c, r]) => `${comoInteiro(estado.excluidos[c])} ${r}`).join(", ")}.`}
-      </p>
-
-      <div className="campanha__campos">
-        <Campo
-          id="orcamento"
-          rotulo="Orçamento"
-          obrigatorio
-          erro={erroDoCampo.orcamento}
-          ajuda="Em reais, com vírgula nos centavos."
-        >
-          <input
-            id="campo-orcamento"
-            inputMode="decimal"
-            placeholder="ex.: 12.000,00"
-            value={valores.orcamento}
-            onChange={(e) => mudar("orcamento", e.target.value)}
-          />
-        </Campo>
-        <Campo
-          id="maximo_acoes"
-          rotulo="Máximo de ações"
-          obrigatorio
-          erro={erroDoCampo.maximo_acoes}
-          ajuda="Quantas a equipe consegue executar no período."
-        >
-          <input
-            id="campo-maximo_acoes"
-            type="number"
-            inputMode="numeric"
-            min={1}
-            value={valores.maximo_acoes}
-            onChange={(e) => mudar("maximo_acoes", e.target.value)}
-          />
-        </Campo>
-        <Campo
-          id="cota_cauda_longa"
-          rotulo="Cota mínima da cauda longa (%)"
-          erro={erroDoCampo.cota_cauda_longa}
-          ajuda={`Das ações, quantas vão para quem está fora do Top ${estado.top_n}.`}
-        >
-          <input
-            id="campo-cota_cauda_longa"
-            inputMode="decimal"
-            placeholder="ex.: 30"
-            value={valores.cauda}
-            onChange={(e) => mudar("cauda", e.target.value)}
-          />
-        </Campo>
-        <Campo id="aplicacao_inicio" rotulo="Início da aplicação" obrigatorio erro={erroDoCampo.aplicacao_inicio}>
-          <input
-            id="campo-aplicacao_inicio"
-            type="date"
-            value={valores.inicio}
-            onChange={(e) => mudar("inicio", e.target.value)}
-          />
-        </Campo>
-        <Campo
-          id="aplicacao_fim"
-          rotulo="Fim da aplicação"
-          obrigatorio
-          erro={erroDoCampo.aplicacao_fim ?? erroDoCampo["requisição"]}
-        >
-          <input
-            id="campo-aplicacao_fim"
-            type="date"
-            value={valores.fim}
-            onChange={(e) => mudar("fim", e.target.value)}
-          />
-        </Campo>
-      </div>
-
-      <CotasPorCategoria
-        categorias={estado.categorias}
-        semCategoria={estado.sem_categoria}
-        cotas={valores.cotas}
-        comErro={erroNasCotas}
-        aoMudar={(cotas) => mudar("cotas", cotas)}
-      />
-
-      <ModoDeExecucao estado={estado} valor={valores.modo} aoMudar={(modo) => mudar("modo", modo)} />
-
-      {!estado.pode_executar && !acompanhando && (
-        <p className="campanha__bloqueio">{estado.motivo_bloqueio}</p>
-      )}
-
-      {confirmando ? (
-        <Confirmacao
-          texto={
-            `Calcular o plano com orçamento de ${comoDinheiro(lerReais(valores.orcamento))} e até ` +
-            `${valores.maximo_acoes || TRACO} ações, ` +
-            (valores.modo
-              ? `no modo ${NOME_MODO[valores.modo]}`
-              : `no modo automático (${NOME_MODO[estado.modo_automatico]})`) +
-            "? O cálculo roda em segundo plano; o plano nunca passa de nenhuma restrição."
-          }
-          acao="Calcular"
-          ocupado={enviando}
-          aoConfirmar={aoConfirmar}
-          aoCancelar={aoCancelar}
-        />
-      ) : (
-        estado.pode_executar && (
-          <div className="campanha__acoes">
-            <button className="botao" type="submit" disabled={Boolean(acompanhando)}>
-              {acompanhando ? "Calculando…" : "Calcular plano"}
-            </button>
-          </div>
-        )
-      )}
-    </form>
-  );
-}
-
-/**
- * O modo de execução (RF32, UC08 passo 4). Um `select`, como no protótipo; o
- * modo que esta instalação não tem fica desabilitado, e o porquê vai na ajuda
- * embaixo do campo — uma opção desabilitada não tem como se explicar sozinha.
- */
-function ModoDeExecucao({ estado, valor, aoMudar }) {
-  const daApi = Object.fromEntries((estado.modos ?? []).map((m) => [m.modo, m]));
-  const escolhido = MODOS_DE_EXECUCAO.find(([modo]) => modo === valor);
-  const ajuda = [
-    escolhido
-      ? escolhido[3]
-      : `Sem escolha, roda na GPU, se houver, e senão no CPU paralelo. Nesta instalação: ${NOME_MODO[estado.modo_automatico]}.`,
-    ...MODOS_DE_EXECUCAO.filter(([modo]) => daApi[modo] && !daApi[modo].disponivel).map(
-      ([modo, rotulo]) => `${rotulo}: ${daApi[modo].motivo}`,
-    ),
-  ].join(" ");
-
-  return (
-    <div className="campanha__modo">
-      <Campo id="modo" rotulo="Modo de execução" ajuda={ajuda}>
-        <select id="campo-modo" value={valor} onChange={(e) => aoMudar(e.target.value)}>
-          <option value="">Automático ({NOME_MODO[estado.modo_automatico]})</option>
-          {MODOS_DE_EXECUCAO.map(([modo, rotulo]) => {
-            const disponivel = Boolean(daApi[modo]?.disponivel);
-            return (
-              <option key={modo} value={modo} disabled={!disponivel}>
-                {disponivel ? rotulo : `${rotulo} — indisponível`}
-              </option>
-            );
-          })}
-        </select>
-      </Campo>
-    </div>
-  );
-}
-
-function CotasPorCategoria({ categorias, semCategoria, cotas, comErro, aoMudar }) {
-  const idTitulo = useId();
-  const usadas = new Set(cotas.map((c) => c.categoria_id));
-  const mudar = (i, campo, valor) =>
-    aoMudar(cotas.map((c, j) => (j === i ? { ...c, [campo]: valor } : c)));
-
-  return (
-    <fieldset className="campanha__cotas" aria-describedby={`${idTitulo}-ajuda`}>
-      <legend id={idTitulo}>Cotas por categoria</legend>
-      <p id={`${idTitulo}-ajuda`} className={comErro ? "campo__erro" : "campo__ajuda"}>
-        {comErro
-          ? "Confira as cotas: o mínimo não pode passar do máximo, e cada categoria entra uma vez."
-          : `Em % do máximo de ações. Só conta a categoria confirmada: ${comoInteiro(semCategoria)} ` +
-            "elegíveis sem categoria confirmada recebem ação, mas não entram em cota (RN11)."}
-      </p>
-      {cotas.map((cota, i) => (
-        <div className="campanha__cota" key={cota.chave}>
-          <label>
-            <span className="so-leitor">Categoria da cota {i + 1}</span>
-            <select value={cota.categoria_id} onChange={(e) => mudar(i, "categoria_id", e.target.value)}>
-              <option value="">Escolha a categoria</option>
-              {categorias.map((c) => (
-                <option
-                  key={c.id}
-                  value={String(c.id)}
-                  disabled={usadas.has(String(c.id)) && cota.categoria_id !== String(c.id)}
-                >
-                  {c.nome} · {comoInteiro(c.elegiveis)} elegíveis
+        <Campo nome="modo" rotulo="Modo de execução" erro={erros.campos.modo} ajuda={`Sem escolha, roda na GPU, se houver, e senão no CPU paralelo. Nesta instalação: ${modoAuto}.`}>
+          {(a) => (
+            <select {...a} ref={registrar("modo")} className="entrada" value={valores.modo} onChange={(e) => mudar("modo", e.target.value)}>
+              <option value="">Automático</option>
+              {estado.modos.map((m) => (
+                <option key={m.modo} value={m.modo} disabled={!m.disponivel}>
+                  {ROTULO_MODO_CURTO[m.modo] ?? m.modo}
+                  {m.disponivel ? "" : " — indisponível"}
                 </option>
               ))}
             </select>
-          </label>
-          <label>
-            <span>mín. %</span>
-            <input
-              inputMode="decimal"
-              value={cota.minimo}
-              onChange={(e) => mudar(i, "minimo", e.target.value)}
-            />
-          </label>
-          <label>
-            <span>máx. %</span>
-            <input
-              inputMode="decimal"
-              value={cota.maximo}
-              onChange={(e) => mudar(i, "maximo", e.target.value)}
-            />
-          </label>
-          <button
-            type="button"
-            className="botao botao--secundario"
-            onClick={() => aoMudar(cotas.filter((_, j) => j !== i))}
-          >
-            Remover
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        className="botao botao--secundario"
-        onClick={() => aoMudar([...cotas, novaCota()])}
-      >
-        Adicionar cota de categoria
-      </button>
-    </fieldset>
-  );
-}
+          )}
+        </Campo>
+        {estado.modos.some((m) => !m.disponivel) && (
+          <ul className="modos-indisponiveis">
+            {estado.modos
+              .filter((m) => !m.disponivel)
+              .map((m) => (
+                <li key={m.modo}>
+                  <strong>{ROTULO_MODO_CURTO[m.modo]}</strong>: {m.motivo}
+                </li>
+              ))}
+          </ul>
+        )}
+        {modoEscolhido && !modoEscolhido.disponivel && <Nota tipo="atencao">{modoEscolhido.motivo}</Nota>}
 
-function Andamento({ execucao }) {
-  return (
-    <div className="aviso aviso--informativo campanha__andamento">
-      <p className="aviso__titulo">Calculando o plano…</p>
-      <p className="aviso__ajuda">
-        Iniciado {comoDataHora(execucao.iniciada_em)}
-        {execucao.autor ? ` por ${execucao.autor}` : " pelo terminal"}, no modo {NOME_MODO[execucao.modo]}.
-        A tela se atualiza sozinha quando o cálculo terminar; você pode sair e voltar.
-      </p>
-      {execucao.substituicao && <p className="aviso__ajuda">{execucao.substituicao}</p>}
-      <div className="campanha__barra-andamento" aria-hidden="true" />
-    </div>
-  );
-}
-
-const ACAO_VAZIA = { nome: "", custo_unitario: "", efeito_crescimento: "", efeito_retencao: "", ativa: true };
-
-function Catalogo({ estado, aoMudar }) {
-  const [editando, setEditando] = useState(null); // id da ação, ou "nova"
-  const [valores, setValores] = useState(ACAO_VAZIA);
-  // Como a linha estava ao abrir a edição: é contra isto que se sabe se algo mudou (H97).
-  const [abertos, setAbertos] = useState(ACAO_VAZIA);
-  const [erro, setErro] = useState(null);
-  const [salvando, setSalvando] = useState(false);
-  const editavel = estado.pode_editar_catalogo;
-  const alterado = editando !== null && Object.keys(abertos).some((campo) => valores[campo] !== abertos[campo]);
-
-  function editar(acao) {
-    const linha = acao
-      ? {
-          nome: acao.nome,
-          custo_unitario: String(acao.custo_unitario).replace(".", ","),
-          efeito_crescimento: paraPercentual(acao.efeito_crescimento),
-          efeito_retencao: paraPercentual(acao.efeito_retencao),
-          ativa: acao.ativa,
-        }
-      : ACAO_VAZIA;
-    setErro(null);
-    setEditando(acao?.id ?? "nova");
-    setValores(linha);
-    setAbertos(linha);
-  }
-
-  async function salvar() {
-    setSalvando(true);
-    const corpo = {
-      nome: valores.nome,
-      custo_unitario: lerReais(valores.custo_unitario),
-      efeito_crescimento: paraFracao(valores.efeito_crescimento),
-      efeito_retencao: paraFracao(valores.efeito_retencao),
-      ativa: valores.ativa,
-    };
-    try {
-      if (editando === "nova") await api.post("/api/acoes-comerciais", corpo);
-      else await api.patch(`/api/acoes-comerciais/${editando}`, corpo);
-      setEditando(null);
-      aoMudar();
-    } catch (e) {
-      setErro(e);
-    } finally {
-      setSalvando(false);
-    }
-  }
-
-  const edicao = (
-    <LinhaDeEdicao
-      valores={valores}
-      erro={erro}
-      salvando={salvando}
-      aoMudar={setValores}
-      aoSalvar={salvar}
-      aoCancelar={() => setEditando(null)}
-    />
-  );
-
-  return (
-    <section className="painel" aria-labelledby="titulo-catalogo">
-      <div className="painel__cabecalho">
-        <h2 className="painel__titulo" id="titulo-catalogo">
-          Catálogo de ações
-        </h2>
-        <span className="painel__nota">Ganho = previsto × crescimento + previsto × risco × retenção (RN10)</span>
-        {editavel && editando === null && (
-          <div className="painel__acoes">
-            <button type="button" className="botao botao--secundario" onClick={() => editar(null)}>
-              Nova ação
+        {confirmando ? (
+          <Confirmacao
+            texto={`Calcular o plano com orçamento de ${comoDinheiro(lerReais(valores.orcamento)) === TRACO ? valores.orcamento || TRACO : comoDinheiro(lerReais(valores.orcamento))} e até ${valores.maximo_acoes || TRACO} ações?`}
+            detalhe="O cálculo roda em segundo plano; o plano aparece ao lado quando ele terminar."
+            acao="Calcular plano"
+            ocupado={enviando}
+            aoConfirmar={calcular}
+            aoCancelar={() => setConfirmando(false)}
+          />
+        ) : estado.pode_executar ? (
+          <div className="formulario__acoes">
+            <button type="submit" className="botao botao--primario botao--grande" disabled={calculando}>
+              <Icone nome="raio" /> {calculando ? "Calculando…" : "Calcular plano"}
             </button>
           </div>
+        ) : (
+          <Nota titulo="Calcular o plano não é do seu perfil">{estado.motivo_bloqueio}</Nota>
+        )}
+      </form>
+    </section>
+  );
+}
+
+function Catalogo({ estado, aoMudar }) {
+  const [editando, setEditando] = useState(null);
+  const [novo, setNovo] = useState(false);
+  const [aviso, setAviso] = useState(null);
+  const podeEditar = estado.pode_editar_catalogo;
+
+  return (
+    <section className="bloco" aria-labelledby="t-catalogo">
+      <div className="bloco__cabeca bloco__cabeca--linha">
+        <div>
+          <h2 id="t-catalogo" className="bloco__titulo">
+            Catálogo de ações
+          </h2>
+          <p className="bloco__sub">Ações que o otimizador pode distribuir. Ganho = previsto × crescimento + previsto × risco × retenção.</p>
+        </div>
+        {podeEditar && !novo && editando === null && (
+          <button type="button" className="botao botao--secundario" onClick={() => (setAviso(null), setNovo(true))}>
+            <Icone nome="mais" /> Nova ação
+          </button>
         )}
       </div>
-
-      <AlteracoesNaoSalvas quando={alterado} className="campanha__corpo" />
-
-      {erro && (
-        <div className="campanha__corpo">
-          <div className="aviso" role="alert">
-            <p className="aviso__titulo">{erro.message}</p>
-            {erro.ajuda && <p className="aviso__ajuda">{erro.ajuda}</p>}
-            {erro.campos?.map((c) => (
-              <p key={c.campo} className="aviso__ajuda">
-                {c.mensagem}
-              </p>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="tabela-rolagem">
-        <table className="tabela campanha__catalogo">
-          <caption className="so-leitor">Ações que o otimizador pode distribuir</caption>
+      {aviso && <Sucesso>{aviso}</Sucesso>}
+      <CaixaDeTabela rotulo="Catálogo de ações">
+        <table className="tabela tabela--catalogo">
+          <caption className="sr-only">Catálogo de ações comerciais: custo, efeitos e situação</caption>
           <thead>
             <tr>
               <th scope="col">Ação</th>
-              <th scope="col" className="numerica">
+              <th scope="col" className="num">
                 Custo
               </th>
-              <th scope="col" className="numerica">
+              <th scope="col" className="num">
                 Crescimento
               </th>
-              <th scope="col" className="numerica">
+              <th scope="col" className="num">
                 Retenção
               </th>
               <th scope="col">Situação</th>
-              {editavel && <th scope="col"><span className="so-leitor">Editar</span></th>}
+              {podeEditar && (
+                <th scope="col">
+                  <span className="sr-only">Editar</span>
+                </th>
+              )}
             </tr>
           </thead>
           <tbody>
-            {estado.acoes.map((acao) =>
-              editando === acao.id ? (
-                <LinhaDeEdicao
-                  key={acao.id}
-                  valores={valores}
-                  erro={erro}
-                  salvando={salvando}
-                  aoMudar={setValores}
-                  aoSalvar={salvar}
-                  aoCancelar={() => setEditando(null)}
-                />
+            {estado.acoes.map((a) =>
+              editando === a.id ? (
+                <LinhaEditavel key={a.id} acao={a} aoCancelar={() => setEditando(null)} aoSalvar={(nome) => (setEditando(null), setAviso(`Ação ${nome} salva.`), aoMudar())} />
               ) : (
-                <tr key={acao.id}>
-                  <td className="nome">{acao.nome}</td>
-                  <td className="numerica">{comoDinheiro(acao.custo_unitario)}</td>
-                  <td className="numerica">{comoFracao(acao.efeito_crescimento)}</td>
-                  <td className="numerica">{comoFracao(acao.efeito_retencao)}</td>
-                  <td>{acao.ativa ? "Ativa" : "Inativa"}</td>
-                  {editavel && (
-                    <td className="campanha__botoes">
-                      <button
-                        type="button"
-                        className="botao botao--secundario"
-                        disabled={editando !== null}
-                        onClick={() => editar(acao)}
-                        aria-label={`Editar ${acao.nome}`}
-                      >
-                        Editar
+                <tr key={a.id} className={a.ativa ? undefined : "linha--inativa"}>
+                  <th scope="row" className="nome">
+                    {a.nome}
+                  </th>
+                  <td className="num">{comoDinheiro(a.custo_unitario)}</td>
+                  <td className="num">{comoFracao(a.efeito_crescimento, 0)}</td>
+                  <td className="num">{comoFracao(a.efeito_retencao, 0)}</td>
+                  <td>{a.ativa ? "Ativa" : "Inativa"}</td>
+                  {podeEditar && (
+                    <td className="celula-acao">
+                      <button type="button" className="botao botao--fantasma botao--pequeno" onClick={() => (setAviso(null), setNovo(false), setEditando(a.id))} disabled={editando !== null || novo} aria-label={`Editar ${a.nome}`}>
+                        <Icone nome="lapis" /> Editar
                       </button>
                     </td>
                   )}
                 </tr>
               ),
             )}
-            {editando === "nova" && edicao}
+            {novo && <LinhaEditavel acao={null} aoCancelar={() => setNovo(false)} aoSalvar={(nome) => (setNovo(false), setAviso(`Ação ${nome} criada.`), aoMudar())} />}
           </tbody>
         </table>
-      </div>
+      </CaixaDeTabela>
     </section>
   );
 }
 
-/** Uma ação do catálogo em edição, na própria linha da tabela. */
-function LinhaDeEdicao({ valores, erro, salvando, aoMudar, aoSalvar, aoCancelar }) {
-  const erroDoCampo = Object.fromEntries((erro?.campos ?? []).map((c) => [c.campo, c]));
-  const campo = (nome, rotulo, extra = {}) => (
-    <input
-      aria-label={rotulo}
-      aria-invalid={erroDoCampo[nome] ? "true" : undefined}
-      value={valores[nome]}
-      onChange={(e) => aoMudar({ ...valores, [nome]: e.target.value })}
-      {...extra}
-    />
+function LinhaEditavel({ acao, aoCancelar, aoSalvar }) {
+  const inicial = useMemo(
+    () => ({
+      nome: acao?.nome ?? "",
+      custo_unitario: acao ? paraCampoDeReais(acao.custo_unitario) : "",
+      efeito_crescimento: acao ? deFracao(acao.efeito_crescimento) : "",
+      efeito_retencao: acao ? deFracao(acao.efeito_retencao) : "",
+      ativa: acao?.ativa ?? true,
+    }),
+    [acao],
   );
+  const [v, setV] = useState(inicial);
+  const [enviando, setEnviando] = useState(false);
+  const { erros, receber, registrar } = useErrosDoFormulario();
+  const alterado = Object.keys(inicial).some((k) => inicial[k] !== v[k]);
+  const sufixo = acao ? acao.id : "nova";
+
+  async function salvar() {
+    setEnviando(true);
+    try {
+      const corpo = {
+        nome: v.nome,
+        custo_unitario: lerReais(v.custo_unitario),
+        efeito_crescimento: paraFracao(v.efeito_crescimento),
+        efeito_retencao: paraFracao(v.efeito_retencao),
+        ativa: v.ativa,
+      };
+      if (acao) {
+        const mudou = Object.fromEntries(Object.entries(corpo).filter(([k]) => inicial[k] !== v[k]));
+        await api.patch(`/api/acoes-comerciais/${acao.id}`, mudou);
+      } else {
+        await api.post("/api/acoes-comerciais", corpo);
+      }
+      aoSalvar(v.nome);
+    } catch (e) {
+      receber(e, { ordem: ["nome", "custo_unitario", "efeito_crescimento", "efeito_retencao"] });
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  const campo = (nome, rotulo, extra = {}) => (
+    <div className={`campo campo--tabela${erros.campos[nome] ? " campo--erro" : ""}`}>
+      <label className="campo__rotulo" htmlFor={`acao-${nome}-${sufixo}`}>
+        {rotulo}
+      </label>
+      <input
+        id={`acao-${nome}-${sufixo}`}
+        ref={registrar(nome)}
+        className="entrada"
+        value={v[nome]}
+        onChange={(e) => setV((x) => ({ ...x, [nome]: e.target.value }))}
+        aria-invalid={erros.campos[nome] ? true : undefined}
+        aria-describedby={erros.campos[nome] ? `acao-${nome}-${sufixo}-erro` : undefined}
+        {...extra}
+      />
+      {erros.campos[nome] && (
+        <p className="campo__erro" id={`acao-${nome}-${sufixo}-erro`}>
+          <Icone nome="erro" />
+          <span>{erros.campos[nome].mensagem}</span>
+        </p>
+      )}
+    </div>
+  );
+
   return (
-    <tr className="campanha__edicao">
-      <td>{campo("nome", "Nome da ação")}</td>
-      <td className="numerica">{campo("custo_unitario", "Custo unitário, em reais", { inputMode: "decimal" })}</td>
-      <td className="numerica">
-        {campo("efeito_crescimento", "Efeito de crescimento, em %", { inputMode: "decimal" })}
-      </td>
-      <td className="numerica">
-        {campo("efeito_retencao", "Efeito de retenção, em %", { inputMode: "decimal" })}
-      </td>
-      <td>
-        <label className="campanha__ativa">
-          <input
-            type="checkbox"
-            checked={valores.ativa}
-            onChange={(e) => aoMudar({ ...valores, ativa: e.target.checked })}
-          />
-          Ativa
-        </label>
-      </td>
-      <td className="campanha__botoes">
-        <button type="button" className="botao" disabled={salvando} onClick={aoSalvar}>
-          Salvar
-        </button>
-        <button type="button" className="botao botao--secundario" onClick={aoCancelar}>
-          Cancelar
-        </button>
+    <tr className="linha--editando">
+      <td colSpan={6}>
+        <div className="edicao-em-linha" role="group" aria-label={acao ? `Editar ${acao.nome}` : "Nova ação"}>
+          {erros.topo && !Object.keys(erros.campos).length && <ErroDaAcao erro={erros.erro ?? { message: erros.topo }} />}
+          <div className="edicao-em-linha__campos">
+            {campo("nome", "Nome")}
+            {campo("custo_unitario", "Custo unitário, em reais", { inputMode: "decimal" })}
+            {campo("efeito_crescimento", "Efeito de crescimento, em %", { inputMode: "decimal" })}
+            {campo("efeito_retencao", "Efeito de retenção, em %", { inputMode: "decimal" })}
+            <label className="caixa-de-selecao edicao-em-linha__ativa">
+              <input type="checkbox" checked={v.ativa} onChange={(e) => setV((x) => ({ ...x, ativa: e.target.checked }))} /> Ativa
+            </label>
+          </div>
+          <div className="formulario__acoes">
+            <button type="button" className="botao botao--primario botao--pequeno" onClick={salvar} disabled={enviando || (acao && !alterado)}>
+              {enviando ? "Salvando…" : "Salvar"}
+            </button>
+            <button type="button" className="botao botao--secundario botao--pequeno" onClick={aoCancelar} disabled={enviando}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+        <AlteracoesNaoSalvas quando={alterado && !enviando} />
       </td>
     </tr>
   );
-}
-
-function anuncio(acompanhando, resultado) {
-  if (acompanhando) return "Calculando o plano.";
-  if (!resultado) return "";
-  if (resultado.situacao === "FALHOU") return `O cálculo falhou. ${resultado.motivo}`;
-  if (resultado.viavel === false) return `Sem solução viável. ${resultado.motivo}`;
-  return `Plano calculado: ${resultado.acoes} ações, ganho esperado de ${comoDinheiro(resultado.uplift_total)}.`;
 }

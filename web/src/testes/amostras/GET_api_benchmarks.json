@@ -1,0 +1,103 @@
+{
+ "itens": [
+  {
+   "id": 1,
+   "situacao": "CONCLUIDA",
+   "autor": "Gestora do Laboratório",
+   "iniciada_em": "2026-10-05T07:45:10.475034Z",
+   "concluida_em": "2026-10-05T07:45:32.539644Z",
+   "parametros": {
+    "parceiros": 500,
+    "acoes": 4,
+    "repeticoes": 3
+   },
+   "progresso": null,
+   "colunas": [
+    {
+     "coluna": "PYTHON",
+     "situacao": "MEDIDA",
+     "motivo": null,
+     "tempos_s": [
+      6.527505931000178,
+      6.89240911800016,
+      6.95482442399998
+     ],
+     "media_s": 6.791579824333439,
+     "desvio_s": 0.2308141751732394,
+     "contexto_s": null,
+     "speedup_python": 1.0,
+     "speedup_cpp": null,
+     "uplift": "39549.83",
+     "diferenca_uplift": 0.0,
+     "divergente": false
+    },
+    {
+     "coluna": "CPP_SERIAL",
+     "situacao": "MEDIDA",
+     "motivo": null,
+     "tempos_s": [
+      0.079224,
+      0.083377,
+      0.080239
+     ],
+     "media_s": 0.08094666666666667,
+     "desvio_s": 0.002165051115639846,
+     "contexto_s": null,
+     "speedup_python": 83.90190855295799,
+     "speedup_cpp": null,
+     "uplift": "39549.83",
+     "diferenca_uplift": 0.0,
+     "divergente": false
+    },
+    {
+     "coluna": "OPENMP",
+     "situacao": "MEDIDA",
+     "motivo": null,
+     "tempos_s": [
+      0.01422,
+      0.015302,
+      0.014686
+     ],
+     "media_s": 0.014735999999999999,
+     "desvio_s": 0.0005427301355185649,
+     "contexto_s": null,
+     "speedup_python": 460.88353856768725,
+     "speedup_cpp": 5.493123416576186,
+     "uplift": "39549.83",
+     "diferenca_uplift": 0.0,
+     "divergente": false
+    },
+    {
+     "coluna": "GPU",
+     "situacao": "MEDIDA",
+     "motivo": null,
+     "tempos_s": [
+      0.226572,
+      0.226657,
+      0.208765
+     ],
+     "media_s": 0.22066466666666665,
+     "desvio_s": 0.010305501265505392,
+     "contexto_s": 0.216176,
+     "speedup_python": 30.777831027169913,
+     "speedup_cpp": 0.36683111931528084,
+     "uplift": "39549.83",
+     "diferenca_uplift": 0.0,
+     "divergente": false
+    }
+   ],
+   "ambiente": {
+    "threads": 8,
+    "gpu": "NVIDIA GeForce RTX 4060",
+    "compilador": "g++ 13.3.0"
+   },
+   "disputada": false,
+   "motivo": null,
+   "explicacao_gpu": "Com 500 parceiros, a GPU não ganha do CPU paralelo: ela gasta 216 ms para começar — iniciar o driver e criar o contexto da placa — antes de qualquer conta. A busca em si leva 4,5 ms, 3,3x mais rápida que a do CPU paralelo. Ela ganha nas campanhas maiores, quando a busca pesa mais que esse custo fixo. É um resultado legítimo, e não um defeito.",
+   "escalabilidade": null
+  }
+ ],
+ "total": 1,
+ "pagina": 1,
+ "tamanho": 10
+}

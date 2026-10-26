@@ -2,15 +2,9 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 /*
- * A interface fala com a API **pela mesma origem**, e isso não é conveniência.
- *
- * O cookie de sessão é `HttpOnly` com `SameSite=Lax`, e a API não tem CORS
- * configurado. Servir a interface numa origem diferente exigiria abrir CORS no
- * backend e afrouxar o cookie para `SameSite=None; Secure` — ou seja, mexer na
- * postura de segurança do servidor para acomodar o cliente. Em HTTP local, nem
- * funcionaria.
- *
- * Com o proxy, o navegador vê um endereço só. Nada muda no backend.
+ * A interface fala com a API pela mesma origem: o cookie de sessão é HttpOnly com
+ * SameSite=Lax e a API não abre CORS. Em desenvolvimento, o Vite repassa /api para
+ * GIH_API_URL; em produção, quem serve o dist/ faz o mesmo papel.
  */
 const API = process.env.GIH_API_URL || "http://localhost:8000";
 
@@ -19,13 +13,19 @@ export default defineConfig({
   server: {
     host: true, // acessível de fora do contêiner
     port: 5173,
-    proxy: {
-      "/api": { target: API, changeOrigin: false },
-    },
+    proxy: { "/api": { target: API, changeOrigin: false } },
+  },
+  preview: {
+    proxy: { "/api": { target: API, changeOrigin: false } },
+  },
+  build: {
+    outDir: "dist",
+    sourcemap: false,
   },
   test: {
     environment: "jsdom",
     setupFiles: "./src/testes/preparar.js",
     globals: true,
+    testTimeout: 15000,
   },
 });

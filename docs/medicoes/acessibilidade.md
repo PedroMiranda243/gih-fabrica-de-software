@@ -12,9 +12,9 @@ Três verificações, em três lugares:
 
 | Item | Valor |
 |---|---|
-| Data | 02/10/2026 21:14 |
-| Navegador | Microsoft Edge 154.0.4258.48, sem cabeça, pelo Playwright |
-| axe-core | 4.13.0 |
+| Data | 22/10/2026 14:54 |
+| Navegador | Microsoft Edge 155.0.4283.62, sem cabeça, pelo Playwright |
+| axe-core | 4.14.0 |
 | Dados | a base de trabalho, com a massa do gerador; dois planos calculados para a medição e apagados depois |
 | Máquina | Windows 10, Python 3.11.9 |
 
@@ -27,29 +27,87 @@ api/.venv/Scripts/python scripts/medir_telas.py
 
 ## O contraste dos tokens (RNF22)
 
-**19 de 19 pares passam nos dois temas.** O texto pede 4,5:1; a borda de um campo e o anel de foco, 3:1 (WCAG 1.4.11).
+**77 de 77 pares passam nos dois temas.** O texto pede 4,5:1; a borda de um campo e o anel de foco, 3:1 (WCAG 1.4.11).
 
 | Frente | Fundo | Mínimo | Claro | Escuro |
 |---|---|--:|--:|--:|
-| `--ink` | `--ground` | 4,50:1 | 16,74:1 | 16,72:1 |
-| `--ink` | `--surface` | 4,50:1 | 17,79:1 | 16,03:1 |
-| `--ink` | `--surface-2` | 4,50:1 | 15,87:1 | 15,10:1 |
-| `--ink` | `--acao-fraca` | 4,50:1 | 16,18:1 | 14,25:1 |
-| `--ink-2` | `--ground` | 4,50:1 | 5,63:1 | 8,75:1 |
-| `--ink-2` | `--surface` | 4,50:1 | 5,98:1 | 8,39:1 |
-| `--ink-2` | `--surface-2` | 4,50:1 | 5,34:1 | 7,90:1 |
-| `--ink-2` | `--acao-fraca` | 4,50:1 | 5,44:1 | 7,46:1 |
-| `--acao-ink` | `--ground` | 4,50:1 | 5,13:1 | 8,80:1 |
-| `--acao-ink` | `--surface` | 4,50:1 | 5,45:1 | 8,44:1 |
-| `--acao-ink` | `--surface-2` | 4,50:1 | 4,87:1 | 7,95:1 |
-| `--acao-ink` | `--acao-fraca` | 4,50:1 | 4,96:1 | 7,50:1 |
-| `--acao-sobre` | `--acao` | 4,50:1 | 5,58:1 | 8,27:1 |
-| `--borda-controle` | `--ground` | 3,00:1 | 3,36:1 | 3,67:1 |
-| `--borda-controle` | `--surface` | 3,00:1 | 3,57:1 | 3,52:1 |
-| `--borda-controle` | `--surface-2` | 3,00:1 | 3,19:1 | 3,31:1 |
-| `--acao-ink` | `--ground` | 3,00:1 | 5,13:1 | 8,80:1 |
-| `--acao-ink` | `--surface` | 3,00:1 | 5,45:1 | 8,44:1 |
-| `--acao-ink` | `--surface-2` | 3,00:1 | 4,87:1 | 7,95:1 |
+| `--carbono` | `--chao` | 4,50:1 | 16,13:1 | 17,47:1 |
+| `--carbono` | `--etiqueta` | 4,50:1 | 18,42:1 | 15,72:1 |
+| `--carbono` | `--etiqueta-2` | 4,50:1 | 17,18:1 | 14,43:1 |
+| `--carbono` | `--acao-fundo` | 4,50:1 | 15,68:1 | 13,34:1 |
+| `--carbono` | `--neutro-fundo` | 4,50:1 | 16,26:1 | 14,26:1 |
+| `--carbono` | `--erro-fundo` | 4,50:1 | 16,15:1 | 14,50:1 |
+| `--carbono` | `--atencao-fundo` | 4,50:1 | 16,81:1 | 13,62:1 |
+| `--carbono` | `--sucesso-fundo` | 4,50:1 | 16,52:1 | 13,68:1 |
+| `--carbono-2` | `--chao` | 4,50:1 | 6,58:1 | 8,65:1 |
+| `--carbono-2` | `--etiqueta` | 4,50:1 | 7,51:1 | 7,79:1 |
+| `--carbono-2` | `--etiqueta-2` | 4,50:1 | 7,00:1 | 7,15:1 |
+| `--carbono-2` | `--acao-fundo` | 4,50:1 | 6,39:1 | 6,61:1 |
+| `--carbono-2` | `--neutro-fundo` | 4,50:1 | 6,63:1 | 7,06:1 |
+| `--carbono-2` | `--erro-fundo` | 4,50:1 | 6,59:1 | 7,18:1 |
+| `--carbono-2` | `--atencao-fundo` | 4,50:1 | 6,86:1 | 6,75:1 |
+| `--carbono-2` | `--sucesso-fundo` | 4,50:1 | 6,74:1 | 6,78:1 |
+| `--carbono-3` | `--etiqueta` | 4,50:1 | 4,93:1 | 5,69:1 |
+| `--carbono-3` | `--etiqueta-2` | 4,50:1 | 4,60:1 | 5,22:1 |
+| `--acao` | `--chao` | 4,50:1 | 6,47:1 | 8,43:1 |
+| `--acao` | `--etiqueta` | 4,50:1 | 7,40:1 | 7,59:1 |
+| `--acao` | `--etiqueta-2` | 4,50:1 | 6,89:1 | 6,96:1 |
+| `--acao` | `--acao-fundo` | 4,50:1 | 6,29:1 | 6,44:1 |
+| `--erro` | `--chao` | 4,50:1 | 5,26:1 | 7,80:1 |
+| `--erro` | `--etiqueta` | 4,50:1 | 6,01:1 | 7,02:1 |
+| `--erro` | `--etiqueta-2` | 4,50:1 | 5,60:1 | 6,44:1 |
+| `--erro` | `--erro-fundo` | 4,50:1 | 5,27:1 | 6,48:1 |
+| `--atencao` | `--chao` | 4,50:1 | 5,54:1 | 12,02:1 |
+| `--atencao` | `--etiqueta` | 4,50:1 | 6,33:1 | 10,82:1 |
+| `--atencao` | `--etiqueta-2` | 4,50:1 | 5,90:1 | 9,93:1 |
+| `--atencao` | `--atencao-fundo` | 4,50:1 | 5,78:1 | 9,37:1 |
+| `--sucesso` | `--chao` | 4,50:1 | 4,70:1 | 10,80:1 |
+| `--sucesso` | `--etiqueta` | 4,50:1 | 5,37:1 | 9,72:1 |
+| `--sucesso` | `--etiqueta-2` | 4,50:1 | 5,01:1 | 8,92:1 |
+| `--sucesso` | `--sucesso-fundo` | 4,50:1 | 4,81:1 | 8,45:1 |
+| `--variacao-boa` | `--chao` | 4,50:1 | 4,70:1 | 10,80:1 |
+| `--variacao-boa` | `--etiqueta` | 4,50:1 | 5,37:1 | 9,72:1 |
+| `--variacao-boa` | `--etiqueta-2` | 4,50:1 | 5,01:1 | 8,92:1 |
+| `--variacao-ruim` | `--chao` | 4,50:1 | 5,64:1 | 8,51:1 |
+| `--variacao-ruim` | `--etiqueta` | 4,50:1 | 6,44:1 | 7,66:1 |
+| `--variacao-ruim` | `--etiqueta-2` | 4,50:1 | 6,01:1 | 7,03:1 |
+| `--acao-tinta` | `--acao` | 4,50:1 | 7,40:1 | 8,43:1 |
+| `--acao-tinta` | `--acao-forte` | 4,50:1 | 10,18:1 | 11,34:1 |
+| `--erro-tinta` | `--erro` | 4,50:1 | 6,01:1 | 7,84:1 |
+| `--lacre-tinta` | `--lacre` | 4,50:1 | 12,74:1 | 12,74:1 |
+| `--etiqueta` | `--carbono` | 4,50:1 | 18,42:1 | 15,72:1 |
+| `--nailon-tinta` | `--nailon` | 4,50:1 | 15,62:1 | 16,60:1 |
+| `--nailon-tinta` | `--nailon-2` | 4,50:1 | 13,75:1 | 15,13:1 |
+| `--nailon-tinta-2` | `--nailon` | 4,50:1 | 8,10:1 | 8,60:1 |
+| `--nailon-tinta-2` | `--nailon-2` | 4,50:1 | 7,13:1 | 7,84:1 |
+| `--nailon-tinta-forte` | `--nailon` | 4,50:1 | 19,18:1 | 20,37:1 |
+| `--nailon-tinta-forte` | `--nailon-2` | 4,50:1 | 16,88:1 | 18,58:1 |
+| `--rota-tinta` | `--rota-analise` | 4,50:1 | 9,13:1 | 9,13:1 |
+| `--rota-tinta` | `--rota-previsao` | 4,50:1 | 8,43:1 | 8,43:1 |
+| `--rota-tinta` | `--rota-otimizacao` | 4,50:1 | 8,71:1 | 8,71:1 |
+| `--rota-tinta` | `--rota-comunicacao` | 4,50:1 | 9,37:1 | 9,37:1 |
+| `--rota-tinta` | `--rota-administracao` | 4,50:1 | 9,00:1 | 9,00:1 |
+| `--seg-prospeccao-tinta` | `--seg-prospeccao-fundo` | 4,50:1 | 6,93:1 | 9,51:1 |
+| `--seg-recem-chegado-tinta` | `--seg-recem-chegado-fundo` | 4,50:1 | 7,80:1 | 9,17:1 |
+| `--seg-em-risco-tinta` | `--seg-em-risco-fundo` | 4,50:1 | 7,68:1 | 9,08:1 |
+| `--seg-top-tinta` | `--seg-top-fundo` | 4,50:1 | 7,80:1 | 9,29:1 |
+| `--seg-em-ascensao-tinta` | `--seg-em-ascensao-fundo` | 4,50:1 | 6,74:1 | 9,60:1 |
+| `--seg-estavel-tinta` | `--seg-estavel-fundo` | 4,50:1 | 7,38:1 | 9,63:1 |
+| `--rota-analise` | `--nailon` | 4,50:1 | 9,13:1 | 9,70:1 |
+| `--rota-analise` | `--nailon-2` | 4,50:1 | 8,03:1 | 8,84:1 |
+| `--rota-previsao` | `--nailon` | 4,50:1 | 8,43:1 | 8,96:1 |
+| `--rota-previsao` | `--nailon-2` | 4,50:1 | 7,42:1 | 8,17:1 |
+| `--rota-otimizacao` | `--nailon` | 4,50:1 | 8,71:1 | 9,25:1 |
+| `--rota-otimizacao` | `--nailon-2` | 4,50:1 | 7,67:1 | 8,44:1 |
+| `--rota-comunicacao` | `--nailon` | 4,50:1 | 9,37:1 | 9,95:1 |
+| `--rota-comunicacao` | `--nailon-2` | 4,50:1 | 8,25:1 | 9,08:1 |
+| `--rota-administracao` | `--nailon` | 4,50:1 | 9,00:1 | 9,56:1 |
+| `--rota-administracao` | `--nailon-2` | 4,50:1 | 7,92:1 | 8,72:1 |
+| `--fio-forte` | `--etiqueta` | 3,00:1 | 3,22:1 | 4,54:1 |
+| `--fio-forte` | `--etiqueta-2` | 3,00:1 | 3,00:1 | 4,16:1 |
+| `--foco` | `--chao` | 3,00:1 | 6,47:1 | 8,43:1 |
+| `--foco` | `--etiqueta` | 3,00:1 | 7,40:1 | 7,59:1 |
+| `--foco` | `--etiqueta-2` | 3,00:1 | 6,89:1 | 6,96:1 |
 
 ## As telas
 
@@ -66,8 +124,8 @@ api/.venv/Scripts/python scripts/medir_telas.py
 | Assistente | `/assistente` | gestor | ok | ok | 0 | 0 |
 | Campanha | `/campanha` | gestor | ok | ok | 0 | 0 |
 | Execuções | `/execucoes` | gestor | ok | ok | 0 | 0 |
-| Execução | `/execucoes/7` | gestor | ok | ok | 0 | 0 |
-| Comparação | `/execucoes/comparar?a=7&b=8` | gestor | ok | ok | 0 | 0 |
+| Execução | `/execucoes/44` | gestor | ok | ok | 0 | 0 |
+| Comparação | `/execucoes/comparar?a=44&b=45` | gestor | ok | ok | 0 | 0 |
 | Mensagens | `/mensagens` | gestor | ok | ok | 0 | 0 |
 | Aprovação | `/aprovacao` | gestor | ok | ok | 0 | 0 |
 | Benchmark | `/benchmark` | gestor | ok | ok | 0 | 0 |
@@ -78,7 +136,7 @@ api/.venv/Scripts/python scripts/medir_telas.py
 | Relatório da campanha | `/relatorios/campanha` | gestor | ok | ok | 0 | 0 |
 | Usuários | `/usuarios` | administrador | ok | ok | 0 | 0 |
 | Novo usuário | `/usuarios/novo` | administrador | ok | ok | 0 | 0 |
-| Conta do usuário | `/usuarios/31` | administrador | ok | ok | 0 | 0 |
+| Conta do usuário | `/usuarios/38` | administrador | ok | ok | 0 | 0 |
 | Auditoria | `/auditoria` | administrador | ok | ok | 0 | 0 |
 | Relatório de operações | `/relatorios/operacoes` | administrador | ok | ok | 0 | 0 |
 | Limiares | `/configuracao` | administrador | ok | ok | 0 | 0 |
@@ -88,35 +146,16 @@ api/.venv/Scripts/python scripts/medir_telas.py
 | Ajuda | `/ajuda` | gestor | ok | ok | 0 | 0 |
 | Ajuda do parceiro | `/ajuda` | parceiro | ok | ok | 0 | 0 |
 
-**O que rola na própria caixa** — e a página fica no lugar: a tabela larga e, a 768 px, o menu, que vira uma faixa no topo.
+**O que rola na própria caixa** — e a página fica no lugar: a tabela larga. A 768 px, o menu vira gaveta e sai da tela.
 
 | Tela | Largura | Caixas |
 |---|--:|---|
-| Painel | 768 px | `nav.trilho`, `div.tabela-rolagem` |
-| Importação | 768 px | `nav.trilho`, `div.tabela-rolagem` |
-| Parceiros | 768 px | `nav.trilho`, `div.tabela-rolagem` |
-| Novo parceiro | 768 px | `nav.trilho` |
-| Cadastro do parceiro | 768 px | `nav.trilho` |
-| Assistente | 768 px | `nav.trilho` |
-| Campanha | 768 px | `nav.trilho`, `div.tabela-rolagem` |
-| Execuções | 768 px | `nav.trilho`, `div.tabela-rolagem` |
-| Execução | 768 px | `nav.trilho`, `div.tabela-rolagem` |
-| Comparação | 768 px | `nav.trilho`, `div.tabela-rolagem` |
-| Mensagens | 768 px | `nav.trilho` |
-| Aprovação | 768 px | `nav.trilho` |
-| Benchmark | 768 px | `nav.trilho` |
-| Modelo | 768 px | `nav.trilho`, `div.tabela-rolagem` |
-| Relatórios | 768 px | `nav.trilho` |
-| Relatório de desempenho | 768 px | `nav.trilho` |
-| Relatório de risco | 768 px | `nav.trilho`, `div.tabela-rolagem` |
-| Relatório da campanha | 768 px | `nav.trilho` |
-| Usuários | 768 px | `nav.trilho` |
-| Novo usuário | 768 px | `nav.trilho` |
-| Conta do usuário | 768 px | `nav.trilho` |
-| Auditoria | 768 px | `nav.trilho`, `div.tabela-rolagem` |
-| Relatório de operações | 768 px | `nav.trilho` |
-| Limiares | 768 px | `nav.trilho` |
-| Ajuda | 768 px | `nav.trilho` |
+| Painel | 768 px | `div.caixa-tabela` |
+| Parceiros | 768 px | `div.caixa-tabela` |
+| Campanha | 768 px | `div.caixa-tabela` |
+| Execução | 768 px | `div.caixa-tabela` |
+| Relatório de risco | 768 px | `div.caixa-tabela` |
+| Auditoria | 768 px | `div.caixa-tabela` |
 
 ## As capturas
 

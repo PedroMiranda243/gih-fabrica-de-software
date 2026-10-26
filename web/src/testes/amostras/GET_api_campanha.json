@@ -1,0 +1,512 @@
+{
+ "modelo_versao": "rede-1",
+ "periodo_base": {
+  "id": 12,
+  "data_inicio": "2026-09-28",
+  "data_fim": "2026-10-04"
+ },
+ "top_n": 15,
+ "elegiveis": 469,
+ "excluidos": {
+  "historico_curto": 31,
+  "fora_do_periodo": 0,
+  "sem_previsao": 0,
+  "inativos": 0,
+  "em_prospeccao": 0
+ },
+ "sem_categoria": 0,
+ "categorias": [
+  {
+   "id": 6,
+   "nome": "Açaí e sorvetes",
+   "elegiveis": 29
+  },
+  {
+   "id": 8,
+   "nome": "Bebidas",
+   "elegiveis": 22
+  },
+  {
+   "id": 7,
+   "nome": "Farmácia",
+   "elegiveis": 27
+  },
+  {
+   "id": 9,
+   "nome": "Gás e água",
+   "elegiveis": 17
+  },
+  {
+   "id": 2,
+   "nome": "Lanchonete",
+   "elegiveis": 111
+  },
+  {
+   "id": 5,
+   "nome": "Mercado",
+   "elegiveis": 42
+  },
+  {
+   "id": 4,
+   "nome": "Padaria",
+   "elegiveis": 48
+  },
+  {
+   "id": 10,
+   "nome": "Petshop",
+   "elegiveis": 23
+  },
+  {
+   "id": 3,
+   "nome": "Pizzaria",
+   "elegiveis": 53
+  },
+  {
+   "id": 1,
+   "nome": "Restaurante",
+   "elegiveis": 97
+  }
+ ],
+ "acoes": [
+  {
+   "id": 1,
+   "nome": "Cupom de primeira compra",
+   "custo_unitario": "120.00",
+   "efeito_crescimento": "0.0800",
+   "efeito_retencao": "0.0300",
+   "ativa": true
+  },
+  {
+   "id": 2,
+   "nome": "Destaque na vitrine",
+   "custo_unitario": "260.00",
+   "efeito_crescimento": "0.1400",
+   "efeito_retencao": "0.0500",
+   "ativa": true
+  },
+  {
+   "id": 3,
+   "nome": "Campanha de categoria",
+   "custo_unitario": "480.00",
+   "efeito_crescimento": "0.2200",
+   "efeito_retencao": "0.0800",
+   "ativa": true
+  },
+  {
+   "id": 4,
+   "nome": "Visita de relacionamento",
+   "custo_unitario": "90.00",
+   "efeito_crescimento": "0.0600",
+   "efeito_retencao": "0.3000",
+   "ativa": true
+  },
+  {
+   "id": 5,
+   "nome": "Frete subsidiado",
+   "custo_unitario": "350.00",
+   "efeito_crescimento": "0.1800",
+   "efeito_retencao": "0.1200",
+   "ativa": true
+  }
+ ],
+ "em_andamento": null,
+ "ultima": {
+  "id": 4,
+  "situacao": "CONCLUIDA",
+  "autor": "Medição Gestor",
+  "modo": "GPU",
+  "substituicao": null,
+  "threads": null,
+  "iniciada_em": "2026-10-05T07:57:36.084628Z",
+  "concluida_em": "2026-10-05T07:57:36.472656Z",
+  "parametros": {
+   "orcamento": "8000.00",
+   "maximo_acoes": 30,
+   "cota_cauda_longa": null,
+   "cotas_categoria": [],
+   "aplicacao_inicio": "2026-10-05",
+   "aplicacao_fim": "2026-10-11",
+   "modo": null
+  },
+  "periodo_base": {
+   "id": 12,
+   "data_inicio": "2026-09-28",
+   "data_fim": "2026-10-04"
+  },
+  "modelo_versao": "rede-1",
+  "viavel": true,
+  "restricao_violada": null,
+  "motivo": null,
+  "ajuda": null,
+  "uplift_total": "132875.95",
+  "custo_total": "7900.00",
+  "tempo_ms": 306,
+  "parcial": false,
+  "acoes": 30,
+  "elegiveis": 469,
+  "excluidos": {
+   "historico_curto": 31,
+   "fora_do_periodo": 0,
+   "sem_previsao": 0,
+   "inativos": 0,
+   "em_prospeccao": 0
+  },
+  "cotas": [],
+  "folga_orcamento": "100",
+  "folga_acoes": 0,
+  "ganho_guloso": "116299.48",
+  "itens": [
+   {
+    "parceiro_id": 246,
+    "parceiro": "Ponto Azul 2",
+    "segmento": "EM_RISCO",
+    "categoria": "Mercado",
+    "cauda_longa": false,
+    "acao_id": 3,
+    "acao": "Campanha de categoria",
+    "custo": "480.00",
+    "ganho": "20258.30"
+   },
+   {
+    "parceiro_id": 460,
+    "parceiro": "Quintal Verde 2",
+    "segmento": "TOP",
+    "categoria": "Restaurante",
+    "cauda_longa": false,
+    "acao_id": 3,
+    "acao": "Campanha de categoria",
+    "custo": "480.00",
+    "ganho": "14950.60"
+   },
+   {
+    "parceiro_id": 214,
+    "parceiro": "Villa da Praça",
+    "segmento": "TOP",
+    "categoria": "Petshop",
+    "cauda_longa": false,
+    "acao_id": 3,
+    "acao": "Campanha de categoria",
+    "custo": "480.00",
+    "ganho": "7673.63"
+   },
+   {
+    "parceiro_id": 152,
+    "parceiro": "Quintal da Serra",
+    "segmento": "TOP",
+    "categoria": "Restaurante",
+    "cauda_longa": false,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "7596.23"
+   },
+   {
+    "parceiro_id": 181,
+    "parceiro": "Celeiro do Chef",
+    "segmento": "TOP",
+    "categoria": "Bebidas",
+    "cauda_longa": false,
+    "acao_id": 3,
+    "acao": "Campanha de categoria",
+    "custo": "480.00",
+    "ganho": "7125.68"
+   },
+   {
+    "parceiro_id": 484,
+    "parceiro": "Casa Caseiro 2",
+    "segmento": "TOP",
+    "categoria": "Açaí e sorvetes",
+    "cauda_longa": false,
+    "acao_id": 3,
+    "acao": "Campanha de categoria",
+    "custo": "480.00",
+    "ganho": "6121.04"
+   },
+   {
+    "parceiro_id": 381,
+    "parceiro": "Esquina do Vale 3",
+    "segmento": "TOP",
+    "categoria": "Lanchonete",
+    "cauda_longa": false,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "6081.52"
+   },
+   {
+    "parceiro_id": 74,
+    "parceiro": "Espaço do Chef",
+    "segmento": "TOP",
+    "categoria": "Lanchonete",
+    "cauda_longa": false,
+    "acao_id": 3,
+    "acao": "Campanha de categoria",
+    "custo": "480.00",
+    "ganho": "5773.82"
+   },
+   {
+    "parceiro_id": 339,
+    "parceiro": "Forno da Serra 2",
+    "segmento": "TOP",
+    "categoria": "Gás e água",
+    "cauda_longa": false,
+    "acao_id": 3,
+    "acao": "Campanha de categoria",
+    "custo": "480.00",
+    "ganho": "4980.76"
+   },
+   {
+    "parceiro_id": 263,
+    "parceiro": "Parada Mineiro 2",
+    "segmento": "TOP",
+    "categoria": "Lanchonete",
+    "cauda_longa": false,
+    "acao_id": 3,
+    "acao": "Campanha de categoria",
+    "custo": "480.00",
+    "ganho": "4122.22"
+   },
+   {
+    "parceiro_id": 7,
+    "parceiro": "Parada Central",
+    "segmento": "TOP",
+    "categoria": "Farmácia",
+    "cauda_longa": false,
+    "acao_id": 3,
+    "acao": "Campanha de categoria",
+    "custo": "480.00",
+    "ganho": "4098.91"
+   },
+   {
+    "parceiro_id": 14,
+    "parceiro": "Casa Verde",
+    "segmento": "TOP",
+    "categoria": "Restaurante",
+    "cauda_longa": false,
+    "acao_id": 3,
+    "acao": "Campanha de categoria",
+    "custo": "480.00",
+    "ganho": "3982.25"
+   },
+   {
+    "parceiro_id": 314,
+    "parceiro": "Quintal do Sol 3",
+    "segmento": "ESTAVEL",
+    "categoria": "Restaurante",
+    "cauda_longa": true,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "3912.23"
+   },
+   {
+    "parceiro_id": 382,
+    "parceiro": "Cantina Popular 3",
+    "segmento": "EM_RISCO",
+    "categoria": "Restaurante",
+    "cauda_longa": true,
+    "acao_id": 3,
+    "acao": "Campanha de categoria",
+    "custo": "480.00",
+    "ganho": "3488.07"
+   },
+   {
+    "parceiro_id": 235,
+    "parceiro": "Espaço do Vale 2",
+    "segmento": "TOP",
+    "categoria": "Mercado",
+    "cauda_longa": false,
+    "acao_id": 3,
+    "acao": "Campanha de categoria",
+    "custo": "480.00",
+    "ganho": "3253.63"
+   },
+   {
+    "parceiro_id": 266,
+    "parceiro": "Varanda Express 3",
+    "segmento": "ESTAVEL",
+    "categoria": "Lanchonete",
+    "cauda_longa": true,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "2988.88"
+   },
+   {
+    "parceiro_id": 375,
+    "parceiro": "Varanda Express 4",
+    "segmento": "ESTAVEL",
+    "categoria": "Farmácia",
+    "cauda_longa": true,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "2834.59"
+   },
+   {
+    "parceiro_id": 226,
+    "parceiro": "Esquina do Vale 2",
+    "segmento": "ESTAVEL",
+    "categoria": "Lanchonete",
+    "cauda_longa": true,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "2646.51"
+   },
+   {
+    "parceiro_id": 442,
+    "parceiro": "Esquina do Chef 3",
+    "segmento": "ESTAVEL",
+    "categoria": "Bebidas",
+    "cauda_longa": true,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "2405.46"
+   },
+   {
+    "parceiro_id": 425,
+    "parceiro": "Parada Azul 2",
+    "segmento": "ESTAVEL",
+    "categoria": "Lanchonete",
+    "cauda_longa": true,
+    "acao_id": 5,
+    "acao": "Frete subsidiado",
+    "custo": "350.00",
+    "ganho": "2404.51"
+   },
+   {
+    "parceiro_id": 310,
+    "parceiro": "Ponto Central 3",
+    "segmento": "EM_RISCO",
+    "categoria": "Restaurante",
+    "cauda_longa": true,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "1980.44"
+   },
+   {
+    "parceiro_id": 377,
+    "parceiro": "Forno Real 2",
+    "segmento": "ESTAVEL",
+    "categoria": "Restaurante",
+    "cauda_longa": true,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "1804.12"
+   },
+   {
+    "parceiro_id": 118,
+    "parceiro": "Villa da Serra",
+    "segmento": "ESTAVEL",
+    "categoria": "Padaria",
+    "cauda_longa": true,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "1764.40"
+   },
+   {
+    "parceiro_id": 82,
+    "parceiro": "Espaço da Praça",
+    "segmento": "ESTAVEL",
+    "categoria": "Farmácia",
+    "cauda_longa": true,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "1712.28"
+   },
+   {
+    "parceiro_id": 388,
+    "parceiro": "Villa do Vale 2",
+    "segmento": "EM_RISCO",
+    "categoria": "Bebidas",
+    "cauda_longa": true,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "1682.14"
+   },
+   {
+    "parceiro_id": 13,
+    "parceiro": "Parada Bom Prato",
+    "segmento": "EM_RISCO",
+    "categoria": "Lanchonete",
+    "cauda_longa": true,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "1529.90"
+   },
+   {
+    "parceiro_id": 356,
+    "parceiro": "Espaço Real 3",
+    "segmento": "ESTAVEL",
+    "categoria": "Padaria",
+    "cauda_longa": true,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "1479.58"
+   },
+   {
+    "parceiro_id": 256,
+    "parceiro": "Espaço Caseiro 2",
+    "segmento": "ESTAVEL",
+    "categoria": "Padaria",
+    "cauda_longa": true,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "1452.12"
+   },
+   {
+    "parceiro_id": 84,
+    "parceiro": "Villa do Sol",
+    "segmento": "ESTAVEL",
+    "categoria": "Pizzaria",
+    "cauda_longa": true,
+    "acao_id": 4,
+    "acao": "Visita de relacionamento",
+    "custo": "90.00",
+    "ganho": "1394.44"
+   },
+   {
+    "parceiro_id": 469,
+    "parceiro": "Villa Express 4",
+    "segmento": "ESTAVEL",
+    "categoria": "Lanchonete",
+    "cauda_longa": true,
+    "acao_id": 5,
+    "acao": "Frete subsidiado",
+    "custo": "350.00",
+    "ganho": "1377.69"
+   }
+  ]
+ },
+ "pode_executar": true,
+ "motivo_bloqueio": null,
+ "pode_editar_catalogo": true,
+ "modos": [
+  {
+   "modo": "GPU",
+   "disponivel": true,
+   "motivo": null
+  },
+  {
+   "modo": "CPU_PARALELO",
+   "disponivel": true,
+   "motivo": null
+  },
+  {
+   "modo": "SERIAL",
+   "disponivel": true,
+   "motivo": null
+  }
+ ],
+ "modo_automatico": "GPU"
+}

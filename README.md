@@ -160,12 +160,12 @@ rode com a aplicação livre. Nenhum dos scripts deixa resíduo no banco.
 | [01 — Visão do produto](docs/01-visao-do-produto.md) | Tema, problema, objetivos, público-alvo, KPIs |
 | [02 — Requisitos](docs/02-requisitos.md) | 56 requisitos funcionais e 30 não funcionais, com rastreabilidade |
 | [03 — Casos de uso](docs/03-casos-de-uso.md) | 16 casos de uso, diagrama e especificação detalhada |
-| [04 — Product Backlog](docs/04-product-backlog.md) | 9 épicos e 105 histórias priorizadas |
+| [04 — Product Backlog](docs/04-product-backlog.md) | 9 épicos e 106 histórias priorizadas |
 | [05 — Cronograma](docs/05-cronograma.md) | O plano e o realizado das 13 sprints semanais, o que resta até 05/12/2026, marcos e riscos |
 | [06 — Equipe e processo](docs/06-equipe-e-processo.md) | Papéis, cerimônias, Definition of Done, fluxo Git |
-| [07 — Arquitetura](docs/07-arquitetura-preliminar.md) | As camadas e onde cada uma roda, o núcleo, as decisões (ADR-001 a ADR-014), o ambiente |
+| [07 — Arquitetura](docs/07-arquitetura-preliminar.md) | As camadas e onde cada uma roda, o núcleo, as decisões (ADR-001 a ADR-015), o ambiente |
 | [08 — Modelo de dados](docs/08-modelo-de-dados.md) | Diagrama ER, entidades, restrições e índices |
-| [09 — Sistema visual](docs/09-sistema-visual.md) | Paleta validada, tipografia, espaçamento e estados vazios |
+| [09 — Sistema visual](docs/09-sistema-visual.md) | As regras de cor, a paleta medida, tipografia, espaçamento, estados vazios e o mapa das telas |
 | [10 — Diagrama de classes](docs/10-diagrama-de-classes.md) | O domínio, os serviços e o núcleo computacional, em nove diagramas |
 | [11 — Rastreabilidade](docs/11-rastreabilidade.md) | Cada requisito com o caso de uso, a rota, a tela e o teste, conferidos pela suíte |
 | [Medições](docs/medicoes/) | O núcleo em CPU e GPU, o otimizador, o modelo preditivo, o assistente e a acessibilidade — gerados por script |

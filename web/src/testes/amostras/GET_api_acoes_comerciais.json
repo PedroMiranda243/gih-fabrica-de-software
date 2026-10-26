@@ -1,0 +1,42 @@
+[
+ {
+  "id": 1,
+  "nome": "Cupom de primeira compra",
+  "custo_unitario": "120.00",
+  "efeito_crescimento": "0.0800",
+  "efeito_retencao": "0.0300",
+  "ativa": true
+ },
+ {
+  "id": 2,
+  "nome": "Destaque na vitrine",
+  "custo_unitario": "260.00",
+  "efeito_crescimento": "0.1400",
+  "efeito_retencao": "0.0500",
+  "ativa": true
+ },
+ {
+  "id": 3,
+  "nome": "Campanha de categoria",
+  "custo_unitario": "480.00",
+  "efeito_crescimento": "0.2200",
+  "efeito_retencao": "0.0800",
+  "ativa": true
+ },
+ {
+  "id": 4,
+  "nome": "Visita de relacionamento",
+  "custo_unitario": "90.00",
+  "efeito_crescimento": "0.0600",
+  "efeito_retencao": "0.3000",
+  "ativa": true
+ },
+ {
+  "id": 5,
+  "nome": "Frete subsidiado",
+  "custo_unitario": "350.00",
+  "efeito_crescimento": "0.1800",
+  "efeito_retencao": "0.1200",
+  "ativa": true
+ }
+]

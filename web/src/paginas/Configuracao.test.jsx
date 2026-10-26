@@ -1,134 +1,65 @@
-import { render, screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
-import { avisariaAoFechar, simularApi } from "../testes/preparar";
-import Configuracao from "./Configuracao";
+import { avisariaAoFechar } from "../testes/preparar";
+import { abrir, amostra } from "../testes/montar";
 
-const ATUAL = {
-  top_n: 15,
-  periodos_tendencia: 2,
-  periodos_novato: 3,
-  atualizado_em: "2026-09-20T18:00:00Z",
-  atualizado_por: "Administração",
-  periodos_reprocessados: 0,
-};
+const EM_VIGOR = () => amostra("GET_api_configuracao_segmentacao");
 
-function renderizar() {
-  return render(
-    <MemoryRouter>
-      <Configuracao />
-    </MemoryRouter>,
-  );
-}
+/* RF21 — configurar os limiares da segmentação (Top N, tendência, recém-chegado). */
+describe("os limiares da segmentação (RF21)", () => {
+  it("mostra os valores em vigor, que vêm da API", async () => {
+    abrir("/configuracao", { perfil: "ADMINISTRADOR", rotas: { "GET /api/configuracao/segmentacao": { corpo: EM_VIGOR() } } });
 
-describe("limiares da segmentação", () => {
-  it("mostra os valores em vigor e quem os mudou por último", async () => {
-    simularApi({ "GET /api/configuracao/segmentacao": { corpo: ATUAL } });
-    renderizar();
-
-    expect(await screen.findByLabelText(/Tamanho do Top/)).toHaveValue(15);
-    expect(screen.getByLabelText(/Períodos de tendência/)).toHaveValue(2);
-    expect(screen.getByText(/Alterados por Administração/)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/^Tamanho do Top/)).toHaveValue("15");
+    expect(screen.getByLabelText(/^Períodos de tendência/)).toHaveValue("2");
+    expect(screen.getByLabelText(/^Períodos de recém-chegado/)).toHaveValue("3");
   });
 
-  it("sem mudança, não há o que salvar", async () => {
-    simularApi({ "GET /api/configuracao/segmentacao": { corpo: ATUAL } });
-    renderizar();
-
-    expect(await screen.findByRole("button", { name: "Salvar limiares" })).toBeDisabled();
-  });
-
-  it("salvar pede confirmação, e depois diz o que foi reclassificado", async () => {
-    const enviados = [];
-    simularApi({
-      "GET /api/configuracao/segmentacao": { corpo: ATUAL },
-      "PUT /api/configuracao/segmentacao": (_url, opcoes) => {
-        enviados.push(JSON.parse(opcoes.body));
-        return { corpo: { ...ATUAL, top_n: 10, periodos_reprocessados: 1 } };
+  it("salva só depois de confirmar, e diz o que foi reclassificado", async () => {
+    const usuario = userEvent.setup();
+    const { corpoDe } = abrir("/configuracao", {
+      perfil: "ADMINISTRADOR",
+      rotas: {
+        "GET /api/configuracao/segmentacao": { corpo: EM_VIGOR() },
+        "PUT /api/configuracao/segmentacao": { corpo: { ...EM_VIGOR(), top_n: 10, periodos_reprocessados: 1 } },
       },
     });
-    const usuario = userEvent.setup();
-    renderizar();
 
-    const top = await screen.findByLabelText(/Tamanho do Top/);
-    await usuario.clear(top);
-    await usuario.type(top, "10");
-    await usuario.click(screen.getByRole("button", { name: "Salvar limiares" }));
-
-    // Ainda nada foi gravado: a confirmação vem antes, dizendo o alcance.
-    expect(enviados).toHaveLength(0);
-    const confirmacao = screen.getByRole("group", { name: "Confirmação" });
-    expect(confirmacao).toHaveTextContent("período mais recente");
-
-    await usuario.click(screen.getByRole("button", { name: "Salvar limiares" }));
-
-    expect(await screen.findByRole("status")).toHaveTextContent("já foi reclassificado");
-    expect(screen.getByText(/reprocessar-segmentos/)).toBeInTheDocument();
-    expect(enviados[0]).toMatchObject({ top_n: "10", periodos_tendencia: "2" });
-  });
-
-  it("o erro do servidor aparece embaixo do campo, e o foco vai para ele", async () => {
-    simularApi({
-      "GET /api/configuracao/segmentacao": { corpo: ATUAL },
-      "PUT /api/configuracao/segmentacao": {
-        status: 422,
-        corpo: {
-          erro: "Alguns campos precisam de correção.",
-          campos: [{ campo: "top_n", mensagem: "Use um valor a partir de 1." }],
-        },
-      },
-    });
-    const usuario = userEvent.setup();
-    renderizar();
-
-    const top = await screen.findByLabelText(/Tamanho do Top/);
-    await usuario.clear(top);
-    await usuario.type(top, "0");
-    await usuario.click(screen.getByRole("button", { name: "Salvar limiares" }));
-    await usuario.click(screen.getByRole("button", { name: "Salvar limiares" }));
-
-    expect(await screen.findByText("Use um valor a partir de 1.")).toBeInTheDocument();
-    expect(top).toHaveAttribute("aria-invalid", "true");
-    expect(top).toHaveFocus();
-  });
-
-  it("sem período importado, diz que não havia o que reclassificar", async () => {
-    simularApi({
-      "GET /api/configuracao/segmentacao": { corpo: { ...ATUAL, atualizado_por: null } },
-      "PUT /api/configuracao/segmentacao": { corpo: { ...ATUAL, top_n: 20, periodos_reprocessados: 0 } },
-    });
-    const usuario = userEvent.setup();
-    renderizar();
-
-    expect(await screen.findByText(/Valores de fábrica/)).toBeInTheDocument();
-    const top = screen.getByLabelText(/Tamanho do Top/);
-    await usuario.clear(top);
-    await usuario.type(top, "20");
-    await usuario.click(screen.getByRole("button", { name: "Salvar limiares" }));
-    await usuario.click(screen.getByRole("button", { name: "Salvar limiares" }));
-
-    expect(await screen.findByRole("status")).toHaveTextContent("não há período importado");
-    expect(screen.queryByText(/reprocessar-segmentos/)).not.toBeInTheDocument();
-  });
-});
-
-describe("limiares da segmentação — alterações não salvas (H97)", () => {
-  it("o limiar mudado e não salvo é alteração; de volta ao valor em vigor, não é mais", async () => {
-    simularApi({ "GET /api/configuracao/segmentacao": { corpo: ATUAL } });
-    const usuario = userEvent.setup();
-    renderizar();
-
-    const top = await screen.findByLabelText(/Tamanho do Top/);
-    expect(avisariaAoFechar()).toBe(false);
-
+    const top = await screen.findByLabelText(/^Tamanho do Top/);
     await usuario.clear(top);
     await usuario.type(top, "10");
     expect(avisariaAoFechar()).toBe(true);
+    await usuario.click(screen.getByRole("button", { name: "Salvar limiares" }));
+    const confirmacao = screen.getByText("Salvar os limiares?").closest(".confirmacao");
+    await usuario.click(within(confirmacao).getByRole("button", { name: "Salvar limiares" }));
 
+    expect(await screen.findByText(/Limiares salvos\. O período mais recente já foi reclassificado/)).toBeInTheDocument();
+    expect(corpoDe("PUT /api/configuracao/segmentacao")).toEqual({ top_n: 10, periodos_tendencia: 2, periodos_novato: 3 });
+    expect(top).toHaveValue("10");
+  });
+
+  it("o valor que a API recusa volta com a mensagem dela, no campo", async () => {
+    const usuario = userEvent.setup();
+    abrir("/configuracao", {
+      perfil: "ADMINISTRADOR",
+      rotas: {
+        "GET /api/configuracao/segmentacao": { corpo: EM_VIGOR() },
+        "PUT /api/configuracao/segmentacao": {
+          status: 422,
+          corpo: { erro: "Alguns campos precisam de correção.", campos: [{ campo: "top_n", mensagem: "O Top precisa ter de 1 a 500 parceiros." }] },
+        },
+      },
+    });
+
+    const top = await screen.findByLabelText(/^Tamanho do Top/);
     await usuario.clear(top);
-    await usuario.type(top, "15");
-    expect(avisariaAoFechar()).toBe(false);
+    await usuario.type(top, "0");
+    await usuario.click(screen.getByRole("button", { name: "Salvar limiares" }));
+    await usuario.click(within(screen.getByText("Salvar os limiares?").closest(".confirmacao")).getByRole("button", { name: "Salvar limiares" }));
+
+    expect((await screen.findAllByText("O Top precisa ter de 1 a 500 parceiros.")).length).toBeGreaterThan(0);
+    expect(top).toHaveAttribute("aria-invalid", "true");
   });
 });

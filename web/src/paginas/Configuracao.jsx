@@ -1,226 +1,115 @@
 /**
- * Limiares da segmentação (RF21, H34) — só o Administrador.
- *
- * Os três números que decidem a régua de RN01 para a rede inteira: quantos são
- * o Top, quantos períodos seguidos fazem tendência, e até quando um parceiro é
- * recém-chegado. **A validação é do servidor** (regra 2.4): os atributos `min` e
- * `max` só dão as setas do campo, e `noValidate` deixa a mensagem da API — em
- * português, dizendo o limite — aparecer embaixo do campo certo.
- *
- * **O que a gravação faz é dito antes e depois.** A API reclassifica só o
- * período mais recente; os anteriores ficam com a classificação antiga até o
- * reprocessamento completo, pelo terminal. Configuração que muda menos do que a
- * pessoa imagina engana quem a mudou — por isso a confirmação avisa, e o aviso
- * de sucesso repete com o número que a API devolveu.
+ * Configuração — os três números que decidem a segmentação da rede inteira. O que
+ * a gravação faz é dito antes e depois. A tela não valida: o limite vem da API.
  */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { api } from "../api/cliente";
-import { Esqueleto } from "../componentes/Carregando";
+import { useCarregar } from "../api/ganchos";
 import AlteracoesNaoSalvas from "../componentes/AlteracoesNaoSalvas";
-import Campo from "../componentes/Campo";
 import Confirmacao from "../componentes/Confirmacao";
-import { comoDataHora } from "../formato";
-import "../estilos/configuracao.css";
+import { Carregando, ErroDaTela, Sucesso } from "../componentes/Estados";
+import { Campo, ResumoDeErros } from "../componentes/Formulario";
+import { useErrosDoFormulario } from "../componentes/useErrosDoFormulario";
+import Lacre from "../componentes/Lacre";
+import { useTitulo } from "../componentes/Titulo";
 
-/* Rótulo e explicação de cada limiar. O texto acompanha a descrição de
-   `LimiaresSegmentacao` na API; os limites de `max` espelham os de lá só para
-   as setas do campo — quem recusa é o servidor. */
-const LIMIARES = [
-  {
-    nome: "top_n",
-    rotulo: "Tamanho do Top",
-    ajuda: "Quantos parceiros, a partir do maior faturamento do período, formam o Top.",
-    max: 1000,
-  },
-  {
-    nome: "periodos_tendencia",
-    rotulo: "Períodos de tendência",
-    ajuda:
-      "Quantos períodos seguidos de queda classificam como em risco — e de alta, como em ascensão.",
-    max: 52,
-  },
-  {
-    nome: "periodos_novato",
-    rotulo: "Períodos de recém-chegado",
-    ajuda: "Com histórico menor que isto, o parceiro é recém-chegado.",
-    max: 52,
-  },
+const CAMPOS = [
+  ["top_n", "Tamanho do Top", "Quantos parceiros, a partir do maior faturamento do período, formam o Top."],
+  ["periodos_tendencia", "Períodos de tendência", "Quantos períodos seguidos de queda classificam como em risco — e de alta, como em ascensão."],
+  ["periodos_novato", "Períodos de recém-chegado", "Com histórico menor que isto, o parceiro é recém-chegado."],
 ];
 
-const COMANDO = "docker compose exec api python -m app.cli reprocessar-segmentos";
-
-function valoresDe(configuracao) {
-  return Object.fromEntries(LIMIARES.map(({ nome }) => [nome, String(configuracao[nome])]));
-}
+const comoTexto = (c) => Object.fromEntries(CAMPOS.map(([k]) => [k, String(c[k])]));
 
 export default function Configuracao() {
-  const [atual, setAtual] = useState(null);
-  const [valores, setValores] = useState(null);
-  const [erroCarga, setErroCarga] = useState(null);
-  const [erro, setErro] = useState(null);
-  const [sucesso, setSucesso] = useState(null);
+  useTitulo("Configuração");
+  const conf = useCarregar(() => api.get("/api/configuracao/segmentacao"), "conf");
+  if (conf.carregando) return <Carregando rotulo="Carregando os limiares" linhas={5} />;
+  if (conf.erro) return <ErroDaTela erro={conf.erro} />;
+  return <Limiares inicial={conf.dados} />;
+}
+
+function Limiares({ inicial }) {
+  const [atual, setAtual] = useState(inicial);
+  const [v, setV] = useState(() => comoTexto(inicial));
   const [confirmando, setConfirmando] = useState(false);
   const [enviando, setEnviando] = useState(false);
-
-  useEffect(() => {
-    let vivo = true;
-    api
-      .get("/api/configuracao/segmentacao")
-      .then((c) => {
-        if (!vivo) return;
-        setAtual(c);
-        setValores(valoresDe(c));
-      })
-      .catch((e) => vivo && setErroCarga(e));
-    return () => {
-      vivo = false;
-    };
-  }, []);
-
-  if (erroCarga) {
-    return (
-      <div className="aviso" role="alert">
-        <p className="aviso__titulo">{erroCarga.message}</p>
-        {erroCarga.ajuda && <p className="aviso__ajuda">{erroCarga.ajuda}</p>}
-      </div>
-    );
-  }
-
-  if (!atual) {
-    return (
-      <section className="painel" aria-busy="true" aria-label="Carregando os limiares">
-        <div className="limiares">
-          <Esqueleto altura={220} />
-        </div>
-      </section>
-    );
-  }
-
-  const mudou = LIMIARES.some(({ nome }) => valores[nome] !== String(atual[nome]));
-  const erroDoCampo = Object.fromEntries((erro?.campos ?? []).map((c) => [c.campo, c]));
-
-  function mudar(nome, valor) {
-    setValores((v) => ({ ...v, [nome]: valor }));
-    // A confirmação e o aviso falam do que estava na tela quando apareceram.
-    setSucesso(null);
-    setConfirmando(false);
-  }
-
-  function pedirConfirmacao(evento) {
-    evento.preventDefault();
-    setErro(null);
-    setConfirmando(true);
-  }
+  const [sucesso, setSucesso] = useState(null);
+  const { erros, receber, limpar, limparCampo, registrar } = useErrosDoFormulario();
+  const emVigor = comoTexto(atual);
+  const alterado = CAMPOS.some(([k]) => v[k] !== emVigor[k]);
 
   async function salvar() {
     setEnviando(true);
+    limpar();
     try {
-      const salvo = await api.put("/api/configuracao/segmentacao", valores);
-      setAtual(salvo);
-      setValores(valoresDe(salvo));
-      setSucesso(salvo.periodos_reprocessados);
-      setErro(null);
+      const num = (s) => (s.trim() === "" || Number.isNaN(Number(s)) ? s : Number(s));
+      const r = await api.put("/api/configuracao/segmentacao", Object.fromEntries(CAMPOS.map(([k]) => [k, num(v[k])])));
+      setAtual(r);
+      setV(comoTexto(r));
+      setSucesso(
+        r.periodos_reprocessados > 0
+          ? "Limiares salvos. O período mais recente já foi reclassificado com os valores novos. Os anteriores mantêm a classificação que tinham."
+          : "Limiares salvos. Ainda não há período importado para reclassificar. Os próximos já entram com os valores novos.",
+      );
+      setConfirmando(false);
     } catch (e) {
-      setErro(e);
-      const primeiro = LIMIARES.find(({ nome }) => e.campos?.some((c) => c.campo === nome));
-      if (primeiro) document.getElementById(`campo-${primeiro.nome}`)?.focus();
+      setConfirmando(false);
+      receber(e, { ordem: CAMPOS.map(([k]) => k) });
     } finally {
       setEnviando(false);
-      setConfirmando(false);
     }
   }
 
   return (
-    <>
-      <AlteracoesNaoSalvas quando={mudou} />
-
-      {sucesso !== null && (
-        <div className="aviso aviso--sucesso" role="status">
-          <p className="aviso__titulo">Limiares salvos.</p>
-          <p className="aviso__ajuda">
-            {sucesso > 0
-              ? "O período mais recente já foi reclassificado com os valores novos. Os anteriores " +
-                "mantêm a classificação de antes até o reprocessamento completo, pelo terminal:"
-              : "Ainda não há período importado para reclassificar. Os próximos já entram com os " +
-                "valores novos."}
-          </p>
-          {sucesso > 0 && <code className="limiares__comando">{COMANDO}</code>}
-        </div>
-      )}
-
-      {erro && !erro.campos?.length && (
-        <div className="aviso" role="alert">
-          <p className="aviso__titulo">{erro.message}</p>
-          {erro.ajuda && <p className="aviso__ajuda">{erro.ajuda}</p>}
-        </div>
-      )}
-
-      <section className="painel" aria-labelledby="titulo-limiares">
-        <div className="painel__cabecalho">
-          <h2 className="painel__titulo" id="titulo-limiares">
+    <div className="pagina">
+      <section className="bloco coluna-estreita" aria-labelledby="t-limiares">
+        <div className="bloco__cabeca">
+          <h2 id="t-limiares" className="bloco__titulo">
             Limiares da segmentação
           </h2>
-          <span className="painel__nota">
-            {atual.atualizado_por
-              ? `Alterados por ${atual.atualizado_por} em ${comoDataHora(atual.atualizado_em)}`
-              : "Valores de fábrica — ninguém alterou ainda"}
-          </span>
+          <p className="bloco__sub">Valem para a rede inteira, e para todos os perfis.</p>
         </div>
-
-        <form className="limiares" onSubmit={pedirConfirmacao} noValidate>
-          <p className="limiares__nota">
-            Estes três números decidem o segmento de cada parceiro na rede inteira. Mudá-los
-            reclassifica o período mais recente assim que você salvar.
-          </p>
-
-          <div className="limiares__campos">
-            {LIMIARES.map(({ nome, rotulo, ajuda, max }) => (
-              <Campo key={nome} id={nome} rotulo={rotulo} obrigatorio erro={erroDoCampo[nome]} ajuda={ajuda}>
-                <input
-                  id={`campo-${nome}`}
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  max={max}
-                  value={valores[nome]}
-                  onChange={(e) => mudar(nome, e.target.value)}
-                />
-              </Campo>
-            ))}
-          </div>
-
+        {atual.atualizado_por ? <Lacre titulo="Limiares em vigor" quem={atual.atualizado_por} quando={atual.atualizado_em} novo={Boolean(sucesso)} /> : <p className="valor-leitura discreto">Valores de fábrica — ninguém alterou ainda.</p>}
+        <form
+          className="formulario"
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            setSucesso(null);
+            setConfirmando(true);
+          }}
+        >
+          {sucesso && <Sucesso foco>{sucesso}</Sucesso>}
+          <ResumoDeErros erros={erros} rotulos={Object.fromEntries(CAMPOS.map(([k, r]) => [k, r]))} />
+          {CAMPOS.map(([k, rotulo, ajuda]) => (
+            <Campo key={k} nome={k} rotulo={rotulo} obrigatorio erro={erros.campos[k]} ajuda={`${ajuda} Em vigor: ${atual[k]}.`}>
+              {(a) => <input {...a} ref={registrar(k)} className="entrada entrada--numero" inputMode="numeric" value={v[k]} onChange={(e) => (setV((x) => ({ ...x, [k]: e.target.value })), limparCampo(k), setSucesso(null))} />}
+            </Campo>
+          ))}
           {confirmando ? (
             <Confirmacao
-              texto={
-                "Salvar os limiares? A rede é reclassificada agora no período mais recente; os " +
-                "anteriores só mudam com o reprocessamento pelo terminal."
-              }
+              texto="Salvar os limiares?"
+              detalhe="A rede é reclassificada agora no período mais recente; os anteriores mantêm a classificação antiga. O painel, a lista de parceiros e a próxima campanha passam a usar os valores novos."
               acao="Salvar limiares"
               ocupado={enviando}
               aoConfirmar={salvar}
               aoCancelar={() => setConfirmando(false)}
             />
           ) : (
-            <div className="limiares__acoes">
-              <button className="botao" type="submit" disabled={!mudou}>
+            <div className="formulario__acoes">
+              <button type="submit" className="botao botao--primario" disabled={!alterado}>
                 Salvar limiares
               </button>
-              <button
-                type="button"
-                className="botao botao--secundario"
-                disabled={!mudou}
-                onClick={() => {
-                  setValores(valoresDe(atual));
-                  setErro(null);
-                }}
-              >
+              <button type="button" className="botao botao--fantasma" disabled={!alterado} onClick={() => (setV(emVigor), limpar())}>
                 Desfazer mudanças
               </button>
             </div>
           )}
         </form>
+        <AlteracoesNaoSalvas quando={alterado && !enviando} />
       </section>
-    </>
+    </div>
   );
 }

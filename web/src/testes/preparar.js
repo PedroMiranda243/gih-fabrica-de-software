@@ -1,8 +1,13 @@
 import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/react";
+import { cleanup, configure } from "@testing-library/react";
 import { afterEach, expect, vi } from "vitest";
 
 import { violacoes } from "./acessibilidade";
+
+/* As telas são carregadas sob demanda. Na primeira abertura de cada uma, com a
+   suíte inteira rodando em paralelo, a importação passa de 1 s — a espera padrão
+   do findBy. 5 s dá folga sem esconder tela que nunca chega. */
+configure({ asyncUtilTimeout: 5000 });
 
 /* **Todo teste termina com a tela conferida pelo axe** (H76): rótulos, papéis e
    nomes acessíveis, no estado em que o teste a deixou — vazio, carregando, com
@@ -16,8 +21,9 @@ afterEach(async () => {
   expect(achadas, "violações de acessibilidade na tela do teste").toEqual([]);
 });
 
-/* O jsdom não implementa `matchMedia`. Sem isto o hook de tema quebraria em
-   todo teste que renderiza a casca. */
+/* O jsdom não implementa `matchMedia`, a rolagem nem a impressão. Sem isto o
+   tema quebraria em todo teste que renderiza a casca, e a troca de tela, que
+   rola para o topo, encheria o console de "Not implemented". */
 if (!window.matchMedia) {
   window.matchMedia = () => ({
     matches: false,
@@ -25,6 +31,9 @@ if (!window.matchMedia) {
     removeEventListener: () => {},
   });
 }
+window.scrollTo = () => {};
+window.print = () => {};
+Element.prototype.scrollIntoView = function scrollIntoView() {};
 
 /**
  * Responde às chamadas da API a partir de uma tabela de rotas.
@@ -38,7 +47,12 @@ export function simularApi(rotas) {
     const metodo = opcoes.method ?? "GET";
     const caminho = String(url).split("?")[0];
     const chave = `${metodo} ${caminho}`;
-    const resposta = rotas[chave];
+    /* "GET /api/parceiros/:id" responde por qualquer identificador. */
+    const resposta =
+      rotas[chave] ??
+      Object.entries(rotas).find(([modelo]) =>
+        modelo.includes("/:") && new RegExp(`^${modelo.replace(/:[a-z_]+/g, "[^/]+")}$`).test(chave),
+      )?.[1];
 
     if (!resposta) {
       return new Response(JSON.stringify({ detail: `rota não simulada: ${chave}` }), {
@@ -46,7 +60,8 @@ export function simularApi(rotas) {
       });
     }
 
-    const { status = 200, corpo = null } = typeof resposta === "function" ? resposta(url, opcoes) : resposta;
+    /* A resposta pode ser uma promessa: o teste a segura para ver a tela esperando. */
+    const { status = 200, corpo = null } = typeof resposta === "function" ? await resposta(url, opcoes) : resposta;
     return new Response(status === 204 ? null : JSON.stringify(corpo), { status });
   });
 }

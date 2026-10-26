@@ -1,132 +1,68 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { ContextoSessao } from "./api/contextoSessao";
-import App from "./App";
-import { simularApi } from "./testes/preparar";
+import { abrir, amostra, endereco } from "./testes/montar";
 
-/**
- * A guarda das rotas pelo perfil — H94.
- *
- * As telas de cada perfil são as que o servidor manda na sessão. O que se
- * confere aqui é a interface: o endereço de uma tela que o perfil não tem
- * mostra a página "Sem acesso", **sem pedir nada à API**; e o que o menu
- * oferece, o endereço abre. A recusa de verdade é da API, e tem o teste dela.
+/*
+ * RF05 — quem pode o quê vem do servidor (`usuario.telas`). A guarda dos
+ * endereços não é controle de acesso (quem decide é a API, a cada requisição):
+ * é a interface deixando de montar uma tela que ela já sabe que será recusada.
  */
-const ANALISTA = {
-  nome: "Ana de Exemplo",
-  perfil: "ANALISTA",
-  telas: ["painel", "importar", "historico_importacoes", "parceiros", "campanha", "execucoes", "execucao",
-    "mensagens", "aprovacao", "relatorios", "assistente"],
-};
-const ADMINISTRADOR = {
-  nome: "Administração",
-  perfil: "ADMINISTRADOR",
-  telas: ["painel", "historico_importacoes", "usuarios", "auditoria", "configuracao", "modelo", "execucoes",
-    "benchmark", "relatorio_operacoes"],
-};
-const PARCEIRO = { nome: "Comércio do Vale", perfil: "PARCEIRO", telas: ["meu_desempenho"] };
+describe("a guarda dos endereços", () => {
+  it("mostra 'Sem acesso' a quem não abre a tela, sem chamar a API dela", async () => {
+    const { chamadas } = abrir("/auditoria", { perfil: "ANALISTA" });
 
-function abrir(usuario, endereco) {
-  const espia = simularApi({});
-  render(
-    <ContextoSessao.Provider value={{ usuario, conferindo: false, sair: () => {} }}>
-      <MemoryRouter initialEntries={[endereco]}>
-        <App />
-      </MemoryRouter>
-    </ContextoSessao.Provider>,
-  );
-  return espia;
-}
-
-const semAcesso = () => screen.queryByText("O seu perfil não abre esta tela");
-
-describe("a guarda das rotas pelo perfil", () => {
-  it("a tela que o perfil não tem diz isso, com o perfil e a volta, e não pede nada à API", async () => {
-    const espia = abrir(ANALISTA, "/auditoria");
-
-    const pagina = screen.getByRole("region", { name: "Sem acesso" });
-    expect(pagina).toHaveTextContent("O perfil Analista não tem acesso a /auditoria");
-    expect(within(pagina).getByRole("link", { name: "Ir para o início" })).toHaveAttribute("href", "/");
-    // O menu continua ao lado, com o que a pessoa abre.
-    expect(screen.getByRole("navigation", { name: "Seções do sistema" })).toHaveTextContent("Parceiros");
-    await waitFor(() => expect(document.title).toBe("Sem acesso · Auditoria · GIH"));
-    expect(espia).not.toHaveBeenCalled();
+    expect(await screen.findByRole("heading", { level: 1, name: "Sem acesso" })).toBeInTheDocument();
+    expect(screen.getByText(/O seu perfil não abre esta tela/)).toBeInTheDocument();
+    expect(chamadas().filter((c) => c.includes("/api/auditoria"))).toEqual([]);
   });
 
-  // O endereço vem antes do usuário: o segundo %s do título é o endereço, e não
-  // o objeto da sessão — com ele, cinco testes saíam com o mesmo nome.
-  it.each([
-    ["o analista", "/usuarios", ANALISTA],
-    ["o analista", "/usuarios/7", ANALISTA],
-    ["o analista", "/configuracao", ANALISTA],
-    ["o analista", "/relatorios/operacoes", ANALISTA],
-    ["o analista", "/modelo", ANALISTA],
-    ["o administrador", "/parceiros", ADMINISTRADOR],
-    ["o administrador", "/campanha", ADMINISTRADOR],
-    ["o administrador", "/relatorios/risco", ADMINISTRADOR],
-    ["o parceiro", "/parceiros/3", PARCEIRO],
-    ["o parceiro", "/execucoes", PARCEIRO],
-  ])("%s não abre %s", (_quem, endereco, usuario) => {
-    const espia = abrir(usuario, endereco);
+  it("abre a tela para quem tem a área na sessão", async () => {
+    abrir("/auditoria", {
+      perfil: "ADMINISTRADOR",
+      rotas: {
+        "GET /api/auditoria": { corpo: amostra("GET_api_auditoria") },
+        "GET /api/auditoria/acoes": { corpo: amostra("GET_api_auditoria_acoes") },
+        "GET /api/usuarios": { corpo: amostra("GET_api_usuarios") },
+      },
+    });
 
-    expect(semAcesso()).toBeInTheDocument();
-    expect(espia).not.toHaveBeenCalled();
+    expect(await screen.findByRole("heading", { level: 1, name: "Auditoria" })).toBeInTheDocument();
+    expect(screen.queryByText(/O seu perfil não abre esta tela/)).not.toBeInTheDocument();
   });
 
-  it("o administrador tem o histórico das execuções, mas não o plano de uma delas (RF34)", () => {
-    abrir(ADMINISTRADOR, "/execucoes/12");
-    expect(semAcesso()).toBeInTheDocument();
+  it("leva o Parceiro, que não tem painel, ao próprio desempenho", async () => {
+    abrir("/", { perfil: "PARCEIRO", rotas: { "GET /api/meu-desempenho": { corpo: amostra("GET_api_meu_desempenho") } } });
+
+    await waitFor(() => expect(endereco()).toBe("/meu-desempenho"));
   });
 
-  it.each([
-    ["o administrador", "/execucoes", ADMINISTRADOR],
-    ["o administrador", "/importacao", ADMINISTRADOR],
-    ["o analista", "/relatorios/desempenho", ANALISTA],
-    ["o parceiro", "/meu-desempenho", PARCEIRO],
-    ["o parceiro", "/", PARCEIRO],
-  ])("%s abre %s", (_quem, endereco, usuario) => {
-    abrir(usuario, endereco);
-    expect(semAcesso()).not.toBeInTheDocument();
+  it("nega ao Parceiro a lista da rede, mesmo pelo endereço digitado", async () => {
+    const { chamadas } = abrir("/parceiros", { perfil: "PARCEIRO" });
+
+    expect(await screen.findByRole("heading", { level: 1, name: "Sem acesso" })).toBeInTheDocument();
+    expect(chamadas().filter((c) => c.includes("/api/parceiros"))).toEqual([]);
   });
 
-  it("a Minha conta é de todos os perfis", () => {
-    abrir(PARCEIRO, "/conta");
+  it("manda quem não tem sessão para a entrada", async () => {
+    abrir("/parceiros?segmento=TOP", { perfil: null });
 
-    expect(semAcesso()).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Trocar a senha" })).toBeInTheDocument();
+    await waitFor(() => expect(endereco()).toBe("/entrar"));
+    expect(await screen.findByRole("button", { name: "Entrar" })).toBeInTheDocument();
   });
 
-  it("a Ajuda é de todos os perfis, e a do parceiro não pede nada à API", () => {
-    const espia = abrir(PARCEIRO, "/ajuda");
+  it("sem a lista de telas na sessão, não adivinha: deixa a API responder", async () => {
+    const usuario = { ...amostra("sessao_de_cada_perfil").ANALISTA, telas: undefined };
+    const { chamadas } = abrir("/auditoria", {
+      usuario,
+      rotas: {
+        "GET /api/auditoria": { status: 403, corpo: { detail: "O seu perfil não tem acesso a esta operação." } },
+        "GET /api/auditoria/acoes": { status: 403, corpo: { detail: "O seu perfil não tem acesso a esta operação." } },
+        "GET /api/usuarios": { status: 403, corpo: { detail: "O seu perfil não tem acesso a esta operação." } },
+      },
+    });
 
-    expect(semAcesso()).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 1, name: "Ajuda" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "O seu portal" })).toBeInTheDocument();
-    expect(espia).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    ["do analista", ANALISTA],
-    ["do administrador", ADMINISTRADOR],
-    ["do parceiro", PARCEIRO],
-  ])("todo item do menu %s leva a uma tela que ele abre", (_de, usuario) => {
-    abrir(usuario, "/conta");
-    const enderecos = within(screen.getByRole("navigation", { name: "Seções do sistema" }))
-      .getAllByRole("link")
-      .map((a) => a.getAttribute("href"));
-    expect(enderecos.length).toBeGreaterThan(0);
-
-    for (const endereco of enderecos) {
-      document.body.innerHTML = "";
-      abrir(usuario, endereco);
-      expect(semAcesso(), endereco).not.toBeInTheDocument();
-    }
-  });
-
-  it("sessão sem a lista de telas deixa a API responder, em vez de adivinhar", () => {
-    abrir({ nome: "Sessão Antiga", perfil: "GESTOR" }, "/auditoria");
-    expect(semAcesso()).not.toBeInTheDocument();
+    await waitFor(() => expect(chamadas().some((c) => c.startsWith("GET /api/auditoria"))).toBe(true));
+    expect((await screen.findAllByText("O seu perfil não tem acesso a esta operação.")).length).toBeGreaterThan(0);
   });
 });

@@ -1,411 +1,226 @@
 /**
- * A ajuda — RF55, UC16, história H95.
- *
- * Quem abria o sistema pela primeira vez encontrava "Em risco", "Estimativa" e
- * "ganho esperado" sem nenhum lugar que dissesse o que são. A ajuda diz, em
- * quatro blocos: o que o perfil de quem lê faz, o que é cada segmento, o que é
- * estimativa e como se chega ao ganho esperado.
- *
- * **Nenhum número de regra está escrito aqui** (regra 2.4). O tamanho do Top,
- * os períodos de tendência e o histórico que o modelo pede vêm de
- * `GET /api/ajuda/regras`, como estão valendo agora — e a ordem dos segmentos
- * também, que é a precedência da RN01. O que a tela escreve é a frase em volta.
- *
- * **"O que você pode fazer" sai das telas que o servidor deu na sessão**, as
- * mesmas do menu: a ajuda não tem uma segunda lista de permissões para
- * discordar da primeira.
- *
- * **O Parceiro lê só a ajuda do portal dele** (RF26, UC16-A1). A sessão dele
- * não traz `ajuda_regras`, e a tela nem pede as regras: os segmentos e os
- * limiares são da operação interna.
+ * Ajuda — explica o sistema a quem chega. Os números das regras vêm de
+ * `GET /api/ajuda/regras` (só para quem tem `ajuda_regras`); o Parceiro lê só o
+ * portal dele e a tela nem pede as regras.
  */
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import { api } from "../api/cliente";
-import { useSessao } from "../api/contextoSessao";
-import { Esqueleto } from "../componentes/Carregando";
-import { ROTULO_PERFIL, ROTULO_SEGMENTO } from "../formato";
-import "../estilos/ajuda.css";
+import { useCarregar } from "../api/ganchos";
+import { tem, useSessao } from "../api/contextoSessao";
+import { Estimativa, Segmento } from "../componentes/Dados";
+import { Carregando, Nota } from "../componentes/Estados";
+import Icone from "../componentes/Icone";
+import { useTitulo } from "../componentes/Titulo";
+import { plural } from "../formato";
+import { grupoDe, itemAtivo } from "../navegacao/telas";
 
-/* O que cada área deixa fazer. `tem`: as telas que a sustentam, todas; `sem`: a
-   capacidade que, presente, troca a frase por outra mais larga. É a mesma
-   informação do menu, dita por extenso. */
-const AREAS = [
-  {
-    tem: ["painel"],
-    para: "/",
-    nome: "Painel",
-    texto: "Acompanhar os indicadores da rede, o ranking, a distribuição por segmento e quem entrou ou saiu do Top.",
-  },
-  {
-    tem: ["meu_desempenho"],
-    para: "/meu-desempenho",
-    nome: "Meu desempenho",
-    texto: "Ver o faturamento, os pedidos e o ticket médio do seu comércio, período a período.",
-  },
-  {
-    tem: ["importar"],
-    para: "/importacao",
-    nome: "Importação",
-    texto: "Importar o relatório de um período, conferindo a prévia antes de gravar, e consultar o histórico.",
-  },
-  {
-    tem: ["historico_importacoes"],
-    sem: ["importar"],
-    para: "/importacao",
-    nome: "Importação",
-    texto: "Consultar o histórico das importações. Importar não faz parte do seu perfil.",
-  },
-  {
-    tem: ["parceiros"],
-    para: "/parceiros",
-    nome: "Parceiros",
-    texto: "Cadastrar e editar parceiros, filtrar e exportar a lista e, no cadastro, ver o histórico e a previsão de cada um.",
-  },
-  {
-    tem: ["assistente"],
-    para: "/assistente",
-    nome: "Assistente",
-    texto: "Perguntar sobre os dados com as suas palavras. A resposta diz de que período veio, ou diz que não sabe.",
-  },
-  {
-    tem: ["relatorios"],
-    para: "/relatorios",
-    nome: "Relatórios",
-    texto: "Gerar os relatórios de desempenho, de parceiros em risco e da campanha, e exportá-los ou imprimi-los.",
-  },
-  {
-    tem: ["modelo"],
-    para: "/modelo",
-    nome: "Modelo",
-    texto: "Treinar o modelo de previsão e ver as métricas da versão em uso.",
-  },
-  {
-    tem: ["campanha", "calcular_campanha"],
-    para: "/campanha",
-    nome: "Campanha",
-    texto: "Calcular o plano de campanha, com o orçamento e as restrições, e consultar o catálogo de ações.",
-  },
-  {
-    tem: ["campanha"],
-    sem: ["calcular_campanha"],
-    para: "/campanha",
-    nome: "Campanha",
-    texto: "Consultar o último plano e o catálogo de ações. Calcular o plano não faz parte do seu perfil.",
-  },
-  {
-    tem: ["execucoes", "execucao"],
-    para: "/execucoes",
-    nome: "Execuções",
-    texto: "Rever os planos já calculados, abrir cada um e comparar dois.",
-  },
-  {
-    tem: ["execucoes"],
-    sem: ["execucao"],
-    para: "/execucoes",
-    nome: "Execuções",
-    texto: "Consultar o histórico das execuções do otimizador. Abrir o plano não faz parte do seu perfil.",
-  },
-  {
-    tem: ["benchmark"],
-    para: "/benchmark",
-    nome: "Benchmark",
-    texto: "Medir o otimizador nesta máquina: em série, na CPU em paralelo e na GPU.",
-  },
-  {
-    tem: ["mensagens"],
-    para: "/mensagens",
-    nome: "Mensagens",
-    texto: "Gerar as mensagens para os parceiros de um plano.",
-  },
-  {
-    tem: ["aprovacao", "decidir_mensagens"],
-    para: "/aprovacao",
-    nome: "Aprovação",
-    texto: "Aprovar, editar ou rejeitar cada mensagem. Nenhuma sai do sistema sem essa decisão.",
-  },
-  {
-    tem: ["aprovacao"],
-    sem: ["decidir_mensagens"],
-    para: "/aprovacao",
-    nome: "Aprovação",
-    texto: "Acompanhar a fila de mensagens. Aprovar, editar e rejeitar não fazem parte do seu perfil.",
-  },
-  {
-    tem: ["usuarios"],
-    para: "/usuarios",
-    nome: "Usuários",
-    texto: "Criar contas, mudar o perfil, desativar e redefinir a senha de quem a esqueceu.",
-  },
-  {
-    tem: ["auditoria"],
-    para: "/auditoria",
-    nome: "Auditoria",
-    texto: "Consultar quem fez o quê, e quando, e exportar o recorte.",
-  },
-  {
-    tem: ["relatorio_operacoes"],
-    para: "/relatorios/operacoes",
-    nome: "Operações",
-    texto: "Gerar o relatório das operações do sistema, que resume a trilha de auditoria.",
-  },
-  {
-    tem: ["configuracao"],
-    para: "/configuracao",
-    nome: "Configuração",
-    texto: "Mudar os limiares da segmentação, que valem para a rede inteira.",
-  },
-];
-
-/* De todos os perfis, e por isso fora das telas da sessão. */
-const MINHA_CONTA = {
-  para: "/conta",
-  nome: "Minha conta",
-  texto: "Ver os seus dados e trocar a sua senha.",
-};
-
-function areasDe(telas) {
-  const tem = (nome) => telas.includes(nome);
-  return [...AREAS.filter((a) => a.tem.every(tem) && !(a.sem ?? []).some(tem)), MINHA_CONTA];
+function oQuePodeFazer(u) {
+  const t = (x) => tem(u, x);
+  const itens = [];
+  if (t("painel")) itens.push(["Painel", "/", "Ver como a rede foi no período: indicadores, série, segmentos e ranking."]);
+  if (t("meu_desempenho")) itens.push(["Meu desempenho", "/meu-desempenho", "Ver o desempenho do seu comércio, período a período."]);
+  if (t("importar")) itens.push(["Importação", "/importacao", "Importar o relatório da semana, conferindo na prévia antes de gravar."]);
+  else if (t("historico_importacoes")) itens.push(["Importação", "/importacao", "Consultar o histórico das importações. Importar um relatório não faz parte do seu perfil."]);
+  if (t("parceiros")) itens.push(["Parceiros", "/parceiros", "Consultar, filtrar e exportar a lista da rede, e cadastrar ou editar um parceiro."]);
+  if (t("assistente")) itens.push(["Assistente", "/assistente", "Perguntar sobre os dados com as suas palavras, com a fonte de cada número."]);
+  if (t("relatorios")) itens.push(["Relatórios", "/relatorios", "Levar para fora do sistema o desempenho, o risco e a campanha, em CSV ou PDF."]);
+  if (t("modelo")) itens.push(["Modelo", "/modelo", "Ver a versão do modelo de previsão em uso, o quanto ela erra, e treinar de novo."]);
+  if (t("calcular_campanha")) itens.push(["Campanha", "/campanha", "Calcular o plano de campanha, com o orçamento e as restrições, e consultar o catálogo de ações."]);
+  else if (t("campanha")) itens.push(["Campanha", "/campanha", "Consultar o último plano e o catálogo de ações. Calcular o plano não faz parte do seu perfil."]);
+  if (t("execucao")) itens.push(["Execuções", "/execucoes", "Abrir cada plano calculado e comparar dois deles lado a lado."]);
+  else if (t("execucoes")) itens.push(["Execuções", "/execucoes", "Consultar o histórico das execuções do otimizador. Abrir o plano de uma delas não faz parte do seu perfil."]);
+  if (t("benchmark")) itens.push(["Benchmark", "/benchmark", "Medir o otimizador nesta máquina, nos quatro modos de execução."]);
+  if (t("mensagens")) itens.push(["Mensagens", "/mensagens", "Gerar uma mensagem para cada parceiro de um público, que vai para a fila de aprovação."]);
+  if (t("decidir_mensagens")) itens.push(["Aprovação", "/aprovacao", "Aprovar, editar ou rejeitar as mensagens geradas: nenhuma sai sem essa decisão."]);
+  else if (t("aprovacao")) itens.push(["Aprovação", "/aprovacao", "Acompanhar a fila de mensagens. Decidir é do perfil Gestor."]);
+  if (t("usuarios")) itens.push(["Usuários", "/usuarios", "Criar contas, mudar perfil, desativar e redefinir senhas."]);
+  if (t("auditoria")) itens.push(["Auditoria", "/auditoria", "Ver a trilha do que foi feito, por quem e quando."]);
+  if (t("relatorio_operacoes")) itens.push(["Operações", "/relatorios/operacoes", "Ver quanto se fez no sistema, por tipo de ação, por pessoa e por dia."]);
+  if (t("configuracao")) itens.push(["Configuração", "/configuracao", "Mudar os limiares que decidem os segmentos da rede."]);
+  itens.push(["Minha conta", "/conta", "Ver os seus dados e trocar a sua senha."]);
+  return itens;
 }
 
-const periodos = (n) => (n === 1 ? "1 período" : `${n} períodos`);
-const seguidos = (n) => (n === 1 ? "no último período" : `em ${n} períodos seguidos, ou mais`);
-
-/* O critério de cada segmento, com os limiares em vigor no lugar dos números. */
+const p = (n) => plural(n, "período", "períodos");
 const CRITERIO = {
   PROSPECCAO: () => "Marcado no cadastro como prospecção: ainda não converteu.",
-  RECEM_CHEGADO: (r) =>
-    `Tem menos de ${periodos(r.periodos_novato)} de histórico: é cedo para falar em tendência.`,
-  EM_RISCO: (r) =>
-    `O faturamento caiu ${seguidos(r.periodos_tendencia)}. Vem antes do Top de propósito: quem está entre os maiores e em queda aparece como risco, e não entre os campeões.`,
+  RECEM_CHEGADO: (r) => `Tem menos de ${p(r.periodos_novato)} de histórico: é cedo para falar em tendência.`,
+  EM_RISCO: (r) => `O faturamento caiu ${p(r.periodos_tendencia)} seguido${r.periodos_tendencia === 1 ? "" : "s"}. Vem antes do Top de propósito: quem está entre os maiores e em queda aparece como risco, e não entre os campeões.`,
   TOP: (r) => `Está entre os ${r.top_n} maiores faturamentos do período mais recente.`,
-  EM_ASCENSAO: (r) => `O faturamento subiu ${seguidos(r.periodos_tendencia)}, e o parceiro está fora do Top.`,
+  EM_ASCENSAO: (r) => `O faturamento subiu ${p(r.periodos_tendencia)} seguido${r.periodos_tendencia === 1 ? "" : "s"}, e o parceiro está fora do Top.`,
   ESTAVEL: () => "Nenhum dos critérios anteriores vale.",
 };
 
-/* O rótulo do Top leva o tamanho em vigor, e não o número escrito no rótulo comum. */
-const rotuloDe = (segmento, regras) =>
-  segmento === "TOP" ? `Top ${regras.top_n}` : (ROTULO_SEGMENTO[segmento] ?? segmento);
-
 export default function Ajuda() {
+  useTitulo("Ajuda");
   const { usuario } = useSessao();
   const { hash } = useLocation();
-  const telas = Array.isArray(usuario?.telas) ? usuario.telas : [];
-  const daRede = telas.includes("ajuda_regras");
-  const [regras, setRegras] = useState(null);
-  const [erro, setErro] = useState(null);
+  const portal = tem(usuario, "meu_desempenho") && !tem(usuario, "painel") && Array.isArray(usuario.telas);
+  const podeRegras = tem(usuario, "ajuda_regras") && !portal;
+  const regras = useCarregar(() => api.get("/api/ajuda/regras"), "regras", { ativo: podeRegras });
 
+  /* Quem chega por um link para um bloco cai nele, com o foco nele. */
   useEffect(() => {
-    if (!daRede) return undefined;
-    let vivo = true;
-    api
-      .get("/api/ajuda/regras")
-      .then((corpo) => vivo && setRegras(corpo))
-      .catch((e) => vivo && setErro(e));
-    return () => {
-      vivo = false;
-    };
-  }, [daRede]);
+    if (!hash || regras.carregando) return;
+    const alvo = document.getElementById(decodeURIComponent(hash.slice(1)));
+    if (alvo) {
+      alvo.scrollIntoView({ block: "start" });
+      alvo.focus({ preventScroll: true });
+    }
+  }, [hash, regras.carregando]);
 
-  /* Quem chegou por "o que é isto?" pediu um bloco, e não o topo da página. Só
-     depois de as regras chegarem: antes, o bloco ainda não está na tela. */
-  useEffect(() => {
-    if (!hash || (daRede && !regras)) return;
-    const bloco = document.getElementById(hash.slice(1));
-    bloco?.scrollIntoView?.({ block: "start" });
-    bloco?.focus();
-  }, [hash, daRede, regras]);
+  if (portal) {
+    return (
+      <div className="pagina ajuda">
+        <section className="bloco ajuda__bloco" id="portal" tabIndex={-1} aria-labelledby="t-portal">
+          <h2 id="t-portal" className="bloco__titulo">
+            O seu portal
+          </h2>
+          <div className="prosa">
+            <p>
+              <strong>O que aparece.</strong> O faturamento, os pedidos e o ticket médio do seu comércio, período a período — cada período é uma semana. Os três números do alto comparam o período mais recente com o anterior, só com os seus próprios números.
+            </p>
+            <p>
+              <strong>De onde vêm os números.</strong> Do relatório semanal que a operação importa no sistema. Se o último relatório não trouxe o seu comércio, o período aparece vazio, e o gráfico mostra a falta como um intervalo, e não como zero.
+            </p>
+            <p>
+              <strong>O que não aparece.</strong> Dados de outros parceiros. O portal mostra só o seu comércio.
+            </p>
+          </div>
+          <Link to="/meu-desempenho" className="link-seta">
+            Ir para Meu desempenho <Icone nome="seta-direita" />
+          </Link>
+        </section>
+      </div>
+    );
+  }
+
+  const r = regras.dados;
+  const pv = r?.previsao;
 
   return (
-    <div className="ajuda">
-      <section className="painel" aria-labelledby="o-que-fazer">
-        <div className="painel__cabecalho">
-          <h2 className="painel__titulo" id="o-que-fazer" tabIndex={-1}>
-            O que você pode fazer
-          </h2>
-          <span className="painel__nota">perfil {ROTULO_PERFIL[usuario?.perfil] ?? usuario?.perfil}</span>
-        </div>
-        <ul className="ajuda__areas">
-          {areasDe(telas).map(({ para, nome, texto }) => (
-            <li key={`${para}-${nome}`}>
-              <Link className="ajuda__area" to={para}>
-                {nome}
-              </Link>
-              <span>{texto}</span>
-            </li>
-          ))}
+    <div className="pagina ajuda">
+      <nav className="ajuda__indice" aria-label="Nesta página">
+        <a href="#pode-fazer">O que você pode fazer</a>
+        <a href="#segmentos">Os segmentos</a>
+        <a href="#estimativa">Estimativa</a>
+        <a href="#ganho">Ganho esperado</a>
+      </nav>
+
+      <section className="bloco ajuda__bloco" id="pode-fazer" tabIndex={-1} aria-labelledby="t-pode">
+        <h2 id="t-pode" className="bloco__titulo">
+          O que você pode fazer
+        </h2>
+        <ul className="pode-fazer">
+          {oQuePodeFazer(usuario).map(([rotulo, para, frase]) => {
+            const area = grupoDe(itemAtivo(para));
+            return (
+              <li key={para + rotulo}>
+                <Link to={para} className="pode-fazer__link">
+                  {rotulo}
+                </Link>
+                {area ? (
+                  <span className="rota-etiqueta rota-etiqueta--compacta" data-rota={area.rota}>
+                    <span className="rota-etiqueta__parada" aria-hidden="true" />
+                    <span className="sr-only">Área: </span>
+                    {area.grupo}
+                  </span>
+                ) : (
+                  <span aria-hidden="true" />
+                )}
+                <span>{frase}</span>
+              </li>
+            );
+          })}
         </ul>
       </section>
 
-      {!daRede && <DoPortal />}
-
-      {daRede && erro && (
-        <div className="aviso" role="alert">
-          <p className="aviso__titulo">{erro.message}</p>
-          <p className="aviso__ajuda">
-            {erro.ajuda ?? "A explicação dos segmentos e da estimativa depende das regras em vigor. Tente de novo em instantes."}
-          </p>
-        </div>
+      {podeRegras && regras.carregando && <Carregando rotulo="Carregando as regras em vigor" linhas={6} />}
+      {podeRegras && (regras.erro || !tem(usuario, "ajuda_regras")) && (
+        <Nota tipo="atencao">A explicação dos segmentos e da estimativa depende das regras em vigor. Tente de novo em instantes.</Nota>
       )}
 
-      {daRede && !regras && !erro && (
-        <section className="painel" aria-busy="true" aria-label="Carregando as regras em vigor">
-          <div className="ajuda__texto">
-            <Esqueleto altura={220} />
-          </div>
-        </section>
-      )}
+      {r && (
+        <>
+          <section className="bloco ajuda__bloco" id="segmentos" tabIndex={-1} aria-labelledby="t-segmentos">
+            <h2 id="t-segmentos" className="bloco__titulo">
+              Os segmentos
+            </h2>
+            <p className="bloco__sub">Na ordem em que a regra decide: o primeiro critério que vale define o segmento.</p>
+            <ol className="segmentos-regra">
+              {r.segmentos.map((s, i) => (
+                <li key={s}>
+                  <span className="segmentos-regra__ordem" aria-hidden="true">
+                    {i + 1}
+                  </span>
+                  <Segmento codigo={s} />
+                  <p>{CRITERIO[s]?.(r) ?? ""}</p>
+                </li>
+              ))}
+            </ol>
+            <p className="bloco__nota">
+              Os limiares de agora: Top de {r.top_n}, tendência de {p(r.periodos_tendencia)}, recém-chegado com menos de {p(r.periodos_novato)}.{" "}
+              {tem(usuario, "configuracao") ? (
+                <>
+                  Eles mudam em <Link to="/configuracao">Configuração</Link>.
+                </>
+              ) : (
+                "Quem os muda é o administrador."
+              )}
+            </p>
+          </section>
 
-      {regras && <DaRede regras={regras} mudaLimiares={telas.includes("configuracao")} />}
+          <section className="bloco ajuda__bloco bloco--estimativa" id="estimativa" tabIndex={-1} aria-labelledby="t-estimativa">
+            <div className="bloco__cabeca bloco__cabeca--etiqueta">
+              <h2 id="t-estimativa" className="bloco__titulo">
+                Estimativa
+              </h2>
+              <Estimativa />
+            </div>
+            <div className="prosa">
+              <p>
+                <strong>Medição</strong> é o que os relatórios importados trouxeram: faturamento, pedidos e ticket médio. Sai com o número do período e não muda depois. <strong>Estimativa</strong> é o que o modelo de previsão calcula para o próximo período, e aparece sempre marcada assim, com contorno tracejado.
+              </p>
+              <ul>
+                <li>
+                  <strong>Faturamento previsto</strong>: quanto o parceiro deve faturar no próximo período.
+                </li>
+                <li>
+                  <strong>Chance de queda</strong>: a probabilidade de o parceiro estar em risco no próximo período. Ela nunca se escreve como certeza: os extremos aparecem como “menos de 1%” e “mais de 99%”.
+                </li>
+              </ul>
+              <p>
+                {!pv.versao_em_uso
+                  ? `Ainda não há modelo em uso, e por isso nenhuma estimativa aparece. O primeiro treino precisa de ${p(pv.periodos_minimos_do_treino)} importados.`
+                  : pv.origem === "REFERENCIA"
+                    ? `As estimativas de agora saem da referência ${pv.versao_em_uso}: nenhuma rede treinada a superou ainda.`
+                    : `As estimativas de agora saem do modelo ${pv.versao_em_uso}.`}{" "}
+                Um parceiro com menos de {p(pv.periodos_minimos_do_parceiro)} de histórico não recebe previsão.
+              </p>
+            </div>
+          </section>
+
+          <section className="bloco ajuda__bloco bloco--estimativa" id="ganho" tabIndex={-1} aria-labelledby="t-ganho">
+            <div className="bloco__cabeca bloco__cabeca--etiqueta">
+              <h2 id="t-ganho" className="bloco__titulo">
+                Ganho esperado
+              </h2>
+              <Estimativa />
+            </div>
+            <div className="prosa">
+              <p>É quanto uma ação da campanha deve render num parceiro, no próximo período. Soma duas parcelas: o que a ação acrescenta e o que ela evita perder.</p>
+              <pre className="formula" aria-label="ganho é igual a previsto vezes crescimento, mais previsto vezes chance de queda vezes retenção">
+                {"ganho = previsto × crescimento\n      + previsto × chance de queda × retenção"}
+              </pre>
+              <p>
+                O <strong>previsto</strong> e a <strong>chance de queda</strong> são as estimativas do modelo; o <strong>crescimento</strong> e a <strong>retenção</strong> são os efeitos da ação, no catálogo da campanha. Por isso uma ação de retenção vale mais para quem está prestes a cair, e uma de crescimento, para quem fatura mais. A tela explica a conta; quem a faz é o servidor.
+              </p>
+            </div>
+          </section>
+        </>
+      )}
     </div>
-  );
-}
-
-function DaRede({ regras, mudaLimiares }) {
-  const { previsao } = regras;
-
-  return (
-    <>
-      <section className="painel" aria-labelledby="segmentos">
-        <div className="painel__cabecalho">
-          <h2 className="painel__titulo" id="segmentos" tabIndex={-1}>
-            Os segmentos
-          </h2>
-          <span className="painel__nota">na ordem em que a regra decide</span>
-        </div>
-        <div className="ajuda__texto">
-          <p>
-            Cada parceiro recebe um segmento só, calculado a cada importação. Quando mais de um critério vale
-            para o mesmo parceiro, fica o que vem primeiro nesta lista.
-          </p>
-        </div>
-        <ol className="ajuda__segmentos">
-          {regras.segmentos.map((segmento) => (
-            <li key={segmento}>
-              <span className="segmento ajuda__segmento">
-                <span
-                  className={`segmento__ponto segmento__ponto--${segmento.toLowerCase()}`}
-                  aria-hidden="true"
-                />
-                {rotuloDe(segmento, regras)}
-              </span>
-              <span>{CRITERIO[segmento]?.(regras) ?? "Sem descrição nesta versão da ajuda."}</span>
-            </li>
-          ))}
-        </ol>
-        <div className="ajuda__texto">
-          <p className="ajuda__nota">
-            Os números desta lista são os que estão valendo agora.{" "}
-            {mudaLimiares ? (
-              <>
-                Eles mudam em <Link to="/configuracao">Configuração</Link>.
-              </>
-            ) : (
-              "Quem os muda é o administrador."
-            )}
-          </p>
-        </div>
-      </section>
-
-      <section className="painel" aria-labelledby="estimativa">
-        <div className="painel__cabecalho">
-          <h2 className="painel__titulo" id="estimativa" tabIndex={-1}>
-            Estimativa
-          </h2>
-          <span className="etiqueta-estimativa">Estimativa</span>
-        </div>
-        <div className="ajuda__texto">
-          <p>
-            O faturamento, os pedidos e o segmento saem dos relatórios importados: são medição. O que leva a
-            etiqueta acima sai do modelo de previsão: é uma conta sobre o histórico, e pode errar.
-          </p>
-          <dl className="ajuda__termos">
-            <div>
-              <dt>Faturamento previsto</dt>
-              <dd>Quanto o parceiro deve faturar no próximo período.</dd>
-            </div>
-            <div>
-              <dt>Chance de queda</dt>
-              <dd>
-                A chance de o parceiro fechar o próximo período em risco — com o faturamento caindo{" "}
-                {seguidos(regras.periodos_tendencia)}, pela mesma regra do segmento Em risco.
-              </dd>
-            </div>
-          </dl>
-          <p>
-            {previsao.versao_em_uso
-              ? previsao.origem === "REFERENCIA"
-                ? `As estimativas de agora saem da referência ${previsao.versao_em_uso}: nenhuma rede treinada a superou ainda.`
-                : `As estimativas de agora saem do modelo ${previsao.versao_em_uso}.`
-              : `Ainda não há modelo em uso, e por isso nenhuma estimativa aparece. O primeiro treino precisa de ${periodos(previsao.periodos_minimos_do_treino)} importados.`}{" "}
-            Parceiro com menos de {periodos(previsao.periodos_minimos_do_parceiro)} de histórico não recebe
-            estimativa, e a tela diz por quê.
-          </p>
-        </div>
-      </section>
-
-      <section className="painel" aria-labelledby="ganho">
-        <div className="painel__cabecalho">
-          <h2 className="painel__titulo" id="ganho" tabIndex={-1}>
-            Ganho esperado
-          </h2>
-          <span className="etiqueta-estimativa">Estimativa</span>
-        </div>
-        <div className="ajuda__texto">
-          <p>
-            É quanto uma ação da campanha deve render num parceiro, no próximo período. Soma duas parcelas: o
-            que a ação acrescenta e o que ela evita perder.
-          </p>
-          {/* Uma parcela por linha: é o que o texto acima acabou de dizer. */}
-          <p className="ajuda__formula num">
-            {"ganho = previsto × crescimento\n      + previsto × chance de queda × retenção"}
-          </p>
-          <p>
-            O <strong>previsto</strong> e a <strong>chance de queda</strong> são as estimativas do modelo; o{" "}
-            <strong>crescimento</strong> e a <strong>retenção</strong> são os efeitos da ação, no catálogo. Por
-            isso uma ação de retenção vale mais para quem está prestes a cair, e uma de crescimento, para quem
-            fatura mais. O plano de campanha escolhe as ações que somam o maior ganho dentro do orçamento.
-          </p>
-        </div>
-      </section>
-    </>
-  );
-}
-
-/* A ajuda do Parceiro (UC16-A1): o que ele vê e de onde vêm os números. Nada
-   aqui é regra da rede, e por isso nada vem da API. */
-function DoPortal() {
-  return (
-    <section className="painel" aria-labelledby="portal">
-      <div className="painel__cabecalho">
-        <h2 className="painel__titulo" id="portal" tabIndex={-1}>
-          O seu portal
-        </h2>
-      </div>
-      <div className="ajuda__texto">
-        <dl className="ajuda__termos">
-          <div>
-            <dt>O que aparece</dt>
-            <dd>
-              O faturamento, os pedidos e o ticket médio do seu comércio no período mais recente, comparados
-              com o período anterior, e o histórico em gráfico e em tabela.
-            </dd>
-          </div>
-          <div>
-            <dt>De onde vêm os números</dt>
-            <dd>
-              Dos relatórios de cada período, importados pela equipe que opera a rede. O ticket médio é o
-              faturamento dividido pelo número de pedidos.
-            </dd>
-          </div>
-          <div>
-            <dt>O que não aparece</dt>
-            <dd>Dados de outros parceiros. O portal mostra só o seu comércio.</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
   );
 }

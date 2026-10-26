@@ -1,0 +1,140 @@
+{
+ "plano": {
+  "execucao_id": 4,
+  "concluida_em": "2026-10-05T07:57:36.472656Z",
+  "aplicacao_inicio": "2026-10-05",
+  "aplicacao_fim": "2026-10-11",
+  "modelo_versao": "rede-1"
+ },
+ "periodo_base": {
+  "id": 12,
+  "data_inicio": "2026-09-28",
+  "data_fim": "2026-10-04"
+ },
+ "orcamento": "8000.00",
+ "total": {
+  "chave": null,
+  "rotulo": "Total",
+  "parceiros": 30,
+  "custo": "7900.00",
+  "ganho_esperado": "132875.95"
+ },
+ "por_acao": [
+  {
+   "chave": "Campanha de categoria",
+   "rotulo": "Campanha de categoria",
+   "parceiros": 12,
+   "custo": "5760.00",
+   "ganho_esperado": "85828.91"
+  },
+  {
+   "chave": "Visita de relacionamento",
+   "rotulo": "Visita de relacionamento",
+   "parceiros": 16,
+   "custo": "1440.00",
+   "ganho_esperado": "43264.84"
+  },
+  {
+   "chave": "Frete subsidiado",
+   "rotulo": "Frete subsidiado",
+   "parceiros": 2,
+   "custo": "700.00",
+   "ganho_esperado": "3782.20"
+  }
+ ],
+ "por_categoria": [
+  {
+   "chave": "1",
+   "rotulo": "Restaurante",
+   "parceiros": 7,
+   "custo": "1800.00",
+   "ganho_esperado": "37713.94"
+  },
+  {
+   "chave": "2",
+   "rotulo": "Lanchonete",
+   "parceiros": 8,
+   "custo": "2020.00",
+   "ganho_esperado": "26925.05"
+  },
+  {
+   "chave": "5",
+   "rotulo": "Mercado",
+   "parceiros": 2,
+   "custo": "960.00",
+   "ganho_esperado": "23511.93"
+  },
+  {
+   "chave": "8",
+   "rotulo": "Bebidas",
+   "parceiros": 3,
+   "custo": "660.00",
+   "ganho_esperado": "11213.28"
+  },
+  {
+   "chave": "7",
+   "rotulo": "Farmácia",
+   "parceiros": 3,
+   "custo": "660.00",
+   "ganho_esperado": "8645.78"
+  },
+  {
+   "chave": "10",
+   "rotulo": "Petshop",
+   "parceiros": 1,
+   "custo": "480.00",
+   "ganho_esperado": "7673.63"
+  },
+  {
+   "chave": "6",
+   "rotulo": "Açaí e sorvetes",
+   "parceiros": 1,
+   "custo": "480.00",
+   "ganho_esperado": "6121.04"
+  },
+  {
+   "chave": "9",
+   "rotulo": "Gás e água",
+   "parceiros": 1,
+   "custo": "480.00",
+   "ganho_esperado": "4980.76"
+  },
+  {
+   "chave": "4",
+   "rotulo": "Padaria",
+   "parceiros": 3,
+   "custo": "270.00",
+   "ganho_esperado": "4696.10"
+  },
+  {
+   "chave": "3",
+   "rotulo": "Pizzaria",
+   "parceiros": 1,
+   "custo": "90.00",
+   "ganho_esperado": "1394.44"
+  }
+ ],
+ "por_segmento": [
+  {
+   "chave": "TOP",
+   "rotulo": "Top",
+   "parceiros": 12,
+   "custo": "4980.00",
+   "ganho_esperado": "75760.29"
+  },
+  {
+   "chave": "EM_RISCO",
+   "rotulo": "Em risco",
+   "parceiros": 5,
+   "custo": "1230.00",
+   "ganho_esperado": "28938.85"
+  },
+  {
+   "chave": "ESTAVEL",
+   "rotulo": "Estável",
+   "parceiros": 13,
+   "custo": "1690.00",
+   "ganho_esperado": "28176.81"
+  }
+ ]
+}

@@ -1,17 +1,18 @@
+/**
+ * O contexto da sessão e o que as telas leem dele. Fica num módulo sem componente
+ * (o provedor está em sessao.jsx) para a recarga rápida do Vite funcionar.
+ */
 import { createContext, useContext } from "react";
 
-/**
- * Contexto da sessão, separado do provedor.
- *
- * Arquivo de componente que também exporta hook quebra o recarregamento a
- * quente do Vite — ele só preserva estado quando o módulo exporta apenas
- * componentes. Separar custa um arquivo e mantém a edição de tela sem perder a
- * sessão a cada salvamento.
- */
-export const ContextoSessao = createContext(null);
+export const Contexto = createContext(null);
 
 export function useSessao() {
-  const contexto = useContext(ContextoSessao);
-  if (!contexto) throw new Error("useSessao precisa estar dentro de ProvedorDeSessao.");
-  return contexto;
+  return useContext(Contexto);
+}
+
+/** Se o perfil abre aquilo. Sem `telas` na sessão, a interface não adivinha: deixa a API responder. */
+export function tem(usuario, ...telas) {
+  if (!usuario) return false;
+  if (!Array.isArray(usuario.telas)) return true;
+  return telas.some((t) => usuario.telas.includes(t));
 }

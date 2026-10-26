@@ -1,169 +1,75 @@
 /**
- * Usuários do sistema (UC02) — só o Administrador.
- *
- * A lista com nome, login, perfil e situação, filtrável por perfil e por
- * situação — o passo 2 do UC02. Os filtros vivem no endereço, como na lista de
- * parceiros: voltar do cadastro devolve o mesmo recorte, e um recorte pode ser
- * mandado por link.
- *
- * O nome abre a conta. Não há "excluir": a auditoria referencia o autor de cada
- * ação, e desativar tira o acesso sem apagar o histórico (UC02-A2) — por isso
- * os desativados continuam existindo, a um filtro de distância.
- *
- * **A lista abre nos ativos.** As contas desativadas só crescem — toda
- * verificação de ponta a ponta deixa as suas, desativadas —, e o trabalho do dia
- * é com quem entra no sistema. "Todas" tem valor próprio no endereço: sem ele,
- * escolher "Todas" apagaria o parâmetro e a lista voltaria aos ativos.
- *
- * **A busca é por nome ou login** (RF52, H91), sem maiúscula nem acento, e vai
- * ao servidor: quem compara é a API, pela mesma regra da busca de parceiros.
- * Ela espera a digitação parar, como lá.
+ * Usuários — quem tem conta no sistema. A lista abre nos ativos; "Todas as
+ * situações" tem valor próprio no endereço (?ativo=todas). Não existe excluir:
+ * desativar tira o acesso sem apagar o histórico.
  */
-import { useEffect, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import { api } from "../api/cliente";
-import { Esqueleto } from "../componentes/Carregando";
-import EstadoVazio from "../componentes/EstadoVazio";
-import { comoInteiro, ROTULO_PERFIL } from "../formato";
-
-const SITUACOES = [
-  { valor: "true", rotulo: "Ativos" },
-  { valor: "false", rotulo: "Desativados" },
-  { valor: "todas", rotulo: "Todas as situações" },
-];
-const SITUACAO_PADRAO = "true";
+import { useCarregar, useFiltros } from "../api/ganchos";
+import Busca from "../componentes/Busca";
+import { Carregando, ErroDaTela, Vazio } from "../componentes/Estados";
+import Icone from "../componentes/Icone";
+import { CaixaDeTabela } from "../componentes/Lista";
+import Seletor from "../componentes/Seletor";
+import { useTitulo } from "../componentes/Titulo";
+import { plural, ROTULO_PERFIL } from "../formato";
 
 export default function Usuarios() {
-  const [parametros, setParametros] = useSearchParams();
+  useTitulo("Usuários");
   const lugar = useLocation();
-  const busca = parametros.get("busca") ?? "";
-  const perfil = parametros.get("perfil") ?? "";
-  const ativo = parametros.get("ativo") || SITUACAO_PADRAO;
-  const aqui = lugar.pathname + lugar.search;
-  const aviso = lugar.state?.aviso;
-
-  const consulta = `${busca}|${perfil}|${ativo}`;
-  const [estado, setEstado] = useState({ consulta: null, usuarios: null, erro: null });
-
-  useEffect(() => {
-    let vivo = true;
-    /* A busca espera a digitação parar, como na lista de parceiros. */
-    const relogio = setTimeout(() => {
-      api
-        .get("/api/usuarios", { busca, perfil, ativo: ativo === "todas" ? "" : ativo })
-        .then((usuarios) => vivo && setEstado({ consulta, usuarios, erro: null }))
-        .catch((erro) => vivo && setEstado({ consulta, usuarios: null, erro }));
-    }, 250);
-    return () => {
-      vivo = false;
-      clearTimeout(relogio);
-    };
-  }, [consulta, busca, perfil, ativo]);
-
-  const atual = estado.consulta === consulta;
-  const usuarios = atual ? estado.usuarios : null;
-  const erro = atual ? estado.erro : null;
-
-  function ajustar(mudancas) {
-    const proximos = new URLSearchParams(parametros);
-    Object.entries(mudancas).forEach(([chave, valor]) =>
-      valor ? proximos.set(chave, valor) : proximos.delete(chave),
-    );
-    setParametros(proximos, { replace: true });
-  }
+  const [filtros, mudar] = useFiltros();
+  const situacao = filtros.ativo ?? "true";
+  const consulta = { busca: filtros.busca, perfil: filtros.perfil, ativo: situacao === "todas" ? undefined : situacao };
+  const lista = useCarregar(() => api.get("/api/usuarios", consulta), lugar.search);
+  const d = lista.dados;
 
   return (
-    <>
-      {aviso && (
-        <div className="aviso aviso--sucesso" role="status">
-          <p className="aviso__titulo">{aviso}</p>
+    <div className="pagina">
+      <div className="barra-acoes">
+        <p className="barra-acoes__contexto">{d ? `${plural(d.length, "conta", "contas")} neste recorte` : " "}</p>
+        <div className="barra-acoes__botoes">
+          <Link className="botao botao--primario" to="/usuarios/novo">
+            <Icone nome="mais" /> Novo usuário
+          </Link>
         </div>
-      )}
-
-      <section className="painel" aria-label="Filtros dos usuários">
-        <div className="filtros">
-          <div className="campo filtros__busca">
-            <label htmlFor="busca">Buscar por nome ou login</label>
-            <input
-              id="busca"
-              type="search"
-              value={busca}
-              placeholder="Um trecho do nome ou do login"
-              onChange={(e) => ajustar({ busca: e.target.value })}
-            />
-          </div>
-          <div className="campo">
-            <label htmlFor="perfil">Perfil</label>
-            <select id="perfil" value={perfil} onChange={(e) => ajustar({ perfil: e.target.value })}>
-              <option value="">Todos os perfis</option>
-              {Object.entries(ROTULO_PERFIL).map(([valor, rotulo]) => (
-                <option key={valor} value={valor}>
-                  {rotulo}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="campo">
-            <label htmlFor="ativo">Situação</label>
-            <select
-              id="ativo"
-              value={ativo}
-              onChange={(e) =>
-                ajustar({ ativo: e.target.value === SITUACAO_PADRAO ? "" : e.target.value })
-              }
-            >
-              {SITUACOES.map(({ valor, rotulo }) => (
-                <option key={valor} value={valor}>
-                  {rotulo}
-                </option>
-              ))}
-            </select>
-          </div>
+      </div>
+      <form className="filtros" aria-label="Filtros dos usuários" onSubmit={(e) => e.preventDefault()}>
+        <div className="campo filtros__busca">
+          <label className="campo__rotulo" htmlFor="u-busca">
+            Buscar por nome ou login
+          </label>
+          <Busca id="u-busca" valor={filtros.busca} aoMudar={(v) => mudar({ busca: v })} placeholder="Um trecho do nome ou do login" />
         </div>
-      </section>
-
-      {erro && (
-        <div className="aviso" role="alert">
-          <p className="aviso__titulo">{erro.message}</p>
-          {erro.ajuda && <p className="aviso__ajuda">{erro.ajuda}</p>}
-        </div>
-      )}
-
-      <section className="painel" aria-labelledby="titulo-usuarios">
-        <div className="painel__cabecalho">
-          <h2 className="painel__titulo" id="titulo-usuarios">
-            Usuários
-          </h2>
-          <div className="painel__acoes">
-            <span className="painel__nota">
-              {usuarios ? `${comoInteiro(usuarios.length)} encontrados` : "carregando…"}
-            </span>
-            <Link className="botao" to="/usuarios/novo" state={{ lista: aqui }}>
-              Novo usuário
-            </Link>
-          </div>
-        </div>
-
-        {!usuarios && !erro && (
-          <div style={{ padding: "var(--esp-16)" }} role="status" aria-label="Carregando usuários">
-            {[0, 1, 2].map((i) => (
-              <Esqueleto key={i} altura={40} style={{ marginBottom: "var(--esp-8)" }} />
-            ))}
-          </div>
+        <Seletor id="u-perfil" rotulo="Perfil" valor={filtros.perfil} aoMudar={(v) => mudar({ perfil: v })} todos="Todos os perfis" opcoes={Object.entries(ROTULO_PERFIL)} />
+        <Seletor
+          id="u-situacao"
+          rotulo="Situação"
+          valor={situacao}
+          aoMudar={(v) => mudar({ ativo: v === "true" ? null : v })}
+          todos={null}
+          opcoes={[
+            ["true", "Ativos"],
+            ["false", "Desativados"],
+            ["todas", "Todas as situações"],
+          ]}
+        />
+      </form>
+      <section className="bloco bloco--tabela" aria-labelledby="t-usuarios" aria-busy={lista.carregando}>
+        <h2 id="t-usuarios" className="sr-only">
+          Contas do sistema
+        </h2>
+        {lista.carregando && !d && <Carregando rotulo="Carregando os usuários" linhas={6} />}
+        <ErroDaTela erro={lista.erro} />
+        {d && !d.length && (
+          <Vazio titulo="Nenhum usuário neste recorte" icone="usuarios">
+            Mude a busca, o perfil ou a situação para ver outros usuários — a lista abre só nos ativos.
+          </Vazio>
         )}
-
-        {usuarios && usuarios.length === 0 && (
-          <EstadoVazio
-            titulo="Nenhum usuário neste recorte"
-            texto="Mude a busca, o perfil ou a situação para ver outros usuários — a lista abre só nos ativos."
-          />
-        )}
-
-        {usuarios && usuarios.length > 0 && (
-          <div className="tabela-rolagem">
+        {d && d.length > 0 && (
+          <CaixaDeTabela rotulo="Usuários">
             <table className="tabela">
-              <caption className="so-leitor">Usuários do sistema, em ordem de nome</caption>
+              <caption className="sr-only">Contas do sistema, em ordem de nome</caption>
               <thead>
                 <tr>
                   <th scope="col">Nome</th>
@@ -173,29 +79,25 @@ export default function Usuarios() {
                 </tr>
               </thead>
               <tbody>
-                {usuarios.map((u) => (
-                  <tr key={u.id}>
-                    <td className="nome">
-                      <Link className="nome__link" to={`/usuarios/${u.id}`} state={{ lista: aqui }}>
+                {d.map((u) => (
+                  <tr key={u.id} className={u.ativo ? undefined : "linha--inativa"}>
+                    <th scope="row" className="nome nome--destaque">
+                      <Link to={`/usuarios/${u.id}`} state={{ busca: lugar.search }}>
                         {u.nome}
                       </Link>
-                    </td>
-                    <td className="secundaria num">{u.login}</td>
-                    <td>{ROTULO_PERFIL[u.perfil] ?? u.perfil}</td>
+                    </th>
                     <td>
-                      <span
-                        className={`ponto-situacao${u.ativo ? "" : " ponto-situacao--inativo"}`}
-                        aria-hidden="true"
-                      />
-                      {u.ativo ? "Ativo" : "Desativado"}
+                      <code>{u.login}</code>
                     </td>
+                    <td>{ROTULO_PERFIL[u.perfil] ?? u.perfil}</td>
+                    <td>{u.ativo ? "Ativa" : "Desativada"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </CaixaDeTabela>
         )}
       </section>
-    </>
+    </div>
   );
 }

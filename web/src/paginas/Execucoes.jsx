@@ -1,366 +1,174 @@
 /**
- * O histórico das execuções do otimizador — RF34, UC08 passo 10, história H58.
- *
- * Cada linha diz quem calculou, quando, com que parâmetros, em que modo, em
- * quanto tempo e com que resultado, da mais recente para a mais antiga.
- *
- * **Abrir o plano de uma execução é da campanha** (UC08): o Gestor e o Analista
- * abrem; o Administrador vê o histórico (RF34), mas não o plano parceiro a
- * parceiro. Quem abre o quê vem da API (`usuario.telas`), como o menu — a tela
- * só desenha a linha com ou sem o link.
- *
- * **Quem abre o plano também compara dois** (RF35, H59): marca dois planos
- * calculados e viáveis, e a comparação mostra o mais antigo como A e o mais novo
- * como B — a diferença é do que veio depois para o que veio antes.
- *
- * **Os filtros vivem no endereço** (RF51, H91), como os das outras listas: o
- * modo em que rodou, o resultado, quem calculou e as datas. O que cada
- * resultado quer dizer nas colunas da execução é a API que sabe; a tela manda a
- * escolha. Quem calculou vem na resposta da própria lista — o Gestor e o
- * Analista não listam os usuários do sistema.
+ * Execuções — o histórico de tudo o que o otimizador calculou, de 20 em 20. A
+ * linha abre o plano só para quem tem `execucao`; quem tem pode marcar dois
+ * planos viáveis e compará-los (o mais antigo como A).
  */
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { api } from "../api/cliente";
-import { useSessao } from "../api/contextoSessao";
-import { Esqueleto } from "../componentes/Carregando";
-import EstadoVazio from "../componentes/EstadoVazio";
-import {
-  comoDataHora,
-  comoDinheiro,
-  comoDuracao,
-  comoFracao,
-  comoInteiro,
-  MODOS_DE_EXECUCAO,
-  ROTULO_MODO,
-  ROTULO_RESTRICAO,
-} from "../formato";
-import "../estilos/execucoes.css";
+import { useCarregar, useFiltros } from "../api/ganchos";
+import { tem, useSessao } from "../api/contextoSessao";
+import { Carregando, ErroDaTela, Vazio } from "../componentes/Estados";
+import Icone from "../componentes/Icone";
+import { CaixaDeTabela, Paginacao } from "../componentes/Lista";
+import Seletor from "../componentes/Seletor";
+import { useTitulo } from "../componentes/Titulo";
+import { comoDataHora, comoDinheiro, comoFracao, comoInteiro, comoMilissegundos, cotasDoPedido, plural, ROTULO_MODO_CURTO, ROTULO_RESTRICAO } from "../formato";
 
-const TAMANHO_PAGINA = 20;
-
-/* Os resultados que a API filtra (RF51), com o nome que a coluna Resultado usa. */
-const RESULTADOS = [
-  ["VIAVEL", "Com plano"],
-  ["INVIAVEL", "Sem solução viável"],
-  ["FALHOU", "Falhou"],
-];
+const TAMANHO = 20;
+const CHAVES = ["resultado", "modo", "autor", "de", "ate"];
 
 export default function Execucoes() {
+  useTitulo("Execuções do otimizador", "Execuções");
   const { usuario } = useSessao();
-  const abrePlano = Boolean(usuario?.telas?.includes("execucao"));
-  const [parametros, setParametros] = useSearchParams();
-  const modo = parametros.get("modo") ?? "";
-  const resultado = parametros.get("resultado") ?? "";
-  const autor = parametros.get("autor") ?? "";
-  const de = parametros.get("de") ?? "";
-  const ate = parametros.get("ate") ?? "";
-  const pagina = Number(parametros.get("pagina") ?? 1);
-  const consulta = JSON.stringify({ modo, resultado, autor, de, ate, pagina });
-  const filtrando = Boolean(modo || resultado || autor || de || ate);
-
-  const [estado, setEstado] = useState({ consulta: null, dados: null, erro: null });
-  /* Guardados à parte: enquanto a lista recarrega, o seletor não esvazia. */
-  const [autores, setAutores] = useState([]);
-  const [escolhidas, setEscolhidas] = useState([]);
+  const lugar = useLocation();
   const navegar = useNavigate();
+  const [filtros, mudar] = useFiltros();
+  const pagina = Number(filtros.pagina) || 1;
+  const consulta = Object.fromEntries(CHAVES.map((c) => [c, filtros[c]]));
+  const lista = useCarregar(() => api.get("/api/otimizacoes", { ...consulta, pagina, tamanho: TAMANHO }), lugar.search);
+  const [marcados, setMarcados] = useState([]);
+  const abre = tem(usuario, "execucao");
+  const d = lista.dados;
+  const filtrado = CHAVES.some((c) => filtros[c]);
 
-  function ajustar(mudancas) {
-    const proximos = new URLSearchParams(parametros);
-    Object.entries(mudancas).forEach(([chave, valor]) =>
-      valor === "" || valor === undefined ? proximos.delete(chave) : proximos.set(chave, String(valor)),
-    );
-    /* Mudar o filtro volta para a primeira página: a página 3 pode não existir mais. */
-    if (!("pagina" in mudancas)) proximos.delete("pagina");
-    setParametros(proximos, { replace: true });
-  }
-
-  function alternar(id) {
-    setEscolhidas((atuais) => (atuais.includes(id) ? atuais.filter((x) => x !== id) : [...atuais, id].slice(-2)));
+  function marcar(execucao, sim) {
+    setMarcados((m) => (sim ? [...m.filter((x) => x.id !== execucao.id), execucao].slice(-2) : m.filter((x) => x.id !== execucao.id)));
   }
 
   function comparar() {
-    const [a, b] = [...escolhidas].sort((x, y) => x - y);
-    navegar(`/execucoes/comparar?a=${a}&b=${b}`);
+    const [a, b] = [...marcados].sort((x, y) => Date.parse(x.iniciada_em) - Date.parse(y.iniciada_em));
+    navegar(`/execucoes/comparar?a=${a.id}&b=${b.id}`);
   }
 
-  useEffect(() => {
-    let vivo = true;
-    api
-      .get("/api/otimizacoes", { ...JSON.parse(consulta), tamanho: TAMANHO_PAGINA })
-      .then((dados) => {
-        if (!vivo) return;
-        setEstado({ consulta, dados, erro: null });
-        setAutores(dados.autores ?? []);
-      })
-      .catch((erro) => vivo && setEstado({ consulta, dados: null, erro }));
-    return () => {
-      vivo = false;
-    };
-  }, [consulta]);
-
-  const atual = estado.consulta === consulta;
-  const dados = atual ? estado.dados : null;
-  const erro = atual ? estado.erro : null;
-  const total = dados?.total ?? 0;
-  const primeiro = (pagina - 1) * TAMANHO_PAGINA + 1;
-  const ultimo = Math.min(pagina * TAMANHO_PAGINA, total);
+  const frase = marcados.length === 0 ? "Marque dois planos calculados para compará-los lado a lado." : marcados.length === 1 ? "Marque mais um plano." : "Dois planos marcados.";
 
   return (
-    <>
-      <section className="painel" aria-label="Filtros do histórico">
-        <div className="filtros">
-          <div className="campo">
-            <label htmlFor="resultado">Resultado</label>
-            <select
-              id="resultado"
-              value={resultado}
-              onChange={(e) => ajustar({ resultado: e.target.value })}
-            >
-              <option value="">Todos os resultados</option>
-              {RESULTADOS.map(([valor, rotulo]) => (
-                <option key={valor} value={valor}>
-                  {rotulo}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="campo">
-            <label htmlFor="modo">Modo em que rodou</label>
-            <select id="modo" value={modo} onChange={(e) => ajustar({ modo: e.target.value })}>
-              <option value="">Todos os modos</option>
-              {MODOS_DE_EXECUCAO.map(([valor, rotulo]) => (
-                <option key={valor} value={valor}>
-                  {rotulo}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="campo">
-            <label htmlFor="autor">Quem calculou</label>
-            <select id="autor" value={autor} onChange={(e) => ajustar({ autor: e.target.value })}>
-              <option value="">Todas as pessoas</option>
-              {autores.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="campo">
-            <label htmlFor="de">De</label>
-            <input id="de" type="date" value={de} onChange={(e) => ajustar({ de: e.target.value })} />
-          </div>
-          <div className="campo">
-            <label htmlFor="ate">Até</label>
-            <input id="ate" type="date" value={ate} onChange={(e) => ajustar({ ate: e.target.value })} />
-          </div>
+    <div className="pagina">
+      <form className="filtros" aria-label="Filtros das execuções" onSubmit={(e) => e.preventDefault()}>
+        <Seletor id="f-resultado" rotulo="Resultado" valor={filtros.resultado} aoMudar={(v) => mudar({ resultado: v })} todos="Todos os resultados" opcoes={[["VIAVEL", "Com plano"], ["INVIAVEL", "Sem solução viável"], ["FALHOU", "Falhou"]]} />
+        <Seletor id="f-modo" rotulo="Modo em que rodou" valor={filtros.modo} aoMudar={(v) => mudar({ modo: v })} todos="Todos os modos" opcoes={Object.entries(ROTULO_MODO_CURTO)} />
+        <Seletor id="f-autor" rotulo="Quem calculou" valor={filtros.autor} aoMudar={(v) => mudar({ autor: v })} todos="Todas as pessoas" opcoes={(d?.autores ?? []).map((a) => [a.id, a.nome])} />
+        <div className="campo">
+          <label className="campo__rotulo" htmlFor="f-de">
+            De
+          </label>
+          <input id="f-de" type="date" className="entrada" value={filtros.de ?? ""} onChange={(e) => mudar({ de: e.target.value })} />
         </div>
-      </section>
-
-      <section className="painel" aria-labelledby="titulo-execucoes">
-        <div className="painel__cabecalho">
-          <h2 className="painel__titulo" id="titulo-execucoes">
-            Histórico
-          </h2>
-          {dados && (
-            <span className="painel__nota">
-              {comoInteiro(total)} {filtrando ? "nesse recorte" : "no total"}
-            </span>
-          )}
+        <div className="campo">
+          <label className="campo__rotulo" htmlFor="f-ate">
+            Até
+          </label>
+          <input id="f-ate" type="date" className="entrada" value={filtros.ate ?? ""} onChange={(e) => mudar({ ate: e.target.value })} />
         </div>
+        {filtrado && (
+          <button type="button" className="botao botao--fantasma filtros__limpar" onClick={() => mudar(Object.fromEntries(CHAVES.map((c) => [c, null])))}>
+            <Icone nome="fechar" /> Limpar filtros
+          </button>
+        )}
+      </form>
 
-        {!abrePlano && (
-          <p className="execucoes__nota">
-            O plano de cada execução, parceiro a parceiro, é da tela de campanha. Aqui fica o resumo de cada
-            uma: quem calculou, com que parâmetros, em que modo, em quanto tempo e com que resultado.
+      {abre && d && d.itens.length > 0 && (
+        <div className="comparar" role="status" aria-live="polite">
+          <p>
+            <Icone nome="comparar" /> {frase}
           </p>
+          <button type="button" className="botao botao--primario" disabled={marcados.length !== 2} onClick={comparar}>
+            Comparar os dois
+          </button>
+        </div>
+      )}
+
+      <section className="bloco bloco--tabela" aria-labelledby="t-execucoes" aria-busy={lista.carregando}>
+        <h2 id="t-execucoes" className="sr-only">
+          Execuções do otimizador
+        </h2>
+        {lista.carregando && !d && <Carregando rotulo="Carregando as execuções" linhas={8} />}
+        <ErroDaTela erro={lista.erro} />
+        {d && !d.itens.length && !filtrado && (
+          <Vazio titulo="Nenhuma execução ainda" acao={tem(usuario, "campanha") ? "Ir para a Campanha" : undefined} para="/campanha" icone="execucoes">
+            Cada plano calculado na campanha aparece aqui, com quem o calculou e o resultado.
+          </Vazio>
         )}
-
-        {erro && (
-          <div className="aviso" role="alert">
-            <p className="aviso__titulo">{erro.message}</p>
-            {erro.ajuda && <p className="aviso__ajuda">{erro.ajuda}</p>}
-          </div>
+        {d && !d.itens.length && filtrado && (
+          <Vazio titulo="Nenhuma execução nesse recorte" icone="busca">
+            Não há execução com esses filtros. Amplie as datas ou tire um dos filtros.
+          </Vazio>
         )}
-
-        {!dados && !erro && (
-          <div className="execucoes__corpo" aria-hidden="true">
-            <Esqueleto altura={220} />
-          </div>
-        )}
-
-        {dados &&
-          total === 0 &&
-          (filtrando ? (
-            <EstadoVazio
-              titulo="Nenhuma execução nesse recorte"
-              texto="Não há execução com esses filtros. Amplie as datas ou tire um dos filtros."
-            />
-          ) : (
-            <EstadoVazio
-              titulo="Nenhuma execução ainda"
-              texto="Cada plano calculado na campanha aparece aqui, com quem o calculou e o resultado."
-            />
-          ))}
-
-        {dados && total > 0 && (
+        {d && d.itens.length > 0 && (
           <>
-            {abrePlano && total > 1 && (
-              <div className="execucoes__escolha" role="group" aria-label="Comparar dois planos">
-                <span>
-                  {escolhidas.length === 0 && "Marque dois planos calculados para compará-los lado a lado."}
-                  {escolhidas.length === 1 && "Marque mais um plano."}
-                  {escolhidas.length === 2 && "Dois planos marcados."}
-                </span>
-                <button type="button" className="botao" disabled={escolhidas.length !== 2} onClick={comparar}>
-                  Comparar os dois
-                </button>
-              </div>
-            )}
-            <div className="tabela-rolagem">
-              <table className="tabela execucoes__tabela">
-                <caption className="so-leitor">
-                  Execuções do otimizador, da mais recente para a mais antiga
-                </caption>
+            <CaixaDeTabela rotulo="Execuções">
+              <table className={`tabela tabela--execucoes${lista.carregando ? " tabela--recarregando" : ""}`}>
+                <caption className="sr-only">Execuções do otimizador, da mais recente para a mais antiga</caption>
                 <thead>
                   <tr>
-                    {abrePlano && (
-                      <th scope="col" className="execucoes__marcar">
-                        <span className="so-leitor">Comparar</span>
+                    {abre && (
+                      <th scope="col">
+                        <span className="sr-only">Marcar para comparar</span>
                       </th>
                     )}
                     <th scope="col">Iniciada em</th>
                     <th scope="col">Por</th>
                     <th scope="col">Parâmetros</th>
                     <th scope="col">Modo</th>
-                    <th scope="col" className="numerica">
+                    <th scope="col" className="num">
                       Tempo
                     </th>
                     <th scope="col">Resultado</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {dados.itens.map((e) => (
-                    <LinhaExecucao
-                      key={e.id}
-                      execucao={e}
-                      abrePlano={abrePlano}
-                      escolhida={escolhidas.includes(e.id)}
-                      aoAlternar={() => alternar(e.id)}
-                    />
-                  ))}
+                  {d.itens.map((e) => {
+                    const marcado = marcados.some((m) => m.id === e.id);
+                    return (
+                      <tr key={e.id} className={marcado ? "linha--marcada" : undefined}>
+                        {abre && (
+                          <td className="celula-marca">
+                            {e.viavel ? (
+                              <input type="checkbox" className="marca-comparar" checked={marcado} onChange={(ev) => marcar(e, ev.target.checked)} aria-label={`Marcar a execução de ${comoDataHora(e.iniciada_em)} para comparar`} />
+                            ) : null}
+                          </td>
+                        )}
+                        <th scope="row" className="nome">
+                          {abre ? <Link to={`/execucoes/${e.id}`}>{comoDataHora(e.iniciada_em)}</Link> : comoDataHora(e.iniciada_em)}
+                        </th>
+                        <td>{e.autor ?? <span className="discreto">pelo terminal</span>}</td>
+                        <td className="parametros">
+                          <span>{comoDinheiro(e.parametros.orcamento)}</span>
+                          <span>até {comoInteiro(e.parametros.maximo_acoes)} ações</span>
+                          {e.parametros.cota_cauda_longa !== null && <span>cauda longa {comoFracao(e.parametros.cota_cauda_longa, 0)}</span>}
+                          {cotasDoPedido(e).map((t) => (
+                            <span key={t}>{t}</span>
+                          ))}
+                        </td>
+                        <td>{ROTULO_MODO_CURTO[e.modo] ?? e.modo}</td>
+                        <td className="num">{comoMilissegundos(e.tempo_ms)}</td>
+                        <td>
+                          <Resultado execucao={e} />
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
-            </div>
-
-            <div className="paginacao">
-              <span className="paginacao__posicao num">
-                {comoInteiro(primeiro)}–{comoInteiro(ultimo)} de {comoInteiro(total)}
-              </span>
-              <button
-                type="button"
-                className="botao botao--secundario"
-                disabled={pagina <= 1}
-                onClick={() => ajustar({ pagina: pagina - 1 })}
-              >
-                Anterior
-              </button>
-              <button
-                type="button"
-                className="botao botao--secundario"
-                disabled={ultimo >= total}
-                onClick={() => ajustar({ pagina: pagina + 1 })}
-              >
-                Próxima
-              </button>
-            </div>
+            </CaixaDeTabela>
+            <Paginacao pagina={pagina} tamanho={TAMANHO} total={d.total} aoMudar={(p) => mudar({ pagina: p > 1 ? p : null }, { manterPagina: true })} rotulo="execuções" />
           </>
         )}
       </section>
-    </>
+    </div>
   );
 }
 
-function LinhaExecucao({ execucao: e, abrePlano, escolhida, aoAlternar }) {
-  const quando = comoDataHora(e.iniciada_em);
-  // Só se compara plano calculado e viável: a inviável e a que falhou não têm plano.
-  const comparavel = e.situacao === "CONCLUIDA" && e.viavel === true;
+export function Resultado({ execucao: e }) {
+  if (e.situacao === "EM_ANDAMENTO") return <span className="discreto">calculando…</span>;
+  if (e.situacao === "FALHOU") return <span className="texto-erro">Falhou</span>;
+  if (e.viavel === false) return <span className="resultado-inviavel">Sem solução viável{e.restricao_violada ? `: ${ROTULO_RESTRICAO[e.restricao_violada] ?? e.restricao_violada}` : ""}</span>;
   return (
-    <tr>
-      {abrePlano && (
-        <td className="execucoes__marcar">
-          {comparavel && (
-            <input
-              id={`comparar-${e.id}`}
-              type="checkbox"
-              checked={escolhida}
-              onChange={aoAlternar}
-              aria-label={`Comparar o plano de ${quando}`}
-            />
-          )}
-        </td>
-      )}
-      <td className="nome quando">
-        {abrePlano ? (
-          <Link className="nome__link" to={`/execucoes/${e.id}`}>
-            {quando}
-          </Link>
-        ) : (
-          quando
-        )}
-      </td>
-      <td>{e.autor ?? "Terminal"}</td>
-      <td className="secundaria">{resumoDosParametros(e.parametros)}</td>
-      <td>
-        {ROTULO_MODO[e.modo]}
-        {e.threads ? <span className="secundaria">, {comoInteiro(e.threads)} threads</span> : null}
-        {/* A troca (UC08-A4) em poucas palavras; a frase inteira está no plano. */}
-        {e.substituicao && (
-          <span className="execucoes__detalhe">pedido em {ROTULO_MODO[e.parametros.modo]}</span>
-        )}
-      </td>
-      <td className="numerica">{comoDuracao(e.tempo_ms)}</td>
-      <td>
-        <Resultado execucao={e} />
-      </td>
-    </tr>
-  );
-}
-
-function resumoDosParametros(p) {
-  const partes = [comoDinheiro(p.orcamento), `até ${comoInteiro(p.maximo_acoes)} ações`];
-  if (p.cota_cauda_longa) partes.push(`cauda longa ≥ ${comoFracao(p.cota_cauda_longa, 0)}`);
-  const cotas = p.cotas_categoria?.length ?? 0;
-  if (cotas) partes.push(`${comoInteiro(cotas)} ${cotas === 1 ? "cota" : "cotas"} de categoria`);
-  return partes.join(" · ");
-}
-
-function Resultado({ execucao: e }) {
-  if (e.situacao === "EM_ANDAMENTO") return "Calculando…";
-  if (e.situacao === "FALHOU") {
-    return (
-      <>
-        Falhou
-        <span className="execucoes__detalhe">{e.motivo}</span>
-      </>
-    );
-  }
-  if (e.viavel === false) {
-    return (
-      <>
-        Sem solução viável
-        <span className="execucoes__detalhe">
-          restrição: {ROTULO_RESTRICAO[e.restricao_violada] ?? e.restricao_violada}
-        </span>
-      </>
-    );
-  }
-  return (
-    <>
-      {comoInteiro(e.acoes)} {e.acoes === 1 ? "ação" : "ações"} · ganho de {comoDinheiro(e.uplift_total)}
-      {e.parcial && <span className="execucoes__detalhe">parcial: atingiu o limite de tempo</span>}
-    </>
+    <span className="resultado-viavel">
+      <strong>{comoDinheiro(e.uplift_total)}</strong> · {plural(e.acoes ?? 0, "ação", "ações")}
+      {e.parcial && <span className="discreto"> · parcial: atingiu o limite de tempo</span>}
+    </span>
   );
 }

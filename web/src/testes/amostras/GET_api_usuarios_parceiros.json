@@ -1,0 +1,102 @@
+[
+ {
+  "id": 89,
+  "nome": "Ponto Azul",
+  "ativo": true
+ },
+ {
+  "id": 246,
+  "nome": "Ponto Azul 2",
+  "ativo": true
+ },
+ {
+  "id": 435,
+  "nome": "Ponto Azul 3",
+  "ativo": true
+ },
+ {
+  "id": 171,
+  "nome": "Ponto Bom Prato",
+  "ativo": true
+ },
+ {
+  "id": 338,
+  "nome": "Ponto Bom Prato 2",
+  "ativo": true
+ },
+ {
+  "id": 192,
+  "nome": "Ponto Caseiro",
+  "ativo": true
+ },
+ {
+  "id": 474,
+  "nome": "Ponto Caseiro 4",
+  "ativo": true
+ },
+ {
+  "id": 136,
+  "nome": "Ponto Central",
+  "ativo": true
+ },
+ {
+  "id": 310,
+  "nome": "Ponto Central 3",
+  "ativo": true
+ },
+ {
+  "id": 27,
+  "nome": "Ponto Dourado",
+  "ativo": true
+ },
+ {
+  "id": 500,
+  "nome": "Ponto Dourado 2",
+  "ativo": true
+ },
+ {
+  "id": 8,
+  "nome": "Ponto Express",
+  "ativo": true
+ },
+ {
+  "id": 415,
+  "nome": "Ponto Express 3",
+  "ativo": true
+ },
+ {
+  "id": 3,
+  "nome": "Ponto Mineiro",
+  "ativo": true
+ },
+ {
+  "id": 130,
+  "nome": "Ponto Popular",
+  "ativo": true
+ },
+ {
+  "id": 424,
+  "nome": "Ponto Popular 2",
+  "ativo": true
+ },
+ {
+  "id": 430,
+  "nome": "Ponto Popular 4",
+  "ativo": true
+ },
+ {
+  "id": 25,
+  "nome": "Ponto Real",
+  "ativo": true
+ },
+ {
+  "id": 472,
+  "nome": "Ponto Real 3",
+  "ativo": true
+ },
+ {
+  "id": 68,
+  "nome": "Ponto Verde",
+  "ativo": true
+ }
+]

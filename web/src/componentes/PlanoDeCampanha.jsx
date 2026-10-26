@@ -1,222 +1,192 @@
 /**
- * O plano de uma execução do otimizador (UC08, passo 8): as ações, as cotas, as
- * folgas, a comparação com o guloso e em que modo rodou — ou a campanha
- * inviável, com a restrição e quanto falta (RN07), ou a falha.
- *
- * Mora em `componentes/` porque duas telas o mostram do mesmo jeito: a Campanha,
- * com o último plano, e a execução aberta pelo histórico (H58).
+ * O plano de uma execução — o mesmo bloco na Campanha e na execução aberta pelo
+ * histórico: viável (com lacre), inviável (a restrição e quanto falta, nunca um
+ * plano parcial) ou falha.
  */
-import { useContext } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-import { ContextoSessao } from "../api/contextoSessao";
+import { tem, useSessao } from "../api/contextoSessao";
+import { comoData, comoDinheiro, comoInteiro, comoMilissegundos, ROTULO_MODO_CURTO, ROTULO_RESTRICAO } from "../formato";
+import { Ausente, Dinheiro, Estimativa, Segmento } from "./Dados";
+import { ErroDaAcao, Nota, Vazio } from "./Estados";
+import Icone from "./Icone";
+import Lacre from "./Lacre";
+import { CaixaDeTabela } from "./Lista";
 
-import {
-  comoDataHora,
-  comoDinheiro,
-  comoDuracao,
-  comoFracao,
-  comoInteiro,
-  comoPeriodo,
-  ROTULO_MODO,
-  TRACO,
-} from "../formato";
-import EstadoVazio from "./EstadoVazio";
-import Segmento from "./Segmento";
-import "../estilos/campanha.css";
+export default function PlanoDeCampanha({ execucao, novo = false, comMensagens = true }) {
+  const { usuario } = useSessao();
+  const e = execucao;
 
-export default function PlanoDeCampanha({ execucao, origem = "Plano" }) {
-  /* O parceiro aberto do plano volta para ele, e não para a lista (H81). */
-  const lugar = useLocation();
-  const doPlano = {
-    lista: lugar.pathname + lugar.search,
-    rotuloLista: origem,
-    voltarPara: `Voltar para ${origem === "Campanha" ? "a campanha" : "o plano"}`,
-  };
-  /* Quem gera mensagens vem da API (`usuario.telas`), como o menu. Lido direto do
-     contexto, e não por `useSessao`: o plano também aparece fora da casca. */
-  const sessao = useContext(ContextoSessao);
-  const geraMensagens = Boolean(sessao?.usuario?.telas?.includes("mensagens"));
-  if (execucao.situacao === "FALHOU") {
+  if (e.situacao === "FALHOU") {
+    return <ErroDaAcao erro={{ message: `O cálculo falhou.${e.motivo ? ` ${e.motivo}` : ""}`, ajuda: e.ajuda }} />;
+  }
+
+  if (e.viavel === false) {
     return (
-      <div className="aviso" role="alert">
-        <p className="aviso__titulo">O cálculo falhou.</p>
-        <p className="aviso__ajuda">{execucao.motivo}</p>
+      <div className="inviavel" role="status">
+        <div className="inviavel__cabeca">
+          <Icone nome="atencao" className="inviavel__icone" />
+          <div>
+            <p className="inviavel__titulo">Sem solução viável{e.restricao_violada ? `: ${ROTULO_RESTRICAO[e.restricao_violada] ?? e.restricao_violada}` : ""}.</p>
+            {e.motivo && <p>{e.motivo}</p>}
+            {e.ajuda && <p className="discreto">{e.ajuda}</p>}
+          </div>
+        </div>
+        <p className="bloco__nota">O sistema não entrega plano que viole restrição: nenhuma ação foi reservada.</p>
+        {e.cotas?.length > 0 && <TabelaDeCotas cotas={e.cotas} />}
       </div>
     );
   }
-  if (execucao.viavel === false) {
-    return (
-      <section className="painel" aria-labelledby="titulo-plano">
-        <div className="painel__cabecalho">
-          <h2 className="painel__titulo" id="titulo-plano">
-            Plano recomendado
-          </h2>
-          <span className="painel__nota">{comoDataHora(execucao.concluida_em)}</span>
-        </div>
-        <div className="campanha__corpo">
-          <div className="aviso campanha__inviavel">
-            <p className="aviso__titulo">Sem solução viável. {execucao.motivo}</p>
-            {execucao.ajuda && <p className="aviso__ajuda">{execucao.ajuda}</p>}
-            <p className="aviso__ajuda">O sistema não entrega plano que viole restrição (RN07).</p>
-          </div>
-          <Cotas cotas={execucao.cotas} />
-        </div>
-      </section>
-    );
-  }
 
-  const p = execucao.parametros;
-  const melhora =
-    execucao.ganho_guloso && Number(execucao.ganho_guloso) > 0
-      ? Number(execucao.uplift_total) / Number(execucao.ganho_guloso) - 1
-      : null;
+  const modo = `${ROTULO_MODO_CURTO[e.modo] ?? e.modo}${e.threads ? `, ${e.threads} threads` : ""} · ${comoMilissegundos(e.tempo_ms)}`;
 
   return (
-    <section className="painel" aria-labelledby="titulo-plano">
-      <div className="painel__cabecalho">
-        <h2 className="painel__titulo" id="titulo-plano">
-          Plano recomendado
-        </h2>
-        <span className="etiqueta-estimativa">Estimativa</span>
-        <span className="painel__nota num">
-          {comoInteiro(execucao.acoes)} ações · {comoDinheiro(execucao.custo_total)} de{" "}
-          {comoDinheiro(p.orcamento)} · ganho esperado {comoDinheiro(execucao.uplift_total)}
-        </span>
+    <div className="plano">
+      <div className="plano__topo">
+        <Lacre numero={e.id} titulo="Plano calculado" quando={e.concluida_em} quem={e.autor} novo={novo}>
+          <span className="lacre__assinatura">Previsões da {e.modelo_versao}, com dados até {comoData(e.periodo_base?.data_fim)}</span>
+        </Lacre>
+        <Link to="/ajuda#ganho" className="link-seta">
+          Como se chega ao ganho esperado? <Icone nome="seta-direita" />
+        </Link>
       </div>
 
-      <div className="campanha__corpo campanha__resumo">
-        {execucao.parcial && (
-          <p className="campanha__parcial">
-            O cálculo atingiu o limite de tempo: este é o melhor plano viável encontrado até ali.
+      <div className="plano__resumo">
+        <div className="plano__ganho">
+          <p className="plano__rotulo">
+            Ganho esperado <Estimativa />
           </p>
-        )}
-        {execucao.substituicao && <p className="campanha__parcial">{execucao.substituicao}</p>}
-        <dl className="campanha__fatos">
-          <dt>Previsões</dt>
-          <dd>
-            {execucao.modelo_versao}, com dados até {comoPeriodo(execucao.periodo_base)}
-            <span className="nao-imprime">
-              {" · "}
-              <Link className="ajuda-link" to="/ajuda#ganho">
-                Como se chega ao ganho esperado?
-              </Link>
-            </span>
-          </dd>
-          <dt>Aplicação</dt>
-          <dd>{comoPeriodo({ data_inicio: p.aplicacao_inicio, data_fim: p.aplicacao_fim })}</dd>
-          <dt>Folga</dt>
-          <dd className="num">
-            {comoDinheiro(execucao.folga_orcamento)} do orçamento · {comoInteiro(execucao.folga_acoes)}{" "}
-            {execucao.folga_acoes === 1 ? "ação" : "ações"}
-          </dd>
-          <dt>Contra o guloso</dt>
-          <dd className="num">
-            {melhora === null
-              ? TRACO
-              : melhora > 0.00005
-                ? `${comoFracao(melhora)} acima do plano guloso (${comoDinheiro(execucao.ganho_guloso)})`
-                : `igual ao plano guloso (${comoDinheiro(execucao.ganho_guloso)})`}
-          </dd>
-          <dt>Cálculo</dt>
-          <dd className="num">
-            {ROTULO_MODO[execucao.modo]}
-            {execucao.threads ? `, ${comoInteiro(execucao.threads)} threads` : ""} ·{" "}
-            {comoDuracao(execucao.tempo_ms)} · {comoDataHora(execucao.concluida_em)}
-            {execucao.autor ? ` · ${execucao.autor}` : ""}
-          </dd>
-        </dl>
-        <Cotas cotas={execucao.cotas} />
-        {geraMensagens && execucao.itens?.length > 0 && (
-          /* O caminho para as mensagens é da tela: não vai para a folha impressa. */
-          <div className="nao-imprime">
-            <Link className="botao botao--secundario" to={`/mensagens?plano=${execucao.id}`}>
-              Gerar mensagens para este plano
-            </Link>
+          <p className="plano__valor">
+            <Dinheiro valor={e.uplift_total} grande />
+          </p>
+          <p className="plano__contra">
+            Contra o guloso: <strong>{comoDinheiro(e.ganho_guloso)}</strong> <span className="discreto">— o plano simples, para comparar; o otimizador nunca fica abaixo dele.</span>
+          </p>
+        </div>
+        <dl className="pares plano__pares">
+          <div>
+            <dt>Custo</dt>
+            <dd className="valor-forte">
+              <Dinheiro valor={e.custo_total} />
+            </dd>
+            <dd className="discreto texto-pequeno">de {comoDinheiro(e.parametros?.orcamento)} de orçamento</dd>
           </div>
-        )}
+          <div>
+            <dt>Ações</dt>
+            <dd className="valor-forte">{comoInteiro(e.acoes)}</dd>
+            <dd className="discreto texto-pequeno">de até {comoInteiro(e.parametros?.maximo_acoes)}</dd>
+          </div>
+          <div>
+            <dt>Folga</dt>
+            <dd>{comoDinheiro(e.folga_orcamento)} e {comoInteiro(e.folga_acoes)} ações</dd>
+          </div>
+          <div>
+            <dt>Aplicação</dt>
+            <dd>
+              {comoData(e.parametros?.aplicacao_inicio)} a {comoData(e.parametros?.aplicacao_fim)}
+            </dd>
+          </div>
+          <div>
+            <dt>Cálculo</dt>
+            <dd>{modo}</dd>
+          </div>
+        </dl>
       </div>
 
-      {execucao.itens?.length ? (
-        <div className="tabela-rolagem">
-          <table className="tabela campanha__itens">
-            <caption className="so-leitor">Ações do plano, do maior ganho esperado para o menor</caption>
-            <thead>
-              <tr>
-                <th scope="col">Parceiro</th>
-                <th scope="col">Segmento</th>
-                <th scope="col">Categoria</th>
-                <th scope="col">Cauda longa</th>
-                <th scope="col">Ação</th>
-                <th scope="col" className="numerica">
-                  Custo
-                </th>
-                <th scope="col" className="numerica">
-                  Ganho esperado
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {execucao.itens.map((item) => (
-                <tr key={item.parceiro_id}>
-                  <td className="nome">
-                    <Link className="nome__link" to={`/parceiros/${item.parceiro_id}`} state={doPlano}>
-                      {item.parceiro}
-                    </Link>
-                  </td>
-                  <td>
-                    <Segmento valor={item.segmento} />
-                  </td>
-                  <td>{item.categoria ?? "Pendente"}</td>
-                  <td>{item.cauda_longa ? "Sim" : "Não"}</td>
-                  <td>{item.acao}</td>
-                  <td className="numerica">{comoDinheiro(item.custo)}</td>
-                  <td className="numerica">{comoDinheiro(item.ganho)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {e.parcial && <Nota tipo="atencao">O cálculo atingiu o limite de tempo: este é o melhor plano viável encontrado até ali.</Nota>}
+      {e.substituicao && <Nota>{e.substituicao}</Nota>}
+
+      {!e.itens?.length ? (
+        <Vazio titulo="O plano não tem ações" compacto icone="campanha">
+          Nenhuma ação do catálogo cabe no orçamento com ganho esperado.
+        </Vazio>
       ) : (
-        <EstadoVazio
-          titulo="O plano não tem ações"
-          texto="Nenhuma ação do catálogo cabe no orçamento com ganho esperado."
-        />
+        <>
+          <h3 className="bloco__subtitulo">Ações do plano, do maior ganho esperado para o menor</h3>
+          <CaixaDeTabela rotulo="Ações do plano">
+            <table className="tabela">
+              <caption className="sr-only">Ações do plano, do maior ganho esperado (estimativa) para o menor</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Parceiro</th>
+                  <th scope="col">Segmento</th>
+                  <th scope="col">Categoria</th>
+                  <th scope="col">Cauda longa</th>
+                  <th scope="col">Ação</th>
+                  <th scope="col" className="num">
+                    Custo
+                  </th>
+                  <th scope="col" className="num">
+                    Ganho esperado
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {e.itens.map((i) => (
+                  <tr key={`${i.parceiro_id}-${i.acao_id}`}>
+                    <th scope="row" className="nome">
+                      {tem(usuario, "parceiros") ? <Link to={`/parceiros/${i.parceiro_id}`}>{i.parceiro}</Link> : i.parceiro}
+                    </th>
+                    <td>
+                      <Segmento codigo={i.segmento} />
+                    </td>
+                    <td>{i.categoria ?? <Ausente porque="sem categoria confirmada" />}</td>
+                    <td>{i.cauda_longa ? "sim" : "não"}</td>
+                    <td>{i.acao}</td>
+                    <td className="num">{comoDinheiro(i.custo)}</td>
+                    <td className="num">{comoDinheiro(i.ganho)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CaixaDeTabela>
+        </>
       )}
-    </section>
+
+      {e.cotas?.length > 0 && <TabelaDeCotas cotas={e.cotas} />}
+
+      {comMensagens && tem(usuario, "mensagens") && e.itens?.length > 0 && (
+        <Link to={`/mensagens?plano=${e.id}`} className="botao botao--secundario plano__mensagens">
+          <Icone nome="mensagens" /> Gerar mensagens para este plano
+        </Link>
+      )}
+    </div>
   );
 }
 
-/** As cotas em contagem (RN11), com quanto o plano deu a cada uma. */
-function Cotas({ cotas }) {
-  if (!cotas?.length) return null;
+function TabelaDeCotas({ cotas }) {
   return (
-    <table className="tabela campanha__cotas-tabela">
-      <caption className="campanha__legenda">Cotas, em número de ações</caption>
-      <thead>
-        <tr>
-          <th scope="col">Cota</th>
-          <th scope="col" className="numerica">
-            Mínimo
-          </th>
-          <th scope="col" className="numerica">
-            Máximo
-          </th>
-          <th scope="col" className="numerica">
-            No plano
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {cotas.map((c) => (
-          <tr key={c.categoria_id ?? "cauda"}>
-            <td>{c.nome}</td>
-            <td className="numerica">{comoInteiro(c.minimo)}</td>
-            <td className="numerica">{comoInteiro(c.maximo)}</td>
-            <td className="numerica">{c.acoes === null ? TRACO : comoInteiro(c.acoes)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <>
+      <h3 className="bloco__subtitulo">Cotas, em número de ações</h3>
+      <CaixaDeTabela rotulo="Cotas">
+        <table className="tabela tabela--compacta tabela--cotas">
+          <caption className="sr-only">Cotas em número de ações: mínimo, máximo e quanto o plano deu</caption>
+          <thead>
+            <tr>
+              <th scope="col">Cota</th>
+              <th scope="col" className="num">
+                Mínimo
+              </th>
+              <th scope="col" className="num">
+                Máximo
+              </th>
+              <th scope="col" className="num">
+                No plano
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {cotas.map((c) => (
+              <tr key={c.categoria_id ?? "cauda"}>
+                <th scope="row">{c.nome}</th>
+                <td className="num">{comoInteiro(c.minimo)}</td>
+                <td className="num">{comoInteiro(c.maximo)}</td>
+                <td className="num">{c.acoes === null ? <Ausente porque="sem plano" /> : comoInteiro(c.acoes)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CaixaDeTabela>
+    </>
   );
 }

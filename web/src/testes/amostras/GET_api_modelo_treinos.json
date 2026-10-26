@@ -1,0 +1,112 @@
+{
+ "itens": [
+  {
+   "id": 1,
+   "situacao": "CONCLUIDO",
+   "autor": null,
+   "iniciado_em": "2026-10-05T07:44:38.293892Z",
+   "concluido_em": "2026-10-05T07:44:42.111373Z",
+   "periodo_base": {
+    "id": 12,
+    "data_inicio": "2026-09-28",
+    "data_fim": "2026-10-04"
+   },
+   "volume": {
+    "parceiros": 500,
+    "periodos": 12,
+    "amostras_treino": 2814,
+    "amostras_validacao": 469,
+    "amostras_teste": 469
+   },
+   "metricas": {
+    "mape_modelo": 0.09222733571784175,
+    "mape_ultimo": 0.11542503374584373,
+    "mape_media_movel": 0.09972713645799962,
+    "brier_modelo": 0.10507158443120267,
+    "brier_referencia": 0.12150220680270103,
+    "calibracao_modelo": 0.03483412452146827,
+    "calibracao_referencia": 0.003332676354123643
+   },
+   "curva": [
+    {
+     "inicio": 0.0,
+     "fim": 0.1,
+     "previsto": 0.011216865408005117,
+     "observado": 0.019305019305019305,
+     "amostras": 259
+    },
+    {
+     "inicio": 0.1,
+     "fim": 0.2,
+     "previsto": 0.1390345395449353,
+     "observado": 0.14285714285714285,
+     "amostras": 42
+    },
+    {
+     "inicio": 0.2,
+     "fim": 0.3,
+     "previsto": 0.240077807240059,
+     "observado": 0.391304347826087,
+     "amostras": 23
+    },
+    {
+     "inicio": 0.3,
+     "fim": 0.4,
+     "previsto": 0.35355661693190654,
+     "observado": 0.3333333333333333,
+     "amostras": 21
+    },
+    {
+     "inicio": 0.4,
+     "fim": 0.5,
+     "previsto": 0.4486659208629378,
+     "observado": 0.5555555555555556,
+     "amostras": 18
+    },
+    {
+     "inicio": 0.5,
+     "fim": 0.6,
+     "previsto": 0.5507172579550662,
+     "observado": 0.44,
+     "amostras": 25
+    },
+    {
+     "inicio": 0.6,
+     "fim": 0.7,
+     "previsto": 0.6599574800726159,
+     "observado": 0.6,
+     "amostras": 30
+    },
+    {
+     "inicio": 0.7,
+     "fim": 0.8,
+     "previsto": 0.7503668706378713,
+     "observado": 0.75,
+     "amostras": 24
+    },
+    {
+     "inicio": 0.8,
+     "fim": 0.9,
+     "previsto": 0.8552219313830488,
+     "observado": 0.8421052631578947,
+     "amostras": 19
+    },
+    {
+     "inicio": 0.9,
+     "fim": 1.0,
+     "previsto": 0.928779118246432,
+     "observado": 0.5,
+     "amostras": 8
+    }
+   ],
+   "segundos": 1.95,
+   "promovido": true,
+   "versao": "rede-1",
+   "versao_em_uso": "rede-1",
+   "motivo": null
+  }
+ ],
+ "total": 1,
+ "pagina": 1,
+ "tamanho": 10
+}

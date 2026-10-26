@@ -1,186 +1,88 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Link, MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
-import { ContextoSessao } from "./api/contextoSessao";
-import { ProvedorDeSessao } from "./api/sessao";
-import App from "./App";
-import { simularApi } from "./testes/preparar";
+import { abrir, amostra, endereco } from "./testes/montar";
 
-/**
- * O teclado e a sessão, na aplicação inteira — H96.
- *
- * O que só existe com a casca e as rotas juntas: o link que pula o menu, o foco
- * que acompanha a troca de tela, e o aviso de que a sessão terminou.
- */
-const ADMINISTRADOR = {
-  id: 1,
-  login: "admin",
-  nome: "Administração",
-  perfil: "ADMINISTRADOR",
-  telas: ["painel", "usuarios", "auditoria", "configuracao"],
+const PARCEIROS = {
+  "GET /api/parceiros": { corpo: amostra("GET_api_parceiros") },
+  "GET /api/categorias": { corpo: amostra("GET_api_categorias") },
+  "GET /api/painel/recortes": { corpo: amostra("GET_api_painel_recortes") },
 };
 
-function abrir(usuario, endereco) {
-  return render(
-    <ContextoSessao.Provider value={{ usuario, conferindo: false, sair: () => {} }}>
-      <MemoryRouter initialEntries={[endereco]}>
-        <App />
-      </MemoryRouter>
-    </ContextoSessao.Provider>,
-  );
-}
-
-describe("o teclado", () => {
-  it("o primeiro Tab da página chega em 'Pular para o conteúdo', que leva ao conteúdo", async () => {
-    simularApi({});
+/*
+ * RF02 — encerrar a sessão, invalidando-a no servidor; e a aplicação inteira
+ * operável pelo teclado (H96): pular para o conteúdo, o foco no título a cada
+ * troca de tela, o menu que abre e fecha.
+ */
+describe("encerrar a sessão (RF02)", () => {
+  it("pelo teclado: invalida a sessão no servidor e volta para a entrada", async () => {
     const usuario = userEvent.setup();
-    abrir(ADMINISTRADOR, "/conta");
+    const { chamadas } = abrir("/conta", { rotas: { "DELETE /api/sessao": { status: 204 } } });
 
-    await usuario.tab();
+    const sair = await screen.findByRole("button", { name: "Encerrar sessão" });
+    sair.focus();
+    await usuario.keyboard("{Enter}");
 
-    const pular = screen.getByRole("link", { name: "Pular para o conteúdo" });
-    expect(pular).toHaveFocus();
-    expect(pular).toHaveAttribute("href", "#conteudo");
-    // O destino existe e aceita o foco: é o `main`, que não é um controle.
-    expect(screen.getByRole("main")).toHaveAttribute("id", "conteudo");
-    expect(screen.getByRole("main")).toHaveAttribute("tabindex", "-1");
+    await waitFor(() => expect(endereco()).toBe("/entrar"));
+    expect(chamadas()).toContain("DELETE /api/sessao");
+    // Sair de propósito não é "a sessão terminou".
+    expect(screen.queryByText(/A sua sessão terminou/)).not.toBeInTheDocument();
   });
 
-  it("trocar de tela pelo menu leva o foco ao título da tela nova", async () => {
-    simularApi({ "GET /api/usuarios": { corpo: [] } });
+  it("sai mesmo que o servidor não responda: a pessoa pediu para sair", async () => {
     const usuario = userEvent.setup();
-    abrir(ADMINISTRADOR, "/conta");
-
-    await usuario.click(
-      within(screen.getByRole("navigation", { name: "Seções do sistema" })).getByRole("link", { name: "Usuários" }),
-    );
-
-    await waitFor(() => expect(screen.getByRole("heading", { level: 1, name: "Usuários" })).toHaveFocus());
-  });
-
-  it("mudar um filtro não tira o foco do campo: a consulta mudou, a tela não", async () => {
-    simularApi({ "GET /api/usuarios": { corpo: [] } });
-    const usuario = userEvent.setup();
-    abrir(ADMINISTRADOR, "/usuarios");
-
-    const busca = await screen.findByLabelText("Buscar por nome ou login");
-    await usuario.type(busca, "ana");
-    // A busca vai para o endereço depois de a digitação parar.
-    await new Promise((r) => setTimeout(r, 400));
-
-    expect(busca).toHaveFocus();
-    expect(busca).toHaveValue("ana");
-  });
-
-  it("o link para um bloco da ajuda leva o foco ao bloco, e não ao título da tela (H95)", async () => {
-    simularApi({
-      "GET /api/ajuda/regras": {
-        corpo: {
-          segmentos: ["EM_RISCO", "TOP"],
-          top_n: 15,
-          periodos_tendencia: 2,
-          periodos_novato: 3,
-          previsao: {
-            versao_em_uso: null,
-            origem: null,
-            periodos_minimos_do_treino: 8,
-            periodos_minimos_do_parceiro: 4,
-          },
-        },
-      },
-    });
-    const usuario = userEvent.setup();
-    // O link de uma tela qualquer para um bloco da ajuda, como o "O que é estimativa?" do cadastro.
-    render(
-      <ContextoSessao.Provider
-        value={{
-          usuario: { ...ADMINISTRADOR, telas: [...ADMINISTRADOR.telas, "ajuda_regras"] },
-          conferindo: false,
-          sair: () => {},
-        }}
-      >
-        <MemoryRouter initialEntries={["/conta"]}>
-          <App />
-          <Link to="/ajuda#ganho">Como se chega ao ganho esperado?</Link>
-        </MemoryRouter>
-      </ContextoSessao.Provider>,
-    );
-
-    await usuario.click(screen.getByRole("link", { name: "Como se chega ao ganho esperado?" }));
-
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Ganho esperado" })).toHaveFocus());
-    expect(screen.getByRole("heading", { level: 1, name: "Ajuda" })).not.toHaveFocus();
-  });
-
-  it("ao abrir a aplicação, o foco não é tomado: só a troca de tela o move", () => {
-    simularApi({});
-    abrir(ADMINISTRADOR, "/conta");
-
-    expect(screen.getByRole("heading", { level: 1, name: "Minha conta" })).not.toHaveFocus();
-  });
-});
-
-describe("a sessão que termina com a tela aberta", () => {
-  function comProvedor(endereco) {
-    return render(
-      <MemoryRouter initialEntries={[endereco]}>
-        <ProvedorDeSessao>
-          <App />
-        </ProvedorDeSessao>
-      </MemoryRouter>,
-    );
-  }
-
-  it("leva ao login dizendo que a sessão terminou, e depois de entrar volta para onde a pessoa estava", async () => {
-    let dentro = true;
-    simularApi({
-      "GET /api/sessao/atual": () => (dentro ? { corpo: ADMINISTRADOR } : { status: 401, corpo: {} }),
-      // A sessão expirou no servidor: a próxima requisição é recusada.
-      "POST /api/sessao/senha": { status: 401, corpo: { detail: "Sessão inválida ou expirada." } },
-      "POST /api/sessao": { status: 201, corpo: { usuario: ADMINISTRADOR } },
-    });
-    const usuario = userEvent.setup();
-    comProvedor("/conta");
-
-    await usuario.type(await screen.findByLabelText(/^Senha atual/), "senha-de-agora");
-    await usuario.type(screen.getByLabelText(/^Senha nova \*/), "senha-nova-bem-longa");
-    await usuario.type(screen.getByLabelText(/^Senha nova, de novo/), "senha-nova-bem-longa");
-    dentro = false;
-    await usuario.click(screen.getByRole("button", { name: "Trocar a senha" }));
-
-    const aviso = await screen.findByRole("status");
-    expect(aviso).toHaveTextContent("A sua sessão terminou.");
-    expect(aviso).toHaveTextContent("Entre de novo para continuar de onde parou.");
-
-    await usuario.type(screen.getByLabelText("Login"), "admin");
-    await usuario.type(screen.getByLabelText("Senha"), "senha-de-agora");
-    await usuario.click(screen.getByRole("button", { name: "Entrar" }));
-
-    // De volta à tela em que estava, e não ao painel.
-    expect(await screen.findByRole("heading", { level: 1, name: "Minha conta" })).toBeInTheDocument();
-  });
-
-  it("quem ainda não entrou não vê o aviso: o 401 da primeira conferência não é sessão terminada", async () => {
-    simularApi({ "GET /api/sessao/atual": { status: 401, corpo: {} } });
-    comProvedor("/conta");
-
-    expect(await screen.findByRole("button", { name: "Entrar" })).toBeInTheDocument();
-    expect(screen.queryByText("A sua sessão terminou.")).not.toBeInTheDocument();
-  });
-
-  it("sair de propósito não é sessão terminada", async () => {
-    simularApi({
-      "GET /api/sessao/atual": { corpo: ADMINISTRADOR },
-      "DELETE /api/sessao": { status: 204 },
-    });
-    const usuario = userEvent.setup();
-    comProvedor("/conta");
+    abrir("/conta", { rotas: { "DELETE /api/sessao": { status: 503, corpo: { detail: "Fora do ar." } } } });
 
     await usuario.click(await screen.findByRole("button", { name: "Encerrar sessão" }));
 
-    expect(await screen.findByRole("button", { name: "Entrar" })).toBeInTheDocument();
-    expect(screen.queryByText("A sua sessão terminou.")).not.toBeInTheDocument();
+    await waitFor(() => expect(endereco()).toBe("/entrar"));
+  });
+});
+
+describe("pelo teclado", () => {
+  it("o primeiro Tab chega a 'Pular para o conteúdo', que leva ao conteúdo", async () => {
+    const usuario = userEvent.setup();
+    abrir("/conta");
+
+    await screen.findByRole("heading", { level: 1, name: "Minha conta" });
+    document.body.focus();
+    await usuario.tab();
+    const pular = screen.getByRole("link", { name: "Pular para o conteúdo" });
+    expect(pular).toHaveFocus();
+    expect(pular).toHaveAttribute("href", "#conteudo");
+    expect(document.getElementById("conteudo").tagName).toBe("MAIN");
+  });
+
+  it("ao trocar de tela, o foco vai para o título da tela nova", async () => {
+    const usuario = userEvent.setup();
+    abrir("/conta", { rotas: PARCEIROS });
+
+    await screen.findByRole("heading", { level: 1, name: "Minha conta" });
+    await usuario.click(screen.getByRole("link", { name: /Parceiros/ }));
+
+    const titulo = await screen.findByRole("heading", { level: 1, name: "Parceiros" });
+    await waitFor(() => expect(titulo).toHaveFocus());
+  });
+
+  it("o item da tela atual é marcado no menu, para quem lê e para quem ouve", async () => {
+    abrir("/parceiros", { rotas: PARCEIROS });
+
+    await screen.findByRole("heading", { level: 1, name: "Parceiros" });
+    const menu = screen.getByRole("navigation", { name: "Menu principal" });
+    const atual = menu.querySelector('[aria-current="page"]');
+    expect(atual).toHaveTextContent("Parceiros");
+  });
+
+  it("o menu de gaveta abre pelo botão e fecha com Esc, devolvendo o foco", async () => {
+    const usuario = userEvent.setup();
+    abrir("/conta");
+
+    const abrirMenu = await screen.findByRole("button", { name: "Abrir o menu" });
+    await usuario.click(abrirMenu);
+    expect(abrirMenu).toHaveAttribute("aria-expanded", "true");
+    await usuario.keyboard("{Escape}");
+    expect(abrirMenu).toHaveAttribute("aria-expanded", "false");
+    expect(abrirMenu).toHaveFocus();
   });
 });

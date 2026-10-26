@@ -1,587 +1,1747 @@
-/* Peças que aparecem em mais de uma tela. */
+/* Componentes: botões, campos, avisos, estados, tabelas, dados, lacre e gráficos. */
 
-/* ------------------------------------------------------------ carregando */
-/* Esqueleto que **reserva o espaço** do conteúdo, em vez de um fiandeiro que
-   empurra o layout quando o dado chega. Conteúdo que salta ao carregar é a
-   diferença entre uma tela que parece pronta e uma que parece quebrada. */
-.esqueleto {
-  border-radius: var(--raio-controle);
-  background: linear-gradient(
-    90deg,
-    var(--surface-2) 25%,
-    var(--border) 37%,
-    var(--surface-2) 63%
-  );
-  background-size: 400% 100%;
-  animation: esqueleto-brilho 1.4s ease infinite;
-}
+/* ---------- botões ---------- */
 
-@keyframes esqueleto-brilho {
-  from {
-    background-position: 100% 50%;
-  }
-  to {
-    background-position: 0 50%;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .esqueleto {
-    animation: none;
-  }
-}
-
-.carregando {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 40vh;
-  color: var(--ink-2);
-  font-size: var(--txt-13);
-}
-
-/* ---------------------------------------------------------- estado vazio */
-/* Tela vazia sem explicação é defeito. Cada um dos três estados previstos no
-   `docs/09` diz o que aconteceu e qual é o próximo passo. */
-.vazio {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--esp-8);
-  padding: var(--esp-24) var(--esp-16);
-  text-align: center;
-}
-
-.vazio__titulo {
-  font-size: var(--txt-14);
-  font-weight: var(--peso-nome);
-}
-
-.vazio__texto {
-  max-width: 44ch;
-  color: var(--ink-2);
-  font-size: var(--txt-13);
-}
-
-.vazio__acao {
-  margin-top: var(--esp-8);
-}
-
-/* ------------------------------------------------------------ indicadores */
-.indicadores {
-  display: grid;
-  /* **Três colunas, e não `auto-fit`.** Com seis indicadores, o encaixe
-     automático punha cinco na primeira linha e deixava o sexto sozinho na
-     segunda, esticado pela linha inteira — medido em 1440 px. Três divide seis
-     em duas linhas cheias, e os pontos de quebra abaixo mantêm isso: 3, 2 e 1
-     são todos divisores de 6, então nunca sobra um cartão solto. */
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--esp-12);
-}
-
-@media (max-width: 900px) {
-  .indicadores {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 560px) {
-  .indicadores {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-.indicador {
-  display: flex;
-  flex-direction: column;
-  gap: var(--esp-6);
-  padding: var(--esp-15) var(--esp-16);
-}
-
-.indicador__rotulo {
-  font-size: var(--txt-12);
-  font-weight: var(--peso-rotulo);
-  color: var(--ink-2);
-}
-
-.indicador__valor {
-  font-size: var(--txt-22);
-  font-weight: var(--peso-nome);
-  letter-spacing: -0.01em;
-}
-
-.indicador__variacao {
+.botao {
   display: inline-flex;
   align-items: center;
-  gap: var(--esp-4);
-  font-size: var(--txt-12);
-  font-family: var(--fonte-dados);
+  justify-content: center;
+  gap: var(--e-2);
+  min-height: 40px;
+  padding: 0 var(--e-4);
+  border: 1.5px solid transparent;
+  border-radius: var(--raio-campo);
+  font-size: var(--t-15);
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.botao:hover {
+  text-decoration: none;
+}
+
+.botao--primario {
+  background: var(--acao);
+  border-color: var(--acao);
+  color: var(--acao-tinta);
+}
+
+.botao--primario:hover:not(:disabled) {
+  background: var(--acao-forte);
+  border-color: var(--acao-forte);
+}
+
+.botao--secundario {
+  background: var(--etiqueta);
+  border-color: var(--fio-forte);
+  color: var(--carbono);
+}
+
+.botao--secundario:hover:not(:disabled) {
+  border-color: var(--acao);
+  color: var(--acao);
+}
+
+.botao--fantasma {
+  background: transparent;
+  color: var(--acao);
+  padding: 0 var(--e-3);
+}
+
+.botao--fantasma:hover:not(:disabled) {
+  background: var(--acao-fundo);
+}
+
+.botao--perigo {
+  background: var(--erro);
+  border-color: var(--erro);
+  color: var(--erro-tinta);
+}
+
+.botao--perigo:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.botao:disabled {
+  background: var(--etiqueta-2);
+  border-color: var(--fio);
+  color: var(--carbono-3);
+}
+
+.botao--pequeno {
+  min-height: 34px;
+  padding: 0 var(--e-3);
+  font-size: var(--t-14);
+}
+
+.botao--grande {
+  min-height: 48px;
+  padding: 0 var(--e-5);
+  font-size: var(--t-16);
+}
+
+.botao--largo {
+  width: 100%;
+}
+
+.botao-icone {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: var(--raio-campo);
+  background: transparent;
+  color: var(--carbono);
+  font-size: 1.15rem;
+}
+
+.botao-icone:hover {
+  background: var(--etiqueta-2);
+}
+
+.link-seta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  font-size: var(--t-14);
+}
+
+.link-botao {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--acao);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* ---------- campos ---------- */
+
+.formulario {
+  display: grid;
+  gap: var(--e-5);
+}
+
+.formulario__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e-3) var(--e-4);
+}
+
+.formulario__dica {
+  font-size: var(--t-13);
+  color: var(--carbono-2);
+}
+
+.grupo-campos {
+  display: grid;
+  gap: var(--e-4);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.grupo-campos--linha {
+  grid-template-columns: repeat(auto-fit, minmax(200px, max-content));
+  align-items: start;
+  gap: var(--e-4) var(--e-5);
+}
+
+.grupo-campos__legenda {
+  padding: 0;
+  margin-bottom: var(--e-2);
+  font-size: var(--t-16);
+  font-weight: 700;
+}
+
+.campo {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  min-width: 0;
+}
+
+.campo__rotulo {
+  font-size: var(--t-14);
+  font-weight: 700;
+}
+
+.campo__obrigatorio {
+  color: var(--erro);
+}
+
+.campo__ajuda {
+  font-size: var(--t-13);
+  color: var(--carbono-2);
+  max-width: 64ch;
+}
+
+.campo__erro {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  font-size: var(--t-13);
+  font-weight: 600;
+  color: var(--erro);
+  max-width: 64ch;
+}
+
+.campo__erro .icone {
+  margin-top: 2px;
+}
+
+.campo__erro-ajuda {
+  font-weight: 400;
+  color: var(--carbono-2);
+}
+
+.campo--em-linha {
+  grid-template-columns: auto;
+}
+
+.entrada {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--fio-forte);
+  border-radius: var(--raio-campo);
+  background: var(--etiqueta);
+  color: var(--carbono);
+  font-size: var(--t-15);
+  line-height: 1.4;
+}
+
+.entrada::placeholder {
+  color: var(--carbono-3);
+  opacity: 1;
+}
+
+.entrada:hover {
+  border-color: var(--carbono-2);
+}
+
+.entrada:focus-visible {
+  border-color: var(--acao);
+  outline: 3px solid color-mix(in srgb, var(--acao) 35%, transparent);
+  outline-offset: 0;
+}
+
+.entrada:disabled {
+  background: var(--etiqueta-2);
+  color: var(--carbono-3);
+}
+
+.campo--erro .entrada {
+  border-color: var(--erro);
+}
+
+select.entrada {
+  appearance: none;
+  padding-right: 36px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  text-overflow: ellipsis;
+}
+
+select.entrada option {
+  background: var(--etiqueta);
+  color: var(--carbono);
+}
+
+textarea.entrada {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.entrada--codigo {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: var(--t-14);
+}
+
+.entrada--arquivo {
+  padding: 6px;
+}
+
+.entrada--arquivo::file-selector-button {
+  margin-right: var(--e-3);
+  padding: 6px 12px;
+  border: 1.5px solid var(--fio-forte);
+  border-radius: var(--raio-campo);
+  background: var(--etiqueta-2);
+  color: var(--carbono);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.entrada--numero {
+  max-width: 160px;
   font-variant-numeric: tabular-nums;
 }
 
-/* O texto da variação é **neutro**. A cor de segmento vai só para a seta,
-   que é marca gráfica — a regra 1.1 do `docs/09` diz que cor de segmento
-   aparece como ponto ou barra, nunca como texto. A primeira versão pintava o
-   número de turquesa, e a medição deu 2,82:1: ilegível, além de fora da regra.
-
-   A seta é redundante com o sinal do número, então quem não distingue a cor
-   não perde nada. */
-.indicador__variacao {
-  color: var(--ink-2);
+.senha {
+  position: relative;
 }
 
-.indicador__variacao--sobe svg {
-  color: var(--seg-ascensao);
+.senha .entrada {
+  padding-right: 108px;
 }
 
-.indicador__variacao--cai svg {
-  color: var(--seg-risco);
+.senha__botao {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  bottom: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--acao);
+  font-size: var(--t-13);
+  font-weight: 700;
 }
 
-/* Estável e indefinida ficam neutras as duas, mas não iguais: estável mostra
-   "0,00%", que é uma medição; indefinida mostra travessão, que é a ausência
-   dela. A cor não distingue — o texto distingue. */
-.indicador__variacao--estavel {
-  color: var(--ink-2);
+.senha__botao:hover {
+  background: var(--acao-fundo);
 }
 
-.indicador__variacao--indefinida {
-  color: var(--ink-2);
+.contador {
+  font-size: var(--t-13);
+  color: var(--carbono-2);
+  font-variant-numeric: tabular-nums;
 }
 
-/* A nota substitui a variação quando não há o que comparar — ou quando o que
-   o indicador tem a dizer não é um número. Neutra: não é medição. */
-.indicador__nota {
-  font-size: var(--txt-12);
-  color: var(--ink-2);
+.segmentado {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 8px;
+  background: var(--etiqueta-2);
+  border: 1px solid var(--fio);
+  justify-self: start;
 }
 
-/* Do número a quem está por trás dele (H81). É link, então usa a cor de ação —
-   o trabalho dela é dizer "responde ao clique". */
-.indicador__acao {
-  font-size: var(--txt-12);
-  color: var(--acao-ink);
+.segmentado__opcao {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 var(--e-4);
+  border-radius: 6px;
+  font-size: var(--t-14);
+  font-weight: 700;
+  color: var(--carbono-2);
+  cursor: pointer;
+}
+
+.segmentado__opcao input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.segmentado__opcao:has(input:focus-visible) {
+  outline: 3px solid var(--foco);
+  outline-offset: 1px;
+}
+
+.segmentado__opcao--ativa {
+  background: var(--etiqueta);
+  color: var(--carbono);
+  box-shadow: inset 0 0 0 1.5px var(--acao);
+}
+
+.caixa-de-selecao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-2);
+  font-size: var(--t-14);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.caixa-de-selecao input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--acao);
+}
+
+.busca {
+  position: relative;
+}
+
+.busca__icone {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--carbono-2);
+  pointer-events: none;
+}
+
+.busca__entrada {
+  padding-left: 38px;
+}
+
+.arquivo-escolhido {
+  display: flex;
+  align-items: center;
+  gap: var(--e-3);
+  min-height: 48px;
+  padding: 6px 6px 6px 14px;
+  border: 1.5px solid var(--fio-forte);
+  border-radius: var(--raio-campo);
+  background: var(--etiqueta-2);
+}
+
+.arquivo-escolhido__nome {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.arquivo-escolhido__tamanho {
+  margin-right: auto;
+  font-size: var(--t-13);
+  color: var(--carbono-2);
+}
+
+/* ---------- avisos e estados ---------- */
+
+.aviso,
+.nota {
+  display: flex;
+  gap: var(--e-3);
+  align-items: flex-start;
+  padding: var(--e-3) var(--e-4);
+  border-radius: var(--raio);
+  border: 1px solid;
+  font-size: var(--t-14);
+}
+
+.aviso:focus-visible,
+.nota:focus-visible {
+  outline-offset: 2px;
+}
+
+.aviso__icone,
+.nota__icone {
+  margin-top: 2px;
+  font-size: 1.15rem;
+}
+
+.aviso__texto,
+.nota__texto {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.aviso__ajuda {
+  color: var(--carbono-2);
+}
+
+.aviso__lista {
+  display: grid;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.aviso__lista a {
+  font-weight: 600;
+}
+
+.aviso .botao-icone {
+  margin: -8px -8px -8px auto;
+  width: 34px;
+  height: 34px;
+}
+
+.aviso--sucesso {
+  background: var(--sucesso-fundo);
+  border-color: color-mix(in srgb, var(--sucesso) 40%, transparent);
+}
+
+.aviso--sucesso .aviso__icone {
+  color: var(--sucesso);
+}
+
+.aviso--erro {
+  background: var(--erro-fundo);
+  border-color: color-mix(in srgb, var(--erro) 45%, transparent);
+}
+
+.aviso--erro .aviso__icone {
+  color: var(--erro);
+}
+
+.aviso--neutro,
+.nota--neutra {
+  background: var(--neutro-fundo);
+  border-color: var(--fio);
+}
+
+.aviso--neutro .aviso__icone,
+.nota--neutra .nota__icone {
+  color: var(--carbono-2);
+}
+
+.nota--atencao {
+  background: var(--atencao-fundo);
+  border-color: color-mix(in srgb, var(--atencao) 35%, transparent);
+}
+
+.nota--atencao .nota__icone {
+  color: var(--atencao);
+}
+
+.nota--erro {
+  background: var(--erro-fundo);
+  border-color: color-mix(in srgb, var(--erro) 45%, transparent);
+}
+
+.nota--erro .nota__icone {
+  color: var(--erro);
+}
+
+.nota--estimativa {
+  background: transparent;
+  border: 2px dashed var(--grafico-estimativa);
+}
+
+.nota__titulo {
+  font-weight: 700;
+}
+
+.carregando {
+  padding: var(--e-4) 0;
+}
+
+.esqueleto {
+  display: grid;
+  gap: 12px;
+}
+
+.esqueleto span {
+  display: block;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--etiqueta-2);
+  animation: respirar 1.4s ease-in-out infinite;
+}
+
+.esqueleto span:first-child {
+  height: 22px;
+}
+
+@keyframes respirar {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.vazio {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--e-4);
+  align-items: start;
+  padding: var(--e-6);
+  border-radius: var(--raio);
+  background: var(--etiqueta);
+  box-shadow: var(--sombra-etiqueta);
+}
+
+.bloco .vazio,
+.vazio--compacto {
+  padding: var(--e-4) 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.vazio__icone {
+  width: 48px;
+  height: 48px;
+  padding: 11px;
+  border-radius: 10px;
+  background: var(--chao);
+  color: var(--carbono-2);
+}
+
+.vazio__titulo {
+  font-size: var(--t-18);
+  font-weight: 700;
+}
+
+.vazio__texto {
+  margin: 4px 0 var(--e-3);
+  color: var(--carbono-2);
+  max-width: 62ch;
+}
+
+.vazio > div > .botao {
+  margin-top: var(--e-2);
+}
+
+.erro-tela {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--e-3);
+  padding: var(--e-4) var(--e-5);
+  border-radius: var(--raio);
+  background: var(--erro-fundo);
+  border: 1px solid color-mix(in srgb, var(--erro) 45%, transparent);
+}
+
+.erro-tela__icone {
+  font-size: 1.3rem;
+  color: var(--erro);
+  margin-top: 2px;
+}
+
+.erro-tela__titulo {
+  font-weight: 700;
+}
+
+.erro-tela__ajuda,
+.erro-tela__correlacao {
+  color: var(--carbono-2);
+  font-size: var(--t-14);
+  margin-top: 4px;
+}
+
+.confirmacao {
+  display: grid;
+  gap: var(--e-3);
+  padding: var(--e-4) var(--e-5);
+  border-radius: var(--raio);
+  background: var(--etiqueta);
+  border: 2px solid var(--carbono);
+  box-shadow: var(--sombra-etiqueta);
+}
+
+.confirmacao--perigo {
+  border-color: var(--erro);
+}
+
+.confirmacao__texto {
+  font-weight: 700;
+  font-size: var(--t-16);
+}
+
+.confirmacao__detalhe {
+  color: var(--carbono-2);
+  font-size: var(--t-14);
+}
+
+.confirmacao__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-3);
+}
+
+.nao-salvas {
+  position: fixed;
+  left: 50%;
+  bottom: var(--e-5);
+  z-index: 70;
+  width: min(560px, calc(100vw - 32px));
+  transform: translateX(-50%);
+}
+
+.selo-texto {
+  display: inline-block;
+  margin-left: var(--e-2);
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--etiqueta-2);
+  border: 1px solid var(--fio-forte);
+  color: var(--carbono-2);
+  font-size: var(--t-12);
+  font-weight: 700;
+  vertical-align: 0.1em;
+  white-space: nowrap;
+}
+
+.selo-texto--sugerida {
+  border-style: dashed;
+}
+
+.selo-texto--neutro {
+  background: transparent;
+}
+
+.selo-texto--mudou {
+  background: var(--carbono);
+  border-color: var(--carbono);
+  color: var(--etiqueta);
+}
+
+.discreto {
+  color: var(--carbono-2);
+}
+
+.linha-ok {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  color: var(--sucesso);
+  font-weight: 700;
+}
+
+.detalhes-curto summary {
+  cursor: pointer;
+  color: var(--acao);
+  font-weight: 700;
+  font-size: var(--t-13);
+  text-decoration: underline;
   text-underline-offset: 3px;
 }
 
-/* ------------------------------------------------------------- segmentos */
-/* **Ponto, nunca texto.** A cor do segmento identifica; o rótulo ao lado
-   informa. A regra 1.1 do `docs/09` reserva a cor de segmento para ponto ou
-   barra, e a RNF22 proíbe informação transmitida só por cor — as duas apontam
-   para a mesma solução. */
+.detalhes {
+  border-top: 1px solid var(--fio);
+  padding-top: var(--e-3);
+}
+
+.detalhes > summary {
+  cursor: pointer;
+  color: var(--acao);
+  font-weight: 700;
+  font-size: var(--t-14);
+  width: fit-content;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.detalhes[open] > summary {
+  margin-bottom: var(--e-3);
+}
+
+/* ---------- blocos ---------- */
+
+.pagina {
+  display: grid;
+  gap: var(--e-5);
+  min-width: 0;
+}
+
+.bloco {
+  position: relative;
+  min-width: 0;
+  padding: var(--e-5);
+  border-radius: var(--raio);
+  background: var(--etiqueta);
+  box-shadow: var(--sombra-etiqueta);
+}
+
+.bloco__cabeca {
+  display: grid;
+  gap: 2px;
+  margin-bottom: var(--e-4);
+}
+
+.bloco__cabeca--etiqueta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e-2) var(--e-3);
+}
+
+.valor-grande,
+.pares dd.valor-grande {
+  font-size: var(--t-40);
+  font-weight: 750;
+  line-height: 1;
+}
+
+.bloco__cabeca--linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--e-3);
+}
+
+.bloco__titulo {
+  font-size: var(--t-20);
+  font-weight: 700;
+}
+
+.bloco__sub {
+  font-size: var(--t-14);
+  color: var(--carbono-2);
+}
+
+.bloco__subtitulo {
+  margin: var(--e-5) 0 var(--e-3);
+  font-size: var(--t-16);
+  font-weight: 700;
+}
+
+.bloco__nota {
+  margin-top: var(--e-3);
+  font-size: var(--t-13);
+  color: var(--carbono-2);
+  max-width: 72ch;
+}
+
+.bloco__nota--atencao {
+  color: var(--atencao);
+  font-weight: 600;
+}
+
+.bloco__rodape {
+  margin-top: var(--e-4);
+}
+
+.bloco--estimativa {
+  background: var(--etiqueta);
+  box-shadow: none;
+  outline: 2px dashed var(--grafico-estimativa);
+  outline-offset: -2px;
+}
+
+.secao-titulo {
+  font-size: var(--t-24);
+  font-weight: 750;
+  margin-bottom: var(--e-3);
+}
+
+/* a coluna nunca fica mais estreita que um valor em reais na Atkinson */
+.pares {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: var(--e-4) var(--e-5);
+}
+
+.pares > div {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  min-width: 0;
+}
+
+.pares dt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--t-13);
+  color: var(--carbono-2);
+  font-weight: 600;
+}
+
+.pares dd {
+  font-size: var(--t-16);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.valor-forte {
+  font-size: var(--t-24) !important;
+  font-weight: 700 !important;
+  line-height: 1.1;
+}
+
+/* três pares de largura muito diferente: cada um toma a sua, e o que não cabe desce */
+.pares--tres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-4) var(--e-6);
+}
+
+.pares--tres > div {
+  flex: 1 1 auto;
+}
+
+/* ---------- dados ---------- */
+
+.ausente {
+  color: var(--carbono-3);
+}
+
+.variacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.variacao .icone {
+  width: 0.95em;
+  height: 0.95em;
+}
+
+.variacao--boa {
+  color: var(--variacao-boa);
+}
+
+.variacao--ruim {
+  color: var(--variacao-ruim);
+}
+
+.variacao--estavel {
+  color: var(--carbono-2);
+}
+
+.variacao--indefinida {
+  color: var(--carbono-3);
+}
+
+.variacao--texto {
+  white-space: normal;
+}
+
 .segmento {
   display: inline-flex;
   align-items: center;
-  gap: var(--esp-6);
+  gap: 7px;
   white-space: nowrap;
 }
 
 .segmento__ponto {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
   flex: none;
-  background: var(--seg-estavel);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--seg-cor, var(--seg-estavel));
 }
 
-.segmento__ponto--top {
-  background: var(--seg-top);
-}
-.segmento__ponto--em_ascensao {
-  background: var(--seg-ascensao);
-}
-.segmento__ponto--em_risco {
-  background: var(--seg-risco);
-}
-.segmento__ponto--recem_chegado {
-  background: var(--seg-recem);
-}
-.segmento__ponto--prospeccao {
-  background: var(--seg-prosp);
-}
-.segmento__ponto--estavel {
-  background: var(--seg-estavel);
+.segmento--prospeccao { --seg-cor: var(--seg-prospeccao); --seg-fundo: var(--seg-prospeccao-fundo); --seg-tinta: var(--seg-prospeccao-tinta); }
+.segmento--recem-chegado { --seg-cor: var(--seg-recem-chegado); --seg-fundo: var(--seg-recem-chegado-fundo); --seg-tinta: var(--seg-recem-chegado-tinta); }
+.segmento--em-risco { --seg-cor: var(--seg-em-risco); --seg-fundo: var(--seg-em-risco-fundo); --seg-tinta: var(--seg-em-risco-tinta); }
+.segmento--top { --seg-cor: var(--seg-top); --seg-fundo: var(--seg-top-fundo); --seg-tinta: var(--seg-top-tinta); }
+.segmento--em-ascensao { --seg-cor: var(--seg-em-ascensao); --seg-fundo: var(--seg-em-ascensao-fundo); --seg-tinta: var(--seg-em-ascensao-tinta); }
+.segmento--estavel { --seg-cor: var(--seg-estavel); --seg-fundo: var(--seg-estavel-fundo); --seg-tinta: var(--seg-estavel-tinta); }
+
+/* Com o nome, o segmento é uma etiqueta impressa: fundo leve e texto escuro do
+   mesmo matiz, com o ponto na cor plena. */
+.segmento--etiqueta {
+  gap: 6px;
+  padding: 1px 9px 1px 7px;
+  border-radius: 4px;
+  background: var(--seg-fundo, var(--seg-estavel-fundo));
+  color: var(--seg-tinta, var(--seg-estavel-tinta));
+  font-weight: 700;
+  line-height: 1.5;
 }
 
-/* --------------------------------------------- distribuição por segmento */
-.distribuicao {
-  display: grid;
-  gap: var(--esp-12);
-  padding: var(--esp-16);
-  margin: 0;
-  list-style: none;
-}
+.segmento-fundo--prospeccao { background: var(--seg-prospeccao); }
+.segmento-fundo--recem-chegado { background: var(--seg-recem-chegado); }
+.segmento-fundo--em-risco { background: var(--seg-em-risco); }
+.segmento-fundo--top { background: var(--seg-top); }
+.segmento-fundo--em-ascensao { background: var(--seg-em-ascensao); }
+.segmento-fundo--estavel { background: var(--seg-estavel); }
 
-/* Rótulo à esquerda, barra no meio, número à direita. A coluna do rótulo é
-   fixa para as barras começarem todas na mesma linha de base: barra que começa
-   em lugar diferente não dá para comparar de relance, que é a única coisa que
-   este gráfico existe para permitir. */
-.distribuicao__linha {
-  display: grid;
-  grid-template-columns: 9.5rem minmax(0, 1fr) 3.5rem;
+.etiqueta-estimativa {
+  display: inline-flex;
   align-items: center;
-  gap: var(--esp-12);
+  gap: 5px;
+  padding: 1px 7px;
+  border: 1.5px dashed var(--carbono);
+  border-radius: 3px;
+  color: var(--carbono);
+  font-size: var(--t-13);
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
 }
 
-.distribuicao__rotulo {
-  font-size: var(--txt-13);
-  color: var(--ink-2);
+.etiqueta-estimativa .icone {
+  width: 1em;
+  height: 1em;
 }
 
-/* O rótulo leva à lista filtrada (H81). Continua na tinta secundária — a cor de
-   ação em seis rótulos seria ruído —, e o sublinhado discreto é o que diz que
-   ele responde ao clique, como o nome do parceiro na tabela. */
-.distribuicao__link {
-  text-decoration: underline;
-  text-decoration-color: var(--border);
-  text-underline-offset: 3px;
+.nota-estimativa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e-2) var(--e-3);
+  font-size: var(--t-14);
+  color: var(--carbono-2);
 }
 
-.distribuicao__link:hover,
-.distribuicao__link:focus-visible {
-  color: var(--ink);
-  text-decoration-color: var(--acao);
+.valor-estimado {
+  font-style: normal;
 }
 
-/* O trilho é recessivo, um passo da superfície: ele mostra a escala sem
-   competir com o dado. */
-.distribuicao__trilho {
-  height: 14px;
-  border-radius: 2px;
-  background: var(--grade);
-  overflow: hidden;
-}
-
-/* Extremidade do dado arredondada, base reta: a barra cresce de uma linha de
-   base comum, e o canto redondo marca onde o valor termina. */
-.distribuicao__barra {
-  display: block;
-  height: 100%;
-  min-width: 3px; /* um parceiro só ainda precisa aparecer */
-  border-radius: 0 4px 4px 0;
-  background: var(--seg-estavel);
-  transition: width var(--transicao);
-}
-
-.distribuicao__barra--top {
-  background: var(--seg-top);
-}
-.distribuicao__barra--em_ascensao {
-  background: var(--seg-ascensao);
-}
-.distribuicao__barra--em_risco {
-  background: var(--seg-risco);
-}
-.distribuicao__barra--recem_chegado {
-  background: var(--seg-recem);
-}
-.distribuicao__barra--prospeccao {
-  background: var(--seg-prosp);
-}
-.distribuicao__barra--estavel {
-  background: var(--seg-estavel);
-}
-
-.distribuicao__valor {
-  font-size: var(--txt-13);
-  text-align: right;
+.dinheiro {
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
-/* ------------------------------------------------- gráfico + distribuição */
-.painel-duplo {
+.dinheiro--grande {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.08em;
+}
+
+.dinheiro__moeda {
+  font-size: 0.5em;
+  font-weight: 700;
+  margin-right: 0.12em;
+  align-self: flex-start;
+  margin-top: 0.12em;
+}
+
+.dinheiro__centavos {
+  font-size: 0.5em;
+  align-self: flex-start;
+  margin-top: 0.12em;
+}
+
+/* ---------- o lacre ---------- */
+
+.lacre {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--e-3);
+  padding: 10px 16px;
+  border-radius: var(--raio);
+  background: var(--lacre);
+  color: var(--lacre-tinta);
+  font-size: var(--t-13);
+  line-height: 1.35;
+}
+
+.lacre::before,
+.lacre::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: radial-gradient(circle at 50% 50%, var(--fundo-do-lacre, var(--etiqueta)) 3px, transparent 3.5px) 0 0 / 8px 10px repeat-y;
+}
+
+.lacre::before {
+  left: -4px;
+}
+
+.lacre::after {
+  right: -4px;
+  transform: scaleX(-1);
+}
+
+.lacre__numero {
+  font-size: var(--t-24);
+  font-weight: 750;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.lacre__no {
+  margin-right: 2px;
+}
+
+.lacre__texto {
   display: grid;
-  gap: var(--esp-12);
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  /* Cada cartão com a altura do que tem dentro. Esticado, o da distribuição
-     ficava com 130 px de conteúdo em 353 px de cartão — medido — e mais da
-     metade dele era vazio com borda em volta, o que lê como algo faltando. */
-  align-items: start;
+  gap: 1px;
 }
 
-/* Abaixo disto a distribuição fica estreita demais para as barras dizerem
-   alguma coisa, e o gráfico perde o eixo. Empilhar é melhor que espremer. */
-@media (max-width: 1000px) {
-  .painel-duplo {
-    grid-template-columns: minmax(0, 1fr);
+.lacre__titulo {
+  font-weight: 700;
+}
+
+.lacre__assinatura {
+  font-weight: 600;
+}
+
+.lacre--compacto {
+  display: inline-flex;
+  padding: 4px 12px;
+  font-size: var(--t-12);
+}
+
+.lacre--compacto .lacre__numero {
+  font-size: var(--t-16);
+}
+
+.lacre--novo {
+  animation: aplicar-lacre var(--passo) steps(2, end) both;
+}
+
+@keyframes aplicar-lacre {
+  0% {
+    transform: scale(1.08) rotate(-2deg);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
   }
 }
 
-@media (max-width: 480px) {
-  /* Num telefone, 9,5rem de rótulo não sobra largura para a barra. O rótulo
-     sobe, e a barra fica com a linha inteira. */
-  .distribuicao__linha {
-    grid-template-columns: minmax(0, 1fr) 3.5rem;
-  }
+/* ---------- indicadores (etiquetas) ---------- */
 
-  .distribuicao__rotulo {
-    grid-column: 1 / -1;
-  }
+.faixa-kpi__grade {
+  display: grid;
+  grid-template-columns: 1.9fr repeat(5, minmax(0, 1fr));
+  gap: var(--e-3);
+  row-gap: var(--e-3);
 }
 
-/* ---------------------------------------------------------------- tabela */
-/* A tabela rola no **próprio container**. A página nunca rola na horizontal. */
-/* `position: relative` pelo mesmo motivo do trilho: o texto só para leitor de
-   tela (`.so-leitor`) é `position: absolute`, e sem um ancestral posicionado
-   ele escapa da caixa que rola e alarga a página. Na lista de parceiros, o
-   "sem previsão" da coluna de risco, a última, fazia a página rolar a 768 px (#192). */
-.tabela-rolagem {
+.faixa-kpi--tres .faixa-kpi__grade {
+  grid-template-columns: 1.4fr 1fr 1fr;
+}
+
+.kpi {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-2);
+  min-width: 0;
+  padding: calc(var(--e-4) + 6px) var(--e-4) var(--e-4);
+  border-radius: var(--raio);
+  /* a faixa impressa no topo da etiqueta, na cor da rota da tela */
+  background: linear-gradient(var(--rota), var(--rota)) top / 100% 6px no-repeat, var(--etiqueta);
+  box-shadow: var(--sombra-etiqueta);
+}
+
+/* a serrilha da etiqueta: arrancada do rolo, na faixa da cor da rota */
+.kpi::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: -4px;
+  height: 8px;
+  background: radial-gradient(circle at 50% 50%, var(--chao) 3px, transparent 3.5px) 0 0 / 10px 8px repeat-x;
+}
+
+.kpi__rotulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e-2);
+  padding-bottom: var(--e-2);
+  border-bottom: 1.5px dashed var(--fio);
+  font-size: var(--t-14);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--carbono-2);
+}
+
+.kpi__selo {
+  flex: none;
+  font-size: var(--t-13);
+  font-weight: 600;
+  color: var(--carbono-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi__rotulo .segmento {
+  color: var(--carbono-2);
+}
+
+.kpi__rotulo .segmento--etiqueta {
+  padding: 0;
+  background: none;
+  color: inherit;
+  font-weight: inherit;
+}
+
+/* A variação do indicador ganha fundo do seu sentido: lê-se de longe. */
+.kpi__variacao .variacao:not(.variacao--texto, .variacao--indefinida) {
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.kpi__variacao .variacao--boa {
+  background: var(--sucesso-fundo);
+}
+
+.kpi__variacao .variacao--ruim {
+  background: var(--erro-fundo);
+}
+
+.kpi__variacao .variacao--estavel:not(.variacao--texto) {
+  background: var(--neutro-fundo);
+}
+
+.kpi__valor {
+  font-size: var(--t-32);
+  font-weight: 750;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.kpi--principal .kpi__valor {
+  font-size: var(--t-40);
+}
+
+/* Na faixa, as etiquetas dividem as linhas: rótulo, número, variação e nota
+   ficam na mesma altura em todas, mesmo quando um rótulo quebra. */
+.faixa-kpi__grade > .kpi,
+.folha .faixa-kpi__grade > .kpi {
+  display: grid;
+  grid-row: span 4;
+  grid-template-rows: subgrid;
+  align-content: start;
+  row-gap: var(--e-2);
+}
+
+.kpi__variacao {
+  font-size: var(--t-14);
+}
+
+.kpi__nota {
+  font-size: var(--t-13);
+  color: var(--carbono-2);
+  display: grid;
+  gap: 6px;
+}
+
+.kpi--risco .kpi__rotulo .segmento__ponto {
+  width: 12px;
+  height: 12px;
+}
+
+.mobilidade {
+  display: grid;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: var(--t-13);
+  color: var(--carbono);
+}
+
+.mobilidade li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mobilidade__entrou {
+  color: var(--variacao-boa);
+}
+
+.mobilidade__saiu {
+  color: var(--variacao-ruim);
+}
+
+.mobilidade__pos {
+  color: var(--carbono-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- tabelas ---------- */
+
+/* A tabela larga rola dentro da caixa; uma sombra na borda mostra que há mais
+   para o lado (some quando se chega ao fim). */
+.caixa-tabela {
   position: relative;
   overflow-x: auto;
+  max-width: 100%;
+  border-radius: 2px;
+  background:
+    linear-gradient(to right, var(--etiqueta) 30%, transparent) left center / 48px 100% no-repeat local,
+    linear-gradient(to left, var(--etiqueta) 30%, transparent) right center / 48px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, color-mix(in oklab, var(--carbono) 28%, transparent), transparent) left center / 18px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, color-mix(in oklab, var(--carbono) 28%, transparent), transparent) right center / 18px 100% no-repeat scroll;
+}
+
+.caixa-tabela--alta {
+  max-height: 420px;
+  overflow-y: auto;
 }
 
 .tabela {
   width: 100%;
-  border-collapse: collapse;
-  font-size: var(--txt-13);
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--t-14);
 }
 
-.tabela th,
-.tabela td {
-  padding: var(--esp-8) var(--esp-12);
+.tabela caption:not(.sr-only) {
   text-align: left;
-  white-space: nowrap;
+  padding-bottom: var(--e-2);
+  font-weight: 700;
 }
 
 .tabela thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  font-size: var(--txt-11);
-  font-weight: var(--peso-rotulo);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-2);
+  padding: 10px 12px;
+  background: var(--etiqueta);
+  border-bottom: 2px solid var(--carbono);
+  font-size: var(--t-13);
+  font-weight: 700;
+  color: var(--carbono-2);
+  text-align: left;
+  white-space: nowrap;
 }
 
-.tabela tbody tr {
-  border-bottom: 1px solid var(--border);
-  transition: background var(--transicao);
+.tabela td,
+.tabela tbody th {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--fio);
+  text-align: left;
+  vertical-align: top;
+  font-weight: 400;
 }
 
-.tabela tbody tr:last-child {
-  border-bottom: none;
+.tabela tbody tr:hover > * {
+  background: var(--etiqueta-2);
 }
 
-.tabela tbody tr:hover {
-  background: var(--surface-2);
-}
-
-/* Sem zebra: em tabela densa ela vira ruído, e o fio de borda já separa as
-   linhas. A hierarquia vem do peso, não do fundo. */
-
-.tabela .numerica {
+.tabela .num {
   text-align: right;
-  font-family: var(--fonte-dados);
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
-/* O nome é o **único** elemento em peso alto e tinta cheia. É assim que o olho
-   encontra a linha sem precisar de contraste extra. */
-/* A quebra continua permitida — nome de parceiro não tem teto — mas o mínimo
-   sobe para caber a massa real: medido nos 500 parceiros gerados, a mediana é
-   15 caracteres, o p95 é 18 e o máximo é 19. Com 18ch, quatro linhas em cada
-   duzentas quebravam em duas, e linha de altura diferente no meio de uma
-   tabela densa faz o olho perder a linha. */
 .tabela .nome {
-  font-weight: var(--peso-nome);
-  color: var(--ink);
-  white-space: normal;
-  min-width: 20ch;
+  font-weight: 700;
+  min-width: 12ch;
 }
 
-.tabela .secundaria {
-  color: var(--ink-2);
+.tabela .nome a {
+  font-weight: 700;
+  text-decoration: none;
 }
 
-.posicao {
-  font-family: var(--fonte-dados);
+.tabela .nome a:hover {
+  text-decoration: underline;
+}
+
+.tabela--compacta td,
+.tabela--compacta tbody th {
+  padding: 8px 10px;
+}
+
+.tabela--compacta thead th {
+  padding: 8px 10px;
+}
+
+.tabela tfoot td,
+.tabela tfoot th {
+  padding: 10px 12px;
+  border-top: 2px solid var(--carbono);
+  border-bottom: 0;
+  text-align: left;
+  font-weight: 700;
+}
+
+.tabela tfoot .num {
+  text-align: right;
+}
+
+.tabela--recarregando tbody {
+  opacity: 0.55;
+}
+
+.linha--inativa > * {
+  color: var(--carbono-3);
+}
+
+.linha--inativa .segmento__ponto,
+.linha--inativa .segmento--etiqueta {
+  filter: grayscale(1);
+}
+
+.linha--apagada > * {
+  color: var(--carbono-3);
+}
+
+.linha--mudou > * {
+  background: var(--neutro-fundo);
+}
+
+.ordenar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+}
+
+th.num .ordenar {
+  flex-direction: row-reverse;
+}
+
+.ordenar:hover,
+.ordenar--ativa {
+  color: var(--carbono);
+}
+
+.ordenar__icone {
+  opacity: 0.55;
+}
+
+.ordenar--ativa .ordenar__icone {
+  opacity: 1;
+  color: var(--acao);
+}
+
+.paginacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e-3);
+  margin-top: var(--e-4);
+}
+
+.paginacao__onde {
+  font-size: var(--t-14);
+  color: var(--carbono-2);
   font-variant-numeric: tabular-nums;
-  color: var(--ink-2);
 }
 
-/* Ponto de segmento: a cor **nunca** aparece sozinha, sempre ao lado do
-   rótulo em texto neutro. É a mitigação registrada na validação da paleta. */
-.ponto-segmento {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: var(--esp-6);
-  vertical-align: baseline;
+.paginacao__botoes {
+  display: flex;
+  gap: var(--e-2);
 }
 
-/* ---------------------------------------------------------------- gráfico */
+.trilha ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--t-14);
+}
+
+.trilha li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.trilha a {
+  font-weight: 600;
+}
+
+.trilha [aria-current] {
+  color: var(--carbono-2);
+}
+
+.trilha__sep {
+  color: var(--carbono-3);
+}
+
+/* ---------- gráficos ---------- */
+
+/* A série medida sai na cor da rota da tela, com a área embaixo dela tingida; a
+   estimativa continua tracejada e cinza, e a estação atual, no amarelo do lacre. */
 .grafico {
-  display: block;
-  width: 100%;
-  height: auto;
+  --grafico-linha: var(--rota-forte);
+}
+
+.grafico {
+  position: relative;
+  min-width: 0;
+}
+
+.grafico__area {
+  fill: color-mix(in oklab, var(--rota) 24%, transparent);
+}
+
+.grafico__svg {
+  overflow: visible;
+  font-family: var(--fonte);
+  touch-action: pan-y;
+}
+
+.grafico__grade line {
+  stroke: var(--grafico-grade);
+  stroke-width: 1;
+}
+
+.grafico__grade text,
+.grafico__eixo-x text {
+  fill: var(--carbono-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.grafico__titulo-eixo {
+  font-weight: 600;
+}
+
+.grafico__rotulo-est {
+  font-weight: 700;
 }
 
 .grafico__linha {
   fill: none;
-  stroke: var(--serie-1);
-  stroke-width: 2;
+  stroke: var(--grafico-linha);
+  stroke-width: 3.5;
+  stroke-linejoin: round;
   stroke-linecap: round;
+}
+
+.grafico__estacao {
+  fill: var(--grafico-linha);
+}
+
+.grafico__estacao--atual {
+  fill: var(--lacre);
+  stroke: var(--grafico-linha);
+  stroke-width: 2.5;
+}
+
+.grafico__linha-est {
+  stroke: var(--grafico-estimativa);
+  stroke-width: 3;
+  stroke-dasharray: 7 6;
+  stroke-linecap: round;
+}
+
+.grafico__estacao-est {
+  fill: var(--etiqueta);
+  stroke: var(--grafico-estimativa);
+  stroke-width: 2.5;
+  stroke-dasharray: 4 3;
+}
+
+.grafico__valor-atual,
+.grafico__valor-est {
+  font-size: 14px;
+  font-weight: 700;
+  fill: var(--carbono);
+  paint-order: stroke;
+  stroke: var(--etiqueta);
+  stroke-width: 4px;
   stroke-linejoin: round;
 }
 
-.grafico__area {
-  fill: var(--serie-1);
-  fill-opacity: 0.2;
-  stroke: none;
+.grafico__valor-est {
+  fill: var(--carbono-2);
 }
 
-.grafico__grade {
-  stroke: var(--grade);
+.grafico__lacuna {
+  fill: var(--etiqueta-2);
+  stroke: var(--fio);
+  stroke-dasharray: 2 4;
+}
+
+.grafico__mira {
+  stroke: var(--carbono-3);
   stroke-width: 1;
-}
-
-.grafico__eixo {
-  fill: var(--ink-2);
-  font-family: var(--fonte-dados);
-  font-size: 10px;
-}
-
-.grafico__ponto {
-  fill: var(--surface);
-  stroke: var(--serie-1);
-  stroke-width: 2;
-}
-
-/* A estimativa: tracejada e vazada, para se distinguir do medido sem depender
-   da cor (H44). O traço é da série, e não da grade: grade tracejada é que leria
-   como projeção. */
-.grafico__linha--prevista {
-  stroke-dasharray: 5 4;
-}
-
-.grafico__ponto--previsto {
-  stroke-dasharray: 2 2;
-}
-
-.grafico__cruz {
-  stroke: var(--ink-3);
-  stroke-width: 1;
-  stroke-dasharray: 3 3;
-}
-
-.grafico__rotulo-final {
-  fill: var(--ink);
-  font-family: var(--fonte-dados);
-  font-size: 11px;
-  font-weight: 500;
 }
 
 .grafico__dica {
   position: absolute;
-  padding: var(--esp-6) var(--esp-8);
-  border: 1px solid var(--border);
-  border-radius: var(--raio-controle);
-  background: var(--surface);
-  box-shadow: 0 4px 12px rgb(16 24 38 / 12%);
-  font-size: var(--txt-12);
-  pointer-events: none;
+  top: 4px;
+  z-index: 5;
+  display: grid;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: var(--raio);
+  background: var(--carbono);
+  color: var(--etiqueta);
+  font-size: var(--t-13);
   white-space: nowrap;
-  z-index: 2;
+  transform: translateX(-50%);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
 }
 
-.grafico__moldura {
-  position: relative;
-  padding: var(--esp-16);
+.grafico__dica strong {
+  font-weight: 700;
 }
 
-/* O gráfico de escalabilidade do benchmark (H57): quatro linhas, uma cor por
-   modo, que o componente passa pela coluna. A legenda fica acima, em uma linha. */
-.escalabilidade__legenda {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--esp-6) var(--esp-16);
-  margin: 0 0 var(--esp-8);
-  padding: 0;
-  list-style: none;
-  font-size: var(--txt-12);
-  color: var(--ink-2);
-}
-
-.escalabilidade__legenda li {
+.grafico__dica-linha {
   display: inline-flex;
   align-items: center;
-  gap: var(--esp-6);
+  gap: 6px;
 }
 
-.escalabilidade__linha {
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* O anel da cor do fundo separa as marcas onde as linhas se cruzam. */
-.escalabilidade__ponto {
-  stroke: var(--surface);
-  stroke-width: 2;
-}
-
-.escalabilidade__rotulo {
-  fill: var(--ink-2);
-  font-family: var(--fonte-interface);
-  font-size: 11px;
-  font-weight: 500;
-}
-
-/* O tamanho que a tela mostra: uma faixa de fundo, e não uma cor de dado. */
-.escalabilidade__destaque {
-  stroke: var(--surface-2);
-  stroke-width: 14;
-}
-
-.escalabilidade__dica-linha {
-  display: grid;
-  grid-template-columns: 10px auto auto;
-  align-items: center;
-  gap: var(--esp-6);
-  justify-content: start;
-}
-
-.escalabilidade__dica-linha .num {
-  padding-left: var(--esp-8);
-}
-
-.escalabilidade__chave {
-  width: 10px;
-  height: 3px;
-  border-radius: 2px;
-}
-
-.grafico__legenda-lacuna {
+.grafico__legenda {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2) var(--e-5);
+  margin-top: var(--e-3);
+  font-size: var(--t-13);
+  color: var(--carbono-2);
+}
+
+.legenda {
+  display: inline-flex;
   align-items: center;
-  gap: var(--esp-6);
-  margin-top: var(--esp-8);
-  font-size: var(--txt-11);
-  color: var(--ink-2);
+  gap: 6px;
 }
 
-/* Neutra de propósito, e compartilhada pelo cadastro do parceiro e pelo plano de
-   campanha: não é alerta nem segmento, é a natureza do número. Em
-   caixa alta pequena, como os rótulos de coluna. */
-/* O caminho de um termo até a explicação dele, na ajuda (H95). Responde ao
-   clique, e por isso leva a tinta da ação; não vai para a folha impressa. */
-.ajuda-link {
-  color: var(--acao-ink);
-  font-weight: var(--peso-rotulo);
+.legenda svg {
+  overflow: visible;
 }
 
-.etiqueta-estimativa {
-  padding: 2px var(--esp-6);
-  border: 1px solid var(--border);
-  border-radius: var(--raio-controle);
-  color: var(--ink-2);
-  font-size: var(--txt-11);
-  font-weight: var(--peso-rotulo);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.legenda--medido line {
+  stroke: var(--grafico-linha);
+  stroke-width: 3;
+}
+
+.legenda--medido circle {
+  fill: var(--grafico-linha);
+}
+
+.legenda--estimativa line {
+  stroke: var(--grafico-estimativa);
+  stroke-width: 2.5;
+  stroke-dasharray: 5 4;
+}
+
+.legenda--estimativa circle {
+  fill: var(--etiqueta);
+  stroke: var(--grafico-estimativa);
+  stroke-width: 2;
+  stroke-dasharray: 3 2;
+}
+
+.legenda--nota,
+.legenda--lacuna {
+  font-style: normal;
+}
+
+.ver-numeros__botao {
+  margin-top: var(--e-3);
+}
+
+.ver-numeros .caixa-tabela {
+  margin-top: var(--e-3);
+}
+
+/* séries do benchmark: cor fixa por modo, mais o marcador */
+.serie--python { --serie: var(--serie-python); }
+.serie--cpp_serial { --serie: var(--serie-cpp); }
+.serie--openmp { --serie: var(--serie-openmp); }
+.serie--gpu { --serie: var(--serie-gpu); }
+
+.serie__linha {
+  fill: none;
+  stroke: var(--serie);
+  stroke-width: 2.5;
+}
+
+.serie-marca {
+  stroke: var(--etiqueta);
+  stroke-width: 1.5;
+}
+
+.serie-marca--python { fill: var(--serie-python); }
+.serie-marca--cpp_serial { fill: var(--serie-cpp); }
+.serie-marca--openmp { fill: var(--serie-openmp); }
+.serie-marca--gpu { fill: var(--serie-gpu); }
+
+.serie__nome {
+  fill: var(--carbono);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.legenda.serie--python line,
+.legenda.serie--cpp_serial line,
+.legenda.serie--openmp line,
+.legenda.serie--gpu line {
+  stroke: var(--serie);
+  stroke-width: 2.5;
+}
+
+/* barras horizontais */
+.barras__lista {
+  display: grid;
+  gap: 10px;
+}
+
+.barras__item {
+  display: grid;
+  grid-template-columns: minmax(120px, 16rem) minmax(80px, 1fr) minmax(72px, auto);
+  align-items: center;
+  gap: var(--e-3);
+  font-size: var(--t-14);
+}
+
+.barras__nome {
+  overflow-wrap: anywhere;
+}
+
+.barras__trilho {
+  height: 14px;
+  background: var(--etiqueta-2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.barras__barra {
+  display: block;
+  height: 100%;
+  background: var(--rota);
+}
+
+.barras__item--destaque .barras__nome {
+  font-weight: 700;
+}
+
+.barras__item--destaque .barras__barra {
+  background: var(--rota-forte);
+}
+
+.barras__valor {
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.barras__legenda {
+  margin-top: var(--e-3);
+  font-size: var(--t-13);
+  color: var(--carbono-2);
+}
+
+@media (max-width: 599px) {
+  .barras__item {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .barras__trilho {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+/* ---------- detalhes: o chevron desenhado, e não o triângulo do navegador ---------- */
+
+summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+.resumo__icone {
+  transition: none;
+}
+
+details[open] > summary .resumo__icone {
+  transform: rotate(90deg);
 }

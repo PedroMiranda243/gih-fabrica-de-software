@@ -1,278 +1,562 @@
-/* Casca da aplicação: trilho lateral, cabeçalho e área de conteúdo. */
+/* A casca: o trilho de náilon preto com a faixa refletiva, o cabeçalho e o conteúdo. */
 
 .casca {
   display: grid;
-  grid-template-columns: var(--trilho) minmax(0, 1fr);
+  grid-template-columns: 248px minmax(0, 1fr);
   min-height: 100vh;
+  /* o trilho continua até o fim da página, mesmo quando ela é mais alta que a tela */
+  background-image: linear-gradient(var(--nailon), var(--nailon)), linear-gradient(var(--refletivo), var(--refletivo));
+  background-size: 242px 100%, 6px 100%;
+  background-position: 0 0, 242px 0;
+  background-repeat: no-repeat;
 }
 
-/* ------------------------------------------------------------- trilho */
+/* ---------- trilho ---------- */
+
 .trilho {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--nailon);
+  color: var(--nailon-tinta);
+  padding: var(--e-5) 0 var(--e-6);
+  scrollbar-color: var(--nailon-fio) transparent;
+  box-shadow: inset -6px 0 0 var(--refletivo);
+  --foco: var(--nailon-tinta-forte);
+}
+
+.trilho__topo {
   display: flex;
-  flex-direction: column;
-  gap: var(--esp-20);
-  padding: var(--esp-20) var(--esp-12);
-  background: var(--surface);
-  border-right: 1px solid var(--border);
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0 var(--e-5) var(--e-5) 22px;
 }
 
 .trilho__marca {
-  display: flex;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  border-radius: var(--raio);
+}
+
+.trilho .trilho__fechar {
+  display: none;
+  color: var(--nailon-tinta);
+}
+
+/* A marca é um lacre: a sigla em corte condensado pesado, serrilha nas bordas. */
+.marca {
+  display: inline-flex;
   flex-direction: column;
-  gap: var(--esp-4);
-  padding: 0 var(--esp-8);
+  gap: 2px;
 }
 
-.trilho__sigla {
-  font-size: var(--txt-19);
-  font-weight: var(--peso-marca);
-  letter-spacing: -0.01em;
+.trilho .marca {
+  position: relative;
+  background: var(--lacre);
+  color: var(--lacre-tinta);
+  padding: 10px 14px 9px;
+  border-radius: 5px;
+  min-width: 176px;
 }
 
-.trilho__produto {
-  font-size: var(--txt-11);
-  font-weight: var(--peso-rotulo);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-2);
+.trilho .marca::before,
+.trilho .marca::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: radial-gradient(circle at 50% 50%, var(--nailon) 3px, transparent 3.5px) 0 0 / 8px 10px repeat-y;
 }
 
-.trilho__navegacao {
-  display: flex;
-  flex-direction: column;
-  gap: var(--esp-16);
+.trilho .marca::before {
+  left: -4px;
 }
 
-/* Um grupo por módulo (H79). O título é rótulo, e não item: não responde a
-   clique, por isso é tinta secundária em caixa alta, como o nome do produto
-   acima — e nunca a cor de ação. */
-.trilho__grupo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--esp-4);
+.trilho .marca::after {
+  right: -4px;
+  transform: scaleX(-1);
 }
 
-.trilho__grupo-titulo {
-  padding: 0 var(--esp-8);
-  font-size: var(--txt-11);
-  font-weight: var(--peso-rotulo);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-2);
+.marca__sigla {
+  font-size: var(--t-30);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
 }
 
-.trilho__item {
+.marca__nome {
+  font-size: var(--t-12);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* O menu é um mapa de rotas: cada grupo é uma linha na cor da sua área, com uma
+   parada por tela. A parada da tela atual acende na cor da linha. */
+.menu__grupo + .menu__grupo {
+  margin-top: var(--e-4);
+}
+
+.menu__nome {
   display: flex;
   align-items: center;
-  gap: var(--esp-8);
-  min-height: 44px;
-  padding: 0 var(--esp-8);
-  border-radius: var(--raio-controle);
-  color: var(--ink-2);
-  font-size: var(--txt-13);
-  font-weight: var(--peso-rotulo);
+  gap: 10px;
+  margin: 0 var(--e-5) 2px 22px;
+  font-size: var(--t-14);
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--rota);
+}
+
+/* o terminal da linha */
+.menu__nome::before {
+  content: "";
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--rota);
+}
+
+.menu__item {
+  position: relative;
+  display: grid;
+  gap: 1px;
+  margin-right: 6px;
+  padding: 6px var(--e-3) 7px 50px;
+  color: var(--nailon-tinta);
   text-decoration: none;
-  transition: background var(--transicao), color var(--transicao);
+  border-radius: 0 3px 3px 0;
 }
 
-.trilho__item:hover {
-  background: var(--surface-2);
-  color: var(--ink);
+/* o trecho da linha que passa por esta parada */
+.menu__item::before {
+  content: "";
+  position: absolute;
+  left: 28px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--rota);
 }
 
-/* Selecionado responde ao clique, então usa a cor de ação — é exatamente o
-   trabalho dela. O fundo fraco carrega o estado; o peso reforça sem depender
-   de cor, para quem não a distingue. */
-.trilho__item[aria-current="page"] {
-  background: var(--acao-fraca);
-  color: var(--acao-ink);
-  font-weight: var(--peso-nome);
+.menu__linha > li:first-child > .menu__item::before {
+  top: -6px;
 }
 
-/* Abaixo de 860 px o trilho vira barra horizontal rolável, como manda o
-   `docs/09`. A rolagem é dele, nunca da página. */
-@media (max-width: 860px) {
-  /* As linhas precisam ser declaradas: sem isso, numa página mais curta que a
-     janela, a grade dividia a sobra do `min-height` entre o trilho e o
-     conteúdo, e o trilho aparecia solto no meio de uma faixa vazia. As telas
-     longas escondiam o defeito; a de limiares, curta, o mostrou a 768 px. */
-  .casca {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
-  }
-
-  /* `position: relative` prende ao trilho os títulos de grupo escondidos
-     abaixo, que são `position: absolute`. Sem ele, o título se posicionava em
-     relação à página, e o do último grupo, além da largura, a fazia rolar (#192). */
-  .trilho {
-    position: relative;
-    flex-direction: row;
-    align-items: center;
-    gap: var(--esp-12);
-    padding: var(--esp-8) var(--esp-12);
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    overflow-x: auto;
-  }
-
-  .trilho__marca {
-    padding: 0;
-  }
-
-  .trilho__produto {
-    display: none;
-  }
-
-  .trilho__navegacao {
-    flex-direction: row;
-    gap: var(--esp-12);
-  }
-
-  /* Na barra horizontal, o título do grupo ocuparia o lugar dos itens: some da
-     tela e fica para o leitor de tela (as regras de `.so-leitor`). Um fio
-     separa um grupo do outro. */
-  .trilho__grupo {
-    flex-direction: row;
-  }
-
-  .trilho__grupo + .trilho__grupo {
-    padding-left: var(--esp-12);
-    border-left: 1px solid var(--border);
-  }
-
-  .trilho__grupo-titulo {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-
-  .trilho__item {
-    white-space: nowrap;
-  }
+.menu__linha > li:last-child > .menu__item::before {
+  bottom: auto;
+  height: 17px;
 }
 
-/* --------------------------------------------------------- conteúdo */
-.conteudo {
+/* a parada */
+.menu__item::after {
+  content: "";
+  position: absolute;
+  left: 24px;
+  top: 11px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--nailon);
+  box-shadow: 0 0 0 3px var(--rota);
+}
+
+.menu__rotulo {
+  font-size: var(--t-15);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.menu__dica {
+  font-size: var(--t-13);
+  line-height: 1.3;
+  color: var(--nailon-tinta-2);
+}
+
+.menu__item:hover {
+  background: var(--nailon-2);
+  color: var(--nailon-tinta-forte);
+  text-decoration: none;
+}
+
+.menu__item--ativo,
+.menu__item--ativo:hover {
+  background: var(--rota);
+  color: var(--rota-tinta);
+}
+
+.menu__item--ativo .menu__rotulo {
+  font-weight: 700;
+}
+
+.menu__item--ativo .menu__dica {
+  color: var(--rota-tinta);
+}
+
+.menu__item--ativo::after {
+  background: var(--nailon-tinta-forte);
+  box-shadow: 0 0 0 3px var(--rota-tinta);
+}
+
+.menu__item:focus-visible {
+  outline-offset: -3px;
+}
+
+/* ---------- corpo ---------- */
+
+.casca__corpo {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  min-width: 0;
+}
+
+.casca__veu {
+  display: none;
 }
 
 .cabecalho {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--esp-16);
-  padding: var(--esp-15) var(--esp-24);
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  gap: var(--e-4);
+  min-height: 72px;
+  padding: var(--e-3) var(--e-6) var(--e-3) 40px;
+  background: var(--etiqueta);
+  border-bottom: 4px solid var(--rota);
+}
+
+.cabecalho .cabecalho__menu {
+  display: none;
+}
+
+/* Onde a pessoa está: a área (na cor da rota), o caminho de volta e o título. */
+.cabecalho__onde {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e-2) var(--e-3);
+  margin-right: auto;
+  min-width: 0;
+}
+
+.caminho ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e-2) var(--e-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.caminho li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-3);
+  font-size: var(--t-15);
+  white-space: nowrap;
+}
+
+.caminho a {
+  font-weight: 700;
+}
+
+.caminho__sep {
+  color: var(--carbono-3);
+}
+
+.rota-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 11px 4px 8px;
+  border-radius: 6px;
+  background: var(--rota);
+  color: var(--rota-tinta);
+  font-size: var(--t-14);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.rota-etiqueta__parada {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--nailon-tinta-forte);
+  box-shadow: 0 0 0 2.5px var(--rota-tinta);
+}
+
+.caminho__voltar {
+  display: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--raio-campo);
+  border: 1.5px solid var(--fio-forte);
+  color: var(--acao);
+}
+
+.caminho__voltar:hover {
+  border-color: var(--acao);
+  background: var(--acao-fundo);
 }
 
 .cabecalho__titulo {
-  font-size: var(--txt-19);
-  font-weight: var(--peso-marca);
+  min-width: 0;
+  font-size: var(--t-28);
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
-.cabecalho__direita {
+.cabecalho__titulo:focus,
+.cabecalho__titulo:focus-visible {
+  outline: none;
+}
+
+.cabecalho__acoes {
   display: flex;
   align-items: center;
-  gap: var(--esp-12);
+  gap: var(--e-1);
 }
 
-/* "Pular para o conteúdo" (H96): fora da tela até receber o foco, e então no
-   canto de cima, por cima do menu. Não é `display: none` — escondido assim, ele
-   sairia da ordem do Tab, que é exatamente onde ele precisa estar. */
-.pular {
-  position: absolute;
-  top: var(--esp-8);
-  left: var(--esp-8);
-  z-index: 10;
-  padding: var(--esp-8) var(--esp-12);
-  border: 1px solid var(--borda-controle);
-  border-radius: var(--raio-controle);
-  background: var(--surface);
-  color: var(--ink);
-  font-weight: var(--peso-nome);
-  transform: translateY(-200%);
+.quem {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  padding: 4px 10px 4px 4px;
+  margin-right: var(--e-2);
+  border-radius: 999px;
+  color: var(--carbono);
+  text-decoration: none;
 }
 
-.pular:focus {
-  transform: none;
+.quem:hover {
+  background: var(--etiqueta-2);
+  text-decoration: none;
 }
 
-/* O nome leva à conta de quem está usando (H92). É link, e parece link só ao
-   passar por ele: no cabeçalho de toda tela, um sublinhado fixo competiria com o
-   título. O foco continua com o anel de sempre. */
-.cabecalho__quem {
+.quem__avatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--carbono);
+  color: var(--etiqueta);
+  font-size: var(--t-13);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.quem__texto {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  line-height: 1.3;
-  padding: var(--esp-4) var(--esp-8);
-  border-radius: var(--raio-controle);
-  color: inherit;
-  text-decoration: none;
-  transition: background var(--transicao);
+  line-height: 1.2;
 }
 
-.cabecalho__quem:hover,
-.cabecalho__quem.active {
-  background: var(--surface-2);
+.quem__nome {
+  font-size: var(--t-14);
+  font-weight: 700;
+  max-width: 18ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.cabecalho__quem:hover .cabecalho__nome {
-  text-decoration: underline;
+.quem__perfil {
+  font-size: var(--t-12);
+  color: var(--carbono-2);
 }
 
-.cabecalho__nome {
-  font-size: var(--txt-13);
-  font-weight: var(--peso-nome);
-}
-
-.cabecalho__perfil {
-  font-size: var(--txt-11);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-}
-
-.icone-botao {
+.botao-cabecalho {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--border);
-  border-radius: var(--raio-controle);
-  background: var(--surface);
-  color: var(--ink-2);
-  cursor: pointer;
-  transition: background var(--transicao), color var(--transicao);
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 var(--e-3);
+  border: 0;
+  border-radius: var(--raio-campo);
+  background: transparent;
+  color: var(--acao);
+  font-size: var(--t-14);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-.icone-botao:hover {
-  background: var(--surface-2);
-  color: var(--ink);
+.botao-cabecalho:hover {
+  background: var(--acao-fundo);
+  text-decoration: none;
 }
 
-.pagina {
-  display: flex;
-  flex-direction: column;
-  gap: var(--esp-20);
-  padding: var(--esp-24);
-  /* Gutter lateral nunca some, mesmo no telefone. */
-  padding-inline: max(var(--esp-16), var(--esp-24));
+.botao-cabecalho:disabled {
+  color: var(--carbono-3);
+  background: transparent;
 }
 
-@media (max-width: 600px) {
-  .cabecalho,
-  .pagina {
-    padding-inline: var(--esp-16);
+.conteudo {
+  flex: 1;
+  width: 100%;
+  max-width: 1600px;
+  padding: var(--e-5) var(--e-6) var(--e-8) 40px;
+}
+
+.conteudo:focus-visible {
+  outline: none;
+}
+
+.conferindo {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--e-4);
+  background: var(--nailon);
+  color: var(--nailon-tinta);
+}
+
+.conferindo .marca {
+  background: var(--lacre);
+  color: var(--lacre-tinta);
+  padding: 12px 16px;
+  border-radius: 5px;
+}
+
+/* ---------- larguras ---------- */
+
+@media (max-width: 1279px) {
+  .botao-cabecalho > span:not(.sr-only) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .botao-cabecalho {
+    width: 40px;
+    justify-content: center;
+    padding: 0;
+  }
+}
+
+@media (max-width: 1179px) {
+  .casca {
+    grid-template-columns: minmax(0, 1fr);
+    background-image: none;
+  }
+
+  .trilho {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 60;
+    width: 280px;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform var(--passo) steps(2, end), visibility 0s linear var(--passo);
+  }
+
+  .casca--gaveta-aberta .trilho {
+    transform: none;
+    visibility: visible;
+    transition: transform var(--passo) steps(2, end);
+  }
+
+  .trilho .trilho__fechar {
+    display: inline-grid;
+  }
+
+  .casca--gaveta-aberta .casca__veu {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    border: 0;
+    background: rgb(5 5 6 / 0.55);
+  }
+
+  .cabecalho {
+    padding-left: var(--e-4);
+  }
+
+  .cabecalho .cabecalho__menu {
+    display: inline-grid;
+  }
+
+  .conteudo {
+    padding-left: var(--e-6);
+  }
+}
+
+@media (max-width: 899px) {
+  .quem__texto {
+    display: none;
+  }
+
+  .quem {
+    margin-right: 0;
+    padding: 2px;
+  }
+
+  .cabecalho {
+    gap: var(--e-2);
+    padding-right: var(--e-4);
+  }
+
+  .cabecalho__titulo {
+    font-size: var(--t-24);
+  }
+
+  /* abaixo de 900 px o caminho vira só o botão de voltar */
+  .caminho .caminho__passo {
+    display: none;
+  }
+
+  .caminho__voltar {
+    display: inline-grid;
+  }
+
+  .conteudo {
+    padding: var(--e-5) var(--e-5) var(--e-7);
+  }
+}
+
+@media (max-width: 599px) {
+  .conteudo {
+    padding: var(--e-4) var(--e-4) var(--e-7);
+  }
+
+  .cabecalho {
+    min-height: 60px;
+    padding-left: var(--e-2);
+  }
+
+  .cabecalho__titulo {
+    font-size: var(--t-20);
+  }
+
+  /* no celular a área continua com o nome: a cor sozinha não diz onde se está */
+  .rota-etiqueta {
+    padding: 3px 9px 3px 7px;
+    font-size: var(--t-13);
+  }
+
+  .rota-etiqueta + .caminho__sep {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 }

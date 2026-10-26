@@ -1,168 +1,149 @@
-import { render, screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
-import { ContextoSessao } from "../api/contextoSessao";
-import { simularApi } from "../testes/preparar";
-import Importacao from "./Importacao";
+import { abrir, amostra } from "../testes/montar";
 
-const PERIODO = { id: 3, data_inicio: "2026-03-16", data_fim: "2026-03-22" };
-
+const PERIODO = { id: null, data_inicio: "2026-10-05", data_fim: "2026-10-11" };
 const PREVIA = {
   periodo: PERIODO,
-  reconhecidos: [{ linha: 2, nome: "Comércio Alfa", faturamento: "12500.40", pedidos: 312 }],
-  rejeitados: [],
-  parceiros_novos: [],
-  total_reconhecido: 1,
-  total_rejeitado: 0,
+  reconhecidos: [
+    { linha: 2, nome: "Ponto Azul 2", faturamento: "1234.50", pedidos: 40 },
+    { linha: 3, nome: "Padaria Nova", faturamento: "987.00", pedidos: 31 },
+  ],
+  rejeitados: [{ linha: 4, conteudo: "linha sem sentido", motivo: "A linha precisa de três colunas: nome, faturamento e pedidos." }],
+  parceiros_novos: ["Padaria Nova"],
+  total_reconhecido: 2,
+  total_rejeitado: 1,
+  periodo_ja_importado: false,
 };
+const JA_IMPORTADO = {
+  status: 409,
+  corpo: {
+    detail: {
+      erro: "Este período já foi importado.",
+      ajuda: "O padrão é cancelar, para não duplicar nem apagar dados sem querer.",
+      ja_existe: { importacao: 17, autor: "Analista da Evidência", enviado_em: "2026-10-03T00:11:21Z", metricas_que_serao_apagadas: 500 },
+    },
+  },
+};
+const ROTAS = (extra = {}) => ({ "GET /api/importacoes": { corpo: amostra("GET_api_importacoes") }, ...extra });
 
-const QUEM_IMPORTA = ["painel", "importar", "historico_importacoes", "parceiros"];
-const ADMINISTRADOR = ["painel", "historico_importacoes", "usuarios", "configuracao"];
-
-const HISTORICO_VAZIO = { itens: [], total: 0, pagina: 1, tamanho: 10 };
-
-function importacao(id, extra = {}) {
-  return {
-    id,
-    periodo: { id, data_inicio: "2026-09-07", data_fim: "2026-09-13" },
-    autor: { id: 1, nome: "Analista de Exemplo" },
-    origem: "TEXTO",
-    total_gravado: 3,
-    total_rejeitado: 1,
-    enviado_em: "2026-09-14T13:05:00Z",
-    metricas_vigentes: 3,
-    ...extra,
-  };
+async function preencher(usuario, texto = "Parceiro;Faturamento;Pedidos\nPonto Azul 2;1234,50;40") {
+  await usuario.type(await screen.findByLabelText(/^Início do período/), "2026-10-05");
+  await usuario.type(screen.getByLabelText(/^Fim do período/), "2026-10-11");
+  await usuario.type(screen.getByRole("textbox", { name: /^Relatório/ }), texto);
 }
 
-function renderizar(telas = QUEM_IMPORTA) {
-  return render(
-    <ContextoSessao.Provider value={{ usuario: { nome: "Quem Testa", telas } }}>
-      <MemoryRouter>
-        <Importacao />
-      </MemoryRouter>
-    </ContextoSessao.Provider>,
-  );
-}
-
-/** Período e texto preenchidos, prévia aberta: o ponto em que se decide gravar. */
-async function ateAPrevia(usuario) {
-  await usuario.type(screen.getByLabelText("Início do período"), "2026-03-16");
-  await usuario.type(screen.getByLabelText("Fim do período"), "2026-03-22");
-  await usuario.type(screen.getByLabelText("Colar o relatório"), "Comércio Alfa;12500,40;312");
-  await usuario.click(screen.getByRole("button", { name: "Ver a prévia" }));
-  await screen.findByRole("heading", { name: "Prévia" });
-}
-
-describe("Importação", () => {
-  it("depois de gravar, leva ao painel", async () => {
-    simularApi({
-      "GET /api/importacoes": { corpo: HISTORICO_VAZIO },
-      "POST /api/importacoes/previa": { corpo: PREVIA },
-      "POST /api/importacoes": {
-        status: 201,
-        corpo: { id: 9, periodo: PERIODO, total_gravado: 1, total_rejeitado: 0 },
-      },
-    });
+/* RF09 (importar texto ou CSV), RF10 (período obrigatório), RF11 (prévia antes
+   de gravar), RF12 (período repetido), RF13 (histórico) e RNF23 (progresso). */
+describe("a importação", () => {
+  it("mostra a prévia antes de gravar: o que entra, o que é rejeitado e o porquê (RF11)", async () => {
     const usuario = userEvent.setup();
-    renderizar();
+    const { corpoDe } = abrir("/importacao", { rotas: ROTAS({ "POST /api/importacoes/previa": { corpo: PREVIA } }) });
 
-    await ateAPrevia(usuario);
-    await usuario.click(screen.getByRole("button", { name: "Gravar 1 registros" }));
+    await preencher(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Ver a prévia" }));
 
-    const aviso = await screen.findByRole("status");
-    expect(aviso).toHaveTextContent("Importação concluída — 1 registros gravados.");
-    expect(screen.getByRole("link", { name: "Ver no painel" })).toHaveAttribute("href", "/");
+    const previa = (await screen.findByRole("heading", { level: 3 })).closest("section");
+    expect(previa).toHaveTextContent("2 linhas serão gravadas · 1 linha rejeitada · 1 parceiro novo");
+    const rejeitadas = within(previa).getByRole("region", { name: "Tabela: Linhas rejeitadas" });
+    expect(rejeitadas).toHaveTextContent("linha sem sentido");
+    expect(rejeitadas).toHaveTextContent("A linha precisa de três colunas");
+    expect(corpoDe("POST /api/importacoes/previa")).toEqual({ periodo_inicio: "2026-10-05", periodo_fim: "2026-10-11", texto: "Parceiro;Faturamento;Pedidos\nPonto Azul 2;1234,50;40" });
+    expect(screen.getByRole("button", { name: "Gravar 2 registros" })).toBeInTheDocument();
   });
 
-  it("período já importado: diz quanto seria apagado antes de oferecer a substituição", async () => {
-    simularApi({
-      "GET /api/importacoes": { corpo: HISTORICO_VAZIO },
-      "POST /api/importacoes/previa": { corpo: PREVIA },
-      "POST /api/importacoes": {
-        status: 409,
-        corpo: {
-          detail: {
-            erro: "Este período já foi importado.",
-            ajuda: "O padrão é cancelar, para não duplicar nem apagar dados sem querer.",
-            ja_existe: {
-              importacao: 4,
-              autor: "Analista de Exemplo",
-              enviado_em: "2026-03-23T09:00:00",
-              metricas_que_serao_apagadas: 480,
-            },
+  it("grava e leva ao painel, que é o passo seguinte (RF09)", async () => {
+    const usuario = userEvent.setup();
+    abrir("/importacao", {
+      rotas: ROTAS({
+        "POST /api/importacoes/previa": { corpo: PREVIA },
+        "POST /api/importacoes": { status: 201, corpo: { id: 18, periodo: { ...PERIODO, id: 13 }, total_gravado: 2, total_rejeitado: 1, parceiros_novos: ["Padaria Nova"] } },
+      }),
+    });
+
+    await preencher(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Ver a prévia" }));
+    await usuario.click(await screen.findByRole("button", { name: "Gravar 2 registros" }));
+
+    expect(await screen.findByText(/Importação gravada: 2 registros do período 05\/10\/2026 a 11\/10\/2026, e 1 linha rejeitada\./)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Ver no painel/ })).toHaveAttribute("href", "/");
+  });
+
+  it("período repetido: explica, diz quanto será apagado e só substitui se a pessoa pedir (RF12)", async () => {
+    const usuario = userEvent.setup();
+    const pedidos = [];
+    abrir("/importacao", {
+      rotas: ROTAS({
+        "POST /api/importacoes/previa": { corpo: { ...PREVIA, periodo_ja_importado: true } },
+        "POST /api/importacoes": (_url, opcoes) => {
+          const corpo = JSON.parse(opcoes.body);
+          pedidos.push(corpo);
+          return corpo.substituir ? { status: 201, corpo: { id: 19, periodo: PERIODO, total_gravado: 2, total_rejeitado: 1, parceiros_novos: [] } } : JA_IMPORTADO;
+        },
+      }),
+    });
+
+    await preencher(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Ver a prévia" }));
+    await usuario.click(await screen.findByRole("button", { name: "Gravar 2 registros" }));
+
+    expect(await screen.findByText(/Já existem/)).toHaveTextContent("Já existem 500 registros deste período, importados por Analista da Evidência");
+    expect(pedidos).toEqual([expect.not.objectContaining({ substituir: true })]);
+    await usuario.click(screen.getByRole("button", { name: "Substituir mesmo assim" }));
+    await waitFor(() => expect(pedidos.at(-1)).toMatchObject({ substituir: true }));
+  });
+
+  it("sem período, a recusa da API aparece junto das datas, com a ajuda dela (RF10)", async () => {
+    const usuario = userEvent.setup();
+    abrir("/importacao", {
+      rotas: ROTAS({
+        "POST /api/importacoes/previa": {
+          status: 422,
+          corpo: {
+            erro: "Alguns campos precisam de correção.",
+            campos: [{ campo: "periodo_inicio", mensagem: "Informe a data inicial do período.", ajuda: "Sem o período, a segmentação classifica errado." }],
           },
         },
-      },
+      }),
     });
+
+    await usuario.type(await screen.findByRole("textbox", { name: /^Relatório/ }), "Parceiro;Faturamento;Pedidos");
+    await usuario.click(screen.getByRole("button", { name: "Ver a prévia" }));
+
+    expect((await screen.findAllByText(/Informe a data inicial do período\./)).length).toBeGreaterThan(0);
+    expect(screen.getByLabelText(/^Início do período/)).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("o botão diz que está conferindo enquanto a prévia não volta (RNF23)", async () => {
     const usuario = userEvent.setup();
-    renderizar();
-
-    await ateAPrevia(usuario);
-    await usuario.click(screen.getByRole("button", { name: "Gravar 1 registros" }));
-
-    const alerta = await screen.findByRole("alert");
-    expect(alerta).toHaveTextContent("Este período já foi importado.");
-    expect(alerta).toHaveTextContent("Já existem 480 registros neste período, trazidos por Analista de Exemplo.");
-    expect(screen.getByRole("button", { name: "Substituir mesmo assim" })).toBeEnabled();
-    expect(screen.queryByRole("link", { name: "Ver no painel" })).not.toBeInTheDocument();
-  });
-
-  it("o histórico lista as importações, e diz qual foi substituída", async () => {
-    simularApi({
-      "GET /api/importacoes": {
-        corpo: {
-          itens: [importacao(2), importacao(1, { metricas_vigentes: 0 })],
-          total: 2,
-          pagina: 1,
-          tamanho: 10,
-        },
-      },
+    let responder;
+    abrir("/importacao", {
+      rotas: ROTAS({ "POST /api/importacoes/previa": () => new Promise((r) => (responder = r)) }),
     });
-    renderizar();
+    // A resposta pendente: o simulador aceita uma promessa no lugar do objeto.
+    await preencher(usuario);
+    await usuario.click(screen.getByRole("button", { name: "Ver a prévia" }));
 
-    const historico = await screen.findByRole("table", { name: /Importações anteriores/ });
-    const [, maisNova, maisAntiga] = within(historico).getAllByRole("row");
-    expect(maisNova).toHaveTextContent("07/09/2026 a 13/09/2026");
-    expect(maisNova).toHaveTextContent("Analista de Exemplo");
-    expect(maisNova).toHaveTextContent("Texto colado");
-    expect(maisAntiga).toHaveTextContent("substituída");
-    expect(screen.getByText("2 no total")).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Conferindo…" })).toBeDisabled();
+    responder({ corpo: PREVIA });
+    expect(await screen.findByRole("button", { name: "Gravar 2 registros" })).toBeInTheDocument();
   });
 
-  it("quem só lê o histórico não vê o formulário de importar", async () => {
-    simularApi({ "GET /api/importacoes": { corpo: HISTORICO_VAZIO } });
-    renderizar(ADMINISTRADOR);
+  it("o histórico traz quem importou, quando, o período e os totais (RF13)", async () => {
+    abrir("/importacao", { rotas: ROTAS() });
 
-    expect(await screen.findByText("Nenhuma importação ainda")).toBeInTheDocument();
+    const historico = await screen.findByRole("region", { name: "Tabela: Importações anteriores" });
+    const primeira = amostra("GET_api_importacoes").itens[0];
+    expect(historico).toHaveTextContent(primeira.autor.nome);
+    expect(historico).toHaveTextContent("28/09/2026 a 04/10/2026");
+  });
+
+  it("o Administrador vê o histórico, mas não o formulário", async () => {
+    abrir("/importacao", { perfil: "ADMINISTRADOR", rotas: ROTAS() });
+
+    expect(await screen.findByRole("region", { name: "Tabela: Importações anteriores" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Ver a prévia" })).not.toBeInTheDocument();
-  });
-
-  it("depois de gravar, o histórico é lido de novo", async () => {
-    let leituras = 0;
-    simularApi({
-      "GET /api/importacoes": () => {
-        leituras += 1;
-        return { corpo: HISTORICO_VAZIO };
-      },
-      "POST /api/importacoes/previa": { corpo: PREVIA },
-      "POST /api/importacoes": {
-        status: 201,
-        corpo: { id: 9, periodo: PERIODO, total_gravado: 1, total_rejeitado: 0 },
-      },
-    });
-    const usuario = userEvent.setup();
-    renderizar();
-    await screen.findByText("Nenhuma importação ainda");
-    const antes = leituras;
-
-    await ateAPrevia(usuario);
-    await usuario.click(screen.getByRole("button", { name: "Gravar 1 registros" }));
-    await screen.findByRole("status");
-
-    await screen.findByText("Nenhuma importação ainda");
-    expect(leituras).toBeGreaterThan(antes);
   });
 });

@@ -1,0 +1,131 @@
+{
+ "itens": [
+  {
+   "id": 31,
+   "nome": "Cantina Azul",
+   "categoria": {
+    "id": 2,
+    "nome": "Lanchonete",
+    "ativa": true
+   },
+   "origem_categoria": "MANUAL",
+   "status": "ATIVO",
+   "contato": null,
+   "ativo": true,
+   "criado_em": "2026-10-05T07:44:37.245985Z",
+   "desempenho": {
+    "segmento": "ESTAVEL",
+    "faturamento": "5161.35",
+    "pedidos": 186,
+    "ticket_medio": "27.75",
+    "variacao_percentual": "15.21"
+   },
+   "risco_queda": 1.837941924764941e-07
+  },
+  {
+   "id": 369,
+   "nome": "Cantina Azul 3",
+   "categoria": {
+    "id": 4,
+    "nome": "Padaria",
+    "ativa": true
+   },
+   "origem_categoria": "MANUAL",
+   "status": "ATIVO",
+   "contato": null,
+   "ativo": true,
+   "criado_em": "2026-10-05T07:44:37.245985Z",
+   "desempenho": {
+    "segmento": "EM_ASCENSAO",
+    "faturamento": "11435.17",
+    "pedidos": 377,
+    "ticket_medio": "30.33",
+    "variacao_percentual": "4.88"
+   },
+   "risco_queda": 0.009679589339988581
+  },
+  {
+   "id": 12,
+   "nome": "Cantina Bom Prato",
+   "categoria": {
+    "id": 5,
+    "nome": "Mercado",
+    "ativa": true
+   },
+   "origem_categoria": "MANUAL",
+   "status": "ATIVO",
+   "contato": null,
+   "ativo": true,
+   "criado_em": "2026-10-05T07:44:37.245985Z",
+   "desempenho": {
+    "segmento": "ESTAVEL",
+    "faturamento": "4894.78",
+    "pedidos": 52,
+    "ticket_medio": "94.13",
+    "variacao_percentual": "44.81"
+   },
+   "risco_queda": 9.992007221626409e-16
+  },
+  {
+   "id": 274,
+   "nome": "Cantina Bom Prato 2",
+   "categoria": {
+    "id": 4,
+    "nome": "Padaria",
+    "ativa": true
+   },
+   "origem_categoria": "MANUAL",
+   "status": "ATIVO",
+   "contato": null,
+   "ativo": true,
+   "criado_em": "2026-10-05T07:44:37.245985Z",
+   "desempenho": {
+    "segmento": "EM_ASCENSAO",
+    "faturamento": "2143.39",
+    "pedidos": 84,
+    "ticket_medio": "25.52",
+    "variacao_percentual": "6.90"
+   },
+   "risco_queda": 0.0012072982070985283
+  },
+  {
+   "id": 284,
+   "nome": "Cantina Bom Prato 3",
+   "categoria": {
+    "id": 1,
+    "nome": "Restaurante",
+    "ativa": true
+   },
+   "origem_categoria": "MANUAL",
+   "status": "ATIVO",
+   "contato": null,
+   "ativo": true,
+   "criado_em": "2026-10-05T07:44:37.245985Z",
+   "desempenho": {
+    "segmento": "EM_RISCO",
+    "faturamento": "1092.99",
+    "pedidos": 22,
+    "ticket_medio": "49.68",
+    "variacao_percentual": "-18.39"
+   },
+   "risco_queda": 0.21206382562416382
+  }
+ ],
+ "total": 500,
+ "pagina": 1,
+ "tamanho": 5,
+ "risco": {
+  "modelo_versao": "rede-1",
+  "periodo_base": {
+   "id": 12,
+   "data_inicio": "2026-09-28",
+   "data_fim": "2026-10-04"
+  },
+  "desatualizada": false
+ },
+ "periodo": {
+  "id": 12,
+  "data_inicio": "2026-09-28",
+  "data_fim": "2026-10-04"
+ }
+}

@@ -1,0 +1,31 @@
+{
+ "periodo": {
+  "id": 12,
+  "data_inicio": "2026-09-28",
+  "data_fim": "2026-10-04"
+ },
+ "categoria": null,
+ "total": 500,
+ "itens": [
+  {
+   "segmento": "ESTAVEL",
+   "total": 272
+  },
+  {
+   "segmento": "EM_RISCO",
+   "total": 104
+  },
+  {
+   "segmento": "EM_ASCENSAO",
+   "total": 89
+  },
+  {
+   "segmento": "RECEM_CHEGADO",
+   "total": 21
+  },
+  {
+   "segmento": "TOP",
+   "total": 14
+  }
+ ]
+}

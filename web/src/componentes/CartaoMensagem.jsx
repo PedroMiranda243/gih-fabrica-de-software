@@ -1,63 +1,64 @@
 /**
- * Uma mensagem de relacionamento, no cartão do protótipo aprovado da aprovação
- * (H08): ponto do segmento, nome do parceiro em peso alto, etiquetas neutras e o
- * texto num quadro.
- *
- * Mora em `componentes/` porque duas telas o mostram: a geração (H60), com as
- * mensagens chegando, e a fila de aprovação (H61), com a decisão. O que muda de
- * uma para a outra entra pelas bordas — `antes` (a caixa de seleção), `corpo` (o
- * texto, ou o campo de edição) e `children` (os avisos e os botões).
- *
- * O nome do parceiro é um título que aceita foco (`tabIndex=-1`): depois de cada
- * decisão, a fila leva o foco para a próxima mensagem, e o leitor de tela anuncia
- * para quem ela vai.
+ * O cartão de uma mensagem — o mesmo na geração e na fila de aprovação: o ponto
+ * do segmento e o nome do parceiro (título que aceita foco), etiquetas neutras,
+ * quem redigiu, o texto num quadro e os dados de onde os números saíram.
  */
 import { forwardRef } from "react";
 
-import { comoDataHora, ROTULO_SEGMENTO } from "../formato";
-import "../estilos/mensagens.css";
+import { ROTULO_SEGMENTO } from "../formato";
+import Icone from "./Icone";
 
-const CartaoMensagem = forwardRef(function CartaoMensagem(
-  { mensagem: m, antes, corpo, mostrarQuando = false, children },
-  refTitulo,
-) {
-  const doModelo = m.redator === "MODELO";
+const CartaoMensagem = forwardRef(function CartaoMensagem({ mensagem: m, children, editor, rodape, idTitulo }, refTitulo) {
+  const id = idTitulo ?? `mensagem-${m.id}`;
   return (
-    <li className="mensagem">
-      <div className="mensagem__cabecalho">
-        {antes}
-        {m.segmento && (
-          <span className={`segmento__ponto segmento__ponto--${m.segmento.toLowerCase()}`} aria-hidden="true" />
-        )}
-        <h3 className="mensagem__parceiro" tabIndex={-1} ref={refTitulo}>
+    <article className={`cartao-mensagem cartao-mensagem--${m.estado.toLowerCase()}`} aria-labelledby={id}>
+      <header className="cartao-mensagem__cabeca">
+        <h3 className="cartao-mensagem__parceiro" id={id} tabIndex={-1} ref={refTitulo}>
           {m.parceiro}
         </h3>
-        {m.segmento && <span className="mensagem__etiqueta">{ROTULO_SEGMENTO[m.segmento]}</span>}
-        {m.categoria && <span className="mensagem__etiqueta">{m.categoria}</span>}
-        {m.acao && <span className="mensagem__etiqueta">{m.acao}</span>}
-        <span className="mensagem__redator">
-          {doModelo ? "Assistente" : "Modelo fixo"}
-          {mostrarQuando && ` · gerada ${comoDataHora(m.gerada_em)}`}
-        </span>
-      </div>
-
-      {corpo ?? <p className="mensagem__texto">{m.texto}</p>}
-
-      {m.editada && (
-        <details className="mensagem__fatos">
-          <summary>Editada — ver o texto redigido</summary>
-          <p className="mensagem__original">{m.texto_gerado}</p>
+        <ul className="cartao-mensagem__etiquetas" aria-label="Sobre o parceiro">
+          {m.segmento && (
+            <li className={`segmento segmento--${m.segmento.toLowerCase().replace(/_/g, "-")} segmento--etiqueta`}>
+              <span className="segmento__ponto" aria-hidden="true" />
+              {ROTULO_SEGMENTO[m.segmento]}
+            </li>
+          )}
+          {m.categoria && <li>{m.categoria}</li>}
+          {m.acao && <li>{m.acao}</li>}
+        </ul>
+      </header>
+      <p className="cartao-mensagem__redator">
+        <Icone nome={m.redator === "MODELO" ? "assistente" : "arquivo"} />
+        {m.redator === "MODELO" ? `Assistente${m.modelo ? ` (${m.modelo})` : ""}` : "Modelo fixo"}
+        {m.redator === "MODELO_FIXO" && m.motivo_redator && <span className="discreto"> — {m.motivo_redator}</span>}
+      </p>
+      {editor ?? <div className="cartao-mensagem__texto">{m.texto}</div>}
+      {m.editada && !editor && (
+        <details className="detalhes-curto cartao-mensagem__original">
+          <summary>
+                <Icone nome="seta-direita" className="resumo__icone" />
+                Editada — ver o texto redigido
+              </summary>
+          <div className="cartao-mensagem__texto cartao-mensagem__texto--original">{m.texto_gerado}</div>
         </details>
       )}
-      {!doModelo && m.motivo_redator && (
-        <p className="mensagem__motivo">Redigida pelo modelo fixo: {m.motivo_redator}</p>
+      {m.estado === "PENDENTE" && m.numeros_fora_dos_fatos?.length > 0 && !editor && (
+        <p className="cartao-mensagem__alerta" role="note">
+          <Icone nome="atencao" />
+          <span>
+            Números que não vieram dos dados: <strong>{m.numeros_fora_dos_fatos.join(", ")}</strong>. Quem editou pode escrever um número novo, como um desconto; confira antes de aprovar.
+          </span>
+        </p>
       )}
-      {m.fatos.length > 0 && (
-        <details className="mensagem__fatos">
-          <summary>Os dados desta mensagem</summary>
-          <dl>
-            {m.fatos.map((f) => (
-              <div key={f.fato}>
+      {m.fatos?.length > 0 && (
+        <details className="detalhes-curto">
+          <summary>
+                <Icone nome="seta-direita" className="resumo__icone" />
+                Os dados desta mensagem
+              </summary>
+          <dl className="fatos">
+            {m.fatos.map((f, i) => (
+              <div key={i}>
                 <dt>{f.fato}</dt>
                 <dd>{f.valor}</dd>
               </div>
@@ -65,8 +66,9 @@ const CartaoMensagem = forwardRef(function CartaoMensagem(
           </dl>
         </details>
       )}
-      {children}
-    </li>
+      {rodape}
+      {children && <div className="cartao-mensagem__acoes">{children}</div>}
+    </article>
   );
 });
 

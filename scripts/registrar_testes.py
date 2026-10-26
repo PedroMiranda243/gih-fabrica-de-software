@@ -70,13 +70,13 @@ EXEMPLOS: dict[str, list[tuple[str, str, str, str]]] = {
         ("api", "test_ajuda.py", "test_mudar_o_limiar_na_configuracao_muda_o_que_a_ajuda_diz",
          "mudar um limiar na configuração muda o que a ajuda diz (RF55)"),
         ("interface", "MinhaConta.test.jsx",
-         "trocar manda a atual e a nova, esvazia os campos e diz que as outras sessões caíram",
+         "troca a senha mandando a atual e a nova",
          "a troca da própria senha, pela tela (RF07, H92)"),
         ("interface", "Ajuda.test.jsx",
-         "os segmentos vêm na ordem que a API mandou, com os limiares em vigor no critério",
-         "a ajuda lista os segmentos na ordem da regra, com os limiares em vigor (H95)"),
+         "lista os segmentos na ordem em que a regra decide (RF55)",
+         "a ajuda lista os segmentos na ordem da regra (H95)"),
         ("interface", "AlteracoesNaoSalvas.test.jsx",
-         "'Sair sem salvar' segue o link que foi clicado, com o que ele carregava",
+         "'Sair sem salvar' segue para onde a pessoa ia",
          "o aviso de alterações não salvas deixa sair, para onde a pessoa ia (H97)"),
     ],
     "Permissões": [
@@ -93,7 +93,7 @@ EXEMPLOS: dict[str, list[tuple[str, str, str, str]]] = {
         ("api", "test_rastreabilidade.py", "test_toda_rota_da_aplicacao_esta_no_documento",
          "toda rota da aplicação está na matriz de rastreabilidade (H98)"),
         ("interface", "App.guarda.test.jsx",
-         "a tela que o perfil não tem diz isso, com o perfil e a volta, e não pede nada à API",
+         "mostra 'Sem acesso' a quem não abre a tela, sem chamar a API dela",
          "a página \"Sem acesso\", sem nenhuma chamada à API (H94)"),
     ],
     "Operações com o banco": [
@@ -120,7 +120,7 @@ EXEMPLOS: dict[str, list[tuple[str, str, str, str]]] = {
         ("api", "test_segmentacao.py", "test_nenhum_rotulo_de_segmento_traz_o_numero_do_limiar",
          "nenhum rótulo de segmento traz o número do limiar, que é configurável (#229)"),
         ("interface", "MinhaConta.test.jsx",
-         "as duas digitações diferentes não chegam ao servidor",
+         "pega o erro de digitação antes de mandar ao servidor",
          "a senha nova digitada de dois jeitos não é enviada"),
     ],
     "Situações de erro": [
@@ -136,13 +136,12 @@ EXEMPLOS: dict[str, list[tuple[str, str, str, str]]] = {
         ("interface", "Ajuda.test.jsx",
          "se as regras não chegam, a tela diz isso e mantém o que o perfil pode fazer",
          "a ajuda sem as regras diz o que houve, e mantém o que o perfil faz"),
-        ("interface", "App.teclado.test.jsx",
-         "leva ao login dizendo que a sessão terminou, e depois de entrar volta para onde a "
-         "pessoa estava",
+        ("interface", "App.sessao.test.jsx",
+         "leva à entrada com o aviso e, depois de entrar, devolve ao mesmo endereço",
          "a sessão que o servidor encerra leva ao login, com o aviso e a volta (H96)"),
         ("interface", "MinhaConta.test.jsx",
-         "a senha atual que não confere aparece embaixo dela, com o foco nela",
-         "a senha atual errada aparece embaixo do campo, com o foco nele"),
+         "a senha atual errada volta com o texto do servidor, ao lado do campo",
+         "a senha atual errada aparece ao lado do campo, com o texto do servidor"),
     ],
 }
 

@@ -1,0 +1,16 @@
+{
+ "disponivel": true,
+ "faturamento_previsto": "84818.54",
+ "probabilidade_queda": 0.23553469215055362,
+ "periodo_base": {
+  "id": 12,
+  "data_inicio": "2026-09-28",
+  "data_fim": "2026-10-04"
+ },
+ "modelo_versao": "rede-1",
+ "origem": "MODELO",
+ "gerada_em": "2026-10-05T07:44:38.304699Z",
+ "desatualizada": false,
+ "motivo": null,
+ "ajuda": null
+}

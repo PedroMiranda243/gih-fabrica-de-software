@@ -1,0 +1,74 @@
+{
+ "categoria": null,
+ "previsao": {
+  "disponivel": true,
+  "motivo": null,
+  "ajuda": null,
+  "periodo_base": {
+   "id": 12,
+   "data_inicio": "2026-09-28",
+   "data_fim": "2026-10-04"
+  },
+  "modelo_versao": "rede-1",
+  "origem": "MODELO",
+  "desatualizada": false,
+  "parceiros": 469,
+  "faturamento_previsto": "1753164.03",
+  "faturamento_medido": "1753406.48",
+  "variacao_percentual": "-0.01",
+  "maior_risco": [
+   {
+    "parceiro_id": 409,
+    "nome": "Varanda do Norte 2",
+    "categoria": "Padaria",
+    "probabilidade_queda": 0.9977954677079193,
+    "faturamento": "955.58",
+    "faturamento_previsto": "757.18"
+   },
+   {
+    "parceiro_id": 100,
+    "nome": "Ponto do Norte",
+    "categoria": "Restaurante",
+    "probabilidade_queda": 0.9523107604567229,
+    "faturamento": "2677.05",
+    "faturamento_previsto": "2336.08"
+   },
+   {
+    "parceiro_id": 154,
+    "nome": "Recanto da Praça",
+    "categoria": "Petshop",
+    "probabilidade_queda": 0.9280406888486661,
+    "faturamento": "1614.27",
+    "faturamento_previsto": "1489.36"
+   },
+   {
+    "parceiro_id": 478,
+    "nome": "Villa Mineiro 2",
+    "categoria": "Restaurante",
+    "probabilidade_queda": 0.9244740581302922,
+    "faturamento": "1096.66",
+    "faturamento_previsto": "1042.82"
+   },
+   {
+    "parceiro_id": 211,
+    "nome": "Villa Popular",
+    "categoria": "Gás e água",
+    "probabilidade_queda": 0.9226488640677951,
+    "faturamento": "167.20",
+    "faturamento_previsto": "151.24"
+   }
+  ]
+ },
+ "campanha": {
+  "plano": {
+   "execucao_id": 4,
+   "concluida_em": "2026-10-05T07:57:36.472656Z",
+   "aplicacao_inicio": "2026-10-05",
+   "aplicacao_fim": "2026-10-11",
+   "modelo_versao": "rede-1"
+  },
+  "acoes": 30,
+  "custo": "7900.00",
+  "ganho_esperado": "132875.95"
+ }
+}

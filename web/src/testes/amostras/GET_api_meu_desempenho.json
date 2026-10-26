@@ -1,0 +1,146 @@
+{
+ "parceiro": "Ponto Azul 2",
+ "categoria": "Mercado",
+ "atual": {
+  "periodo": {
+   "id": 12,
+   "data_inicio": "2026-09-28",
+   "data_fim": "2026-10-04"
+  },
+  "faturamento": "79410.29",
+  "pedidos": 1070,
+  "ticket_medio": "74.22"
+ },
+ "anterior": {
+  "id": 11,
+  "data_inicio": "2026-09-21",
+  "data_fim": "2026-09-27"
+ },
+ "variacao": {
+  "faturamento": "-15.06",
+  "pedidos": "-15.08",
+  "ticket_medio": "0.03"
+ },
+ "pontos": [
+  {
+   "periodo": {
+    "id": 1,
+    "data_inicio": "2026-07-13",
+    "data_fim": "2026-07-19"
+   },
+   "faturamento": "84536.86",
+   "pedidos": 1139,
+   "ticket_medio": "74.22"
+  },
+  {
+   "periodo": {
+    "id": 2,
+    "data_inicio": "2026-07-20",
+    "data_fim": "2026-07-26"
+   },
+   "faturamento": "85343.55",
+   "pedidos": 1150,
+   "ticket_medio": "74.21"
+  },
+  {
+   "periodo": {
+    "id": 3,
+    "data_inicio": "2026-07-27",
+    "data_fim": "2026-08-02"
+   },
+   "faturamento": "96383.01",
+   "pedidos": 1299,
+   "ticket_medio": "74.20"
+  },
+  {
+   "periodo": {
+    "id": 4,
+    "data_inicio": "2026-08-03",
+    "data_fim": "2026-08-09"
+   },
+   "faturamento": "75903.82",
+   "pedidos": 1023,
+   "ticket_medio": "74.20"
+  },
+  {
+   "periodo": {
+    "id": 5,
+    "data_inicio": "2026-08-10",
+    "data_fim": "2026-08-16"
+   },
+   "faturamento": "82240.99",
+   "pedidos": 1108,
+   "ticket_medio": "74.22"
+  },
+  {
+   "periodo": {
+    "id": 6,
+    "data_inicio": "2026-08-17",
+    "data_fim": "2026-08-23"
+   },
+   "faturamento": "88110.82",
+   "pedidos": 1187,
+   "ticket_medio": "74.23"
+  },
+  {
+   "periodo": {
+    "id": 7,
+    "data_inicio": "2026-08-24",
+    "data_fim": "2026-08-30"
+   },
+   "faturamento": "89096.12",
+   "pedidos": 1200,
+   "ticket_medio": "74.25"
+  },
+  {
+   "periodo": {
+    "id": 8,
+    "data_inicio": "2026-08-31",
+    "data_fim": "2026-09-06"
+   },
+   "faturamento": "78897.09",
+   "pedidos": 1063,
+   "ticket_medio": "74.22"
+  },
+  {
+   "periodo": {
+    "id": 9,
+    "data_inicio": "2026-09-07",
+    "data_fim": "2026-09-13"
+   },
+   "faturamento": "84408.65",
+   "pedidos": 1137,
+   "ticket_medio": "74.24"
+  },
+  {
+   "periodo": {
+    "id": 10,
+    "data_inicio": "2026-09-14",
+    "data_fim": "2026-09-20"
+   },
+   "faturamento": "96501.67",
+   "pedidos": 1300,
+   "ticket_medio": "74.23"
+  },
+  {
+   "periodo": {
+    "id": 11,
+    "data_inicio": "2026-09-21",
+    "data_fim": "2026-09-27"
+   },
+   "faturamento": "93493.95",
+   "pedidos": 1260,
+   "ticket_medio": "74.20"
+  },
+  {
+   "periodo": {
+    "id": 12,
+    "data_inicio": "2026-09-28",
+    "data_fim": "2026-10-04"
+   },
+   "faturamento": "79410.29",
+   "pedidos": 1070,
+   "ticket_medio": "74.22"
+  }
+ ]
+}

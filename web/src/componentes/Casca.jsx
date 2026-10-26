@@ -1,234 +1,184 @@
 /**
- * Casca da aplicação: trilho lateral, cabeçalho e o conteúdo da rota.
+ * A casca: pular para o conteúdo, o menu em grupos (só o que o perfil abre, por
+ * `telas`), o cabeçalho com o título da tela, quem está usando (→ Minha conta),
+ * Ajuda, o tema e Encerrar sessão.
  *
- * O trilho lista **apenas o que existe**: cada item entrou junto com a API que o
- * sustenta. Item de menu que leva a uma tela vazia é pior que item ausente —
- * promete e não entrega.
- *
- * **Os itens se agrupam pelos módulos do produto, na ordem do fluxo** (H79): a
- * análise da rede, a previsão, a otimização da campanha, a comunicação e, por
- * último e à parte, a administração. Até a Sprint 06 eram doze itens soltos, na
- * ordem em que foram construídos — o Assistente entre Parceiros e Campanha, o
- * Modelo depois do Benchmark —, e a pessoa precisava conhecer o sistema para
- * achar o módulo.
- *
- * Pela mesma razão, **cada perfil vê só o que abre**. A lista vem do servidor
- * (`usuario.telas`), que a lê das permissões das próprias rotas: a interface
- * não decide quem pode o quê (regra 2.4), só desenha o que ouviu. E esconder o
- * item não é controle de acesso — a rota continua recusando (regra 2.5).
+ * Cada grupo do menu é uma rota com a sua cor: o trilho desenha as linhas, com uma
+ * parada por tela, e o cabeçalho diz em que área a pessoa está e o caminho de volta.
  */
-import { useEffect, useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 
-import { useSessao } from "../api/contextoSessao";
-import { EXIGE } from "../navegacao/telas";
-import { useTema } from "../temas/useTema";
-import { ContextoTituloDaAba, tituloDaAba } from "./tituloDaAba";
-import {
-  IconeAjuda,
-  IconeAprovacao,
-  IconeAssistente,
-  IconeAuditoria,
-  IconeBenchmark,
-  IconeCampanha,
-  IconeConfiguracao,
-  IconeExecucoes,
-  IconeImportar,
-  IconeMensagens,
-  IconeModelo,
-  IconeOperacoes,
-  IconePainel,
-  IconeParceiros,
-  IconeRelatorios,
-  IconeSair,
-  IconeUsuarios,
-  IconeTemaClaro,
-  IconeTemaEscuro,
-} from "./Icones";
+import { tem, useSessao } from "../api/contextoSessao";
+import { ROTULO_PERFIL } from "../formato";
+import { grupoDe, itemAtivo, MENU } from "../navegacao/telas";
+import { useTema } from "../tema";
+import Icone from "./Icone";
+import Marca from "./Marca";
+import { ContextoTitulo } from "./Titulo";
 
-/* `exige`: as telas do servidor que sustentam o item — basta uma. Vem de
-   `navegacao/telas.js`, a mesma tabela que a guarda das rotas lê (H94): o item
-   que o menu esconde é a tela que o endereço não monta. */
-const GRUPOS = [
-  {
-    chave: "analise",
-    titulo: "Análise",
-    itens: [
-      { para: "/", rotulo: "Painel", Icone: IconePainel, fim: true, exige: EXIGE.painel },
-      /* O Parceiro tem só esta: o histórico dele, e nada da rede (RF26, H39). */
-      { para: "/meu-desempenho", rotulo: "Meu desempenho", Icone: IconePainel, exige: EXIGE.meuDesempenho },
-      {
-        para: "/importacao",
-        rotulo: "Importação",
-        Icone: IconeImportar,
-        exige: EXIGE.importacao,
-      },
-      { para: "/parceiros", rotulo: "Parceiros", Icone: IconeParceiros, exige: EXIGE.parceiros },
-      /* Consulta, como o painel e a lista de parceiros: por isso junto deles (UC12). */
-      { para: "/assistente", rotulo: "Assistente", Icone: IconeAssistente, exige: EXIGE.assistente },
-      /* Os três relatórios da rede (UC15), que resumem o que este grupo mostra. */
-      { para: "/relatorios", rotulo: "Relatórios", Icone: IconeRelatorios, exige: EXIGE.relatorios },
-    ],
-  },
-  {
-    chave: "previsao",
-    titulo: "Previsão",
-    itens: [{ para: "/modelo", rotulo: "Modelo", Icone: IconeModelo, exige: EXIGE.modelo }],
-  },
-  {
-    /* "Otimização", e não "Campanha": o grupo leva o nome do módulo, e o item
-       Campanha dentro de um grupo Campanha diria a mesma coisa duas vezes. */
-    chave: "otimizacao",
-    titulo: "Otimização",
-    itens: [
-      { para: "/campanha", rotulo: "Campanha", Icone: IconeCampanha, exige: EXIGE.campanha },
-      /* O histórico (RF34) é também do Administrador, que não tem a Campanha. */
-      { para: "/execucoes", rotulo: "Execuções", Icone: IconeExecucoes, exige: EXIGE.execucoes },
-      { para: "/benchmark", rotulo: "Benchmark", Icone: IconeBenchmark, exige: EXIGE.benchmark },
-    ],
-  },
-  {
-    chave: "comunicacao",
-    titulo: "Comunicação",
-    itens: [
-      { para: "/mensagens", rotulo: "Mensagens", Icone: IconeMensagens, exige: EXIGE.mensagens },
-      { para: "/aprovacao", rotulo: "Aprovação", Icone: IconeAprovacao, exige: EXIGE.aprovacao },
-    ],
-  },
-  {
-    chave: "administracao",
-    titulo: "Administração",
-    itens: [
-      { para: "/usuarios", rotulo: "Usuários", Icone: IconeUsuarios, exige: EXIGE.usuarios },
-      /* A trilha do que foi feito (UC14): só o Administrador a abre. */
-      { para: "/auditoria", rotulo: "Auditoria", Icone: IconeAuditoria, exige: EXIGE.auditoria },
-      /* O relatório das operações resume a trilha, e fica ao lado dela (RF47). */
-      {
-        para: "/relatorios/operacoes",
-        rotulo: "Operações",
-        Icone: IconeOperacoes,
-        exige: EXIGE.operacoes,
-      },
-      {
-        para: "/configuracao",
-        rotulo: "Configuração",
-        Icone: IconeConfiguracao,
-        exige: EXIGE.configuracao,
-      },
-    ],
-  },
-];
-
-/* Sessão aberta antes de o servidor mandar `telas` — uma aba esquecida aberta
-   durante a atualização — continua vendo o menu de antes, em vez de um trilho
-   vazio, e sem as telas de administração que vieram depois. Na próxima
-   recarga, a lista chega. */
-const MENU_ANTERIOR = ["painel", "importar", "parceiros"];
-
-/* Grupo sem nenhum item que o perfil abre não aparece: um título sobre nada é
-   ruído, e diria ao Analista que existe uma Administração que ele não vê. */
-function visiveis(usuario) {
-  const telas = Array.isArray(usuario?.telas) ? usuario.telas : MENU_ANTERIOR;
-  return GRUPOS.map((grupo) => ({
-    ...grupo,
-    itens: grupo.itens.filter(({ exige }) => exige.some((tela) => telas.includes(tela))),
-  })).filter(({ itens }) => itens.length > 0);
-}
-
-export default function Casca({ titulo }) {
+export default function Casca() {
   const { usuario, sair } = useSessao();
-  const { tema, alternar } = useTema();
-  // O item aberto numa tela de detalhe, que a página sobe por `useTituloDaAba`.
-  const [detalhe, setDetalhe] = useState(null);
+  const { efetivo, alternar } = useTema();
+  const { pathname } = useLocation();
+  const [titulo, setTitulo] = useState("");
+  const [trilha, setTrilha] = useState(null);
+  const [gaveta, setGaveta] = useState(false);
+  const [saindo, setSaindo] = useState(false);
+  const botaoMenu = useRef(null);
+  const painelMenu = useRef(null);
+  const definir = useCallback((t) => setTitulo(t), []);
+  const definirTrilha = useCallback((t) => setTrilha(t?.length ? t : null), []);
+  const contexto = useMemo(() => ({ definir, definirTrilha }), [definir, definirTrilha]);
 
+  const grupos = MENU.map((g) => ({ ...g, itens: g.itens.filter((i) => tem(usuario, ...i.exige)) })).filter((g) => g.itens.length);
+  const ativo = itemAtivo(pathname);
+  const area = grupoDe(ativo);
+  /* Enquanto a tela carregada sob demanda não diz o título dela, o h1 mostra o nome
+     dela no menu: título de página vazio é anunciado como nada pelo leitor de tela. */
+  const tituloDoMenu = area?.itens.find((i) => i.para === ativo)?.rotulo ?? "GIH";
+  const volta = trilha?.filter((p) => p.para).at(-1) ?? null;
+
+  /* Trocar de tela fecha a gaveta do menu (ajuste na própria renderização). */
+  const [caminhoVisto, setCaminhoVisto] = useState(pathname);
+  if (pathname !== caminhoVisto) {
+    setCaminhoVisto(pathname);
+    setGaveta(false);
+  }
   useEffect(() => {
-    document.title = tituloDaAba(titulo, detalhe);
-  }, [titulo, detalhe]);
+    if (!gaveta) return undefined;
+    painelMenu.current?.querySelector("a")?.focus();
+    function tecla(e) {
+      if (e.key === "Escape") {
+        setGaveta(false);
+        botaoMenu.current?.focus();
+      }
+    }
+    document.addEventListener("keydown", tecla);
+    return () => document.removeEventListener("keydown", tecla);
+  }, [gaveta]);
+
+  async function encerrar() {
+    setSaindo(true);
+    try {
+      await sair();
+    } finally {
+      setSaindo(false);
+    }
+  }
 
   return (
-    <div className="casca">
-      {/* O primeiro foco da página (H96): quem navega pelo teclado chega ao
-          conteúdo sem atravessar o menu a cada tela. Só aparece ao receber o foco. */}
+    <ContextoTitulo.Provider value={contexto}>
       <a className="pular" href="#conteudo">
         Pular para o conteúdo
       </a>
-
-      <nav className="trilho" aria-label="Seções do sistema">
-        <div className="trilho__marca">
-          <span className="trilho__sigla">GIH</span>
-          <span className="trilho__produto">Growth Intelligence</span>
-        </div>
-
-        <div className="trilho__navegacao">
-          {visiveis(usuario).map(({ chave, titulo: grupo, itens }) => (
-            <div key={chave} className="trilho__grupo" role="group" aria-labelledby={`grupo-${chave}`}>
-              <span className="trilho__grupo-titulo" id={`grupo-${chave}`}>
-                {grupo}
-              </span>
-              {itens.map(({ para, rotulo, Icone, fim }) => (
-                <NavLink key={para} to={para} end={fim} className="trilho__item">
-                  <Icone />
-                  {rotulo}
-                </NavLink>
-              ))}
-            </div>
-          ))}
-        </div>
-      </nav>
-
-      <div className="conteudo">
-        <header className="cabecalho">
-          {/* Recebe o foco quando a tela troca (`FocoNaTroca`, em App.jsx): é o que
-              o leitor de tela anuncia, e de onde o Tab seguinte parte. */}
-          <h1 className="cabecalho__titulo" id="titulo-da-tela" tabIndex={-1}>
-            {titulo}
-          </h1>
-
-          <div className="cabecalho__direita">
-            {/* O nome é o caminho para a conta de quem está usando (H92): é onde a
-                pessoa procura "os meus dados", e a conta não é item de menu — todos
-                os perfis a têm. */}
-            {usuario && (
-              <NavLink to="/conta" className="cabecalho__quem">
-                {/* Sem ver o cabeçalho, "Gestora de Exemplo GESTOR" não diz aonde o link leva. */}
-                {/* Os espaços soltos separam as três partes no nome que o leitor de
-                    tela lê; na tela, que é uma coluna, eles não ocupam lugar. */}
-                <span className="so-leitor">Minha conta:</span>{" "}
-                <span className="cabecalho__nome">{usuario.nome}</span>{" "}
-                <span className="cabecalho__perfil">{usuario.perfil}</span>
-              </NavLink>
-            )}
-
-            {/* A ajuda é de todos os perfis, como a conta, e por isso também fica
-                aqui e não no menu (H95). */}
-            <NavLink to="/ajuda" className="icone-botao" aria-label="Ajuda">
-              <IconeAjuda />
-            </NavLink>
-
-            <button
-              type="button"
-              className="icone-botao"
-              onClick={alternar}
-              /* O rótulo diz o que **vai acontecer**, não o estado atual: é o
-                 que o leitor de tela anuncia, e "modo escuro" sozinho deixa
-                 ambíguo se liga ou desliga. */
-              aria-label={tema === "escuro" ? "Mudar para o modo claro" : "Mudar para o modo escuro"}
-            >
-              {tema === "escuro" ? <IconeTemaClaro /> : <IconeTemaEscuro />}
-            </button>
-
-            <button type="button" className="icone-botao" onClick={sair} aria-label="Encerrar sessão">
-              <IconeSair />
+      <div className={`casca${gaveta ? " casca--gaveta-aberta" : ""}`} data-rota={area?.rota}>
+        <aside className="trilho" id="menu-principal" ref={painelMenu}>
+          <div className="trilho__topo">
+            <Link to="/" className="trilho__marca">
+              <Marca />
+            </Link>
+            <button type="button" className="botao-icone trilho__fechar" onClick={() => setGaveta(false)} aria-label="Fechar o menu">
+              <Icone nome="fechar" />
             </button>
           </div>
-        </header>
-
-        <main className="pagina" id="conteudo" tabIndex={-1}>
-          <ContextoTituloDaAba.Provider value={setDetalhe}>
+          <nav aria-label="Menu principal" className="menu">
+            {grupos.map((g) => (
+              <div key={g.grupo} className="menu__grupo" data-rota={g.rota} role="group" aria-labelledby={`grupo-${g.rota}`}>
+                <p className="menu__nome" id={`grupo-${g.rota}`}>
+                  {g.grupo}
+                </p>
+                <ul className="menu__linha">
+                  {g.itens.map((i) => (
+                    <li key={i.para}>
+                      <NavLink to={i.para} end className={() => `menu__item${ativo === i.para ? " menu__item--ativo" : ""}`} aria-current={ativo === i.para ? "page" : undefined}>
+                        <span className="menu__rotulo">{i.rotulo}</span>
+                        <span className="menu__dica">{i.dica}</span>
+                      </NavLink>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </nav>
+        </aside>
+        <button type="button" className="casca__veu" aria-hidden="true" tabIndex={-1} onClick={() => setGaveta(false)} />
+        <div className="casca__corpo">
+          <header className="cabecalho">
+            <button type="button" ref={botaoMenu} className="botao-icone cabecalho__menu" onClick={() => setGaveta(true)} aria-expanded={gaveta} aria-controls="menu-principal" aria-label="Abrir o menu">
+              <Icone nome="menu" />
+            </button>
+            <div className="cabecalho__onde">
+              {(area || trilha) && (
+                <nav className="caminho" aria-label="Onde você está">
+                  <ol>
+                    {area && (
+                      <li>
+                        <span className="rota-etiqueta">
+                          <span className="rota-etiqueta__parada" aria-hidden="true" />
+                          <span className="sr-only">Área: </span>
+                          <span className="rota-etiqueta__nome">{area.grupo}</span>
+                        </span>
+                        <Icone nome="seta-direita" className="caminho__sep" />
+                      </li>
+                    )}
+                    {trilha?.map((p) => (
+                      <li key={`${p.rotulo}-${p.para ?? ""}`} className="caminho__passo">
+                        {p.para ? <Link to={p.para}>{p.rotulo}</Link> : <span>{p.rotulo}</span>}
+                        <Icone nome="seta-direita" className="caminho__sep" />
+                      </li>
+                    ))}
+                  </ol>
+                </nav>
+              )}
+              {volta && (
+                <Link to={volta.para} className="caminho__voltar" aria-label={`Voltar para ${volta.rotulo}`} title={`Voltar para ${volta.rotulo}`}>
+                  <Icone nome="seta-esquerda" />
+                </Link>
+              )}
+              <h1 className="cabecalho__titulo" id="titulo-da-tela" tabIndex={-1}>
+                {titulo || tituloDoMenu}
+              </h1>
+            </div>
+            <div className="cabecalho__acoes">
+              {/* O nome do link é o texto que se vê, precedido de "Minha conta" para quem
+                  ouve: quem usa comando de voz fala o que está escrito (WCAG 2.5.3). Na tela
+                  estreita, o nome some e o link continua se chamando "Minha conta". */}
+              <Link to="/conta" className="quem">
+                <span className="sr-only">Minha conta:</span>{" "}
+                <span className="quem__avatar" aria-hidden="true">
+                  {usuario.nome
+                    .split(/\s+/)
+                    .filter((p) => p.length > 2)
+                    .slice(0, 2)
+                    .map((p) => p[0])
+                    .join("")
+                    .toUpperCase() || usuario.nome[0]}
+                </span>
+                <span className="quem__texto">
+                  <span className="quem__nome">{usuario.nome}</span>{" "}
+                  <span className="quem__perfil">{ROTULO_PERFIL[usuario.perfil] ?? usuario.perfil}</span>
+                </span>
+              </Link>
+              <Link to="/ajuda" className="botao-cabecalho">
+                <Icone nome="ajuda" />
+                <span>Ajuda</span>
+              </Link>
+              <button type="button" className="botao-cabecalho" onClick={alternar} aria-label={efetivo === "escuro" ? "Mudar para o modo claro" : "Mudar para o modo escuro"} title={efetivo === "escuro" ? "Mudar para o modo claro" : "Mudar para o modo escuro"}>
+                <Icone nome={efetivo === "escuro" ? "sol" : "lua"} />
+                <span className="botao-cabecalho__rotulo-tema">{efetivo === "escuro" ? "Modo claro" : "Modo escuro"}</span>
+              </button>
+              <button type="button" className="botao-cabecalho" onClick={encerrar} disabled={saindo}>
+                <Icone nome="sair" />
+                <span>{saindo ? "Encerrando…" : "Encerrar sessão"}</span>
+              </button>
+            </div>
+          </header>
+          <main id="conteudo" className="conteudo" tabIndex={-1}>
             <Outlet />
-          </ContextoTituloDaAba.Provider>
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </ContextoTitulo.Provider>
   );
 }

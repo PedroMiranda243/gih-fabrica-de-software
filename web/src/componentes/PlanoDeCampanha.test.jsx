@@ -1,84 +1,62 @@
-import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { ContextoSessao } from "../api/contextoSessao";
 import PlanoDeCampanha from "./PlanoDeCampanha";
+import { amostra, montar } from "../testes/montar";
 
-const EXECUCAO = {
-  id: 7,
-  situacao: "CONCLUIDA",
-  autor: "Gestora",
-  modo: "SERIAL",
-  concluida_em: "2026-09-26T12:00:06Z",
-  parametros: {
-    orcamento: "12000.00",
-    maximo_acoes: 45,
-    cotas_categoria: [],
-    aplicacao_inicio: "2026-09-21",
-    aplicacao_fim: "2026-09-27",
-  },
-  periodo_base: { id: 12, data_inicio: "2026-09-14", data_fim: "2026-09-20" },
-  modelo_versao: "rede-1",
-  viavel: true,
-  uplift_total: "4180.00",
-  custo_total: "90.00",
-  tempo_ms: 6400,
-  parcial: false,
-  acoes: 1,
-  cotas: [],
-  folga_orcamento: "11910.00",
-  folga_acoes: 44,
-  ganho_guloso: "4180.00",
-  itens: [
-    {
-      parceiro_id: 16,
-      parceiro: "Villa da Praça",
-      segmento: "EM_RISCO",
-      categoria: "Restaurante",
-      cauda_longa: true,
-      acao_id: 1,
-      acao: "Visita de relacionamento",
-      custo: "90.00",
-      ganho: "4180.00",
-    },
-  ],
-};
+const PLANO = () => amostra("GET_api_otimizacoes_execucao_id");
 
-function renderizar(telas) {
-  const plano = (
-    <MemoryRouter>
-      <PlanoDeCampanha execucao={EXECUCAO} />
-    </MemoryRouter>
-  );
-  return render(
-    telas ? (
-      <ContextoSessao.Provider value={{ usuario: { nome: "Quem testa", telas }, sair: () => {} }}>
-        {plano}
-      </ContextoSessao.Provider>
-    ) : (
-      plano
-    ),
-  );
-}
+/* RF30 — o plano de campanha: os pares parceiro-ação escolhidos, o custo e o
+   ganho esperado, que é estimativa. */
+describe("o plano de campanha (RF30)", () => {
+  it("é lacrado com o número, quem calculou e quando", async () => {
+    montar(<PlanoDeCampanha execucao={PLANO()} />);
 
-describe("plano de campanha", () => {
-  it("leva às mensagens com o plano já escolhido, para quem gera mensagens (H60)", () => {
-    renderizar(["campanha", "execucao", "mensagens"]);
-    expect(screen.getByRole("link", { name: "Gerar mensagens para este plano" })).toHaveAttribute(
-      "href",
-      "/mensagens?plano=7",
-    );
+    const lacre = (await screen.findByText("Plano calculado")).closest(".lacre");
+    // O número é lido como "número 4"; o "Nº" é só desenho.
+    expect(lacre).toHaveTextContent("número 4");
+    expect(lacre).toHaveTextContent(/em 05\/10\/2026 às \d{2}:\d{2} por Medição Gestor/);
   });
 
-  it("quem não gera mensagens não vê o caminho", () => {
-    renderizar(["execucoes"]);
-    expect(screen.queryByRole("link", { name: "Gerar mensagens para este plano" })).not.toBeInTheDocument();
+  it("lista cada ação do plano, com o parceiro, o segmento por nome, o custo e o ganho", async () => {
+    montar(<PlanoDeCampanha execucao={PLANO()} />);
+
+    const tabela = await screen.findByRole("region", { name: "Tabela: Ações do plano" });
+    const linha = within(tabela).getByText("Ponto Azul 2").closest("tr");
+    expect(linha).toHaveTextContent("Em risco");
+    expect(linha).toHaveTextContent("Campanha de categoria");
+    expect(linha).toHaveTextContent("R$ 480,00");
+    expect(linha).toHaveTextContent("R$ 20.258,30");
   });
 
-  it("sem sessão em volta, o plano aparece igual, sem o caminho", () => {
-    renderizar(null);
-    expect(screen.getByRole("heading", { name: "Plano recomendado" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Gerar mensagens para este plano" })).not.toBeInTheDocument();
+  it("o ganho esperado é marcado como estimativa, e comparado com o plano guloso", async () => {
+    montar(<PlanoDeCampanha execucao={PLANO()} />);
+
+    expect((await screen.findAllByText("Estimativa")).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Contra o guloso:/)).toHaveTextContent("R$ 116.299,48");
+  });
+
+  it("o nome leva à ficha do parceiro só para quem abre parceiros", async () => {
+    montar(<PlanoDeCampanha execucao={PLANO()} />, { perfil: "GESTOR" });
+    expect(await screen.findByRole("link", { name: "Ponto Azul 2" })).toHaveAttribute("href", "/parceiros/246");
+  });
+
+  it("oferece gerar as mensagens do plano a quem tem a área de mensagens", async () => {
+    montar(<PlanoDeCampanha execucao={PLANO()} />, { perfil: "GESTOR" });
+
+    await waitFor(() => expect(screen.getByRole("link", { name: /Gerar mensagens para este plano/ })).toHaveAttribute("href", "/mensagens?plano=4"));
+  });
+
+  it("o Administrador, que não gera mensagens, não vê o atalho", async () => {
+    montar(<PlanoDeCampanha execucao={PLANO()} />, { perfil: "ADMINISTRADOR" });
+
+    await screen.findByRole("region", { name: "Tabela: Ações do plano" });
+    await waitFor(() => expect(screen.queryByRole("link", { name: /Gerar mensagens/ })).not.toBeInTheDocument());
+  });
+
+  it("o plano parcial, cortado pelo tempo, avisa que é o melhor viável até ali", async () => {
+    montar(<PlanoDeCampanha execucao={{ ...PLANO(), parcial: true }} />);
+
+    expect(await screen.findByText(/O cálculo atingiu o limite de tempo/)).toBeInTheDocument();
   });
 });

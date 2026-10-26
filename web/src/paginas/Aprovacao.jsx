@@ -1,637 +1,404 @@
 /**
- * A fila de aprovação — UC11, RF37 a RF39, RN06, histórias H61 a H63.
- *
- * **Nenhuma mensagem sai sem a decisão de um gestor.** O Gestor aprova, edita ou
- * rejeita cada mensagem, ou aprova várias de uma vez; o Analista vê a mesma fila,
- * sem os controles. Quem decide o que cada um pode é a API (`usuario.telas`, com
- * `decidir_mensagens`), como o menu — e a rota recusa de qualquer jeito
- * (regra 2.5).
- *
- * **A decisão tira a mensagem da fila, e o foco vai para a próxima** (passo 6): o
- * título dela recebe o foco, e o leitor de tela anuncia a decisão e para quem é a
- * próxima. Editar não decide: a mensagem continua na fila, com o texto novo e o
- * aviso dos números que não vieram dos dados.
- *
- * **A decisão que chegou tarde** — outra pessoa decidiu enquanto esta revisava —
- * volta com a decisão registrada, e a fila se atualiza (E1).
- *
- * **O histórico é a mesma lista, em outro estado** (RF40, H64): as aprovadas e as
- * rejeitadas, com quem decidiu, quando, o conteúdo final, o texto redigido quando
- * houve edição e o motivo da rejeição. As aprovadas estão prontas para envio — o
- * sistema não envia —, com o contato do parceiro, "Copiar texto" e a exportação
- * em CSV.
- *
- * **O filtro vive no endereço** (`?estado=`, `?segmento=`, `?lote=`, `?de=`,
- * `?ate=`, `?pagina=`), para o link da geração abrir a fila só das mensagens dela.
+ * Aprovação — nenhuma mensagem sai do sistema sem a decisão de um gestor. A fila
+ * do que foi gerado e o histórico do que foi decidido, tudo no endereço. Quem não
+ * tem `decidir_mensagens` vê a mesma fila, sem caixa de seleção e sem botão.
  */
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
-import { api } from "../api/cliente";
-import { useSessao } from "../api/contextoSessao";
+import { api, comConsulta, ErroDaApi } from "../api/cliente";
+import { useCarregar, useFiltros } from "../api/ganchos";
+import { tem, useSessao } from "../api/contextoSessao";
 import AlteracoesNaoSalvas from "../componentes/AlteracoesNaoSalvas";
-import { Esqueleto } from "../componentes/Carregando";
 import CartaoMensagem from "../componentes/CartaoMensagem";
 import Confirmacao from "../componentes/Confirmacao";
-import EstadoVazio from "../componentes/EstadoVazio";
-import { comoDataHora, comoInteiro, ROTULO_SEGMENTO } from "../formato";
-import "../estilos/aprovacao.css";
+import { Carregando, ErroDaAcao, ErroDaTela, Nota, Sucesso, Vazio } from "../componentes/Estados";
+import Icone from "../componentes/Icone";
+import Lacre from "../componentes/Lacre";
+import { Paginacao } from "../componentes/Lista";
+import Seletor from "../componentes/Seletor";
+import { useTitulo } from "../componentes/Titulo";
+import { comoDataHora, comoInteiro, ORDEM_SEGMENTOS, plural, ROTULO_SEGMENTO } from "../formato";
 
-export const TAMANHO = 20;
-
-const VISTAS = [
+const TAMANHO = 20;
+const ABAS = [
   ["PENDENTE", "Pendentes"],
   ["APROVADA", "Aprovadas"],
   ["REJEITADA", "Rejeitadas"],
 ];
 
 export default function Aprovacao() {
+  useTitulo("Aprovação");
   const { usuario } = useSessao();
-  const decide = Boolean(usuario?.telas?.includes("decidir_mensagens"));
-  const [parametros, setParametros] = useSearchParams();
-  const estado = parametros.get("estado") ?? "PENDENTE";
-  const pendentes = estado === "PENDENTE";
-  const segmento = parametros.get("segmento") ?? "";
-  const lote = parametros.get("lote") ?? "";
-  const de = parametros.get("de") ?? "";
-  const ate = parametros.get("ate") ?? "";
-  const pagina = Number(parametros.get("pagina") ?? 1) || 1;
-
-  const [dados, setDados] = useState(null);
-  const [erroCarga, setErroCarga] = useState(null);
-  const [recarga, setRecarga] = useState(0);
-  const [aviso, setAviso] = useState(null);
-  const [anuncio, setAnuncio] = useState("");
-  const [selecionadas, setSelecionadas] = useState(() => new Set());
+  const lugar = useLocation();
+  const [filtros, mudar] = useFiltros();
+  const estado = ABAS.some(([v]) => v === filtros.estado) ? filtros.estado : "PENDENTE";
+  const pagina = Number(filtros.pagina) || 1;
+  const decide = tem(usuario, "decidir_mensagens");
+  const consulta = { estado, segmento: filtros.segmento, lote_id: filtros.lote, de: estado === "PENDENTE" ? undefined : filtros.de, ate: estado === "PENDENTE" ? undefined : filtros.ate, pagina, tamanho: TAMANHO };
+  const lista = useCarregar(() => api.get("/api/mensagens", consulta), lugar.search);
+  const [itens, setItens] = useState([]);
+  const [anuncio, setAnuncio] = useState(null);
+  const [selecionadas, setSelecionadas] = useState([]);
   const [confirmandoLote, setConfirmandoLote] = useState(false);
-  const [ocupada, setOcupada] = useState(null);
-  const titulos = useRef(new Map());
-  /* Para onde o foco vai quando a lista nova estiver na tela. Numa referência, e
-     não no estado: depois de usado, some, e a próxima recarga não rouba o foco de
-     quem estiver, por exemplo, no filtro. */
-  const focoPendente = useRef(null);
+  const [ocupadoLote, setOcupadoLote] = useState(false);
+  const [erroLote, setErroLote] = useState(null);
+  const [sujos, setSujos] = useState({});
+  const titulos = useRef({});
 
-  useEffect(() => {
-    let vivo = true;
-    api
-      .get("/api/mensagens", { estado, segmento, lote_id: lote, de, ate, pagina, tamanho: TAMANHO })
-      .then((corpo) => vivo && setDados(corpo))
-      .catch((e) => vivo && setErroCarga(e));
-    return () => {
-      vivo = false;
-    };
-  }, [estado, segmento, lote, de, ate, pagina, recarga]);
-
-  /* O foco segue para a próxima mensagem depois que ela está na tela. */
-  useEffect(() => {
-    if (focoPendente.current === null) return;
-    titulos.current.get(focoPendente.current)?.focus();
-    focoPendente.current = null;
-  }, [dados]);
-
-  function filtrar(mudancas) {
-    const novos = new URLSearchParams(parametros);
-    Object.entries(mudancas).forEach(([chave, valor]) => {
-      if (valor === "" || valor === null) novos.delete(chave);
-      else novos.set(chave, String(valor));
-    });
-    // Mudar o filtro volta à primeira página, e a seleção era de outra lista.
-    if (!("pagina" in mudancas)) novos.delete("pagina");
-    setParametros(novos);
-    setSelecionadas(new Set());
-    setAviso(null);
+  /* Trocar de aba apaga o anúncio da anterior; uma lista nova da API troca os
+     itens e desmarca tudo — ajustes feitos na própria renderização. */
+  const [estadoVisto, setEstadoVisto] = useState(estado);
+  if (estado !== estadoVisto) {
+    setEstadoVisto(estado);
+    setAnuncio(null);
+  }
+  const [dadosVistos, setDadosVistos] = useState(null);
+  if (lista.dados !== dadosVistos) {
+    setDadosVistos(lista.dados);
+    if (lista.dados) setItens(lista.dados.itens);
+    setSelecionadas([]);
   }
 
-  /* A mensagem decidida sai da lista, e o foco vai para a que tomou o lugar dela
-     — ou para a anterior, se era a última. Lista vazia pede a página de novo. */
-  function tirarDaFila(id, frase) {
-    const itens = dados.itens;
-    const posicao = Math.max(itens.findIndex((m) => m.id === id), 0);
-    const restantes = itens.filter((m) => m.id !== id);
-    const proxima = restantes[Math.min(posicao, restantes.length - 1)];
-    focoPendente.current = proxima ? proxima.id : null;
-    setDados((atual) => ({
-      ...atual,
-      itens: atual.itens.filter((m) => m.id !== id),
-      total: Math.max(atual.total - 1, 0),
-    }));
-    setSelecionadas((atual) => {
-      const nova = new Set(atual);
-      nova.delete(id);
-      return nova;
-    });
-    if (frase) {
-      setAnuncio(proxima ? `${frase} Próxima: mensagem para ${proxima.parceiro}.` : `${frase} A fila desta página acabou.`);
-    }
-    // Página vazia: a próxima página, se houver, vem para cá.
-    if (!restantes.length) setRecarga((r) => r + 1);
-  }
-
-  function trocarNaFila(mensagem) {
-    focoPendente.current = mensagem.id;
-    setDados((atual) => ({ ...atual, itens: atual.itens.map((m) => (m.id === mensagem.id ? mensagem : m)) }));
-  }
-
-  /* A decisão que chegou tarde: a mensagem já saiu da fila por outra mão, e a
-     fila se atualiza (UC11-E1). */
-  function tratarErro(e, id) {
-    setAviso({ tipo: "erro", titulo: e.message, ajuda: e.ajuda });
-    if (e.status === 409 || e.status === 404) {
-      tirarDaFila(id, "");
-      setRecarga((r) => r + 1);
-    }
-  }
-
-  async function aprovar(m) {
-    setOcupada(m.id);
-    setAviso(null);
-    try {
-      await api.post(`/api/mensagens/${m.id}/aprovacao`);
-      tirarDaFila(m.id, `Mensagem para ${m.parceiro} aprovada.`);
-    } catch (e) {
-      tratarErro(e, m.id);
-    } finally {
-      setOcupada(null);
-    }
-  }
-
-  async function rejeitar(m, motivo) {
-    setOcupada(m.id);
-    setAviso(null);
-    try {
-      await api.post(`/api/mensagens/${m.id}/rejeicao`, { motivo: motivo.trim() || null });
-      tirarDaFila(m.id, `Mensagem para ${m.parceiro} rejeitada.`);
-      return true;
-    } catch (e) {
-      tratarErro(e, m.id);
-      return false;
-    } finally {
-      setOcupada(null);
-    }
-  }
-
-  async function editar(m, texto) {
-    setOcupada(m.id);
-    setAviso(null);
-    try {
-      const editada = await api.post(`/api/mensagens/${m.id}/edicao`, { texto });
-      trocarNaFila(editada);
-      setAnuncio(`Texto da mensagem para ${m.parceiro} salvo. Ela continua na fila, esperando a decisão.`);
-      return true;
-    } catch (e) {
-      if (e.status === 422) {
-        setAviso({ tipo: "erro", titulo: e.message, ajuda: e.ajuda });
-      } else {
-        tratarErro(e, m.id);
-      }
-      return false;
-    } finally {
-      setOcupada(null);
-    }
-  }
-
-  async function aprovarSelecionadas() {
-    setOcupada("lote");
-    setAviso(null);
-    try {
-      const resultado = await api.post("/api/mensagens/aprovacao-em-lote", { ids: [...selecionadas] });
-      const n = resultado.aprovadas.length;
-      const tarde = resultado.ja_decididas.length;
-      const titulo = n === 1 ? "1 mensagem aprovada." : `${comoInteiro(n)} mensagens aprovadas.`;
-      const ajuda = tarde
-        ? `${tarde === 1 ? "1 já tinha" : `${tarde} já tinham`} sido decidida${tarde === 1 ? "" : "s"} por outra pessoa, e ficou como estava.`
-        : null;
-      setAviso({ tipo: "sucesso", titulo, ajuda });
-      setAnuncio([titulo, ajuda].filter(Boolean).join(" "));
-      setSelecionadas(new Set());
-      setRecarga((r) => r + 1);
-    } catch (e) {
-      setAviso({ tipo: "erro", titulo: e.message, ajuda: e.ajuda });
-    } finally {
-      setOcupada(null);
-      setConfirmandoLote(false);
-    }
-  }
-
-  async function copiar(m) {
-    try {
-      await navigator.clipboard.writeText(m.texto);
-      setAnuncio(`Texto da mensagem para ${m.parceiro} copiado.`);
-      return true;
-    } catch {
-      setAviso({
-        tipo: "erro",
-        titulo: "Não foi possível copiar o texto.",
-        ajuda: "O navegador não deu acesso à área de transferência: selecione o texto e copie à mão.",
+  function sairDaFila(id, frase) {
+    setItens((atual) => {
+      const i = atual.findIndex((m) => m.id === id);
+      const resto = atual.filter((m) => m.id !== id);
+      const proxima = resto[Math.min(i, resto.length - 1)];
+      requestAnimationFrame(() => {
+        if (proxima) titulos.current[proxima.id]?.focus();
       });
-      return false;
+      if (!resto.length) lista.recarregar();
+      return resto;
+    });
+    setSelecionadas((s) => s.filter((x) => x !== id));
+    setSujos((s) => ({ ...s, [id]: false }));
+    setAnuncio(frase);
+  }
+
+  async function aprovarLote() {
+    setOcupadoLote(true);
+    setErroLote(null);
+    try {
+      const r = await api.post("/api/mensagens/aprovacao-em-lote", { ids: selecionadas });
+      const partes = [`${plural(r.aprovadas.length, "mensagem aprovada", "mensagens aprovadas")}.`];
+      if (r.ja_decididas.length) partes.push(`${plural(r.ja_decididas.length, "já tinha sido decidida", "já tinham sido decididas")} por outra pessoa e ficou como estava.`);
+      if (r.nao_encontradas.length) partes.push(`${plural(r.nao_encontradas.length, "não foi encontrada", "não foram encontradas")}.`);
+      setAnuncio({ texto: partes.join(" "), lacre: r.aprovadas.length > 0 });
+      setConfirmandoLote(false);
+      setSelecionadas([]);
+      lista.recarregar();
+    } catch (e) {
+      setErroLote(e);
+      setConfirmandoLote(false);
+    } finally {
+      setOcupadoLote(false);
     }
   }
 
-  if (erroCarga) {
-    return (
-      <div className="aviso" role="alert">
-        <p className="aviso__titulo">{erroCarga.message}</p>
-        {erroCarga.ajuda && <p className="aviso__ajuda">{erroCarga.ajuda}</p>}
-      </div>
-    );
-  }
-
-  if (!dados) {
-    return (
-      <section className="painel" aria-busy="true" aria-label="Carregando a fila">
-        <div className="aprovacao__corpo">
-          <Esqueleto altura={240} />
-        </div>
-      </section>
-    );
-  }
-
-  const itens = dados.itens;
-  const todas = itens.length > 0 && itens.every((m) => selecionadas.has(m.id));
-  const primeiro = (pagina - 1) * TAMANHO + (itens.length ? 1 : 0);
-  const ultimo = (pagina - 1) * TAMANHO + itens.length;
+  const d = lista.dados;
+  const filtrado = Boolean(filtros.segmento || filtros.de || filtros.ate || filtros.lote);
+  const csv = comConsulta("/api/mensagens/exportacao.csv", { segmento: filtros.segmento, de: filtros.de, ate: filtros.ate });
+  const pendentes = estado === "PENDENTE";
+  const todasMarcadas = itens.length > 0 && itens.every((m) => selecionadas.includes(m.id));
+  const algumSujo = Object.values(sujos).some(Boolean);
 
   return (
-    <>
-      <p className="so-leitor" role="status">
-        {anuncio}
-      </p>
+    <div className="pagina">
+      <AlteracoesNaoSalvas quando={algumSujo} />
+      {!decide && (
+        <Nota titulo="Só um gestor decide.">Você vê a fila, mas aprovar, editar e rejeitar são do perfil Gestor: nenhuma mensagem sai sem essa decisão.</Nota>
+      )}
 
-      <fieldset className="escolha aprovacao__vistas">
-        <legend className="so-leitor">Mensagens</legend>
-        <div className="escolha__opcoes">
-          {VISTAS.map(([valor, rotulo]) => (
-            <label key={valor} className="escolha__opcao">
-              <input
-                type="radio"
-                name="vista"
-                value={valor}
-                checked={estado === valor}
-                onChange={() =>
-                  // O período é o da decisão: na fila de pendentes, ele não existe.
-                  filtrar(valor === "PENDENTE" ? { estado: "", de: "", ate: "" } : { estado: valor })
-                }
-              />
-              <span>{rotulo}</span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      <nav className="abas" aria-label="Estado das mensagens">
+        {ABAS.map(([v, r]) => (
+          <Link key={v} to={comConsulta("/aprovacao", { estado: v === "PENDENTE" ? undefined : v, segmento: filtros.segmento, lote: filtros.lote })} className={`abas__aba${estado === v ? " abas__aba--ativa" : ""}`} aria-current={estado === v ? "page" : undefined}>
+            {r}
+          </Link>
+        ))}
+      </nav>
 
-      {pendentes && !decide && (
-        <div className="aviso aviso--informativo">
-          <p className="aviso__titulo">Só um gestor decide.</p>
-          <p className="aviso__ajuda">
-            Você vê a fila, mas aprovar, editar e rejeitar são do perfil Gestor: nenhuma mensagem sai sem essa decisão.
+      <form className="filtros" aria-label="Filtros da fila" onSubmit={(e) => e.preventDefault()}>
+        <Seletor id="a-segmento" rotulo="Segmento" valor={filtros.segmento} aoMudar={(v) => mudar({ segmento: v })} todos="Todos os segmentos" opcoes={ORDEM_SEGMENTOS.map((s) => [s, ROTULO_SEGMENTO[s]])} />
+        {!pendentes && (
+          <>
+            <div className="campo">
+              <label className="campo__rotulo" htmlFor="a-de">
+                Decididas de
+              </label>
+              <input id="a-de" type="date" className="entrada" value={filtros.de ?? ""} onChange={(e) => mudar({ de: e.target.value })} />
+            </div>
+            <div className="campo">
+              <label className="campo__rotulo" htmlFor="a-ate">
+                até
+              </label>
+              <input id="a-ate" type="date" className="entrada" value={filtros.ate ?? ""} onChange={(e) => mudar({ ate: e.target.value })} />
+            </div>
+          </>
+        )}
+        {estado === "APROVADA" && (
+          <a className="botao botao--secundario filtros__limpar" href={csv} download>
+            <Icone nome="baixar" /> Exportar aprovadas (CSV)
+          </a>
+        )}
+      </form>
+
+      {filtros.lote && (
+        <div className="faixa-anterior" role="status">
+          <p>
+            <Icone nome="filtro" /> <strong>Só as mensagens de uma geração.</strong>
           </p>
+          <button type="button" className="botao botao--secundario botao--pequeno" onClick={() => mudar({ lote: null })}>
+            Ver toda a fila
+          </button>
         </div>
       )}
 
-      {aviso && (
-        <div className={aviso.tipo === "sucesso" ? "aviso aviso--sucesso" : "aviso"} role="alert">
-          <p className="aviso__titulo">{aviso.titulo}</p>
-          {aviso.ajuda && <p className="aviso__ajuda">{aviso.ajuda}</p>}
-        </div>
-      )}
-
-      <section className="painel" aria-labelledby="titulo-fila">
-        <div className="painel__cabecalho">
-          <h2 className="painel__titulo" id="titulo-fila">
-            {VISTAS.find(([valor]) => valor === estado)?.[1] ?? "Pendentes"}
-          </h2>
-          <span className="painel__nota">{nota(estado, dados.total)}</span>
-        </div>
-
-        <div className="aprovacao__corpo aprovacao__filtros">
-          <div className="campo aprovacao__filtro">
-            <label htmlFor="filtro-segmento">Segmento</label>
-            <select id="filtro-segmento" value={segmento} onChange={(e) => filtrar({ segmento: e.target.value })}>
-              <option value="">Todos os segmentos</option>
-              {Object.entries(ROTULO_SEGMENTO).map(([valor, rotulo]) => (
-                <option key={valor} value={valor}>
-                  {rotulo}
-                </option>
-              ))}
-            </select>
+      {anuncio &&
+        (anuncio.lacre ? (
+          <div className="anuncio" role="status">
+            <Lacre numero={anuncio.numero} titulo={anuncio.texto} novo compacto />
           </div>
-          {!pendentes && (
-            <>
-              <div className="campo aprovacao__filtro aprovacao__filtro--data">
-                <label htmlFor="filtro-de">Decididas de</label>
-                <input id="filtro-de" type="date" value={de} onChange={(e) => filtrar({ de: e.target.value })} />
-              </div>
-              <div className="campo aprovacao__filtro aprovacao__filtro--data">
-                <label htmlFor="filtro-ate">até</label>
-                <input id="filtro-ate" type="date" value={ate} onChange={(e) => filtrar({ ate: e.target.value })} />
-              </div>
-            </>
-          )}
-          {estado === "APROVADA" && (
-            <a
-              className="botao botao--secundario aprovacao__exportar"
-              href={`/api/mensagens/exportacao.csv?${new URLSearchParams(
-                Object.entries({ segmento, de, ate }).filter(([, v]) => v !== ""),
-              )}`}
-              download
-            >
-              Exportar aprovadas (CSV)
-            </a>
-          )}
-          {lote && (
-            <p className="aprovacao__recorte">
-              Só as mensagens de uma geração.{" "}
-              <button type="button" className="aprovacao__limpar" onClick={() => filtrar({ lote: "" })}>
-                Ver toda a fila
-              </button>
-            </p>
-          )}
-        </div>
-
-        {decide && pendentes && itens.length > 0 && (
-          <div className="aprovacao__corpo aprovacao__lote">
-            <label className="aprovacao__todas">
-              <input
-                type="checkbox"
-                checked={todas}
-                onChange={() => setSelecionadas(todas ? new Set() : new Set(itens.map((m) => m.id)))}
-              />
-              Selecionar as {comoInteiro(itens.length)} desta página
-            </label>
-            {confirmandoLote ? (
-              <Confirmacao
-                texto={`Aprovar ${
-                  selecionadas.size === 1 ? "1 mensagem" : `${comoInteiro(selecionadas.size)} mensagens`
-                }? Cada uma fica registrada com a sua decisão, e nenhuma volta para a fila.`}
-                acao={selecionadas.size === 1 ? "Aprovar 1 mensagem" : `Aprovar as ${comoInteiro(selecionadas.size)}`}
-                ocupado={ocupada === "lote"}
-                aoConfirmar={aprovarSelecionadas}
-                aoCancelar={() => setConfirmandoLote(false)}
-              />
-            ) : (
-              <button
-                type="button"
-                className="botao"
-                disabled={selecionadas.size === 0}
-                onClick={() => setConfirmandoLote(true)}
-              >
-                {selecionadas.size ? `Aprovar selecionadas (${comoInteiro(selecionadas.size)})` : "Aprovar selecionadas"}
-              </button>
-            )}
-          </div>
-        )}
-
-        {itens.length ? (
-          <ol
-            className="mensagens__lista aprovacao__lista"
-            aria-label={pendentes ? "Mensagens pendentes" : "Mensagens decididas"}
-          >
-            {itens.map((m) =>
-              !pendentes ? (
-                <Decidida key={m.id} mensagem={m} aoCopiar={() => copiar(m)} />
-              ) : (
-                <Pendente
-                  key={m.id}
-                  mensagem={m}
-                  decide={decide}
-                  ocupada={ocupada === m.id}
-                  selecionada={selecionadas.has(m.id)}
-                  refTitulo={(no) => {
-                    if (no) titulos.current.set(m.id, no);
-                    else titulos.current.delete(m.id);
-                  }}
-                  aoSelecionar={() =>
-                    setSelecionadas((atual) => {
-                      const nova = new Set(atual);
-                      if (nova.has(m.id)) nova.delete(m.id);
-                      else nova.add(m.id);
-                      return nova;
-                    })
-                  }
-                  aoAprovar={() => aprovar(m)}
-                  aoRejeitar={(motivo) => rejeitar(m, motivo)}
-                  aoEditar={(texto) => editar(m, texto)}
-                />
-              ),
-            )}
-          </ol>
-        ) : pendentes ? (
-          <EstadoVazio
-            titulo={segmento || lote ? "Nenhuma mensagem pendente neste recorte." : "Nenhuma mensagem pendente."}
-            texto="As mensagens geradas chegam aqui e esperam a decisão de um gestor."
-            acao={{ para: "/mensagens", rotulo: "Gerar mensagens" }}
-          />
         ) : (
-          <EstadoVazio
-            titulo={`Nenhuma mensagem ${estado === "APROVADA" ? "aprovada" : "rejeitada"} neste recorte.`}
-            texto="As decisões aparecem aqui, da mais recente para a mais antiga, com quem decidiu e quando."
-            acao={{ para: "/aprovacao", rotulo: "Ver as pendentes" }}
-          />
-        )}
+          <Sucesso aoFechar={() => setAnuncio(null)}>{anuncio.texto ?? anuncio}</Sucesso>
+        ))}
 
-        {dados.total > TAMANHO && (
-          <div className="aprovacao__corpo paginacao">
-            <span className="paginacao__posicao num">
-              {comoInteiro(primeiro)}–{comoInteiro(ultimo)} de {comoInteiro(dados.total)}
-            </span>
-            <button
-              type="button"
-              className="botao botao--secundario"
-              disabled={pagina <= 1}
-              onClick={() => filtrar({ pagina: pagina - 1 })}
-            >
-              Anterior
-            </button>
-            <button
-              type="button"
-              className="botao botao--secundario"
-              disabled={ultimo >= dados.total}
-              onClick={() => filtrar({ pagina: pagina + 1 })}
-            >
-              Próxima
-            </button>
+      <section className="bloco bloco--fila" aria-labelledby="t-fila" aria-busy={lista.carregando}>
+        <div className="bloco__cabeca bloco__cabeca--linha">
+          <div>
+            <h2 id="t-fila" className="bloco__titulo">
+              {pendentes ? "Fila de aprovação" : estado === "APROVADA" ? "Aprovadas — prontas para envio" : "Rejeitadas"}
+            </h2>
+            {d && <p className="bloco__sub">{plural(d.total, "mensagem", "mensagens")}{pendentes ? " esperando a decisão" : estado === "APROVADA" ? " · o sistema não envia: quem envia usa o contato do parceiro" : ""}</p>}
           </div>
+          {decide && pendentes && itens.length > 0 && (
+            <div className="selecao-lote">
+              <label className="caixa-de-selecao">
+                <input type="checkbox" checked={todasMarcadas} onChange={(e) => setSelecionadas(e.target.checked ? itens.map((m) => m.id) : [])} /> Selecionar as {comoInteiro(itens.length)} desta página
+              </label>
+              <button type="button" className="botao botao--primario" disabled={!selecionadas.length || confirmandoLote} onClick={() => setConfirmandoLote(true)}>
+                Aprovar selecionadas ({comoInteiro(selecionadas.length)})
+              </button>
+            </div>
+          )}
+        </div>
+        {confirmandoLote && <Confirmacao texto={`Aprovar as ${comoInteiro(selecionadas.length)}?`} detalhe="Cada uma fica pronta para envio, com a sua decisão registrada. As que outra pessoa decidiu no meio ficam como estavam." acao="Aprovar" ocupado={ocupadoLote} aoConfirmar={aprovarLote} aoCancelar={() => setConfirmandoLote(false)} />}
+        <ErroDaAcao erro={erroLote} />
+        {lista.carregando && !d && <Carregando rotulo="Carregando a fila" linhas={6} />}
+        <ErroDaTela erro={lista.erro} />
+        {d && !itens.length && pendentes && !filtrado && (
+          <Vazio titulo="Nenhuma mensagem pendente." compacto icone="aprovacao" acao={tem(usuario, "mensagens") ? "Gerar mensagens" : undefined} para="/mensagens">
+            As mensagens geradas chegam aqui e esperam a decisão de um gestor.
+          </Vazio>
         )}
+        {d && !itens.length && pendentes && filtrado && (
+          <Vazio titulo="Nenhuma mensagem pendente neste recorte." compacto icone="busca">
+            Tire um dos filtros para ver a fila inteira.
+          </Vazio>
+        )}
+        {d && !itens.length && !pendentes && (
+          <Vazio titulo={filtrado ? "Nenhuma decisão neste recorte." : "Nenhuma decisão ainda."} compacto icone="aprovacao" acao="Ver as pendentes" para="/aprovacao">
+            As decisões aparecem aqui, da mais recente para a mais antiga, com quem decidiu e quando.
+          </Vazio>
+        )}
+        {itens.length > 0 && (
+          <ol className="lista-mensagens">
+            {itens.map((m) => (
+              <li key={m.id}>
+                {pendentes ? (
+                  <Pendente
+                    mensagem={m}
+                    decide={decide}
+                    selecionada={selecionadas.includes(m.id)}
+                    aoSelecionar={(sim) => setSelecionadas((s) => (sim ? [...s, m.id] : s.filter((x) => x !== m.id)))}
+                    refTitulo={(el) => {
+                      titulos.current[m.id] = el;
+                    }}
+                    aoDecidir={sairDaFila}
+                    aoAtualizar={(nova, frase) => {
+                      setItens((l) => l.map((x) => (x.id === nova.id ? nova : x)));
+                      setAnuncio(frase);
+                    }}
+                    aoConflito={(frase) => {
+                      setAnuncio(frase);
+                      lista.recarregar();
+                    }}
+                    aoSujar={(sujo) => setSujos((s) => ({ ...s, [m.id]: sujo }))}
+                  />
+                ) : (
+                  <Decidida mensagem={m} />
+                )}
+              </li>
+            ))}
+          </ol>
+        )}
+        {d && itens.length > 0 && <Paginacao pagina={pagina} tamanho={TAMANHO} total={d.total} aoMudar={(p) => mudar({ pagina: p > 1 ? p : null }, { manterPagina: true })} rotulo="mensagens" />}
       </section>
-    </>
+    </div>
   );
 }
 
-function nota(estado, total) {
-  const quantas = total === 1 ? "1 mensagem" : `${comoInteiro(total)} mensagens`;
-  if (estado === "APROVADA") return `${quantas} · prontas para envio: o sistema não envia, quem envia é você`;
-  if (estado === "REJEITADA") return `${quantas} · ficam registradas, com o motivo`;
-  return `${quantas} esperando a decisão · nenhuma é enviada sem ela`;
-}
+function Pendente({ mensagem: m, decide, selecionada, aoSelecionar, refTitulo, aoDecidir, aoAtualizar, aoConflito, aoSujar }) {
+  const [modo, setModo] = useState(null);
+  const [texto, setTexto] = useState(m.texto);
+  const [motivo, setMotivo] = useState("");
+  const [ocupado, setOcupado] = useState(false);
+  const [erro, setErro] = useState(null);
+  const campo = useRef(null);
 
-/* A mensagem decidida (RF40): quem decidiu, quando e — na rejeitada — por quê. A
-   aprovada traz o contato do parceiro e "Copiar texto": é o caminho até o envio,
-   que é de uma pessoa, fora do sistema (ADR-013). */
-function Decidida({ mensagem: m, aoCopiar }) {
-  const [copiado, setCopiado] = useState(false);
-  const aprovada = m.estado === "APROVADA";
-  const decisao = `${aprovada ? "Aprovada" : "Rejeitada"} por ${m.decidida_por ?? "—"} em ${comoDataHora(
-    m.decidida_em,
-  )}`;
+  useEffect(() => {
+    aoSujar((modo === "editar" && texto !== m.texto) || (modo === "rejeitar" && motivo.trim() !== ""));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modo, texto, motivo]);
+
+  useEffect(() => {
+    if (modo) campo.current?.focus();
+  }, [modo]);
+
+  async function agir(fazer) {
+    setOcupado(true);
+    setErro(null);
+    try {
+      await fazer();
+    } catch (e) {
+      if (e instanceof ErroDaApi && e.status === 409) aoConflito(`${e.message}${e.ajuda ? ` ${e.ajuda}` : ""}`);
+      else setErro(e);
+    } finally {
+      setOcupado(false);
+    }
+  }
+
+  const aprovar = () => agir(async () => {
+    await api.post(`/api/mensagens/${m.id}/aprovacao`);
+    aoDecidir(m.id, { texto: `Mensagem para ${m.parceiro} aprovada.`, lacre: true, numero: m.id });
+  });
+  const rejeitar = () => agir(async () => {
+    await api.post(`/api/mensagens/${m.id}/rejeicao`, { motivo: motivo.trim() || null });
+    aoDecidir(m.id, `Mensagem para ${m.parceiro} rejeitada.`);
+  });
+  const salvar = () => agir(async () => {
+    const nova = await api.post(`/api/mensagens/${m.id}/edicao`, { texto });
+    setModo(null);
+    aoAtualizar(nova, `Texto da mensagem para ${m.parceiro} salvo. Ela continua na fila, esperando a decisão.`);
+  });
+
+  const erroDoTexto = erro?.campos?.find((c) => c.campo === "texto");
+  const editor =
+    modo === "editar" ? (
+      <div className="campo">
+        <label className="campo__rotulo" htmlFor={`texto-${m.id}`}>
+          Texto da mensagem
+        </label>
+        <textarea id={`texto-${m.id}`} ref={campo} className="entrada" rows={6} value={texto} onChange={(e) => setTexto(e.target.value)} aria-describedby={`texto-${m.id}-ajuda${erroDoTexto ? ` texto-${m.id}-erro` : ""}`} aria-invalid={erroDoTexto ? true : undefined} />
+        {erroDoTexto && (
+          <p className="campo__erro" id={`texto-${m.id}-erro`}>
+            <Icone nome="erro" />
+            <span>{erroDoTexto.mensagem}</span>
+          </p>
+        )}
+        <p className="campo__ajuda" id={`texto-${m.id}-ajuda`}>
+          <strong>Salvar não aprova</strong>: a mensagem continua na fila.
+        </p>
+      </div>
+    ) : null;
+
   return (
-    <CartaoMensagem mensagem={m} mostrarQuando>
-      <p className="aprovacao__decisao">
-        {decisao}
-        {!aprovada && (m.motivo_rejeicao ? `. Motivo: ${m.motivo_rejeicao}` : ", sem motivo registrado")}.
-      </p>
-      {aprovada && (
-        <div className="aprovacao__acoes">
-          <button
-            type="button"
-            className="botao botao--secundario"
-            onClick={async () => {
-              if (await aoCopiar()) {
-                setCopiado(true);
-                setTimeout(() => setCopiado(false), 2000);
-              }
-            }}
-          >
-            {copiado ? "Copiado" : "Copiar texto"}
-          </button>
-          <span className="aprovacao__contato">
-            {m.contato ? `Contato: ${m.contato}` : "Parceiro sem contato cadastrado"}
-          </span>
-        </div>
+    <CartaoMensagem mensagem={m} ref={refTitulo} editor={editor} rodape={!erroDoTexto && <ErroDaAcao erro={erro} />}>
+      {decide && (
+        <>
+          {modo === null && (
+            <>
+              <label className="caixa-de-selecao cartao-mensagem__marca">
+                <input type="checkbox" checked={selecionada} onChange={(e) => aoSelecionar(e.target.checked)} />
+                <span className="sr-only">Selecionar a mensagem para {m.parceiro}</span>
+              </label>
+              <button type="button" className="botao botao--primario" onClick={aprovar} disabled={ocupado}>
+                <Icone nome="certo" /> Aprovar
+              </button>
+              <button type="button" className="botao botao--secundario" onClick={() => (setTexto(m.texto), setModo("editar"))} disabled={ocupado}>
+                <Icone nome="lapis" /> Editar
+              </button>
+              <button type="button" className="botao botao--secundario" onClick={() => setModo("rejeitar")} disabled={ocupado}>
+                <Icone nome="fechar" /> Rejeitar
+              </button>
+            </>
+          )}
+          {modo === "editar" && (
+            <>
+              <button type="button" className="botao botao--primario" onClick={salvar} disabled={ocupado || !texto.trim()}>
+                {ocupado ? "Salvando…" : "Salvar o texto"}
+              </button>
+              <button type="button" className="botao botao--secundario" onClick={() => (setModo(null), setErro(null))} disabled={ocupado}>
+                Cancelar
+              </button>
+            </>
+          )}
+          {modo === "rejeitar" && (
+            <div className="rejeicao">
+              <div className="campo">
+                <label className="campo__rotulo" htmlFor={`motivo-${m.id}`}>
+                  Motivo da rejeição (opcional)
+                </label>
+                <textarea id={`motivo-${m.id}`} ref={campo} className="entrada" rows={2} value={motivo} onChange={(e) => setMotivo(e.target.value)} aria-describedby={`motivo-${m.id}-ajuda`} />
+                <p className="campo__ajuda" id={`motivo-${m.id}-ajuda`}>
+                  Fica no histórico, e ajuda a ajustar as próximas mensagens.
+                </p>
+              </div>
+              <div className="formulario__acoes">
+                <button type="button" className="botao botao--perigo" onClick={rejeitar} disabled={ocupado}>
+                  {ocupado ? "Rejeitando…" : "Rejeitar mensagem"}
+                </button>
+                <button type="button" className="botao botao--secundario" onClick={() => (setModo(null), setMotivo(""))} disabled={ocupado}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </CartaoMensagem>
   );
 }
 
-function Pendente({
-  mensagem: m,
-  decide,
-  ocupada,
-  selecionada,
-  refTitulo,
-  aoSelecionar,
-  aoAprovar,
-  aoRejeitar,
-  aoEditar,
-}) {
-  const [modo, setModo] = useState(null);
-  const [texto, setTexto] = useState(m.texto);
-  const [motivo, setMotivo] = useState("");
-  const idTexto = `texto-${m.id}`;
-  const idMotivo = `motivo-${m.id}`;
+function Decidida({ mensagem: m }) {
+  const [copia, setCopia] = useState(null);
 
-  const corpo =
-    modo === "editar" ? (
-      <div className="campo">
-        <label htmlFor={idTexto}>Texto da mensagem para {m.parceiro}</label>
-        <textarea
-          id={idTexto}
-          className="aprovacao__edicao"
-          rows={4}
-          maxLength={2000}
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-        />
-      </div>
-    ) : undefined;
+  async function copiar() {
+    try {
+      await navigator.clipboard.writeText(m.texto);
+      setCopia({ ok: true, texto: `Texto da mensagem para ${m.parceiro} copiado.` });
+    } catch {
+      setCopia({ ok: false, texto: "Não foi possível copiar o texto. O navegador não deu acesso à área de transferência: selecione o texto e copie à mão." });
+    }
+  }
 
+  const aprovada = m.estado === "APROVADA";
   return (
     <CartaoMensagem
-      ref={refTitulo}
       mensagem={m}
-      mostrarQuando
-      corpo={corpo}
-      antes={
-        decide && (
-          <input
-            type="checkbox"
-            className="aprovacao__marca"
-            checked={selecionada}
-            onChange={aoSelecionar}
-            aria-label={`Selecionar a mensagem para ${m.parceiro}`}
-          />
-        )
+      rodape={
+        <div className="cartao-mensagem__decisao">
+          {aprovada ? (
+            <Lacre numero={m.id} titulo="Aprovada" quem={m.decidida_por} quando={m.decidida_em} compacto />
+          ) : (
+            <p className="decisao-rejeitada">
+              <strong>Rejeitada</strong> por {m.decidida_por ?? "—"} em {comoDataHora(m.decidida_em)}
+              {m.motivo_rejeicao ? <span className="decisao-rejeitada__motivo"> — {m.motivo_rejeicao}</span> : <span className="discreto"> — sem motivo registrado</span>}
+            </p>
+          )}
+          {aprovada && <p className="cartao-mensagem__contato">{m.contato ? `Contato: ${m.contato}` : "Parceiro sem contato cadastrado"}</p>}
+          {copia && (
+            <p className={copia.ok ? "texto-ok" : "texto-erro"} role="status">
+              {copia.texto}
+            </p>
+          )}
+        </div>
       }
     >
-      {m.numeros_fora_dos_fatos.length > 0 && (
-        <div className="aviso aviso--informativo aprovacao__numeros">
-          <p className="aviso__titulo">Números que não vieram dos dados: {m.numeros_fora_dos_fatos.join(", ")}.</p>
-          <p className="aviso__ajuda">
-            Quem editou pode escrever um número novo, como um desconto; confira antes de aprovar.
-          </p>
-        </div>
-      )}
-
-      {/* O texto reescrito e o motivo digitado se perdem com a troca de tela (H97). */}
-      <AlteracoesNaoSalvas
-        quando={(modo === "editar" && texto !== m.texto) || (modo === "rejeitar" && motivo !== "")}
-      />
-
-      {decide && modo === null && (
-        <div className="aprovacao__acoes">
-          <button type="button" className="botao" disabled={ocupada} onClick={aoAprovar}>
-            Aprovar
-          </button>
-          <button
-            type="button"
-            className="botao botao--secundario"
-            disabled={ocupada}
-            onClick={() => {
-              setTexto(m.texto);
-              setModo("editar");
-            }}
-          >
-            Editar
-          </button>
-          <button type="button" className="botao botao--secundario" disabled={ocupada} onClick={() => setModo("rejeitar")}>
-            Rejeitar
-          </button>
-        </div>
-      )}
-
-      {decide && modo === "editar" && (
-        <div className="aprovacao__acoes">
-          <button
-            type="button"
-            className="botao"
-            disabled={ocupada}
-            onClick={async () => {
-              if (await aoEditar(texto)) setModo(null);
-            }}
-          >
-            Salvar o texto
-          </button>
-          <button type="button" className="botao botao--secundario" onClick={() => setModo(null)}>
-            Cancelar
-          </button>
-          <span className="aprovacao__dica">Salvar não aprova: a mensagem continua na fila.</span>
-        </div>
-      )}
-
-      {decide && modo === "rejeitar" && (
-        <div className="aprovacao__rejeicao">
-          <div className="campo">
-            <label htmlFor={idMotivo}>Motivo da rejeição (opcional)</label>
-            <input
-              id={idMotivo}
-              type="text"
-              maxLength={240}
-              value={motivo}
-              onChange={(e) => setMotivo(e.target.value)}
-              aria-describedby={`${idMotivo}-ajuda`}
-            />
-            <p id={`${idMotivo}-ajuda`} className="campo__ajuda">
-              Fica no histórico, e ajuda a ajustar as próximas mensagens.
-            </p>
-          </div>
-          <div className="aprovacao__acoes">
-            <button type="button" className="botao" disabled={ocupada} onClick={() => aoRejeitar(motivo)}>
-              Rejeitar mensagem
-            </button>
-            <button type="button" className="botao botao--secundario" onClick={() => setModo(null)}>
-              Cancelar
-            </button>
-          </div>
-        </div>
+      {aprovada && (
+        <button type="button" className="botao botao--secundario" onClick={copiar}>
+          <Icone nome="copiar" /> Copiar texto
+        </button>
       )}
     </CartaoMensagem>
   );

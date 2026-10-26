@@ -1,0 +1,41 @@
+{
+ "periodo": {
+  "id": 12,
+  "data_inicio": "2026-09-28",
+  "data_fim": "2026-10-04"
+ },
+ "periodo_anterior": {
+  "id": 11,
+  "data_inicio": "2026-09-21",
+  "data_fim": "2026-09-27"
+ },
+ "top_n": 15,
+ "entradas": [
+  {
+   "parceiro_id": 80,
+   "nome": "Parada Real",
+   "posicao": 13,
+   "posicao_anterior": 23
+  },
+  {
+   "parceiro_id": 439,
+   "nome": "Forno da Serra 3",
+   "posicao": 15,
+   "posicao_anterior": 24
+  }
+ ],
+ "saidas": [
+  {
+   "parceiro_id": 314,
+   "nome": "Quintal do Sol 3",
+   "posicao": 17,
+   "posicao_anterior": 14
+  },
+  {
+   "parceiro_id": 171,
+   "nome": "Ponto Bom Prato",
+   "posicao": 28,
+   "posicao_anterior": 12
+  }
+ ]
+}

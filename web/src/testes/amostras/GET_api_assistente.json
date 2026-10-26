@@ -1,0 +1,65 @@
+{
+ "assistente": {
+  "disponivel": true,
+  "modelo": "qwen2.5:7b",
+  "motivo": null
+ },
+ "exemplos": [
+  {
+   "tipo": "desempenho_do_parceiro",
+   "descricao": "O faturamento, os pedidos e o ticket médio de um parceiro num período, contra o período anterior.",
+   "exemplo": "Quanto a Esquina da Serra faturou na semana passada?"
+  },
+  {
+   "tipo": "evolucao_do_parceiro",
+   "descricao": "O faturamento de um parceiro período a período, num intervalo ou nas últimas semanas.",
+   "exemplo": "Como evoluiu o faturamento da Esquina da Serra em agosto?"
+  },
+  {
+   "tipo": "posicao_do_parceiro",
+   "descricao": "A posição de um parceiro no ranking de faturamento de um período.",
+   "exemplo": "Em que posição do ranking está a Esquina da Serra?"
+  },
+  {
+   "tipo": "segmento_do_parceiro",
+   "descricao": "O segmento de um parceiro num período: Top, em ascensão, em risco, recém-chegado, em prospecção ou estável.",
+   "exemplo": "A Esquina da Serra está em risco?"
+  },
+  {
+   "tipo": "previsao_do_parceiro",
+   "descricao": "A previsão do modelo para um parceiro: a chance de ele entrar em risco no próximo período e o faturamento previsto.",
+   "exemplo": "Qual a chance de a Esquina da Serra cair no próximo período?"
+  },
+  {
+   "tipo": "ranking",
+   "descricao": "Os parceiros de maior faturamento num período, na rede inteira ou numa categoria.",
+   "exemplo": "Quais pizzarias mais faturaram na semana passada?"
+  },
+  {
+   "tipo": "parceiros_do_segmento",
+   "descricao": "Quantos e quais parceiros estão num segmento num período, na rede ou numa categoria.",
+   "exemplo": "Quais farmácias estão em risco?"
+  },
+  {
+   "tipo": "mobilidade_do_top",
+   "descricao": "Quem entrou e quem saiu do Top do ranking, de um período para o seguinte.",
+   "exemplo": "Quem saiu do Top nesta semana?"
+  },
+  {
+   "tipo": "resumo_do_periodo",
+   "descricao": "O faturamento, os pedidos, o ticket médio e os parceiros com movimento da rede inteira num período.",
+   "exemplo": "Como foi a rede na semana passada?"
+  },
+  {
+   "tipo": "distribuicao_dos_segmentos",
+   "descricao": "Quantos parceiros há em cada segmento num período.",
+   "exemplo": "Como os parceiros se dividem entre os segmentos?"
+  },
+  {
+   "tipo": "ultimo_plano",
+   "descricao": "O último plano de campanha calculado: as ações, o custo e o ganho esperado.",
+   "exemplo": "Qual é o ganho esperado do último plano?"
+  }
+ ],
+ "tamanho_maximo": 1000
+}

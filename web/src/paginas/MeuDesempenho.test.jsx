@@ -1,119 +1,44 @@
-import { render, screen, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { ContextoSessao } from "../api/contextoSessao";
-import App from "../App";
-import { simularApi } from "../testes/preparar";
-import MeuDesempenho from "./MeuDesempenho";
+import { abrir, amostra } from "../testes/montar";
 
-function ponto(inicio, fim, faturamento, pedidos, ticket) {
-  return {
-    periodo: { id: 1, data_inicio: inicio, data_fim: fim },
-    faturamento,
-    pedidos,
-    ticket_medio: ticket,
-  };
-}
+/* RF26 — o Parceiro vê exclusivamente o próprio desempenho, período a período. */
+describe("Meu desempenho (RF26)", () => {
+  it("mostra os números do próprio comércio, comparados com o período anterior", async () => {
+    abrir("/meu-desempenho", { perfil: "PARCEIRO", rotas: { "GET /api/meu-desempenho": { corpo: amostra("GET_api_meu_desempenho") } } });
 
-const PONTOS = [
-  ponto("2026-08-10", "2026-08-16", "1000.00", 20, "50.00"),
-  ponto("2026-08-17", "2026-08-23", null, null, null),
-  ponto("2026-08-24", "2026-08-30", "1250.00", 25, "50.00"),
-  ponto("2026-08-31", "2026-09-06", "1500.00", 25, "60.00"),
-];
-
-function desempenho(extra = {}) {
-  return {
-    parceiro: "Mercearia Boa Vista",
-    categoria: "Mercado",
-    atual: PONTOS[3],
-    anterior: PONTOS[2].periodo,
-    variacao: { faturamento: "20.00", pedidos: "0.00", ticket_medio: "20.00" },
-    pontos: PONTOS,
-    ...extra,
-  };
-}
-
-function renderizar() {
-  return render(
-    <MemoryRouter>
-      <MeuDesempenho />
-    </MemoryRouter>,
-  );
-}
-
-describe("meu desempenho (portal do Parceiro)", () => {
-  it("mostra só os números dele: o período, os três indicadores e a série", async () => {
-    const chamadas = simularApi({ "GET /api/meu-desempenho": { corpo: desempenho() } });
-    renderizar();
-
-    expect(await screen.findByRole("heading", { name: "Mercearia Boa Vista · Mercado" })).toBeInTheDocument();
-    expect(screen.getByText(/Período de 31\/08\/2026 a 06\/09\/2026, comparado com 24\/08\/2026 a 30\/08\/2026/)).toBeInTheDocument();
-    const indicadores = screen.getByRole("region", { name: "Os seus indicadores do período" });
-    expect(within(indicadores).getByText("R$ 1.500,00")).toBeInTheDocument();
-    // O faturamento e o ticket subiram 20%; os pedidos ficaram iguais.
-    expect(within(indicadores).getAllByText("+20,00%", { selector: "span" })).toHaveLength(2);
-    expect(within(indicadores).getByText("25")).toBeInTheDocument();
-    expect(screen.getByRole("img").getAttribute("aria-label")).toMatch(/^Faturamento por período\. 4 períodos/);
-    // Nada de ranking, posição ou rede.
-    expect(screen.queryByText(/ranking|posição|rede/i)).not.toBeInTheDocument();
-    // A tela não manda identificador de parceiro: quem diz de quem é, é a sessão.
-    expect(String(chamadas.mock.calls[0][0])).toBe("/api/meu-desempenho");
-  });
-
-  it("o relatório mais recente sem o comércio dele: indicadores vazios, e o aviso", async () => {
-    simularApi({
-      "GET /api/meu-desempenho": {
-        corpo: desempenho({
-          atual: ponto("2026-09-07", "2026-09-13", null, null, null),
-          variacao: { faturamento: null, pedidos: null, ticket_medio: null },
-        }),
-      },
+    expect(await screen.findByRole("heading", { level: 1, name: "Meu desempenho" })).toBeInTheDocument();
+    const indicadores = await waitFor(() => {
+      const s = document.querySelector('[aria-labelledby="titulo-meus-indicadores"]');
+      expect(s).toHaveTextContent("79.410");
+      return s;
     });
-    renderizar();
-    expect(await screen.findByText("O último relatório não trouxe o seu comércio.")).toBeInTheDocument();
-    expect(screen.getAllByText("sem dados neste período")).toHaveLength(3);
+    expect(indicadores).toHaveTextContent("1.070");
+    expect(indicadores).toHaveTextContent("−15,06%");
+    expect(screen.getByText(/Ponto Azul 2/)).toBeInTheDocument();
   });
 
-  it("o primeiro período com os números dele diz que não há com que comparar", async () => {
-    simularApi({
-      "GET /api/meu-desempenho": {
-        corpo: desempenho({ atual: PONTOS[0], anterior: null, variacao: null, pontos: [PONTOS[0]] }),
-      },
-    });
-    renderizar();
-    expect(await screen.findByText(/o primeiro com os seus números/)).toBeInTheDocument();
+  it("chama só a consulta do próprio parceiro, e nenhuma da rede", async () => {
+    const { chamadas } = abrir("/meu-desempenho", { perfil: "PARCEIRO", rotas: { "GET /api/meu-desempenho": { corpo: amostra("GET_api_meu_desempenho") } } });
+
+    await screen.findByRole("heading", { level: 1, name: "Meu desempenho" });
+    await waitFor(() => expect(chamadas()).toContain("GET /api/meu-desempenho"));
+    expect(chamadas().filter((c) => /\/api\/(parceiros|painel|relatorios)/.test(c))).toEqual([]);
   });
 
-  it("sem histórico ainda, explica quando os números chegam (UC13-A1)", async () => {
-    simularApi({
-      "GET /api/meu-desempenho": {
-        corpo: desempenho({ atual: null, anterior: null, variacao: null, pontos: [] }),
-      },
-    });
-    renderizar();
-    expect(await screen.findByText("Mercearia Boa Vista: seus números ainda não chegaram.")).toBeInTheDocument();
-    expect(screen.getByText(/depois da primeira importação de relatório que incluir o seu comércio/)).toBeInTheDocument();
+  it("o menu do Parceiro tem só o portal dele", async () => {
+    abrir("/meu-desempenho", { perfil: "PARCEIRO", rotas: { "GET /api/meu-desempenho": { corpo: amostra("GET_api_meu_desempenho") } } });
+
+    const menu = await screen.findByRole("navigation", { name: "Menu principal" });
+    const itens = [...menu.querySelectorAll(".menu__rotulo")].map((e) => e.textContent);
+    expect(itens).toEqual(["Meu desempenho"]);
   });
 
-  it("o parceiro que entra pela raiz vai direto ao portal dele", async () => {
-    simularApi({ "GET /api/meu-desempenho": { corpo: desempenho() } });
-    render(
-      <ContextoSessao.Provider
-        value={{
-          usuario: { nome: "Dona da Mercearia", perfil: "PARCEIRO", telas: ["meu_desempenho"] },
-          conferindo: false,
-          sair: () => {},
-        }}
-      >
-        <MemoryRouter initialEntries={["/"]}>
-          <App />
-        </MemoryRouter>
-      </ContextoSessao.Provider>,
-    );
-    expect(await screen.findByRole("heading", { name: "Mercearia Boa Vista · Mercado" })).toBeInTheDocument();
-    const trilho = screen.getByRole("navigation", { name: "Seções do sistema" });
-    expect(within(trilho).getAllByRole("link").map((a) => a.textContent.trim())).toEqual(["Meu desempenho"]);
+  it("antes do primeiro relatório com o comércio, diz que os números ainda não chegaram", async () => {
+    const vazio = { ...amostra("GET_api_meu_desempenho"), atual: null, anterior: null, variacao: null, pontos: [] };
+    abrir("/meu-desempenho", { perfil: "PARCEIRO", rotas: { "GET /api/meu-desempenho": { corpo: vazio } } });
+
+    expect(await screen.findByText("Ponto Azul 2: seus números ainda não chegaram.")).toBeInTheDocument();
   });
 });

@@ -1,0 +1,289 @@
+{
+ "itens": [
+  {
+   "id": 2,
+   "parceiro_id": 460,
+   "parceiro": "Quintal Verde 2",
+   "segmento": "TOP",
+   "acao": "Campanha de categoria",
+   "texto": "Olá, Quintal Verde 2! No período de 28/09/2026 a 04/10/2026, vocês registraram 1.129 pedidos e R$ 57.841,79 em vendas. Obrigado pela parceria, que faz diferença na plataforma. Preparamos uma ação para vocês: Campanha de categoria, de 12/10/2026 a 18/10/2026. Nesta semana, 15% de desconto na taxa.",
+   "texto_gerado": "Olá, Quintal Verde 2! No período de 28/09/2026 a 04/10/2026, vocês registraram 1.129 pedidos e R$ 57.841,79 em vendas. Obrigado pela parceria, que faz diferença na plataforma. Preparamos uma ação para vocês: Campanha de categoria, de 12/10/2026 a 18/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO_FIXO",
+   "modelo": null,
+   "motivo_redator": "O serviço do modelo de linguagem não respondeu.",
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Quintal Verde 2"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 57.841,79"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "1.129"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 51,23"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-14,11%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Campanha de categoria"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "12/10/2026 a 18/10/2026"
+    }
+   ],
+   "lote_id": 1,
+   "gerada_em": "2026-10-05T07:45:10.372310Z",
+   "categoria": "Restaurante",
+   "editada": true,
+   "numeros_fora_dos_fatos": [
+    "15%"
+   ],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 4,
+   "parceiro_id": 381,
+   "parceiro": "Esquina do Vale 3",
+   "segmento": "TOP",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Esquina do Vale 3! No período de 28/09/2026 a 04/10/2026, vocês registraram 743 pedidos e R$ 25.429,22 em vendas. Obrigado pela parceria, que faz diferença na plataforma. Preparamos uma ação para vocês: Visita de relacionamento, de 12/10/2026 a 18/10/2026.",
+   "texto_gerado": "Olá, Esquina do Vale 3! No período de 28/09/2026 a 04/10/2026, vocês registraram 743 pedidos e R$ 25.429,22 em vendas. Obrigado pela parceria, que faz diferença na plataforma. Preparamos uma ação para vocês: Visita de relacionamento, de 12/10/2026 a 18/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO_FIXO",
+   "modelo": null,
+   "motivo_redator": "O serviço do modelo de linguagem não respondeu.",
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Esquina do Vale 3"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 25.429,22"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "743"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 34,23"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-7,03%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "12/10/2026 a 18/10/2026"
+    }
+   ],
+   "lote_id": 1,
+   "gerada_em": "2026-10-05T07:45:10.376342Z",
+   "categoria": "Lanchonete",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 5,
+   "parceiro_id": 214,
+   "parceiro": "Villa da Praça",
+   "segmento": "TOP",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Villa da Praça! No período de 28/09/2026 a 04/10/2026, vocês registraram 513 pedidos e R$ 31.039,82 em vendas. Obrigado pela parceria, que faz diferença na plataforma. Preparamos uma ação para vocês: Visita de relacionamento, de 12/10/2026 a 18/10/2026.",
+   "texto_gerado": "Olá, Villa da Praça! No período de 28/09/2026 a 04/10/2026, vocês registraram 513 pedidos e R$ 31.039,82 em vendas. Obrigado pela parceria, que faz diferença na plataforma. Preparamos uma ação para vocês: Visita de relacionamento, de 12/10/2026 a 18/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO_FIXO",
+   "modelo": null,
+   "motivo_redator": "O serviço do modelo de linguagem não respondeu.",
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Villa da Praça"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 31.039,82"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "513"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 60,51"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-3,04%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "12/10/2026 a 18/10/2026"
+    }
+   ],
+   "lote_id": 1,
+   "gerada_em": "2026-10-05T07:45:10.378083Z",
+   "categoria": "Petshop",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 6,
+   "parceiro_id": 314,
+   "parceiro": "Quintal do Sol 3",
+   "segmento": "ESTAVEL",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Quintal do Sol 3! No período de 28/09/2026 a 04/10/2026, vocês registraram 335 pedidos e R$ 13.863,15 em vendas. Seguimos à disposição para o que precisarem. Preparamos uma ação para vocês: Visita de relacionamento, de 12/10/2026 a 18/10/2026.",
+   "texto_gerado": "Olá, Quintal do Sol 3! No período de 28/09/2026 a 04/10/2026, vocês registraram 335 pedidos e R$ 13.863,15 em vendas. Seguimos à disposição para o que precisarem. Preparamos uma ação para vocês: Visita de relacionamento, de 12/10/2026 a 18/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO_FIXO",
+   "modelo": null,
+   "motivo_redator": "O serviço do modelo de linguagem não respondeu.",
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Quintal do Sol 3"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 13.863,15"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "335"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 41,38"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-2,83%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "12/10/2026 a 18/10/2026"
+    }
+   ],
+   "lote_id": 1,
+   "gerada_em": "2026-10-05T07:45:10.379766Z",
+   "categoria": "Restaurante",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  },
+  {
+   "id": 7,
+   "parceiro_id": 14,
+   "parceiro": "Casa Verde",
+   "segmento": "TOP",
+   "acao": "Visita de relacionamento",
+   "texto": "Olá, Casa Verde! No período de 28/09/2026 a 04/10/2026, vocês registraram 341 pedidos e R$ 14.927,34 em vendas. Obrigado pela parceria, que faz diferença na plataforma. Preparamos uma ação para vocês: Visita de relacionamento, de 12/10/2026 a 18/10/2026.",
+   "texto_gerado": "Olá, Casa Verde! No período de 28/09/2026 a 04/10/2026, vocês registraram 341 pedidos e R$ 14.927,34 em vendas. Obrigado pela parceria, que faz diferença na plataforma. Preparamos uma ação para vocês: Visita de relacionamento, de 12/10/2026 a 18/10/2026.",
+   "estado": "PENDENTE",
+   "redator": "MODELO_FIXO",
+   "modelo": null,
+   "motivo_redator": "O serviço do modelo de linguagem não respondeu.",
+   "fatos": [
+    {
+     "fato": "Parceiro",
+     "valor": "Casa Verde"
+    },
+    {
+     "fato": "Período",
+     "valor": "28/09/2026 a 04/10/2026"
+    },
+    {
+     "fato": "Faturamento no período",
+     "valor": "R$ 14.927,34"
+    },
+    {
+     "fato": "Pedidos no período",
+     "valor": "341"
+    },
+    {
+     "fato": "Ticket médio",
+     "valor": "R$ 43,78"
+    },
+    {
+     "fato": "Variação do faturamento sobre o período anterior",
+     "valor": "-15,56%"
+    },
+    {
+     "fato": "Ação oferecida",
+     "valor": "Visita de relacionamento"
+    },
+    {
+     "fato": "Período da ação",
+     "valor": "12/10/2026 a 18/10/2026"
+    }
+   ],
+   "lote_id": 1,
+   "gerada_em": "2026-10-05T07:45:10.381405Z",
+   "categoria": "Restaurante",
+   "editada": false,
+   "numeros_fora_dos_fatos": [],
+   "decidida_por": null,
+   "decidida_em": null,
+   "motivo_rejeicao": null,
+   "contato": null
+  }
+ ],
+ "total": 36,
+ "pagina": 1,
+ "tamanho": 5
+}

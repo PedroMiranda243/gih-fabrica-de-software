@@ -1,0 +1,101 @@
+[
+ {
+  "id": 1,
+  "login": "admin",
+  "nome": "Administrador",
+  "perfil": "ADMINISTRADOR",
+  "ativo": true,
+  "parceiro_id": null,
+  "criado_em": "2026-10-05T07:44:17.253536Z"
+ },
+ {
+  "id": 4,
+  "login": "lab.analista",
+  "nome": "Analista do Laboratório",
+  "perfil": "ANALISTA",
+  "ativo": true,
+  "parceiro_id": null,
+  "criado_em": "2026-10-05T07:44:44.921638Z"
+ },
+ {
+  "id": 2,
+  "login": "gerador",
+  "nome": "Gerador de dados",
+  "perfil": "ADMINISTRADOR",
+  "ativo": false,
+  "parceiro_id": null,
+  "criado_em": "2026-10-05T07:44:37.245985Z"
+ },
+ {
+  "id": 3,
+  "login": "lab.gestor",
+  "nome": "Gestora do Laboratório",
+  "perfil": "GESTOR",
+  "ativo": true,
+  "parceiro_id": null,
+  "criado_em": "2026-10-05T07:44:44.858241Z"
+ },
+ {
+  "id": 7,
+  "login": "t29645.admin",
+  "nome": "Medição Administrador",
+  "perfil": "ADMINISTRADOR",
+  "ativo": false,
+  "parceiro_id": null,
+  "criado_em": "2026-10-05T07:57:30.192030Z"
+ },
+ {
+  "id": 10,
+  "login": "t03223.admin",
+  "nome": "Medição Administrador",
+  "perfil": "ADMINISTRADOR",
+  "ativo": false,
+  "parceiro_id": null,
+  "criado_em": "2026-10-05T08:00:54.194886Z"
+ },
+ {
+  "id": 6,
+  "login": "t29645.gestor",
+  "nome": "Medição Gestor",
+  "perfil": "GESTOR",
+  "ativo": false,
+  "parceiro_id": null,
+  "criado_em": "2026-10-05T07:57:27.750074Z"
+ },
+ {
+  "id": 9,
+  "login": "t03223.gestor",
+  "nome": "Medição Gestor",
+  "perfil": "GESTOR",
+  "ativo": false,
+  "parceiro_id": null,
+  "criado_em": "2026-10-05T08:00:51.770014Z"
+ },
+ {
+  "id": 8,
+  "login": "t29645.parceiro",
+  "nome": "Medição Parceiro",
+  "perfil": "PARCEIRO",
+  "ativo": false,
+  "parceiro_id": 246,
+  "criado_em": "2026-10-05T07:57:30.253985Z"
+ },
+ {
+  "id": 11,
+  "login": "t03223.parceiro",
+  "nome": "Medição Parceiro",
+  "perfil": "PARCEIRO",
+  "ativo": false,
+  "parceiro_id": 246,
+  "criado_em": "2026-10-05T08:00:54.263866Z"
+ },
+ {
+  "id": 5,
+  "login": "lab.parceiro",
+  "nome": "Parceiro do Laboratório",
+  "perfil": "PARCEIRO",
+  "ativo": true,
+  "parceiro_id": 246,
+  "criado_em": "2026-10-05T07:44:47.334180Z"
+ }
+]

@@ -1,0 +1,97 @@
+{
+ "disponivel": true,
+ "motivo": null,
+ "ajuda": null,
+ "periodo_base": {
+  "id": 12,
+  "data_inicio": "2026-09-28",
+  "data_fim": "2026-10-04"
+ },
+ "modelo_versao": "rede-1",
+ "origem": "MODELO",
+ "desatualizada": false,
+ "categoria": null,
+ "segmento": null,
+ "risco_minimo": null,
+ "plano": {
+  "execucao_id": 4,
+  "concluida_em": "2026-10-05T07:57:36.472656Z",
+  "aplicacao_inicio": "2026-10-05",
+  "aplicacao_fim": "2026-10-11",
+  "modelo_versao": "rede-1"
+ },
+ "total": 500,
+ "com_previsao": 469,
+ "faturamento_medido": "1753406.48",
+ "faturamento_previsto": "1753164.03",
+ "no_plano": 30,
+ "itens": [
+  {
+   "parceiro_id": 409,
+   "nome": "Varanda do Norte 2",
+   "categoria": "Padaria",
+   "segmento": "ESTAVEL",
+   "faturamento": "955.58",
+   "variacao_percentual": "-9.26",
+   "faturamento_previsto": "757.18",
+   "probabilidade_queda": 0.9977954677079193,
+   "sem_previsao": null,
+   "acao": null,
+   "custo": null
+  },
+  {
+   "parceiro_id": 100,
+   "nome": "Ponto do Norte",
+   "categoria": "Restaurante",
+   "segmento": "ESTAVEL",
+   "faturamento": "2677.05",
+   "variacao_percentual": "-3.97",
+   "faturamento_previsto": "2336.08",
+   "probabilidade_queda": 0.9523107604567229,
+   "sem_previsao": null,
+   "acao": null,
+   "custo": null
+  },
+  {
+   "parceiro_id": 154,
+   "nome": "Recanto da Praça",
+   "categoria": "Petshop",
+   "segmento": "ESTAVEL",
+   "faturamento": "1614.27",
+   "variacao_percentual": "-12.02",
+   "faturamento_previsto": "1489.36",
+   "probabilidade_queda": 0.9280406888486661,
+   "sem_previsao": null,
+   "acao": null,
+   "custo": null
+  },
+  {
+   "parceiro_id": 478,
+   "nome": "Villa Mineiro 2",
+   "categoria": "Restaurante",
+   "segmento": "ESTAVEL",
+   "faturamento": "1096.66",
+   "variacao_percentual": "-25.87",
+   "faturamento_previsto": "1042.82",
+   "probabilidade_queda": 0.9244740581302922,
+   "sem_previsao": null,
+   "acao": null,
+   "custo": null
+  },
+  {
+   "parceiro_id": 211,
+   "nome": "Villa Popular",
+   "categoria": "Gás e água",
+   "segmento": "ESTAVEL",
+   "faturamento": "167.20",
+   "variacao_percentual": "-16.25",
+   "faturamento_previsto": "151.24",
+   "probabilidade_queda": 0.9226488640677951,
+   "sem_previsao": null,
+   "acao": null,
+   "custo": null
+  }
+ ],
+ "pagina": 1,
+ "tamanho": 5
+}

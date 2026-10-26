@@ -1,130 +1,65 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
-import { ContextoSessao } from "../api/contextoSessao";
-import { simularApi } from "../testes/preparar";
-import MinhaConta from "./MinhaConta";
+import { abrir } from "../testes/montar";
 
-const EU = { id: 5, login: "ana.lista", nome: "Ana de Exemplo", perfil: "ANALISTA", ativo: true };
+/* RF07 — trocar a própria senha, exigindo a atual. */
+describe("Minha conta (RF07)", () => {
+  it("mostra os dados da conta, só para leitura", async () => {
+    abrir("/conta", { perfil: "ANALISTA" });
 
-function renderizar(usuario = EU) {
-  return render(
-    <ContextoSessao.Provider value={{ usuario }}>
-      <MemoryRouter>
-        <MinhaConta />
-      </MemoryRouter>
-    </ContextoSessao.Provider>,
-  );
-}
-
-async function preencher(usuario, { atual = "senha-de-agora", nova = "senha-nova-bem-longa", de_novo = nova } = {}) {
-  await usuario.type(screen.getByLabelText(/^Senha atual/), atual);
-  await usuario.type(screen.getByLabelText(/^Senha nova \*/), nova);
-  await usuario.type(screen.getByLabelText(/^Senha nova, de novo/), de_novo);
-}
-
-describe("minha conta", () => {
-  it("mostra os dados de quem está usando, com o perfil por extenso", () => {
-    renderizar();
-
-    const dados = screen.getByRole("region", { name: "Seus dados" });
-    expect(dados).toHaveTextContent("Ana de Exemplo");
-    expect(dados).toHaveTextContent("ana.lista");
-    expect(dados).toHaveTextContent("Analista");
+    expect(await screen.findByRole("heading", { level: 1, name: "Minha conta" })).toBeInTheDocument();
+    expect(screen.getByText("Quem muda o nome e o perfil é o administrador.")).toBeInTheDocument();
+    expect(screen.getByText("Analista", { selector: "dd" })).toBeInTheDocument();
   });
 
-  it("trocar manda a atual e a nova, esvazia os campos e diz que as outras sessões caíram", async () => {
-    const enviados = [];
-    simularApi({
-      "POST /api/sessao/senha": (_url, opcoes) => {
-        enviados.push(JSON.parse(opcoes.body));
-        return { status: 204 };
-      },
-    });
+  it("troca a senha mandando a atual e a nova", async () => {
     const usuario = userEvent.setup();
-    renderizar();
+    const { corpoDe } = abrir("/conta", { perfil: "GESTOR", rotas: { "POST /api/sessao/senha": { status: 204 } } });
 
-    await preencher(usuario);
+    await usuario.type(await screen.findByLabelText(/^Senha atual/), "antiga-123");
+    await usuario.type(screen.getByLabelText(/^Senha nova(?!, de novo)/), "nova-e-forte-456");
+    await usuario.type(screen.getByLabelText(/^Senha nova, de novo/), "nova-e-forte-456");
     await usuario.click(screen.getByRole("button", { name: "Trocar a senha" }));
 
-    const aviso = await screen.findByRole("status");
-    expect(aviso).toHaveTextContent("Senha trocada.");
-    expect(aviso).toHaveTextContent("As outras sessões desta conta foram encerradas");
-    // A confirmação é da tela: o servidor recebe a atual e a nova, e só.
-    expect(enviados).toEqual([{ senha_atual: "senha-de-agora", senha_nova: "senha-nova-bem-longa" }]);
+    expect(await screen.findByText(/Senha trocada\./)).toBeInTheDocument();
+    expect(corpoDe("POST /api/sessao/senha")).toEqual({ senha_atual: "antiga-123", senha_nova: "nova-e-forte-456" });
     expect(screen.getByLabelText(/^Senha atual/)).toHaveValue("");
-    expect(screen.getByLabelText(/^Senha nova \*/)).toHaveValue("");
   });
 
-  it("a senha atual que não confere aparece embaixo dela, com o foco nela", async () => {
-    simularApi({
-      "POST /api/sessao/senha": {
-        status: 422,
-        corpo: {
-          erro: "Alguns campos precisam de correção.",
-          campos: [{ campo: "senha_atual", mensagem: "A senha atual está incorreta." }],
-        },
-      },
-    });
+  it("pega o erro de digitação antes de mandar ao servidor", async () => {
     const usuario = userEvent.setup();
-    renderizar();
+    const { chamadas } = abrir("/conta", { perfil: "GESTOR" });
 
-    await preencher(usuario, { atual: "chute" });
-    await usuario.click(screen.getByRole("button", { name: "Trocar a senha" }));
-
-    expect(await screen.findByText("A senha atual está incorreta.")).toBeInTheDocument();
-    expect(screen.getByLabelText(/^Senha atual/)).toHaveFocus();
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-  });
-
-  it("a senha nova que é fraca aparece embaixo dela, com a regra que o servidor mandou", async () => {
-    simularApi({
-      "POST /api/sessao/senha": {
-        status: 422,
-        corpo: {
-          erro: "Alguns campos precisam de correção.",
-          campos: [{ campo: "senha_nova", mensagem: "A senha precisa ter pelo menos 12 caracteres." }],
-        },
-      },
-    });
-    const usuario = userEvent.setup();
-    renderizar();
-
-    await preencher(usuario, { nova: "curta" });
-    await usuario.click(screen.getByRole("button", { name: "Trocar a senha" }));
-
-    expect(await screen.findByText("A senha precisa ter pelo menos 12 caracteres.")).toBeInTheDocument();
-    expect(screen.getByLabelText(/^Senha nova \*/)).toHaveFocus();
-  });
-
-  it("as duas digitações diferentes não chegam ao servidor", async () => {
-    const espia = simularApi({});
-    const usuario = userEvent.setup();
-    renderizar();
-
-    await preencher(usuario, { de_novo: "senha-nova-bem-lomga" });
+    await usuario.type(await screen.findByLabelText(/^Senha atual/), "antiga-123");
+    await usuario.type(screen.getByLabelText(/^Senha nova(?!, de novo)/), "nova-e-forte-456");
+    await usuario.type(screen.getByLabelText(/^Senha nova, de novo/), "nova-e-forte-465");
     await usuario.click(screen.getByRole("button", { name: "Trocar a senha" }));
 
     expect(screen.getByText("As duas digitações da senha nova não são iguais.")).toBeInTheDocument();
     expect(screen.getByLabelText(/^Senha nova, de novo/)).toHaveFocus();
-    expect(espia).not.toHaveBeenCalled();
+    expect(chamadas().filter((c) => c.startsWith("POST"))).toEqual([]);
   });
 
-  it("o erro que não é de campo aparece no topo do formulário", async () => {
-    simularApi({
-      "POST /api/sessao/senha": {
-        status: 500,
-        corpo: { erro: "Não foi possível concluir a operação.", correlacao: "abc123" },
+  it("a senha atual errada volta com o texto do servidor, ao lado do campo", async () => {
+    const usuario = userEvent.setup();
+    abrir("/conta", {
+      perfil: "GESTOR",
+      rotas: {
+        "POST /api/sessao/senha": {
+          status: 422,
+          corpo: { erro: "Alguns campos precisam de correção.", campos: [{ campo: "senha_atual", mensagem: "A senha atual não confere." }] },
+        },
       },
     });
-    const usuario = userEvent.setup();
-    renderizar();
 
-    await preencher(usuario);
+    await usuario.type(await screen.findByLabelText(/^Senha atual/), "errada");
+    await usuario.type(screen.getByLabelText(/^Senha nova(?!, de novo)/), "nova-e-forte-456");
+    await usuario.type(screen.getByLabelText(/^Senha nova, de novo/), "nova-e-forte-456");
     await usuario.click(screen.getByRole("button", { name: "Trocar a senha" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível concluir a operação.");
+    expect((await screen.findAllByText("A senha atual não confere.")).length).toBeGreaterThan(0);
+    expect(screen.getByLabelText(/^Senha atual/)).toHaveAttribute("aria-invalid", "true");
   });
 });

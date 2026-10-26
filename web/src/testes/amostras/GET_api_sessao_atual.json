@@ -1,0 +1,28 @@
+{
+ "id": 3,
+ "login": "lab.gestor",
+ "nome": "Gestora do Laboratório",
+ "perfil": "GESTOR",
+ "ativo": true,
+ "parceiro_id": null,
+ "criado_em": "2026-10-05T07:44:44.858241Z",
+ "telas": [
+  "painel",
+  "painel_decisao",
+  "importar",
+  "historico_importacoes",
+  "parceiros",
+  "modelo",
+  "campanha",
+  "calcular_campanha",
+  "execucoes",
+  "execucao",
+  "benchmark",
+  "mensagens",
+  "aprovacao",
+  "decidir_mensagens",
+  "relatorios",
+  "assistente",
+  "ajuda_regras"
+ ]
+}

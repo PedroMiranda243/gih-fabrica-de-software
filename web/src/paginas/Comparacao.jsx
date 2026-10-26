@@ -1,371 +1,255 @@
 /**
- * Dois planos lado a lado — RF35, UC08-A3, história H59.
- *
- * O gestor calcula um plano, muda um parâmetro e quer ver **o que mudou por causa
- * disso**. A página responde de cima para baixo, do resumo ao detalhe:
- *
- * 1. os parâmetros dos dois, com os que mudaram marcados;
- * 2. o resultado de cada um e a diferença do segundo para o primeiro;
- * 3. os parceiros que mudaram de ação ou que só estão num dos planos — os iguais
- *    ficam a um clique, porque são quase sempre a maioria e não dizem nada novo.
- *
- * **Quem decide o que mudou é a API** (regra 2.4): a comparação chega pronta, com
- * os campos diferentes, a diferença e o caso de cada parceiro. A tela só desenha.
- *
- * O endereço (`?a=&b=`) é o que o histórico monta, e é o que se manda a alguém.
+ * Comparação de dois planos — o que mudou por causa de um parâmetro. A comparação
+ * chega pronta da API; a tela desenha do resumo ao detalhe, A e B na mesma escala.
  */
-import { useEffect, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { api } from "../api/cliente";
-import { Esqueleto } from "../componentes/Carregando";
-import EstadoVazio from "../componentes/EstadoVazio";
-import Segmento from "../componentes/Segmento";
-import { useTituloDaAba } from "../componentes/tituloDaAba";
-import {
-  comoDataHora,
-  comoDinheiro,
-  comoFracao,
-  comoInteiro,
-  comoPercentual,
-  cotasDoPedido,
-  ROTULO_MODO,
-  TRACO,
-} from "../formato";
-import "../estilos/execucoes.css";
+import { useCarregar } from "../api/ganchos";
+import { tem, useSessao } from "../api/contextoSessao";
+import { Segmento } from "../componentes/Dados";
+import { Carregando, ErroDaTela, Nota, Vazio } from "../componentes/Estados";
+import { CaixaDeTabela, Trilha } from "../componentes/Lista";
+import { useTitulo } from "../componentes/Titulo";
+import { comoData, comoDataHora, comoDinheiro, comoFracao, comoInteiro, cotasDoPedido, ROTULO_MODO_CURTO, ROTULO_PARAMETRO } from "../formato";
 
-const PARAMETROS = [
-  ["orcamento", "Orçamento", (p) => comoDinheiro(p.orcamento)],
-  ["maximo_acoes", "Máximo de ações", (p) => comoInteiro(p.maximo_acoes)],
-  [
-    "cota_cauda_longa",
-    "Cauda longa",
-    (p) => (p.cota_cauda_longa ? `ao menos ${comoFracao(p.cota_cauda_longa, 0)} das ações` : TRACO),
-  ],
-  ["cotas_categoria", "Cotas por categoria", (p, e) => cotasDoPedido(e).join(" · ") || TRACO],
-  ["aplicacao_inicio", "Início da aplicação", (p) => p.aplicacao_inicio.split("-").reverse().join("/")],
-  ["aplicacao_fim", "Fim da aplicação", (p) => p.aplicacao_fim.split("-").reverse().join("/")],
-  ["modo", "Modo pedido", (p) => (p.modo ? ROTULO_MODO[p.modo] : "Automático")],
-];
+function comSinalDinheiro(v) {
+  const n = Number(v);
+  if (Number.isNaN(n)) return "—";
+  if (n === 0) return "igual";
+  return `${n > 0 ? "+" : "−"}${comoDinheiro(Math.abs(n))}`;
+}
 
-const SITUACAO = {
-  MUDOU: "mudou de ação",
-  SO_A: "só no plano A",
-  SO_B: "só no plano B",
-  IGUAL: "igual",
-};
+function comSinalInteiro(n) {
+  if (n === null || n === undefined) return "—";
+  if (n === 0) return "igual";
+  return `${n > 0 ? "+" : "−"}${comoInteiro(Math.abs(n))}`;
+}
+
+const SITUACAO = { MUDOU: "Mudou de ação", SO_A: "Só no plano A", SO_B: "Só no plano B", IGUAL: "Igual" };
 
 export default function Comparacao() {
-  const [parametros] = useSearchParams();
-  const a = parametros.get("a");
-  const b = parametros.get("b");
-  const chave = `${a}-${b}`;
-  const [estado, setEstado] = useState({ chave: null, dados: null, erro: null });
+  useTitulo("Comparação de dois planos", "Execuções");
+  const { usuario } = useSessao();
+  const [busca] = useSearchParams();
+  const a = busca.get("a");
+  const b = busca.get("b");
+  const temOsDois = Boolean(a && b);
+  const comp = useCarregar(() => api.get("/api/otimizacoes/comparacao", { a, b }), `${a}-${b}`, { ativo: temOsDois });
+  const [mostrarIguais, setMostrarIguais] = useState(false);
 
-  useEffect(() => {
-    if (!a || !b) return undefined;
-    let vivo = true;
-    api
-      .get("/api/otimizacoes/comparacao", { a, b })
-      .then((dados) => vivo && setEstado({ chave, dados, erro: null }))
-      .catch((erro) => vivo && setEstado({ chave, dados: null, erro }));
-    return () => {
-      vivo = false;
-    };
-  }, [a, b, chave]);
-  useTituloDaAba("Comparação");
+  const trilha = <Trilha passos={[{ rotulo: "Execuções", para: "/execucoes" }, { rotulo: "Comparação de dois planos" }]} />;
 
-  const atual = estado.chave === chave;
-  const comparacao = atual ? estado.dados : null;
-  const erro = atual ? estado.erro : null;
-
-  const trilha = (
-    <nav className="trilha" aria-label="Você está em">
-      <Link to="/execucoes">Execuções</Link>
-      <span aria-hidden="true">›</span>
-      <span aria-current="page">Comparação</span>
-    </nav>
-  );
-
-  if (!a || !b || erro?.status === 404) {
+  if (!temOsDois) {
     return (
-      <>
+      <div className="pagina">
         {trilha}
-        <EstadoVazio
-          titulo={!a || !b ? "Escolha dois planos para comparar" : "Plano não encontrado"}
-          texto="No histórico das execuções, marque dois planos calculados e peça a comparação."
-          acao={{ para: "/execucoes", rotulo: "Ir para as execuções" }}
-        />
-      </>
+        <Vazio titulo="Escolha dois planos para comparar" acao="Ir para as execuções" para="/execucoes" icone="comparar">
+          No histórico das execuções, marque dois planos calculados e peça a comparação.
+        </Vazio>
+      </div>
+    );
+  }
+  if (comp.carregando) return <Carregando rotulo="Carregando a comparação" linhas={8} />;
+  if (comp.erro?.status === 404) {
+    return (
+      <div className="pagina">
+        {trilha}
+        <Vazio titulo="Plano não encontrado" acao="Ir para as execuções" para="/execucoes" icone="busca">
+          {comp.erro.ajuda ?? "Um dos dois planos do endereço não existe. Escolha dois planos no histórico das execuções."}
+        </Vazio>
+      </div>
+    );
+  }
+  if (comp.erro) {
+    return (
+      <div className="pagina">
+        {trilha}
+        <ErroDaTela erro={comp.erro} />
+      </div>
     );
   }
 
-  return (
-    <>
-      {trilha}
-
-      {erro && (
-        <div className="aviso" role="alert">
-          <p className="aviso__titulo">{erro.message}</p>
-          {erro.ajuda && <p className="aviso__ajuda">{erro.ajuda}</p>}
-        </div>
-      )}
-
-      {!comparacao && !erro && (
-        <section className="painel" aria-busy="true" aria-label="Carregando a comparação">
-          <div className="execucoes__corpo">
-            <Esqueleto altura={260} />
-          </div>
-        </section>
-      )}
-
-      {comparacao && <Lado comparacao={comparacao} />}
-    </>
-  );
-}
-
-function Lado({ comparacao: c }) {
-  return (
-    <>
-      {!c.mesmas_previsoes && (
-        <div className="aviso aviso--informativo">
-          <p className="aviso__titulo">Os dois planos partiram de previsões diferentes.</p>
-          <p className="aviso__ajuda">
-            O plano A usou a {c.a.modelo_versao} e o plano B, a {c.b.modelo_versao}, ou períodos
-            diferentes. O ganho de um mesmo parceiro pode ter mudado por causa da previsão, e não dos
-            parâmetros.
-          </p>
-        </div>
-      )}
-      <Parametros comparacao={c} />
-      <Resultado comparacao={c} />
-      <Parceiros comparacao={c} />
-    </>
-  );
-}
-
-function CabecalhoDosPlanos({ a, b }) {
-  return (
-    <>
-      <th scope="col">
-        Plano A
-        <span className="comparacao__quando">
-          {comoDataHora(a.iniciada_em)}
-          {a.autor ? `, ${a.autor}` : ""}
-        </span>
-      </th>
-      <th scope="col">
-        Plano B
-        <span className="comparacao__quando">
-          {comoDataHora(b.iniciada_em)}
-          {b.autor ? `, ${b.autor}` : ""}
-        </span>
-      </th>
-    </>
-  );
-}
-
-function Parametros({ comparacao: c }) {
-  const mudaram = new Set(c.parametros_diferentes);
-  return (
-    <section className="painel" aria-labelledby="titulo-parametros">
-      <div className="painel__cabecalho">
-        <h2 className="painel__titulo" id="titulo-parametros">
-          O que foi pedido
-        </h2>
-        <span className="painel__nota">
-          {mudaram.size
-            ? `${mudaram.size} ${mudaram.size === 1 ? "parâmetro mudou" : "parâmetros mudaram"}`
-            : "Os mesmos parâmetros"}
-        </span>
-      </div>
-      <div className="tabela-rolagem">
-        <table className="tabela comparacao__tabela">
-          <caption className="so-leitor">Os parâmetros dos dois planos</caption>
-          <thead>
-            <tr>
-              <th scope="col">Parâmetro</th>
-              <CabecalhoDosPlanos a={c.a} b={c.b} />
-            </tr>
-          </thead>
-          <tbody>
-            {PARAMETROS.map(([campo, rotulo, valor]) => {
-              const mudou = mudaram.has(campo);
-              return (
-                <tr key={campo} className={mudou ? "comparacao__mudou" : undefined}>
-                  <th scope="row">
-                    {rotulo}
-                    {mudou && <span className="comparacao__marca">mudou</span>}
-                  </th>
-                  <td>{valor(c.a.parametros, c.a)}</td>
-                  <td>{valor(c.b.parametros, c.b)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
-/* A diferença com sinal, e a variação em porcentagem quando a base não é zero. */
-function diferenca(valor, base, formatar) {
-  const n = Number(valor);
-  if (n === 0) return "igual";
-  const sinal = n > 0 ? "+" : "−";
-  const texto = `${sinal}${formatar(Math.abs(n))}`;
-  const b = Number(base);
-  return b ? `${texto} (${comoPercentual((n / b) * 100)})` : texto;
-}
-
-function Resultado({ comparacao: c }) {
-  const linhas = [
-    [
-      "Ganho esperado",
-      comoDinheiro(c.a.uplift_total),
-      comoDinheiro(c.b.uplift_total),
-      diferenca(c.diferenca_uplift, c.a.uplift_total, comoDinheiro),
-    ],
-    [
-      "Custo",
-      comoDinheiro(c.a.custo_total),
-      comoDinheiro(c.b.custo_total),
-      diferenca(c.diferenca_custo, c.a.custo_total, comoDinheiro),
-    ],
-    ["Ações", comoInteiro(c.a.acoes), comoInteiro(c.b.acoes), diferenca(c.diferenca_acoes, null, comoInteiro)],
+  const c = comp.dados;
+  const mudou = new Set(c.parametros_diferentes);
+  const linhaParametro = (chave, rotulo, valor) => ({ chave, rotulo, a: valor(c.a), b: valor(c.b) });
+  const parametros = [
+    linhaParametro("orcamento", ROTULO_PARAMETRO.orcamento, (e) => comoDinheiro(e.parametros.orcamento)),
+    linhaParametro("maximo_acoes", ROTULO_PARAMETRO.maximo_acoes, (e) => comoInteiro(e.parametros.maximo_acoes)),
+    linhaParametro("cota_cauda_longa", ROTULO_PARAMETRO.cota_cauda_longa, (e) => (e.parametros.cota_cauda_longa === null ? "Sem cota" : comoFracao(e.parametros.cota_cauda_longa, 0))),
+    linhaParametro("cotas_categoria", ROTULO_PARAMETRO.cotas_categoria, (e) => (e.parametros.cotas_categoria.length ? cotasDoPedido(e).join("; ") : "Nenhuma")),
+    linhaParametro("aplicacao_inicio", ROTULO_PARAMETRO.aplicacao_inicio, (e) => comoData(e.parametros.aplicacao_inicio)),
+    linhaParametro("aplicacao_fim", ROTULO_PARAMETRO.aplicacao_fim, (e) => comoData(e.parametros.aplicacao_fim)),
+    linhaParametro("modo", ROTULO_PARAMETRO.modo, (e) => (e.parametros.modo ? ROTULO_MODO_CURTO[e.parametros.modo] : "Automático")),
   ];
-  return (
-    <section className="painel" aria-labelledby="titulo-resultado">
-      <div className="painel__cabecalho">
-        <h2 className="painel__titulo" id="titulo-resultado">
-          O que saiu
-        </h2>
-        <span className="painel__nota">A diferença é do plano B para o plano A</span>
-      </div>
-      <div className="tabela-rolagem">
-        <table className="tabela comparacao__tabela">
-          <caption className="so-leitor">O resultado dos dois planos e a diferença</caption>
-          <thead>
-            <tr>
-              <th scope="col">Medida</th>
-              <CabecalhoDosPlanos a={c.a} b={c.b} />
-              <th scope="col" className="numerica">
-                Diferença
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {linhas.map(([rotulo, va, vb, dif]) => (
-              <tr key={rotulo}>
-                <th scope="row">{rotulo}</th>
-                <td className="num">{va}</td>
-                <td className="num">{vb}</td>
-                <td className="numerica comparacao__diferenca">{dif}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
+  const diferentes = c.itens.filter((i) => i.situacao !== "IGUAL");
+  const iguais = c.itens.filter((i) => i.situacao === "IGUAL");
+  const visiveis = mostrarIguais ? c.itens : diferentes;
 
-function Parceiros({ comparacao: c }) {
-  /* O parceiro aberto daqui volta para a comparação, e não para a lista (H81). */
-  const lugar = useLocation();
-  const [comIguais, setComIguais] = useState(false);
-  const { mudaram, so_a: soA, so_b: soB, iguais } = c.resumo;
-  const visiveis = comIguais ? c.itens : c.itens.filter((i) => i.situacao !== "IGUAL");
   return (
-    <section className="painel" aria-labelledby="titulo-parceiros">
-      <div className="painel__cabecalho">
-        <h2 className="painel__titulo" id="titulo-parceiros">
-          Parceiro a parceiro
-        </h2>
-        <span className="painel__nota">
-          {comoInteiro(mudaram)} {mudaram === 1 ? "mudou" : "mudaram"} de ação · {comoInteiro(soA)} só no A ·{" "}
-          {comoInteiro(soB)} só no B · {comoInteiro(iguais)} {iguais === 1 ? "igual" : "iguais"}
-        </span>
+    <div className="pagina">
+      {trilha}
+      {!c.mesmas_previsoes && (
+        <Nota tipo="atencao" titulo="Os dois planos partiram de previsões diferentes.">
+          A diferença de um parceiro pode ser da previsão, e não do plano.
+        </Nota>
+      )}
+
+      <div className="comparacao-cabeca">
+        {[
+          ["A", c.a],
+          ["B", c.b],
+        ].map(([letra, e]) => (
+          <div key={letra} className="comparacao-cabeca__plano">
+            <span className="comparacao-cabeca__letra">{letra}</span>
+            <div>
+              <p className="comparacao-cabeca__nome">
+                {tem(usuario, "execucao") ? <Link to={`/execucoes/${e.id}`}>Plano de {comoDataHora(e.concluida_em ?? e.iniciada_em)}</Link> : `Plano de ${comoDataHora(e.concluida_em ?? e.iniciada_em)}`}
+              </p>
+              <p className="discreto">
+                {e.autor ?? "pelo terminal"} · previsões da {e.modelo_versao}
+              </p>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {visiveis.length === 0 ? (
-        <EstadoVazio
-          titulo="Os dois planos dão a mesma ação aos mesmos parceiros."
-          texto="Os parâmetros que mudaram não mudaram o plano."
-        />
-      ) : (
-        <div className="tabela-rolagem">
-          <table className="tabela comparacao__tabela">
-            <caption className="so-leitor">Os parceiros dos dois planos, com o que mudou</caption>
+      <section className="bloco" aria-labelledby="t-pedido">
+        <div className="bloco__cabeca">
+          <h2 id="t-pedido" className="bloco__titulo">
+            O que foi pedido
+          </h2>
+          {!c.parametros_diferentes.length && <p className="bloco__sub">Os mesmos parâmetros.</p>}
+        </div>
+        <CaixaDeTabela rotulo="Parâmetros dos dois planos">
+          <table className="tabela tabela--comparacao">
+            <caption className="sr-only">Parâmetros pedidos no plano A e no plano B, com os que mudaram marcados</caption>
             <thead>
               <tr>
-                <th scope="col">Parceiro</th>
-                <th scope="col">Segmento</th>
+                <th scope="col">Parâmetro</th>
                 <th scope="col">Plano A</th>
                 <th scope="col">Plano B</th>
-                <th scope="col">O que mudou</th>
+                <th scope="col">
+                  <span className="sr-only">Mudou?</span>
+                </th>
               </tr>
             </thead>
             <tbody>
-              {visiveis.map((i) => (
-                <tr key={i.parceiro_id}>
-                  <td className="nome">
-                    <Link
-                      className="nome__link"
-                      to={`/parceiros/${i.parceiro_id}`}
-                      state={{
-                        lista: lugar.pathname + lugar.search,
-                        rotuloLista: "Comparação",
-                        voltarPara: "Voltar para a comparação",
-                      }}
-                    >
-                      {i.parceiro}
-                    </Link>
-                  </td>
-                  <td>
-                    <Segmento valor={i.segmento} />
-                  </td>
-                  <td>
-                    <Acao acao={i.acao_a} ganho={i.ganho_a} />
-                  </td>
-                  <td>
-                    <Acao acao={i.acao_b} ganho={i.ganho_b} />
-                  </td>
-                  <td className="secundaria">{SITUACAO[i.situacao]}</td>
+              {parametros.map((p) => (
+                <tr key={p.chave} className={mudou.has(p.chave) ? "linha--mudou" : undefined}>
+                  <th scope="row">{p.rotulo}</th>
+                  <td>{p.a}</td>
+                  <td>{p.b}</td>
+                  <td>{mudou.has(p.chave) && <span className="selo-texto selo-texto--mudou">mudou</span>}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        </CaixaDeTabela>
+      </section>
 
-      {iguais > 0 && (
-        <div className="execucoes__corpo">
-          <button
-            type="button"
-            className="botao botao--secundario"
-            aria-expanded={comIguais}
-            onClick={() => setComIguais((v) => !v)}
-          >
-            {comIguais
-              ? "Esconder os que ficaram iguais"
-              : iguais === 1
-                ? "Mostrar também o que ficou igual"
-                : `Mostrar também os ${comoInteiro(iguais)} que ficaram iguais`}
-          </button>
+      <section className="bloco" aria-labelledby="t-saiu">
+        <div className="bloco__cabeca">
+          <h2 id="t-saiu" className="bloco__titulo">
+            O que saiu
+          </h2>
+          <p className="bloco__sub">A diferença é do plano B para o plano A. O ganho esperado é estimativa.</p>
         </div>
-      )}
-    </section>
-  );
-}
+        <CaixaDeTabela rotulo="Resultado dos dois planos">
+          <table className="tabela tabela--comparacao">
+            <caption className="sr-only">Ganho esperado, custo e ações do plano A e do plano B, e a diferença</caption>
+            <thead>
+              <tr>
+                <th scope="col">Medida</th>
+                <th scope="col" className="num">
+                  Plano A
+                </th>
+                <th scope="col" className="num">
+                  Plano B
+                </th>
+                <th scope="col" className="num">
+                  Diferença
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Ganho esperado (estimativa)</th>
+                <td className="num">{comoDinheiro(c.a.uplift_total)}</td>
+                <td className="num">{comoDinheiro(c.b.uplift_total)}</td>
+                <td className="num diferenca">{comSinalDinheiro(c.diferenca_uplift)}</td>
+              </tr>
+              <tr>
+                <th scope="row">Custo</th>
+                <td className="num">{comoDinheiro(c.a.custo_total)}</td>
+                <td className="num">{comoDinheiro(c.b.custo_total)}</td>
+                <td className="num diferenca">{comSinalDinheiro(c.diferenca_custo)}</td>
+              </tr>
+              <tr>
+                <th scope="row">Ações</th>
+                <td className="num">{comoInteiro(c.a.acoes)}</td>
+                <td className="num">{comoInteiro(c.b.acoes)}</td>
+                <td className="num diferenca">{comSinalInteiro(c.diferenca_acoes)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </CaixaDeTabela>
+      </section>
 
-function Acao({ acao, ganho }) {
-  if (!acao) return <span className="secundaria">sem ação</span>;
-  return (
-    <>
-      {acao}
-      <span className="execucoes__detalhe num">ganho de {comoDinheiro(ganho)}</span>
-    </>
+      <section className="bloco" aria-labelledby="t-parceiros">
+        <div className="bloco__cabeca bloco__cabeca--linha">
+          <div>
+            <h2 id="t-parceiros" className="bloco__titulo">
+              Parceiro a parceiro
+            </h2>
+            <p className="bloco__sub">
+              {comoInteiro(c.resumo.mudaram)} mudaram de ação · {comoInteiro(c.resumo.so_a)} só no A · {comoInteiro(c.resumo.so_b)} só no B · {comoInteiro(c.resumo.iguais)} iguais
+            </p>
+          </div>
+          {iguais.length > 0 && (
+            <button type="button" className="botao botao--secundario botao--pequeno" aria-expanded={mostrarIguais} onClick={() => setMostrarIguais((m) => !m)}>
+              {mostrarIguais ? "Esconder os que ficaram iguais" : `Mostrar também os ${comoInteiro(iguais.length)} que ficaram iguais`}
+            </button>
+          )}
+        </div>
+        {!diferentes.length && (
+          <Nota>{c.parametros_diferentes.length ? "Os parâmetros que mudaram não mudaram o plano." : "Os dois planos dão a mesma ação aos mesmos parceiros."}</Nota>
+        )}
+        {visiveis.length > 0 && (
+          <CaixaDeTabela rotulo="Parceiro a parceiro">
+            <table className="tabela">
+              <caption className="sr-only">Parceiros dos dois planos: a ação em cada um e o que mudou</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Parceiro</th>
+                  <th scope="col">Segmento</th>
+                  <th scope="col">Ação no A</th>
+                  <th scope="col">Ação no B</th>
+                  <th scope="col">O que mudou</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visiveis.map((i) => (
+                  <tr key={i.parceiro_id} className={i.situacao === "IGUAL" ? "linha--igual" : undefined}>
+                    <th scope="row" className="nome">
+                      {tem(usuario, "parceiros") ? <Link to={`/parceiros/${i.parceiro_id}`}>{i.parceiro}</Link> : i.parceiro}
+                    </th>
+                    <td>
+                      <Segmento codigo={i.segmento} />
+                    </td>
+                    <td>{i.acao_a ?? <span className="discreto">sem ação</span>}</td>
+                    <td>{i.acao_b ?? <span className="discreto">sem ação</span>}</td>
+                    <td>
+                      <span className={`mudanca mudanca--${i.situacao.toLowerCase()}`}>{SITUACAO[i.situacao] ?? i.situacao}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CaixaDeTabela>
+        )}
+      </section>
+    </div>
   );
 }

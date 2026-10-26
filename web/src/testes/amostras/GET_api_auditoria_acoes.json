@@ -1,0 +1,142 @@
+[
+ {
+  "acao": "LOGIN_SUCESSO",
+  "rotulo": "Entrada no sistema"
+ },
+ {
+  "acao": "LOGIN_FALHA",
+  "rotulo": "Entrada recusada"
+ },
+ {
+  "acao": "LOGIN_BLOQUEADO",
+  "rotulo": "Login bloqueado"
+ },
+ {
+  "acao": "LOGOUT",
+  "rotulo": "Saída do sistema"
+ },
+ {
+  "acao": "SENHA_ALTERADA",
+  "rotulo": "Senha alterada"
+ },
+ {
+  "acao": "SENHA_REDEFINIDA",
+  "rotulo": "Senha redefinida pelo administrador"
+ },
+ {
+  "acao": "IMPORTACAO_REALIZADA",
+  "rotulo": "Importação de relatório"
+ },
+ {
+  "acao": "IMPORTACAO_SUBSTITUIDA",
+  "rotulo": "Importação que substituiu um período"
+ },
+ {
+  "acao": "PARCEIRO_CRIADO",
+  "rotulo": "Parceiro cadastrado"
+ },
+ {
+  "acao": "PARCEIRO_EDITADO",
+  "rotulo": "Cadastro de parceiro editado"
+ },
+ {
+  "acao": "PARCEIRO_CLASSIFICADO",
+  "rotulo": "Categoria de parceiro alterada"
+ },
+ {
+  "acao": "PARCEIRO_DESATIVADO",
+  "rotulo": "Parceiro desativado"
+ },
+ {
+  "acao": "PARCEIRO_REATIVADO",
+  "rotulo": "Parceiro reativado"
+ },
+ {
+  "acao": "PARCEIRO_EXCLUIDO",
+  "rotulo": "Parceiro excluído"
+ },
+ {
+  "acao": "CATEGORIA_CRIADA",
+  "rotulo": "Categoria criada"
+ },
+ {
+  "acao": "SEGMENTACAO_CONFIGURADA",
+  "rotulo": "Limiares da segmentação alterados"
+ },
+ {
+  "acao": "USUARIO_CRIADO",
+  "rotulo": "Usuário criado"
+ },
+ {
+  "acao": "USUARIO_EDITADO",
+  "rotulo": "Usuário editado"
+ },
+ {
+  "acao": "USUARIO_DESATIVADO",
+  "rotulo": "Usuário desativado"
+ },
+ {
+  "acao": "USUARIO_REATIVADO",
+  "rotulo": "Usuário reativado"
+ },
+ {
+  "acao": "PERFIL_ALTERADO",
+  "rotulo": "Perfil de usuário alterado"
+ },
+ {
+  "acao": "ACESSO_NEGADO",
+  "rotulo": "Acesso negado"
+ },
+ {
+  "acao": "MODELO_TREINADO",
+  "rotulo": "Modelo treinado"
+ },
+ {
+  "acao": "MODELO_TREINO_FALHOU",
+  "rotulo": "Treino do modelo falhou"
+ },
+ {
+  "acao": "ACAO_COMERCIAL_CRIADA",
+  "rotulo": "Ação comercial criada"
+ },
+ {
+  "acao": "ACAO_COMERCIAL_EDITADA",
+  "rotulo": "Ação comercial editada"
+ },
+ {
+  "acao": "OTIMIZACAO_EXECUTADA",
+  "rotulo": "Campanha calculada"
+ },
+ {
+  "acao": "OTIMIZACAO_FALHOU",
+  "rotulo": "Cálculo de campanha falhou"
+ },
+ {
+  "acao": "BENCHMARK_EXECUTADO",
+  "rotulo": "Benchmark executado"
+ },
+ {
+  "acao": "BENCHMARK_FALHOU",
+  "rotulo": "Benchmark falhou"
+ },
+ {
+  "acao": "MENSAGENS_GERADAS",
+  "rotulo": "Mensagens geradas"
+ },
+ {
+  "acao": "MENSAGENS_FALHARAM",
+  "rotulo": "Geração de mensagens falhou"
+ },
+ {
+  "acao": "MENSAGEM_APROVADA",
+  "rotulo": "Mensagem aprovada"
+ },
+ {
+  "acao": "MENSAGEM_EDITADA",
+  "rotulo": "Mensagem editada"
+ },
+ {
+  "acao": "MENSAGEM_REJEITADA",
+  "rotulo": "Mensagem rejeitada"
+ }
+]

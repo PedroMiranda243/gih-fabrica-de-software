@@ -1,0 +1,10 @@
+{
+ "id": 3,
+ "login": "lab.gestor",
+ "nome": "Gestora do Laboratório",
+ "perfil": "GESTOR",
+ "ativo": true,
+ "parceiro_id": null,
+ "criado_em": "2026-10-05T07:44:44.858241Z",
+ "parceiro": null
+}

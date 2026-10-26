@@ -1,0 +1,13 @@
+{
+ "plano": {
+  "execucao_id": 4,
+  "concluida_em": "2026-10-05T07:57:36.472656Z",
+  "aplicacao_inicio": "2026-10-05",
+  "aplicacao_fim": "2026-10-11",
+  "modelo_versao": "rede-1"
+ },
+ "no_plano": true,
+ "acao": "Campanha de categoria",
+ "custo": "480.00",
+ "uplift_esperado": "20258.30"
+}
