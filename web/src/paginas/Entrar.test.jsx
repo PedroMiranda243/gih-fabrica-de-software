@@ -52,7 +52,7 @@ describe("a entrada (RF01)", () => {
     expect(screen.getByLabelText("Login")).toHaveValue("lab.gestor");
     expect(screen.getByLabelText("Senha")).toHaveValue("");
     expect(screen.getByLabelText("Senha")).toHaveFocus();
-    expect(endereco()).toBe("/entrar");
+    await waitFor(() => expect(endereco()).toBe("/entrar"));
   });
 
   it("mostra a senha só quando a pessoa pede, sem enviar o formulário", async () => {

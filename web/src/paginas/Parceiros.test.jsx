@@ -29,7 +29,7 @@ describe("a lista de parceiros", () => {
     await usuario.type(await screen.findByLabelText("Buscar por nome"), "canti");
 
     await waitFor(() => expect(ultimaLista(chamadas)).toContain("busca=canti"));
-    expect(endereco()).toContain("busca=canti");
+    await waitFor(() => expect(endereco()).toContain("busca=canti"));
   });
 
   it("filtra por segmento e categoria: o filtro vai para o endereço e para a API (RF23)", async () => {
@@ -41,7 +41,7 @@ describe("a lista de parceiros", () => {
     const categoria = amostra("GET_api_categorias")[0];
     await usuario.selectOptions(screen.getByLabelText("Categoria"), String(categoria.id));
     await waitFor(() => expect(ultimaLista(chamadas)).toContain(`categoria_id=${categoria.id}`));
-    expect(endereco()).toContain("segmento=EM_RISCO");
+    await waitFor(() => expect(endereco()).toContain("segmento=EM_RISCO"));
   });
 
   it("ordena pela coluna: número do maior para o menor no primeiro clique (RF23)", async () => {

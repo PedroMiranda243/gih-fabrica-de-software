@@ -27,7 +27,7 @@ describe("a sessão que termina no meio", () => {
     });
 
     expect(await screen.findByText("A sua sessão terminou. Entre de novo para continuar de onde parou.")).toBeInTheDocument();
-    expect(endereco()).toBe("/entrar");
+    await waitFor(() => expect(endereco()).toBe("/entrar"));
 
     await usuario.type(screen.getByLabelText("Login"), "lab.gestor");
     await usuario.type(screen.getByLabelText("Senha"), "segredo");
