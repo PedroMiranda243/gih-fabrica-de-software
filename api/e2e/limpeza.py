@@ -48,6 +48,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 
 from app.config import Config
 from app.modelos import (
+    AcaoComercial,
     Categoria,
     ExecucaoBenchmark,
     ExecucaoOtimizador,
@@ -88,6 +89,7 @@ class Contagem:
     benchmarks: int = 0
     lotes: int = 0
     mensagens: int = 0
+    acoes: int = 0
 
     def __str__(self) -> str:
         nomes = (
@@ -101,6 +103,7 @@ class Contagem:
             ("benchmark", "benchmarks"),
             ("lote de mensagens", "lotes de mensagens"),
             ("mensagem", "mensagens"),
+            ("ação do catálogo", "ações do catálogo"),
         )
         partes = [
             f"{n} {um if n == 1 else varios}"
@@ -151,7 +154,8 @@ def limpar_execucao(marca: str, url: str | None = None) -> Contagem:
     - usuários: o login começa com `<marca>.`;
     - importações: o autor é um desses usuários;
     - períodos: os dessas importações;
-    - parceiros e categorias: a marca aparece no nome como palavra inteira;
+    - parceiros, categorias e ações do catálogo: a marca aparece no nome como
+      palavra inteira;
     - treinos do modelo: disparados por um desses usuários, com as previsões
       das versões que eles produziram. Sem o treino, a versão em uso volta a
       ser a do último treino de fora da execução;
@@ -289,6 +293,12 @@ def _apagar(c: Connection, marca: str, destino: str) -> Contagem:
     ).rowcount
     removidos.categorias = c.execute(
         delete(Categoria).where(Categoria.nome.regexp_match(palavra))
+    ).rowcount
+    # A ação do catálogo não tem exclusão pela API: o plano que a usou guarda o
+    # item, e o item aponta para ela. Os planos da execução já saíram acima; se
+    # um plano de fora a usou, a chave estrangeira recusa, e nada é removido.
+    removidos.acoes = c.execute(
+        delete(AcaoComercial).where(AcaoComercial.nome.regexp_match(palavra))
     ).rowcount
     return removidos
 
