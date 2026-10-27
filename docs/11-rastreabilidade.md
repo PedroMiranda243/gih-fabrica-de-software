@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 08 acadêmica — história **H98**
-**Versão:** 1.2 — 22/10/2026 · as citações de teste da interface apontam para a suíte da interface nova (H103) (1.1 — 04/10/2026, o RNF30, do acesso remoto por rede privada; 1.0 — 02/10/2026)
+**Versão:** 1.3 — 26/10/2026 · a RNF08 com a navegação conferida também no Chrome, pelos casos do plano de testes (1.2 — 22/10/2026, as citações de teste da interface apontam para a suíte da interface nova, na H103; 1.1 — 04/10/2026, o RNF30, do acesso remoto por rede privada; 1.0 — 02/10/2026)
 
 > **Para que serve.** "Todas as funcionalidades implementadas" é uma frase que qualquer documento escreve.
 > Esta matriz a transforma em algo que se confere: para cada requisito, **onde** ele está — o caso de uso, a
@@ -194,7 +194,7 @@ configuração do repositório — e o que a conferência diz hoje.
 | **RNF05** | Consultas do painel sem varredura da tabela de métricas | `docs/medicoes/painel-5000.md`<br>`api/tests/test_painel.py::test_o_ranking_nao_faz_uma_consulta_por_linha` | Atende |
 | **RNF06** | Fluxo completo sem GPU, com aviso | `api/tests/test_campanha.py::test_a_gpu_que_falha_no_calculo_cai_para_a_cpu`<br>`api/tests/test_campanha.py::test_a_tela_diz_por_que_nao_ha_gpu`<br>`nucleo/tests/test_gpu.py::test_sem_placa_o_executavel_recusa_com_saida_1` | Atende |
 | **RNF07** | `docker compose up` de um clone limpo | `docker-compose.yml`<br>`docs/validacao-do-readme.md` | Parcial: sobe com um comando na máquina de desenvolvimento; a validação em máquina limpa é a H72, em aberto |
-| **RNF08** | Chrome, Edge e Firefox | `scripts/medir_telas.py` | Parcial: medido no Edge; Chrome e Firefox não têm conferência automatizada |
+| **RNF08** | Chrome, Edge e Firefox | `scripts/medir_telas.py`<br>`scripts/testar_na_tela.py` | Parcial: as 30 telas medidas no Edge, e os 16 casos de navegação do `docs/12-plano-de-testes.md` executados no Edge e no Chrome; o Firefox não está instalado na máquina de teste |
 | **RNF09** | Senha só como hash lento | `api/tests/test_autenticacao.py::test_senha_e_guardada_como_hash_lento`<br>`api/tests/test_auditoria.py::test_trilha_nunca_guarda_senha` | Atende |
 | **RNF10** | Cookie HttpOnly e SameSite; identificador renovado | `api/tests/test_autenticacao.py::test_cookie_de_sessao_tem_as_marcacoes_do_rnf10`<br>`api/tests/test_autenticacao.py::test_novo_login_invalida_o_identificador_anterior` | Atende |
 | **RNF11** | Bloqueio após 5 falhas; resposta igual | `api/tests/test_autenticacao.py::test_bloqueia_apos_cinco_falhas`<br>`api/tests/test_autenticacao.py::test_usuario_inexistente_e_senha_errada_respondem_igual` | Atende |

@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** pós-S08 — história **H103** (a versão 1, da H08, ficou na etiqueta `interface-v1`)
-**Versão:** 2.0 — 22/10/2026 · o sistema "Etiqueta e Lacre", que substitui o da versão 1 (1.0 — 15/09/2026)
+**Versão:** 2.1 — 26/10/2026 · o mapa de navegação renderizado de novo, e as operações da API contadas (2.0 — 22/10/2026, o sistema "Etiqueta e Lacre", que substitui o da versão 1; 1.0 — 15/09/2026)
 **Status:** ✅ aprovado pela equipe em 22/10/2026, na issue #241 (H103)
 
 > **Este documento é portão.** A interface nova só entra na `main` com a direção visual aprovada pela equipe,
@@ -13,7 +13,7 @@
 **Por que uma versão 2.** A interface da versão 1 funcionava, e passava em toda medição; o problema era o que
 ela não dizia ao olho. A letra condensada cansava quem lê muito, o rótulo em maiúsculas espaçadas competia
 com o dado, e a pessoa se perdia entre as telas: nada dizia em que área do sistema ela estava. A versão 2
-mantém o comportamento — os mesmos 29 endereços, as mesmas 78 operações da API, as mesmas permissões — e troca
+mantém o comportamento — os mesmos 29 endereços, as mesmas 78 operações da API que a interface usa, das 81, as mesmas permissões — e troca
 a camada visual inteira. Ela foi testada antes de chegar aqui, num laboratório fora do repositório, com a API
 de verdade e uma conta de cada perfil.
 
