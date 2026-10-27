@@ -25,7 +25,7 @@ isso já é um travamento, e ele vai para o registro.
 | 4 | `popular-demonstracao` | A saída termina em "Versão em uso", em cerca de 10 s |
 | 5 | `criar-usuario` | Pede a senha duas vezes; com ela, a tela de entrada deixa passar |
 | 6 | Percorrer a aplicação | O Painel com números e gráficos; a lista de Parceiros; um parceiro com a previsão; a Campanha calcula um plano; o Assistente diz que está indisponível — é o esperado, sem o perfil |
-| 7 | A senha do administrador no log | `grep` ou, no PowerShell, `Select-String`; com ela, o administrador entra e vê Usuários e Limiares |
+| 7 | A senha do administrador no log | `grep` ou, no PowerShell, `Select-String`; com ela, o administrador entra e vê, no menu, Usuários, Auditoria, Operações e Configuração |
 
 ## Com a GPU (se houver placa NVIDIA)
 
@@ -42,6 +42,13 @@ isso já é um travamento, e ele vai para o registro.
 | 11 | `docker compose --profile assistente up -d` | A primeira vez baixa a imagem do Ollama (~8 GB) e o modelo (~4,7 GB); o serviço `ollama-modelo` baixa e sai |
 | 12 | Assistente: "Como foi a rede na semana passada?" | A resposta traz a fonte embaixo. A primeira pergunta leva perto de 45 s, porque o modelo carrega |
 | 13 | Com a GPU e o assistente juntos | O comando combinado do README; o modelo passa a responder em poucos segundos |
+
+## Os testes, com o sistema no ar (opcional)
+
+| # | Passo do README | O que conferir |
+|--:|---|---|
+| 14 | Os testes da interface: `npm ci`, `npm run lint` e `npm test`, na pasta `web/` | O lint sem aviso, e todos os testes passando |
+| 15 | Os testes pela tela, só a navegação: `scripts/testar_na_tela.py --so CT-N` | "Resultado: 16 de 16 casos como esperado" |
 
 ## O que registrar na issue #164
 
