@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 2.3 — 02/10/2026 · como a matriz de permissões é conferida, na H100 (2.2 — 02/10/2026, o UC16 e os fluxos de senha; 2.1 — 01/10/2026, o UC15; 2.0 — 16/09/2026)
+**Versão:** 2.4 — 26/10/2026 · o diagrama com os dezesseis casos de uso, e as telas pela interface v2 (H103) (2.3 — 02/10/2026, como a matriz de permissões é conferida, na H100; 2.2 — 02/10/2026, o UC16 e os fluxos de senha; 2.1 — 01/10/2026, o UC15; 2.0 — 16/09/2026)
 
 ---
 
@@ -24,11 +24,64 @@
 
 ## 2. Diagrama de casos de uso
 
-![Diagrama de casos de uso do GIH](diagramas/casos-de-uso.svg)
+![Diagrama de casos de uso do GIH, da Sprint 1](diagramas/casos-de-uso.svg)
 
-> O diagrama é o da Sprint 1, com os quatorze casos de então, e é a figura que foi entregue. O UC15 —
-> consultar e exportar relatórios —, da Sprint 07 da disciplina, e o UC16 — consultar a ajuda —, da Sprint 08,
-> estão na tabela e na especificação abaixo.
+> A figura acima é a da Sprint 1, com os quatorze casos de então, e é a que foi entregue. O diagrama de hoje,
+> com os dezesseis — o UC15, consultar e exportar relatórios, entrou na Sprint 07 da disciplina, e o UC16,
+> consultar a ajuda, na Sprint 08 —, é o de baixo, com os casos agrupados pelas áreas do menu. Uma linha até a
+> área quer dizer todos os casos dela; o detalhe de quem faz o quê está na matriz da seção 4.
+
+<!-- diagrama: casos-de-uso-atual -->
+```mermaid
+flowchart LR
+    ADM(("Administrador"))
+    GES(("Gestor"))
+    ANL(("Analista"))
+    PAR(("Parceiro"))
+
+    subgraph ACESSO["Acesso — todos os perfis"]
+        UC01(["UC01 Autenticar no sistema"])
+        UC16(["UC16 Consultar a ajuda"])
+    end
+    subgraph ANALISE["Análise"]
+        UC03(["UC03 Importar relatório"])
+        UC04(["UC04 Gerenciar parceiros e categorias"])
+        UC05(["UC05 Consultar painel e ranking"])
+        UC06(["UC06 Analisar mobilidade do Top N"])
+        UC12(["UC12 Consultar o assistente"])
+        UC15(["UC15 Consultar e exportar relatórios"])
+    end
+    subgraph OTIMIZACAO["Previsão e otimização"]
+        UC07(["UC07 Treinar o modelo"])
+        UC08(["UC08 Executar a otimização da campanha"])
+        UC09(["UC09 Comparar serial, paralelo e GPU"])
+    end
+    subgraph COMUNICACAO["Comunicação"]
+        UC10(["UC10 Gerar mensagens"])
+        UC11(["UC11 Aprovar ou rejeitar mensagem"])
+    end
+    subgraph ADMINISTRACAO["Administração"]
+        UC02(["UC02 Gerenciar usuários e perfis"])
+        UC14(["UC14 Auditar ações do sistema"])
+    end
+    subgraph PORTAL["Portal do parceiro"]
+        UC13(["UC13 Consultar meu desempenho"])
+    end
+
+    ADM --- ACESSO
+    GES --- ACESSO
+    ANL --- ACESSO
+    PAR --- ACESSO
+    GES --- ANALISE
+    ANL --- ANALISE
+    ADM --- UC15
+    GES --- UC07 & UC08 & UC09
+    ADM --- UC07 & UC09
+    GES --- COMUNICACAO
+    ANL --- UC10
+    ADM --- ADMINISTRACAO
+    PAR --- PORTAL
+```
 
 ---
 
@@ -660,7 +713,7 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 > **Na interface (Sprint 12 interna, H60).** A tela **Mensagens** (`/mensagens`) segue os passos do caso de
 > uso. O público se escolhe entre segmento e categoria, plano de campanha ou parceiros escolhidos pelo nome;
 > "Ver quem entra" traz a prévia, com quem ficou de fora e por quê, e o botão diz quantas mensagens vão ser
-> geradas. Gerando, a tela conta as prontas e as mostra conforme chegam (A1), no cartão do protótipo da
+> geradas. Gerando, a tela conta as prontas e as mostra conforme chegam (A1), no cartão de mensagem da
 > aprovação: o parceiro, o segmento, a ação, quem redigiu — o assistente ou o modelo fixo, com o motivo — e,
 > num clique, os dados que o texto usou. Quem falhou aparece com o motivo e "Tentar de novo" (A2). Sem o
 > assistente, a tela diz por quê no topo, e gera igual. Da Campanha e da execução, "Gerar mensagens para este
@@ -723,8 +776,8 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 >   sobre a mensagem pendente, e quem chegou depois recebe a decisão registrada, com o autor (E1).
 > - **Nada é enviado.** Aprovada é "pronta para envio" (ADR-013).
 >
-> **Na interface (Sprint 12 interna, H61 a H63).** A tela **Aprovação** (`/aprovacao`) é a fila, no cartão do
-> protótipo aprovado (H08): o parceiro, o segmento, a categoria, a ação, o texto e, embaixo, Aprovar,
+> **Na interface (Sprint 12 interna, H61 a H63).** A tela **Aprovação** (`/aprovacao`) é a fila, no cartão de
+> mensagem do sistema visual 2 (`docs/09`, H103): o parceiro, o segmento, a categoria, a ação, o texto e, embaixo, Aprovar,
 > Editar e Rejeitar. Decidir tira a mensagem da fila, e o foco vai para a próxima, com a decisão e o nome
 > do próximo parceiro anunciados ao leitor de tela (passo 6). Editar abre o texto no próprio cartão e avisa
 > que salvar não aprova; o número novo aparece apontado. Rejeitar pede o motivo, opcional (A2). A seleção
@@ -967,8 +1020,8 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 
 **Fluxo principal**
 
-1. O usuário abre a Ajuda, pelo cabeçalho, ou segue o caminho "o que é isto?" de um rótulo de segmento ou
-   de uma marca de estimativa.
+1. O usuário abre a Ajuda, pelo cabeçalho, ou segue um dos caminhos que as telas oferecem — "O que é cada
+   segmento?", ao lado dos segmentos, e "O que é estimativa?", ao lado de uma marca de estimativa.
 2. O sistema mostra o que o perfil dele pode fazer, a partir das telas que o servidor lhe dá.
 3. O sistema explica cada segmento, na ordem de precedência da RN01, com os limiares **em vigor** — o
    tamanho do Top, os períodos de tendência e os de recém-chegado —, que vêm da configuração, e não do texto

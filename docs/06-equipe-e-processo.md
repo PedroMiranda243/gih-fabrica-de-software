@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 2.0 — 15/09/2026
+**Versão:** 2.1 — 26/10/2026 · a estratégia de testes no `docs/12`, e a trilha do núcleo como de fato andou (2.0 — 15/09/2026)
 
 ---
 
@@ -33,8 +33,10 @@ pessoa.
 Como não há par para diluir o conhecimento, valem três compromissos:
 
 1. Decisões do núcleo registradas em ADR, não apenas em comentário de código
-2. Apresentação do código do núcleo nas revisões das Sprints 10 e 11, até que outro integrante consiga
-   explicar o funcionamento do kernel
+2. Apresentação do código do núcleo à equipe, até que outro integrante consiga explicar o funcionamento do
+   kernel. O plano era fazê-la nas revisões das Sprints 10 e 11; as duas fecharam em 26 e 27/09, antes dela, e
+   ela foi remarcada para antes da gravação dos vídeos, junto com as perguntas prováveis da banca em
+   `docs/banca.md` (R4, `docs/05`)
 3. Se o spike de GPU da Sprint 3 revelar dificuldade maior que a prevista, a decisão de reforçar a trilha
    volta à mesa na hora — não na Sprint 11
 
@@ -190,11 +192,12 @@ correspondente. O que não está escrito no repositório não aconteceu.
 
 | Prática | Compromisso |
 |---|---|
-| Testes automatizados | Cobertura de no mínimo 70% no núcleo de regras (RNF24) |
+| Testes automatizados | Cobertura de no mínimo 70% no núcleo de regras (RNF24), conferida pela CI |
+| Testes do sistema no ar | Antes de cada entrega: os roteiros de ponta a ponta da API (`api/e2e/`) e os casos pela tela (`scripts/testar_na_tela.py`), com o catálogo e a estratégia em [`12-plano-de-testes.md`](12-plano-de-testes.md) |
 | Testes de segurança | Autorização, injeção e sessão cobertos por teste (RNF12, RNF13, RNF14) |
 | Análise estática | Executada na CI a cada Pull Request |
-| Revisão por par | Obrigatória, sem exceção |
-| Programação em par | Obrigatória nas histórias do núcleo em C++/CUDA |
+| Revisão por par | Obrigatória, sem exceção, e registrada no GitHub com a aprovação de quem revisou (RNF25) |
+| Programação em par | Prevista para as histórias do núcleo em C++/CUDA, e não aconteceu: o núcleo ficou com uma pessoa só (seção 2, R4). A revisão por PR e a apresentação à equipe fazem esse papel |
 | Reprodutibilidade | Validada por integrante que não escreveu a parte (RNF27) |
 
 ---

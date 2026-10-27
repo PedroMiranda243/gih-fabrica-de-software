@@ -160,7 +160,7 @@ rode com a aplicação livre. Nenhum dos scripts deixa resíduo no banco.
 | [01 — Visão do produto](docs/01-visao-do-produto.md) | Tema, problema, objetivos, público-alvo, KPIs |
 | [02 — Requisitos](docs/02-requisitos.md) | 56 requisitos funcionais e 30 não funcionais, com rastreabilidade |
 | [03 — Casos de uso](docs/03-casos-de-uso.md) | 16 casos de uso, diagrama e especificação detalhada |
-| [04 — Product Backlog](docs/04-product-backlog.md) | 9 épicos e 106 histórias priorizadas |
+| [04 — Product Backlog](docs/04-product-backlog.md) | 9 épicos e 109 histórias priorizadas |
 | [05 — Cronograma](docs/05-cronograma.md) | O plano e o realizado das 13 sprints semanais, o que resta até 05/12/2026, marcos e riscos |
 | [06 — Equipe e processo](docs/06-equipe-e-processo.md) | Papéis, cerimônias, Definition of Done, fluxo Git |
 | [07 — Arquitetura](docs/07-arquitetura-preliminar.md) | As camadas e onde cada uma roda, o núcleo, as decisões (ADR-001 a ADR-015), o ambiente |
@@ -168,6 +168,7 @@ rode com a aplicação livre. Nenhum dos scripts deixa resíduo no banco.
 | [09 — Sistema visual](docs/09-sistema-visual.md) | As regras de cor, a paleta medida, tipografia, espaçamento, estados vazios e o mapa das telas |
 | [10 — Diagrama de classes](docs/10-diagrama-de-classes.md) | O domínio, os serviços e o núcleo computacional, em nove diagramas |
 | [11 — Rastreabilidade](docs/11-rastreabilidade.md) | Cada requisito com o caso de uso, a rota, a tela e o teste, conferidos pela suíte |
+| [12 — Plano de testes](docs/12-plano-de-testes.md) | Os níveis de teste, o ambiente e os 77 casos — funcionais, de validação e de navegação — executados pela tela, com o esperado |
 | [Medições](docs/medicoes/) | O núcleo em CPU e GPU, o otimizador, o modelo preditivo, o assistente e a acessibilidade — gerados por script |
 | [Documentação técnica final](#documentação-técnica-final) | 07, 08, 10 e as medições, num documento só |
 | [Como contribuir](CONTRIBUTING.md) | Branches, commits, Pull Requests |
@@ -450,7 +451,29 @@ limpo o banco errado.
 > estar ocupada por outro Postgres na máquina.
 
 A interface (`web/`) sobe junto: `docker compose up` entrega banco, API e aplicação em
-`http://localhost:5173`.
+`http://localhost:5173`. Os testes e a análise estática dela, de dentro de `web/`, com o Node 22:
+
+```bash
+npm ci
+npm run lint
+npm test
+```
+
+### Testes pela tela
+
+Os casos de teste do [`docs/12`](docs/12-plano-de-testes.md) — funcionais, de validação e de navegação —
+executados num navegador de verdade (o Edge ou o Chrome da máquina), contra o sistema no ar. Cada caso
+registra o resultado obtido ao lado do esperado, com uma captura:
+
+```bash
+api/.venv/Scripts/python -m pip install -r scripts/requisitos-medicao.txt
+GIH_ADMIN_SENHA=... api/.venv/Scripts/python scripts/testar_na_tela.py --saida <pasta>
+```
+
+`--so CT-N` roda só os de navegação; `--navegador chrome`, no Chrome; `--ver` abre a janela e vai devagar,
+para demonstrar. Como a verificação, ele não deixa resíduo: as contas e os dados de teste levam a marca da
+execução e saem no fim. Os dois casos do assistente pedem o perfil `assistente`; sem ele, saem como "não
+executados".
 
 ### Dados de demonstração
 
@@ -490,7 +513,13 @@ com `criar-usuario`, como acima.
 api/.venv/Scripts/python scripts/medir_painel.py        # o painel com 5.000 parceiros (H40)
 api/.venv/Scripts/python scripts/medir_modelo.py        # o modelo contra as referências (H46)
 api/.venv/Scripts/python scripts/medir_otimizador.py    # o otimizador contra o guloso e o teto (H49)
+api/.venv/Scripts/python scripts/revisar_regras.py      # as regras RN01 a RN11, com o esperado e o que voltou (H99)
+GIH_ADMIN_SENHA=... api/.venv/Scripts/python scripts/medir_telas.py   # as 30 telas: rolagem, axe e contraste (H76)
 ```
+
+As duas últimas gravam [`docs/medicoes/regras.md`](docs/medicoes/regras.md) e
+[`docs/medicoes/acessibilidade.md`](docs/medicoes/acessibilidade.md); a das telas usa o Edge da máquina e as
+dependências de `scripts/requisitos-medicao.txt`, e roda contra o sistema no ar.
 
 O núcleo em C++ é medido no contêiner, que é onde ele roda (ADR-012) — o OpenMP e a GPU contra o C++
 serial, o RNF01 e o RNF02 no cenário de referência, a transferência para a GPU e o kernel de avaliação:

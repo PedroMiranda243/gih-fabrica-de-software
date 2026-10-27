@@ -1,7 +1,7 @@
 # 07 — Arquitetura
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Versão:** 2.3 — 22/10/2026, a interface refeita (ADR-015) (2.2 — 04/10/2026, o acesso remoto por rede privada, na ADR-014; 2.1 — 30/09/2026, o dado entre os módulos; 2.0 — 28/09/2026, o sistema construído; 1.0 — 03/09/2026, a arquitetura preliminar da Sprint 1)
+**Versão:** 2.4 — 26/10/2026, a versão do Node e as operações da API contadas (2.3 — 22/10/2026, a interface refeita, na ADR-015; 2.2 — 04/10/2026, o acesso remoto por rede privada, na ADR-014; 2.1 — 30/09/2026, o dado entre os módulos; 2.0 — 28/09/2026, o sistema construído; 1.0 — 03/09/2026, a arquitetura preliminar da Sprint 1)
 
 > **O sistema como está, e as decisões que o trouxeram até aqui.** Este documento começou como a arquitetura
 > preliminar da Sprint 1. Cada decisão tomada na construção entrou como uma ADR, na seção 5, com a data e o
@@ -1148,7 +1148,7 @@ telas a 768 e a 1.440 px nos dois temas, a entrada pela tela com os quatro perfi
 |---|---|---|
 | Manter a versão 1 | Nada a refazer | Não resolve a leitura nem a orientação, que eram o problema |
 | Candidata 01, "Sala de controle" | O código da versão 1 com a camada visual refeita | Os 405 testes continuam valendo, mas a navegação é a mesma: a pessoa continuaria sem saber onde está |
-| **Candidata 02, "Etiqueta e Lacre"** | Código novo, para os mesmos 29 endereços e as mesmas 78 operações da API | Resolve a leitura (Atkinson Hyperlegible Next, letra normal) e a orientação (cada área uma rota com a sua cor e o seu nome, o cabeçalho com o caminho de volta); chegou sem nenhum teste |
+| **Candidata 02, "Etiqueta e Lacre"** | Código novo, para os mesmos 29 endereços e as mesmas 78 operações da API que a interface usa (das 81, ficam de fora a saúde do sistema, o catálogo de ações avulso, que a tela lê dentro da campanha, e a criação de categoria, que não tem tela) | Resolve a leitura (Atkinson Hyperlegible Next, letra normal) e a orientação (cada área uma rota com a sua cor e o seu nome, o cabeçalho com o caminho de volta); chegou sem nenhum teste |
 
 **Decisão:** adotar a candidata 02, com três condições, cumpridas antes do PR:
 
@@ -1191,7 +1191,7 @@ telas a 768 e a 1.440 px nos dois temas, a entrada pela tela com os quatro perfi
 | CUDA Toolkit (`nvcc`) | **13.4 — instalado e validado** em 15/09/2026 (H47) |
 | Compilador C++ | **MSVC 19.44 (Build Tools 2022)** — instalado e validado; exigido só para `nucleo/` |
 | Python | 3.11 |
-| Node.js | 20 |
+| Node.js | 22 (o mesmo do `web/Dockerfile` e da CI) |
 | Docker Desktop | Necessário para o banco e para o empacotamento |
 
 Nem todas as estações da equipe têm GPU. É exatamente por isso que a ADR-004 existe: o desenvolvimento do

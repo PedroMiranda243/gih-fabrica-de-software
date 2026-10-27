@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Entrega:** Sprint 02 acadêmica — arquitetura e modelagem
-**Versão:** 2.0 — 28/09/2026, o sistema construído (1.0 — 16/09/2026, a entrega da Sprint 02)
+**Versão:** 2.1 — 26/10/2026, os serviços e as rotas dos relatórios, da auditoria e da ajuda, e as tabelas contadas (2.0 — 28/09/2026, o sistema construído; 1.0 — 16/09/2026, a entrega da Sprint 02)
 
 > **Por que nove diagramas e não um.** O sistema tem três camadas com naturezas diferentes: entidades de
 > domínio (dados), serviços (regra de negócio) e núcleo computacional (C++/CUDA). Espremer as três num
@@ -776,13 +776,15 @@ abaixo separa os dois — e o repositório comprova cada linha da coluna ✅.
 | Camada | Implementado ✅ | Previsto ⏳ |
 |---|---|---|
 | Domínio | **as 20 entidades**, com restrições `CHECK` no banco | — |
-| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `servico_otimizacao`, `servico_comparacao`, `servico_benchmark`, `desempenho`, `redator`, `guarda_numerica`, `servico_mensagens`, `servico_aprovacao`, `assistente`, `formato`, `planilha`, `erros` | — |
-| Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/campanha`, `/api/otimizacoes`, `/api/acoes-comerciais`, `/api/benchmark`, `/api/benchmarks`, `/api/mensagens`, `/api/meu-desempenho`, `/api/assistente`, `/api/auditoria`, `/api/health` | — |
+| Serviços | `seguranca`, `sessoes`, `bloqueio`, `auditoria`, `dependencias`, `leitor_relatorio`, `servico_importacao`, `servico_segmentacao`, `ranking`, `calculos`, `sugestao_categoria`, `servico_previsao`, `servico_otimizacao`, `servico_comparacao`, `servico_benchmark`, `desempenho`, `redator`, `guarda_numerica`, `servico_mensagens`, `servico_aprovacao`, `assistente`, `servico_relatorios`, `servico_auditoria`, `texto`, `formato`, `planilha`, `erros` | — |
+| Rotas | `/api/sessao`, `/api/usuarios`, `/api/importacoes`, `/api/parceiros`, `/api/categorias`, `/api/painel`, `/api/configuracao`, `/api/modelo`, `/api/campanha`, `/api/otimizacoes`, `/api/acoes-comerciais`, `/api/benchmark`, `/api/benchmarks`, `/api/mensagens`, `/api/meu-desempenho`, `/api/assistente`, `/api/auditoria`, `/api/relatorios`, `/api/ajuda`, `/api/health` — 81 operações em 20 grupos | — |
 | Núcleo | pacote `gih_nucleo`: instância, viabilidade exata, gulosos e o genético serial (H48, H49, H52); o mesmo genético em C++, idêntico ao Python (H53a), com OpenMP (H53b) e inteiro na GPU (H54a a H54c), com o mesmo plano nos quatro | — |
 | Modelo preditivo | pacote `gih_modelo`: variáveis, referências, rede e treino (H41 a H43, H46) | — |
 
-Cobertura de teste da API em 27/09/2026: **1.179 testes, 97%**. Os pacotes do modelo e do
-otimizador têm as próprias suítes, em `modelo/tests` e `nucleo/tests`.
+Testes em 26/10/2026, na CI: **1.547 casos na API, com 97% de cobertura**; 250 na interface;
+277 no núcleo e 31 no modelo, nas suítes próprias de `nucleo/tests` e `modelo/tests`. Em 27/09 eram
+1.179 na API, com 97%. O sistema no ar se testa à parte, com o catálogo do
+[`12-plano-de-testes.md`](12-plano-de-testes.md).
 
 ---
 
@@ -794,8 +796,8 @@ Diagrama que diverge do código é pior que diagrama ausente. As três verifica�
    corresponde a uma `class` desse arquivo, com os mesmos atributos.
 2. **Serviços e assinaturas** — os módulos de [`api/app/`](../api/app/). Os métodos listados nas seções 5 e 6
    são as funções públicas de cada um.
-3. **Tabelas realmente criadas** — `docker compose exec postgres psql -U gih -d gih -c "\dt"`. São 19
-   tabelas de domínio mais a `alembic_version`, de controle das migrações.
+3. **Tabelas realmente criadas** — `docker compose exec postgres psql -U gih -d gih -c "\dt"`. São 20
+   tabelas de domínio — as 20 entidades da seção 9 — mais a `alembic_version`, de controle das migrações.
 
 Modelo de dados detalhado, com tipos, chaves e índices, em
 [`08-modelo-de-dados.md`](08-modelo-de-dados.md).

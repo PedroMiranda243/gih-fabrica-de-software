@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 2.5 — 22/10/2026 · a H103, da interface refeita (2.4 — 04/10/2026, a H102, do acesso remoto por rede privada; 2.3 — 02/10/2026, as histórias da Sprint 08 acadêmica; 2.2 — 01/10/2026, as da Sprint 07; 2.1 — 30/09/2026, as da Sprint 06; 2.0 — 15/09/2026, sprints semanais)
+**Versão:** 2.6 — 26/10/2026 · as histórias da Sprint 09 acadêmica, de testes e documentação (2.5 — 22/10/2026, a H103, da interface refeita; 2.4 — 04/10/2026, a H102, do acesso remoto por rede privada; 2.3 — 02/10/2026, as histórias da Sprint 08 acadêmica; 2.2 — 01/10/2026, as da Sprint 07; 2.1 — 30/09/2026, as da Sprint 06; 2.0 — 15/09/2026, sprints semanais)
 
 ---
 
@@ -26,7 +26,8 @@ quebra durante o planejamento da sprint.
 capacidade; será recalibrada ao fim da Sprint 3, com duas semanas de execução medidas.
 
 **Este backlog é vivo.** A versão de referência para execução são as *issues* do GitHub, organizadas no
-board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
+board do projeto. Esta tabela começou como o retrato aprovado na Sprint 1, e cada história que entrou depois
+veio com a nota da data e do porquê, no fim da seção 4.
 
 ---
 
@@ -195,10 +196,13 @@ board do projeto. Esta tabela é o retrato aprovado na Sprint 1.
 | **H95** | Como usuário novo, quero uma tela de ajuda que explique os termos do sistema e o que o meu perfil faz, para operar sem treinamento. | S | 3 | S08 | RNF20, RF55; os segmentos na ordem da RN01, o que é estimativa e o que é o ganho esperado; os números das regras vêm da API; o Parceiro recebe só a ajuda do portal dele |
 | **H96** | Como usuário que navega pelo teclado ou com leitor de tela, quero chegar ao conteúdo sem atravessar o menu e saber quando a sessão terminou, para usar o sistema com a mesma facilidade de quem usa o mouse. | S | 3 | S08 | RNF20, RNF22; "pular para o conteúdo"; foco no título ao trocar de tela; o login diz que a sessão terminou; mostrar e ocultar a senha |
 | **H97** | Como usuário, quero ser avisado antes de sair de um formulário com alterações que não salvei, para não perder o que digitei. | C | 2 | S08 | RNF20; cadastro de parceiro e de usuário, limiares, catálogo de ações e o texto em edição na fila de aprovação; sem alteração, nada pergunta; o botão voltar do navegador não é interceptado |
-| **H98** | Como equipe, quero uma matriz que diga, requisito a requisito, onde ele está e como é testado, para afirmar com evidência que as funcionalidades previstas estão implementadas. | M | 5 | S08 | RF01 a RF56 e RNF01 a RNF29; `docs/11-rastreabilidade.md`; teste que reprova se faltar um RF, se uma rota ou um teste citado não existir, ou se os perfis divergirem |
+| **H98** | Como equipe, quero uma matriz que diga, requisito a requisito, onde ele está e como é testado, para afirmar com evidência que as funcionalidades previstas estão implementadas. | M | 5 | S08 | RF01 a RF56 e RNF01 a RNF30 (a RNF30 entrou com a H102); `docs/11-rastreabilidade.md`; teste que reprova se faltar um RF, se uma rota ou um teste citado não existir, ou se os perfis divergirem |
 | **H99** | Como equipe, quero revisar cada regra de negócio contra o que o sistema faz, para corrigir o que estiver incoerente antes da entrega final. | M | 5 | S08 | RN01 a RN11; roteiro executável regra a regra; `docs/02` diz onde cada regra está e como é conferida; os limiares de fábrica na RN01 (#59) |
 | **H102** | Como integrante da equipe, quero acessar o sistema que roda na máquina de demonstração a partir do meu próprio aparelho, por uma rede privada, para ensaiar e demonstrar fora de casa sem expor o sistema na internet. | C | 3 | pós-S08 | RNF30, RNF07, RNF10; perfil `remoto` do Compose; nenhuma porta fora do `127.0.0.1`; quem chega de fora recebe a interface empacotada, e não o servidor de desenvolvimento; o cookie sai com `Secure`; o link público foi avaliado e recusado (ADR-014) |
 | **H103** | Como pessoa que usa o sistema todo dia, quero uma interface que se leia sem esforço e diga em que área estou, para trabalhar sem me perder entre as telas. | C | 8 | pós-S08 | RNF20, RNF21, RNF22; ADR-015; o sistema visual versão 2 (`docs/09`) aprovado pela equipe na issue; os mesmos endereços e as mesmas operações da API; uma suíte de testes por tela citada no `docs/11`; zero avisos do lint; a medição das telas sem rolagem nem violação do axe, nos dois temas |
+| **H104** | Como equipe, quero os casos de teste escritos e executados pela tela, com o resultado obtido ao lado do esperado, para demonstrar com evidência que cada funcionalidade faz o que os requisitos dizem. | M | 5 | S09 | Os RF de cada módulo, pela matriz do `docs/11`; RNF24; `docs/12-plano-de-testes.md` com o catálogo; `scripts/testar_na_tela.py`, que recusa rodar com o catálogo e o código divergentes; as contas e os dados de teste marcados e limpos no fim; `--ver`, para demonstrar na orientação |
+| **H105** | Como equipe, quero provar pela tela que o sistema recusa dado inválido com mensagem clara, e que cada perfil navega só pelo que pode, para mostrar validação e navegação com evidência. | M | 3 | S09 | RNF08, RNF20, RNF21; os casos de validação e de navegação do `docs/12`; a navegação no Edge e no Chrome; o bloqueio de cinco tentativas fica no teste da API, que pela tela travaria a máquina inteira |
+| **H106** | Como banca e equipe, quero a documentação técnica igual ao sistema de hoje, para ler os requisitos, os diagramas, o modelo de dados, a arquitetura e as instruções de execução sem encontrar o sistema de antes. | M | 3 | S09 | RNF27; os documentos de `docs/` revisados, cada um com a versão nova; o diagrama de casos de uso com os UC01 a UC16; o mapa de navegação da interface v2; nenhuma contagem escrita que divirja do que se mede; a documentação técnica consolidada regerada |
 
 ---
 
@@ -226,7 +230,8 @@ Detalhamento e datas em [05 — Cronograma](05-cronograma.md).
 | **S07** | Sprint 07 acadêmica — painel, relatórios, pesquisa, filtros, exportação e histórico | H82, H83, H84, H85, H86, H87, H88, H89, H90, H91 | 38 |
 | **S08** | Sprint 08 acadêmica — conta, permissões, usabilidade e revisão das regras | H92, H93, H94, H95, H96, H97, H98, H99, H100, H101 | 33 |
 | **pós-S08** | Depois da Sprint 08 acadêmica — o acesso remoto por rede privada e a interface refeita | H102, H103 | 11 |
-| | | **Total** | **484** |
+| **S09** | Sprint 09 acadêmica — testes funcionais, de validação e de navegação, e a documentação atualizada | H104, H105, H106 | 11 |
+| | | **Total** | **495** |
 
 > A média é de **30,2 pontos por semana**, contra uma capacidade nominal de ~40. A folga é pequena, e a
 > Sprint 13 está deliberadamente acima da média — ver a seção *A semana que não fecha* no cronograma.
@@ -260,6 +265,12 @@ Detalhamento e datas em [05 — Cronograma](05-cronograma.md).
 > sem mudar nenhuma tela de lugar nem nenhuma rota da API, e refaz a suíte de testes da interface junto — o
 > porquê da escolha está na ADR-015, e o sistema visual novo, no `docs/09`. Entra depois do congelamento, com a
 > exceção que a equipe aprovou em 22/10 (`docs/05`). O escopo passa de 476 para 484 pontos.
+
+> **Sprint 09 acadêmica, 26/10/2026.** O enunciado pede a verificação completa do sistema: testes funcionais,
+> de validação e de navegação, com o resultado esperado e o obtido, o registro dos bugs e a documentação
+> atualizada. Nenhuma das três histórias é funcionalidade nova — o congelamento de 25/10 continua —: a H104 e a
+> H105 escrevem os casos (`docs/12`) e os executam pela tela, contra o sistema no ar; a H106 alinha a
+> documentação à interface v2 e ao que se mede hoje. O escopo passa de 484 para 495 pontos.
 
 ## Primeiro corte, se o prazo apertar
 
