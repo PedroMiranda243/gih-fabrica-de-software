@@ -3,7 +3,7 @@
 **Projeto:** Growth Intelligence Hub (GIH)
 **Disciplinas:** Fábrica de Software · Tópicos Avançados — UNINASSAU, 2026.2
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 1.0 — 03/09/2026
+**Versão:** 1.1 — 26/10/2026 · os identificadores dos requisitos da seção 4.3, como ficaram depois da renumeração do `docs/02` (1.0 — 03/09/2026)
 
 ---
 
@@ -182,14 +182,14 @@ Unidade regional de marketplace de delivery — franquia ou licenciada local —
 
 O público-alvo condiciona decisões técnicas que aparecem nos requisitos não funcionais:
 
-- **Interface em português e autoexplicativa** — não há treinamento formal nem suporte de TI interno (RNF12)
-- **Instalação em um comando** — não há equipe para configurar ambiente (RNF18)
+- **Interface em português e autoexplicativa** — não há treinamento formal nem suporte de TI interno (RNF20)
+- **Instalação em um comando** — não há equipe para configurar ambiente (RNF07)
 - **Funcionar sem GPU** — a máquina do usuário pode ser um notebook comum; a GPU acelera, mas o sistema
-  precisa operar sem ela (RNF04)
+  precisa operar sem ela (RNF06)
 - **Rastreabilidade das análises** — o gestor precisa justificar a decisão para a franqueadora e para os
-  próprios parceiros, então toda resposta cita a fonte (RNF11)
+  próprios parceiros, então toda resposta cita a fonte (RNF17)
 - **Aprovação humana antes de qualquer envio** — a relação com o parceiro é ativo estratégico da unidade;
-  nenhuma mensagem sai automaticamente (O7, RF33)
+  nenhuma mensagem sai automaticamente (O7, RF39)
 
 ---
 
