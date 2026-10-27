@@ -237,6 +237,39 @@ def test_a_otimizacao_da_execucao_sai_e_a_de_fora_fica(execucao):
     assert _contar(ItemPlano) == 1
 
 
+def test_a_acao_do_catalogo_da_execucao_sai_e_a_de_fora_fica(execucao):
+    """O teste pela tela cria uma ação no catálogo (CT-F25), e a API não tem como
+    excluí-la: ela sai pela marca no nome, como o parceiro e a categoria."""
+    _gravar(
+        AcaoComercial(nome=f"Cupom {MARCA}", custo_unitario=35, efeito_crescimento=0.04),
+        AcaoComercial(nome="Visita", custo_unitario=90, efeito_crescimento=0.06),
+        AcaoComercial(nome=f"Cupom x{MARCA}", custo_unitario=35, efeito_crescimento=0.04),
+    )
+
+    removidos = limpar_execucao(MARCA)
+
+    assert removidos.acoes == 1
+    assert _contar(AcaoComercial, AcaoComercial.nome == f"Cupom {MARCA}") == 0
+    assert _contar(AcaoComercial) == 2
+
+
+def test_recusa_acao_da_execucao_usada_num_plano_de_fora(execucao):
+    """Um plano de fora que usou a ação da execução guarda o item: a ação fica, e
+    a limpeza inteira é recusada — nada some pela metade."""
+    _otimizacao("analista.real", SEMANA_REAL[0])
+    s = Sessao()
+    try:
+        visita = s.scalar(select(AcaoComercial).where(AcaoComercial.nome == "Visita"))
+        visita.nome = f"Visita {MARCA}"
+        s.commit()
+    finally:
+        s.close()
+
+    with pytest.raises(LimpezaRecusada, match="depende"):
+        limpar_execucao(MARCA)
+    assert _contar(AcaoComercial, AcaoComercial.nome == f"Visita {MARCA}") == 1
+
+
 def _mensagem(login: str, item_plano_id: int | None) -> int:
     """Um lote de `login`, com uma mensagem para o primeiro parceiro da base."""
     s = Sessao()
