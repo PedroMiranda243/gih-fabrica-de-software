@@ -1,7 +1,7 @@
 # 05 — Cronograma
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Versão:** 3.6 — 26/10/2026 · a H103 entra na `main`, depois do envio da Sprint 08 (3.5 — 22/10/2026, a exceção ao congelamento, para a H103; 3.4 — 04/10/2026, a H102, do acesso remoto; 3.3 — 02/10/2026, a Sprint 08 da disciplina; 3.2 — 01/10/2026, a Sprint 07; 3.1 — 30/09/2026, a Sprint 06; 3.0 — 28/09/2026, o calendário real; 2.1 — 16/09/2026, o plano em sprints semanais)
+**Versão:** 3.7 — 26/10/2026 · a Sprint 09 da disciplina, e a H72 adiada (3.6 — 26/10/2026, a H103 entra na `main`, depois do envio da Sprint 08; 3.5 — 22/10/2026, a exceção ao congelamento, para a H103; 3.4 — 04/10/2026, a H102, do acesso remoto; 3.3 — 02/10/2026, a Sprint 08 da disciplina; 3.2 — 01/10/2026, a Sprint 07; 3.1 — 30/09/2026, a Sprint 06; 3.0 — 28/09/2026, o calendário real; 2.1 — 16/09/2026, o plano em sprints semanais)
 **Datas oficiais da disciplina:** entrega da Sprint 1 em **05/09/2026** · entrega final em **05/12/2026**
 
 ---
@@ -22,7 +22,8 @@ desenvolvimento da equipe, não a terceira entrega avaliada.
 | **Sprint 06** — aprimoramento do sistema | 17/10/2026 | 9 a 11, e as H79 a H81 | Campanha e otimizador: Python, C++, OpenMP e GPU com o mesmo plano, histórico, comparação e benchmark; os módulos ligados pelos dados e pela tela; navegação por módulo e risco na lista de parceiros; as correções da Pré-Banca |
 | **Sprint 07** — sistema quase completo | 24/10/2026 | as H82 a H91 | Painel com período e categoria, e com a previsão e a campanha; quatro relatórios, com CSV e PDF pela impressão; busca e filtros nas listas que não tinham; a trilha de auditoria na tela e o histórico no cadastro do parceiro |
 | **Sprint 08** — funcionalidades concluídas | 31/10/2026 | 12 e 13, e as H92 a H101 | A comunicação, o assistente e o portal do parceiro, apresentados; a Minha conta, a redefinição de senha e a conta de perfil Parceiro pela tela; a página "Sem acesso", o teclado e o aviso de alterações não salvas; a ajuda; e três revisões conferidas por execução — a rastreabilidade dos requisitos, as permissões e as regras de negócio |
-| Sprint 09 em diante | conforme os enunciados | — | O que os enunciados pedirem; a construção está concluída |
+| **Sprint 09** — testes e correções | 07/11/2026 | as H104 a H106 | Os testes funcionais, de validação e de navegação: 77 casos executados pela tela, com o esperado e o obtido (`docs/12`), a campanha manual de cada integrante, o registro dos bugs e as correções; a documentação técnica alinhada à interface v2 |
+| Sprint 10 em diante | conforme os enunciados | — | O que os enunciados pedirem; a construção está concluída |
 
 A numeração semanal é a que aparece nas *issues*, nos *milestones* e nos commits do GitHub, e por isso não
 foi renumerada: mudá-la desalinharia o histórico do repositório, que é justamente onde a disciplina pede
@@ -134,9 +135,10 @@ validação numa máquina limpa, por outro integrante.
 
 | O que | Quem | Quando |
 |---|---|---|
-| **H72** — subir o sistema do zero numa máquina limpa, só com o README, e registrar o que travar | Thiago ou João Pedro | até 25/10 |
+| **H72** — subir o sistema do zero numa máquina limpa, só com o README, e registrar o que travar. Adiada: a Sprint 09 a declara como pendência, e o roteiro (`docs/validacao-do-readme.md`) já está atualizado para a interface v2 | Thiago ou João Pedro | até 20/11 |
 | **Congelamento de funcionalidades** — a partir dele, só correção, documentação e vídeo | equipe | 25/10 |
-| **H103** — o PR da interface refeita, a única exceção ao congelamento (#241), aberto com a Sprint 08 já enviada | Pedro e Ingryd | 26/10 |
+| **H103** — a interface refeita, a única exceção ao congelamento (#241), mesclada com a Sprint 08 já enviada (#242) | Pedro e Ingryd | 26/10 |
+| **Sprint 09** — os 77 casos pela tela, a campanha manual (#256), as correções e a documentação; o PDF com a Parte IX | equipe | 26/10 – 05/11 |
 | Roteiros dos vídeos; a base de demonstração final (a rede, o modelo treinado, um plano, mensagens na fila e o benchmark com a GPU) | equipe | 26/10 – 08/11 |
 | **Transferência do núcleo** (R4): o otimizador, a GPU e o benchmark apresentados à equipe; as perguntas prováveis da banca em `docs/banca.md` | Pedro e equipe | 26/10 – 08/11 |
 | **H74** e **H75** — a gravação dos dois vídeos | equipe | 09/11 – 04/12 |
@@ -159,8 +161,9 @@ gantt
     S12 e S13 Comunicação e assistente :done, 2026-09-27, 2026-09-29
 
     section Fechamento
-    H72 validação do README         :2026-09-29, 2026-10-25
+    H72 validação do README         :2026-09-29, 2026-11-20
     Congelamento                    :milestone, 2026-10-25, 0d
+    Sprint 09 testes e correções    :2026-10-26, 2026-11-07
     Roteiros, demonstração e banca  :2026-10-26, 2026-11-09
     Gravação dos vídeos             :crit, 2026-11-09, 2026-12-05
     Entrega final                   :milestone, 2026-12-05, 0d
@@ -282,6 +285,7 @@ tem só o que não podia sair, com mais de dois meses até 05/12.
 | **16/10** | Dados entrando e painel no ar | Importação completa e ranking com variação | ✅ 20/09 |
 | **23/10** | Inteligência de negócio pronta | Segmentação determinística e mobilidade do Top N | ✅ 20/09 |
 | **30/10** | Modelo batendo o baseline | MAPE registrado e inferior ao baseline ingênuo | ✅ 25/09 — MAPE de 9,8%, contra 10,2% da melhor referência e 11,5% do ingênuo |
+| **07/11** | Sistema verificado | Os casos de teste pela tela com o esperado e o obtido, os bugs registrados e corrigidos (Sprint 09) | — |
 | **13/11** | Otimizador paralelo em CPU | Plano válido e ganho medido sobre o serial | ✅ 26/09 — OpenMP 5,9x sobre o C++ serial, com 8 threads e o mesmo plano |
 | **20/11** | **Componente avançado demonstrável** | *Speedup* medido e exibido na interface | ✅ 27/09 — a GPU 106x sobre o Python no cenário de referência; o benchmark na tela (H57) |
 | **27/11** | Produto completo | Fluxo inteiro, do dado bruto à mensagem aprovada | ✅ 27/09 |
