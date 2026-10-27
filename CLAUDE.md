@@ -174,8 +174,9 @@ entende o motor do projeto, a banca pode perguntar a quem não sabe responder. C
 é **transferência de conhecimento**:
 
 - Toda decisão não óbvia vira ADR em `docs/07-arquitetura-preliminar.md`, não só comentário no código
-- O código do núcleo é apresentado à equipe nas revisões das Sprints 10 e 11, com alguém além do autor
-  conseguindo explicar o que o kernel faz e por quê
+- O código do núcleo é apresentado à equipe antes da gravação dos vídeos, com alguém além do autor
+  conseguindo explicar o que o kernel faz e por quê. Estava previsto para as revisões das Sprints 10 e 11, que
+  fecharam antes dela (`docs/06`, seção 2)
 - Os comentários no `nucleo/` explicam o *porquê* com mais rigor que no resto do projeto
 
 ### Como evitar conflito de merge
@@ -592,6 +593,7 @@ frente com alguma, a resposta já está aqui.
 | Papéis, cerimônias, Definition of Done | [`docs/06-equipe-e-processo.md`](docs/06-equipe-e-processo.md) |
 | Arquitetura e decisões registradas | [`docs/07-arquitetura-preliminar.md`](docs/07-arquitetura-preliminar.md) |
 | Onde cada requisito está: rota, tela e teste | [`docs/11-rastreabilidade.md`](docs/11-rastreabilidade.md) |
+| Como se testa, e os casos executados pela tela | [`docs/12-plano-de-testes.md`](docs/12-plano-de-testes.md) |
 | Ramos, commits, Pull Requests | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 
 **Este arquivo é vivo.** Decisão de arquitetura ou convenção nova entra aqui, no mesmo Pull Request que a
