@@ -168,7 +168,7 @@ rode com a aplicação livre. Nenhum dos scripts deixa resíduo no banco.
 | [09 — Sistema visual](docs/09-sistema-visual.md) | As regras de cor, a paleta medida, tipografia, espaçamento, estados vazios e o mapa das telas |
 | [10 — Diagrama de classes](docs/10-diagrama-de-classes.md) | O domínio, os serviços e o núcleo computacional, em nove diagramas |
 | [11 — Rastreabilidade](docs/11-rastreabilidade.md) | Cada requisito com o caso de uso, a rota, a tela e o teste, conferidos pela suíte |
-| [12 — Plano de testes](docs/12-plano-de-testes.md) | Os níveis de teste, o ambiente e os 77 casos — funcionais, de validação e de navegação — executados pela tela, com o esperado |
+| [12 — Plano de testes](docs/12-plano-de-testes.md) | Os níveis de teste, o ambiente e os 78 casos — funcionais, de validação e de navegação — executados pela tela, com o esperado |
 | [Medições](docs/medicoes/) | O núcleo em CPU e GPU, o otimizador, o modelo preditivo, o assistente e a acessibilidade — gerados por script |
 | [Documentação técnica final](#documentação-técnica-final) | 07, 08, 10 e as medições, num documento só |
 | [Como contribuir](CONTRIBUTING.md) | Branches, commits, Pull Requests |
