@@ -50,6 +50,9 @@ services:
       # das 21h no horário local.
       TZ: ${TZ:-America/Recife}
       COOKIE_SEGURO: ${COOKIE_SEGURO:-false}
+      # Sem estar nesta lista, a variável do `.env` não chega ao contêiner, e a
+      # sessão ficava sempre com o padrão do `config.py` (#266).
+      SESSAO_DURACAO_HORAS: ${SESSAO_DURACAO_HORAS:-8}
       ADMIN_LOGIN: ${ADMIN_LOGIN:-admin}
       ADMIN_SENHA: ${ADMIN_SENHA:-}
       # O modelo de linguagem (ADR-013). Sem o perfil `assistente`, o serviço
@@ -58,7 +61,7 @@ services:
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       LLM_MODEL: ${LLM_MODEL:-qwen2.5:7b}
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:${API_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy

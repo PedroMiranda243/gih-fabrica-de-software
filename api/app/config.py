@@ -9,8 +9,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Config(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    database_url: str = "postgresql+psycopg://gih:gih@localhost:5432/gih"
-    api_port: int = 8000
+    # A 5433, e não a 5432: é a porta que o compose publica (POSTGRES_PORT), e a
+    # 5432 costuma ser de outro Postgres na máquina (#267).
+    database_url: str = "postgresql+psycopg://gih:gih@localhost:5433/gih"
 
     # Limite de entrada para evitar consumo excessivo de recursos (RNF15).
     tamanho_maximo_relatorio: int = 500_000
