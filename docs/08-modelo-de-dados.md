@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Entrega:** Sprint 02 acadêmica — itens 3 (MER), 4 (modelo relacional) e 6 (banco criado)
-**Versão:** 3.1 — 01/10/2026, os índices da trilha de auditoria (3.0 — 28/09/2026, o banco construído)
+**Versão:** 3.2 — 16/11/2026, a versão final do banco conferida por teste: as cardinalidades, a entidade do lote de mensagens e a integridade (3.1 — 01/10/2026, os índices da trilha de auditoria; 3.0 — 28/09/2026, o banco construído)
 
 > **Como o esquema cresceu.** A versão 1.0 tinha 14 tabelas; a 2.0, da entrega da Sprint 02, **16**: a
 > autenticação acrescentou `sessao_acesso` e `tentativa_login`. A construção trouxe mais quatro, cada uma
@@ -25,17 +25,17 @@ O primeiro responde *"o que o sistema precisa saber"*. O segundo, *"como isso vi
 ```mermaid
 erDiagram
     USUARIO ||--o{ SESSAO_ACESSO : abre
-    USUARIO ||--o{ AUDITORIA : gera
+    USUARIO |o--o{ AUDITORIA : gera
     USUARIO ||--o{ IMPORTACAO : realiza
     USUARIO |o--o{ EXECUCAO_OTIMIZADOR : dispara
-    USUARIO ||--o{ MENSAGEM : decide
+    USUARIO |o--o{ MENSAGEM : decide
     USUARIO }o--o| PARCEIRO : representa
     USUARIO |o--o| CONFIGURACAO_SEGMENTACAO : ajusta
     USUARIO |o--o{ TREINO_MODELO : dispara
     USUARIO |o--o{ EXECUCAO_BENCHMARK : dispara
     USUARIO |o--o{ LOTE_MENSAGENS : pede
 
-    CATEGORIA ||--o{ PARCEIRO : classifica
+    CATEGORIA |o--o{ PARCEIRO : classifica
 
     PERIODO ||--o{ IMPORTACAO : cobre
     PERIODO ||--o{ METRICA : delimita
@@ -53,7 +53,7 @@ erDiagram
     PARCEIRO ||--o{ MENSAGEM : recebe
 
     EXECUCAO_OTIMIZADOR ||--o| PLANO_CAMPANHA : produz
-    PLANO_CAMPANHA ||--|{ ITEM_PLANO : compoe
+    PLANO_CAMPANHA ||--o{ ITEM_PLANO : compoe
     ACAO_COMERCIAL ||--o{ ITEM_PLANO : e_alocada_em
     ITEM_PLANO |o--o{ MENSAGEM : justifica
     LOTE_MENSAGENS |o--o{ MENSAGEM : gera
@@ -68,7 +68,7 @@ dicionário usa login desconhecido (RNF11).
 no papel, cada parte da seção 2 abre com o recorte dela — o acesso, os parceiros e o desempenho, a campanha
 e a comunicação —, e o treino e as previsões têm o seu na 2.4.
 
-Os atributos de cada entidade estão na tabela abaixo, e não dentro das caixas do desenho: com dezenove
+Os atributos de cada entidade estão na tabela abaixo, e não dentro das caixas do desenho: com vinte
 entidades e mais de cem atributos, a figura ficaria ilegível impressa, que é critério de aceite da entrega.
 
 ### Entidades e atributos, na linguagem do negócio
@@ -93,7 +93,8 @@ entidades e mais de cem atributos, a figura ficaria ilegível impressa, que é c
 | **PlanoCampanha** | O plano resultante de uma execução viável | janela de aplicação |
 | **ItemPlano** | Par (parceiro, ação) escolhido pelo otimizador | uplift esperado, custo |
 | **ExecucaoBenchmark** | Uma medição do benchmark (UC09): o mesmo problema sintético em cada modo | autor, situação, parceiros, tipos de ação, repetições, semente, início e fim, andamento, as medidas cruas de cada modo, onde mediu, se outro cálculo disputou a máquina, motivo |
-| **Mensagem** | Comunicação gerada para um parceiro | texto gerado, texto final, estado, autor da decisão, motivo da rejeição |
+| **LoteMensagens** | Um pedido de geração de mensagens (UC10) | quem pediu, situação, o público como foi pedido, quem entra, quem falhou e por quê, o modelo de linguagem usado, início e fim, motivo |
+| **Mensagem** | Comunicação gerada para um parceiro | o lote que a gerou, o item do plano que a justifica, o segmento e os fatos que o texto usou, quem a redigiu (o modelo de linguagem, ou o modelo fixo e por quê), texto gerado, texto final, estado, autor da decisão, motivo da rejeição, quando foi gerada e decidida |
 
 ### Quatro relacionamentos que carregam regra de negócio
 
@@ -101,8 +102,9 @@ entidades e mais de cem atributos, a figura ficaria ilegível impressa, que é c
   duplicar a série e corromper a segmentação por tendência.
 - **ExecucaoOtimizador produz *zero ou um* PlanoCampanha.** RN07: ou o plano respeita todas as restrições,
   ou não existe plano. A execução inviável fica registrada com o motivo.
-- **PlanoCampanha compõe *um ou mais* ItemPlano**, e no máximo um por parceiro. Item sem plano não tem
-  significado.
+- **PlanoCampanha compõe *zero ou mais* ItemPlano**, e no máximo um por parceiro. Item sem plano não tem
+  significado; plano sem item tem: é o plano viável em que nenhuma ação cabe no orçamento com ganho, e a tela
+  diz isso (até a versão 3.1, este documento dizia "um ou mais", o que nada no banco garante).
 - **Usuario representa *zero ou um* Parceiro.** Só o perfil `PARCEIRO` usa esse vínculo, e é ele que
   restringe aquele usuário a consultar o próprio desempenho (RF26).
 
@@ -165,7 +167,7 @@ O recorte do acesso: o usuário, a sessão, a trilha, o parceiro que ele represe
 ```mermaid
 erDiagram
     USUARIO ||--o{ SESSAO_ACESSO : abre
-    USUARIO ||--o{ AUDITORIA : gera
+    USUARIO |o--o{ AUDITORIA : gera
     USUARIO }o--o| PARCEIRO : representa
     USUARIO |o--o| CONFIGURACAO_SEGMENTACAO : ajusta
 ```
@@ -235,7 +237,7 @@ erDiagram
     PARCEIRO ||--o{ METRICA : possui
     PERIODO ||--o{ HISTORICO_SEGMENTO : delimita
     PARCEIRO ||--o{ HISTORICO_SEGMENTO : recebe
-    CATEGORIA ||--o{ PARCEIRO : classifica
+    CATEGORIA |o--o{ PARCEIRO : classifica
 ```
 
 **categoria**
@@ -420,7 +422,7 @@ erDiagram
     USUARIO |o--o{ EXECUCAO_OTIMIZADOR : dispara
     PERIODO ||--o{ EXECUCAO_OTIMIZADOR : baseia
     EXECUCAO_OTIMIZADOR ||--o| PLANO_CAMPANHA : produz
-    PLANO_CAMPANHA ||--|{ ITEM_PLANO : compoe
+    PLANO_CAMPANHA ||--o{ ITEM_PLANO : compoe
     ACAO_COMERCIAL ||--o{ ITEM_PLANO : e_alocada_em
     PARCEIRO ||--o{ ITEM_PLANO : e_alvo_de
     USUARIO |o--o{ EXECUCAO_BENCHMARK : dispara
@@ -518,7 +520,7 @@ O recorte da comunicação: o lote, a mensagem, quem a decide e o item do plano 
 erDiagram
     USUARIO |o--o{ LOTE_MENSAGENS : pede
     LOTE_MENSAGENS |o--o{ MENSAGEM : gera
-    USUARIO ||--o{ MENSAGEM : decide
+    USUARIO |o--o{ MENSAGEM : decide
     PARCEIRO ||--o{ MENSAGEM : recebe
     ITEM_PLANO |o--o{ MENSAGEM : justifica
 ```
@@ -529,7 +531,7 @@ erDiagram
 |---|---|---|---|
 | id | serial | **PK** | |
 | situacao | enum | | o mesmo `situacaoexecucao` do otimizador — **um só em andamento**, por índice único parcial |
-| usuario_id | integer | **FK** → usuario | quem pediu |
+| usuario_id | integer | **FK** → usuario | quem pediu; vazio quando o pedido não veio de uma pessoa |
 | publico | jsonb | | o pedido, como a pessoa o fez: segmento e categoria, plano ou seleção; e a descrição |
 | alvos | jsonb | | quem entra, **resolvido no pedido**: um por parceiro, com o item do plano quando há |
 | falhas | jsonb | | quem falhou, com o motivo (UC10-A2) |
@@ -648,6 +650,39 @@ entre uma regra que vale e uma regra que valeria se ninguém esquecesse de cham�
 | `ck_lote_mensagens_falha_tem_motivo` | Geração de mensagens que parou **diz** por quê |
 | `ck_mensagem_redator_explicado` | Mensagem diz quem a redigiu: o modelo, com o nome dele, ou o modelo fixo, com o motivo (ADR-013) |
 
+
+## 5.1 Integridade e exclusão
+
+**O que se apaga, e o que não se apaga.** Nenhuma chave estrangeira apaga em cascata: as 28 são `NO ACTION`,
+o padrão do PostgreSQL, e o banco recusa apagar uma linha para a qual outra aponta. É de propósito — o
+histórico de um período fechado, a trilha de auditoria e as decisões sobre as mensagens não se apagam por
+efeito colateral:
+
+- **Usuário não se apaga, desativa** (`ativo`). A trilha de auditoria e as decisões apontam para ele.
+- **Sessão não se apaga, revoga** (`revogada_em`, com o motivo).
+- **Parceiro com histórico não se apaga** — a API recusa, e o banco recusaria também; desativa (`ativo`). Só o
+  parceiro sem nenhuma métrica, previsão ou mensagem pode ser excluído (UC04-A4).
+- **Período e importação não se apagam pela API**: substituir um período troca o conteúdo e mantém o rastro.
+- **O `TRUNCATE … CASCADE` existe só nas ferramentas de desenvolvimento** — o gerador de dados com `--limpar`,
+  o `resetar_banco.py` e a limpeza da verificação de ponta a ponta —, nunca na aplicação. Ele leva os usuários
+  junto, e por isso as três ferramentas recriam o administrador no fim (`CLAUDE.md`, seção 7).
+
+**Onze chaves estrangeiras aceitam nulo, e cada uma tem o seu motivo.** O diagrama as desenha como "zero ou
+um":
+
+- a categoria do parceiro — melhor vazia que palpite gravado (RN05);
+- o parceiro do usuário — só o perfil Parceiro tem;
+- o item do plano da mensagem — a mensagem de um público por segmento ou escolhido à mão não vem de um plano;
+- o lote da mensagem — a coluna entrou depois da tabela, e as mensagens de antes dela não têm lote;
+- quem decidiu a mensagem — vazio até alguém decidir, e obrigatório depois (`ck_mensagem_decisao_tem_autor`);
+- o autor de seis registros, quando não há uma pessoa na tela por trás: a auditoria de uma entrada recusada;
+  o treino, a execução do otimizador, o benchmark e o lote de mensagens pedidos pelo terminal ou pelos scripts
+  de medição; e a configuração dos limiares, que nasce com os valores de fábrica, sem autor.
+
+**A busca do parceiro pelo nome** usa a extensão `pg_trgm` do PostgreSQL, criada pela migração do nome
+normalizado: o índice de trigrama (`ix_parceiro_nome_trgm`) responde à busca por trecho do nome sem varrer a
+tabela (RF24, RNF05).
+
 ---
 
 ## 6. O banco criado — evidência
@@ -706,7 +741,9 @@ qual versão do esquema está aplicada.
 | Índices | 48 |
 | Tipos `ENUM` | 10 |
 
-Medido em 01/10/2026, contra o banco no ar, sem a tabela do Alembic. Desde a medição de 27/09 (20, 20, 28,
+Medido em 01/10/2026, contra o banco no ar, sem a tabela do Alembic, e **conferido a cada Pull Request desde
+16/11/2026** pelo `api/tests/test_modelo_de_dados.py` (seção 7): a versão final do banco é esta, sem nenhuma
+migração desde 01/10. Desde a medição de 27/09 (20, 20, 28,
 11, 25, 45 e 10) entraram só os três índices da trilha de auditoria (H89 e H90, Sprint 07 da disciplina):
 nenhuma tabela, coluna ou restrição mudou. Entre a medição de 26/09 (18, 18, 25, 11, 18, 40 e 9) e a de
 27/09 tinham entrado o benchmark (H57: +1 tabela, +1 chave estrangeira, +5 `CHECK`, +2 índices) e o
@@ -748,9 +785,24 @@ alembic upgrade head     # reaplica — é aqui que o erro apareceria
 ```
 
 Além disso, a suíte de testes da API cria um banco `gih_teste` separado e aplica **as mesmas migrações**
-nele, em vez de montar o esquema com `create_all`. Custa alguns segundos a mais por execução e cobre a
-divergência entre o modelo em código e a migração — que é o defeito que ninguém percebe até a hora de
-implantar.
+nele, em vez de montar o esquema com `create_all`. Custa alguns segundos a mais por execução.
+
+**E este documento é conferido contra esse banco, a cada Pull Request** (`api/tests/test_modelo_de_dados.py`,
+desde a versão 3.2):
+
+- **as migrações criam o que os modelos descrevem** — o `compare_metadata` do Alembic, contra o banco migrado,
+  sem nenhuma diferença de tabela, coluna, tipo, nulo, índice ou chave. Antes, a suíte só pegava a divergência
+  nas colunas que algum teste tocava;
+- **toda tabela e toda coluna do modelo relacional (seção 2) existem no banco**, e o banco não tem nenhuma a
+  mais; as colunas marcadas com `*` são exatamente as chaves estrangeiras;
+- **toda tabela tem a sua entidade** na tabela de entidades e no MER (a tentativa de login, que não se liga a
+  nada, fica fora do desenho de propósito);
+- **a cardinalidade de cada diagrama é a da chave**: "zero ou um" onde a chave aceita nulo, "exatamente um"
+  onde é obrigatória, e nenhum "um ou mais", que o banco não garante;
+- **as contagens da seção 6** são as do catálogo do PostgreSQL.
+
+Foi esse teste que achou os erros que a versão 3.1 tinha: a entidade do lote de mensagens fora da tabela de
+entidades, e oito ligações em cinco diagramas com a cardinalidade errada.
 
 ---
 
