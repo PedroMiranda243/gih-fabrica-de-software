@@ -1,7 +1,7 @@
 # 12 — Plano de testes
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Versão:** 1.0 — 26/10/2026 · H104 e H105, Sprint 09
+**Versão:** 1.1 — 16/11/2026 · o CT-F39, da categoria nova pelo cadastro (#269) (1.0 — 26/10/2026, H104 e H105, Sprint 09)
 **Responsáveis:** João Pedro (testes), Marcio (requisitos), com a equipe inteira na execução manual
 
 ---
@@ -84,6 +84,7 @@ Cadastro, consulta, atualização e exclusão de cada módulo, e a autenticaçã
 | CT-F13 | RF14 | Gestor | No cadastro de um parceiro sem histórico, clicar em "Excluir parceiro" e confirmar | O parceiro é excluído e o cadastro dele deixa de existir |
 | CT-F14 | RF25 | Gestor | Na lista filtrada pelo segmento Top, clicar em "Exportar CSV" | Um CSV com o cabeçalho e as linhas do mesmo filtro |
 | CT-F15 | RF14 | Gestor | No cadastro, desativar o parceiro e confirmar; depois, reativá-lo | As duas mudanças são gravadas pela tela |
+| CT-F39 | RF14 | Gestor | Em Parceiros › Novo, clicar em "Nova categoria", digitar o nome e clicar em "Criar categoria" | A categoria é criada e já fica escolhida no campo Categoria; o parceiro continua por salvar |
 
 ### Importação
 
@@ -280,7 +281,7 @@ parece errado. O registro é na issue da campanha manual (#256), com a própria 
 | Integrante | Área | Perfil | Casos para seguir à mão | E também |
 |---|---|---|---|---|
 | Ingryd | Telas e navegação | os quatro | CT-N01 a CT-N16 | Os dois temas, claro e escuro; 768 px e uma tela larga; o teclado sem mouse |
-| João Pedro | Importação, parceiros e categorias | Gestor e Analista | CT-F10 a CT-F18, CT-V07 a CT-V13, CT-V21, CT-V22 | Um relatório com acento e vírgula nos números; o CSV aberto na planilha |
+| João Pedro | Importação, parceiros e categorias | Gestor e Analista | CT-F10 a CT-F18, CT-F39, CT-V07 a CT-V13, CT-V21, CT-V22 | Um relatório com acento e vírgula nos números; o CSV aberto na planilha |
 | Marcio | Painel, campanha e relatórios | Gestor | CT-F19, CT-F20, CT-F22 a CT-F25, CT-F33, CT-F34, CT-V14, CT-V15 | Conferir o que a tela mostra contra a RN01, a RN02, a RN07 e a RN10 (`docs/02`) |
 | Thiago | Usuários, permissões, sessão e auditoria | Administrador e Parceiro | CT-F01 a CT-F09, CT-F36, CT-F38, CT-V01 a CT-V06, CT-V17, CT-N04 a CT-N06 | Um perfil tentando abrir pelo endereço uma tela que não é dele |
 | Pedro | Modelo, benchmark, mensagens e assistente | Gestor e Analista | CT-F21, CT-F26 a CT-F32, CT-V20 | O Analista na fila de aprovação: vê, mas não decide (RN06) |

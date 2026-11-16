@@ -591,6 +591,24 @@ def situacao_parceiro(x: Execucao, pg) -> str:
     return "desativado e reativado pela tela (200 nas duas)"
 
 
+@caso("CT-F39")
+def nova_categoria(x: Execucao, pg) -> str:
+    # A marca no nome é o que a limpeza da execução usa para apagar a categoria no fim.
+    nome = f"Doceria {x.marca}"
+    x.entrar(pg, "GESTOR", "/parceiros/novo")
+    pg.get_by_role("button", name="Nova categoria").click()
+    pg.get_by_label(re.compile("^Nome da categoria nova")).fill(nome)
+    r = resposta(
+        pg, "POST", r"/api/categorias$", lambda: pg.get_by_role("button", name="Criar categoria").click()
+    )
+    confere(r.status == 201, f"a criação respondeu {r.status}: {r.text()[:200]}")
+    criada = r.json()
+    expect(pg.locator("#campo-categoria_id")).to_have_value(str(criada["id"]))
+    aviso = " ".join(pg.get_by_role("status").filter(has_text="criada").first.inner_text().split())
+    x.alvo = pg.locator("#campo-categoria_id")
+    return f"'{aviso}'; a categoria {criada['id']} ficou escolhida no campo, e o parceiro continua por salvar"
+
+
 # ---------------------------------------------------------------- importação
 def colar_relatorio(pg, inicio: str, fim: str, texto: str) -> None:
     pg.locator("#campo-periodo_inicio").fill(inicio)
