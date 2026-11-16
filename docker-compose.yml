@@ -54,6 +54,7 @@ services:
       # sessão ficava sempre com o padrão do `config.py` (#266).
       SESSAO_DURACAO_HORAS: ${SESSAO_DURACAO_HORAS:-8}
       ADMIN_LOGIN: ${ADMIN_LOGIN:-admin}
+      ADMIN_NOME: ${ADMIN_NOME:-Administrador}
       ADMIN_SENHA: ${ADMIN_SENHA:-}
       # O modelo de linguagem (ADR-013). Sem o perfil `assistente`, o serviço
       # abaixo não sobe, o endereço não responde, e o sistema funciona igual:
