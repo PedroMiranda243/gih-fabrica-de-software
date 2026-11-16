@@ -15,6 +15,7 @@ from sqlalchemy import text
 
 from app import servico_benchmark, servico_mensagens, servico_otimizacao, servico_previsao
 from app.db import sessao
+from app.documentacao_api import VERSAO, documentar
 from app.erros import erro_de_validacao
 from app.rotas import (
     ajuda,
@@ -72,7 +73,7 @@ app = FastAPI(
     lifespan=ciclo_de_vida,
     title="Growth Intelligence Hub",
     description="API do painel de inteligência de crescimento para redes de parceiros.",
-    version="0.2.0",
+    version=VERSAO,
     docs_url="/api/docs",
     openapi_url="/api/openapi.json",
 )
@@ -172,3 +173,9 @@ def health() -> dict:
         banco = "indisponível"
 
     return {"status": "ok", "banco": banco, "versao": app.version}
+
+
+# O OpenAPI completado com os resumos, os perfis, a autenticação, os formatos de
+# erro e os exemplos de cada rota (H107) — o FastAPI sozinho só sabe o que o
+# código das rotas diz. Ver app/documentacao_api.py.
+app.openapi = lambda: documentar(app)
