@@ -58,7 +58,7 @@ export default function Campanha() {
   if (!c.modelo_versao) {
     return (
       <div className="pagina">
-        <Vazio titulo={c.motivo_bloqueio ?? "Ainda não há modelo treinado."} icone="modelo" acao="Ir para o Modelo" para="/modelo">
+        <Vazio titulo={c.motivo_bloqueio ?? "Ainda não há modelo treinado"} icone="modelo" acao="Ir para o Modelo" para="/modelo">
           O plano parte da previsão de cada parceiro.
         </Vazio>
         <Catalogo estado={c} aoMudar={estado.recarregar} />

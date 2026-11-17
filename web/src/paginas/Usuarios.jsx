@@ -27,7 +27,7 @@ export default function Usuarios() {
   return (
     <div className="pagina">
       <div className="barra-acoes">
-        <p className="barra-acoes__contexto">{d ? `${plural(d.length, "conta", "contas")} neste recorte` : " "}</p>
+        <p className="barra-acoes__contexto">{d ? `${plural(d.length, "conta", "contas")} nesse recorte` : " "}</p>
         <div className="barra-acoes__botoes">
           <Link className="botao botao--primario" to="/usuarios/novo">
             <Icone nome="mais" /> Novo usuário
@@ -62,7 +62,7 @@ export default function Usuarios() {
         {lista.carregando && !d && <Carregando rotulo="Carregando os usuários" linhas={6} />}
         <ErroDaTela erro={lista.erro} />
         {d && !d.length && (
-          <Vazio titulo="Nenhum usuário neste recorte" icone="usuarios">
+          <Vazio titulo="Nenhum usuário nesse recorte" icone="usuarios">
             Mude a busca, o perfil ou a situação para ver outros usuários — a lista abre só nos ativos.
           </Vazio>
         )}

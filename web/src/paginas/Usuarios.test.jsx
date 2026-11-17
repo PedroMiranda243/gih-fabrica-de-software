@@ -30,6 +30,6 @@ describe("a lista de usuários", () => {
   it("recorte sem ninguém diz isso", async () => {
     abrir("/usuarios?busca=ninguem", { perfil: "ADMINISTRADOR", rotas: { "GET /api/usuarios": { corpo: [] } } });
 
-    expect(await screen.findByText("Nenhum usuário neste recorte")).toBeInTheDocument();
+    expect(await screen.findByText("Nenhum usuário nesse recorte")).toBeInTheDocument();
   });
 });

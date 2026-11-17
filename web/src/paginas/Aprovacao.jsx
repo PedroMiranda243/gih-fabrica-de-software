@@ -187,17 +187,17 @@ export default function Aprovacao() {
         {lista.carregando && !d && <Carregando rotulo="Carregando a fila" linhas={6} />}
         <ErroDaTela erro={lista.erro} />
         {d && !itens.length && pendentes && !filtrado && (
-          <Vazio titulo="Nenhuma mensagem pendente." compacto icone="aprovacao" acao={tem(usuario, "mensagens") ? "Gerar mensagens" : undefined} para="/mensagens">
+          <Vazio titulo="Nenhuma mensagem pendente" compacto icone="aprovacao" acao={tem(usuario, "mensagens") ? "Gerar mensagens" : undefined} para="/mensagens">
             As mensagens geradas chegam aqui e esperam a decisão de um gestor.
           </Vazio>
         )}
         {d && !itens.length && pendentes && filtrado && (
-          <Vazio titulo="Nenhuma mensagem pendente neste recorte." compacto icone="busca">
+          <Vazio titulo="Nenhuma mensagem pendente nesse recorte" compacto icone="busca">
             Tire um dos filtros para ver a fila inteira.
           </Vazio>
         )}
         {d && !itens.length && !pendentes && (
-          <Vazio titulo={filtrado ? "Nenhuma decisão neste recorte." : "Nenhuma decisão ainda."} compacto icone="aprovacao" acao="Ver as pendentes" para="/aprovacao">
+          <Vazio titulo={filtrado ? "Nenhuma decisão nesse recorte" : "Nenhuma decisão ainda"} compacto icone="aprovacao" acao="Ver as pendentes" para="/aprovacao">
             As decisões aparecem aqui, da mais recente para a mais antiga, com quem decidiu e quando.
           </Vazio>
         )}

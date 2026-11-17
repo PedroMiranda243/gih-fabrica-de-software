@@ -22,7 +22,7 @@ export default function MeuDesempenho() {
   if (!d.pontos.length) {
     return (
       <div className="pagina">
-        <Vazio titulo={`${d.parceiro}: seus números ainda não chegaram.`} icone="relogio">
+        <Vazio titulo={`${d.parceiro}: seus números ainda não chegaram`} icone="relogio">
           Eles aparecem aqui depois da primeira importação de relatório que incluir o seu comércio.
         </Vazio>
       </div>

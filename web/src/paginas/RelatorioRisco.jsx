@@ -73,7 +73,7 @@ export default function RelatorioRisco() {
         <p>Os filtros continuam acima para escolher outro recorte.</p>
       </ErroDaTela>
       {r && !r.disponivel && (
-        <Vazio titulo={r.motivo ?? "Ainda não há previsão."} icone="modelo" acao={tem(usuario, "modelo") ? "Ir para o Modelo" : undefined} para="/modelo">
+        <Vazio titulo={r.motivo ?? "Ainda não há previsão"} icone="modelo" acao={tem(usuario, "modelo") ? "Ir para o Modelo" : undefined} para="/modelo">
           {r.ajuda}
         </Vazio>
       )}

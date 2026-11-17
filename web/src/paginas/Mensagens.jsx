@@ -197,7 +197,7 @@ export default function Mensagens() {
               (planos.carregando ? (
                 <Carregando rotulo="Carregando os planos" linhas={1} />
               ) : !planosViaveis.length ? (
-                <Vazio titulo="Nenhum plano calculado ainda" compacto icone="campanha" acao={tem(usuario, "campanha") ? "Ir para a campanha" : undefined} para="/campanha">
+                <Vazio titulo="Nenhum plano calculado ainda" compacto icone="campanha" acao={tem(usuario, "campanha") ? "Ir para a Campanha" : undefined} para="/campanha">
                   O plano de campanha diz quem recebe cada ação; com ele, cada mensagem já leva a ação do parceiro.
                 </Vazio>
               ) : (
@@ -313,7 +313,7 @@ export default function Mensagens() {
         )}
         {ultimo.carregando && <Carregando rotulo="Carregando a última geração" linhas={3} />}
         {!loteExibido && !rodando && !ultimo.carregando && (
-          <Vazio titulo="Nenhuma mensagem gerada ainda." compacto icone="mensagens">
+          <Vazio titulo="Nenhuma mensagem gerada ainda" compacto icone="mensagens">
             Escolha o público e veja quem entra: as mensagens aparecem aqui, uma a uma, conforme ficam prontas.
           </Vazio>
         )}

@@ -104,7 +104,7 @@ export default function Benchmark() {
       {anterior && <ErroDaTela erro={antigo.erro} />}
 
       {!exibido && !anterior && !rodando && (
-        <Vazio titulo="Nenhum benchmark ainda." icone="benchmark">
+        <Vazio titulo="Nenhum benchmark ainda" icone="benchmark">
           Rode o primeiro com o cenário sugerido: a tabela e o gráfico aparecem aqui quando ele terminar.
         </Vazio>
       )}

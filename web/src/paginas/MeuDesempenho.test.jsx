@@ -44,6 +44,6 @@ describe("Meu desempenho (RF26)", () => {
     const vazio = { ...amostra("GET_api_meu_desempenho"), atual: null, anterior: null, variacao: null, pontos: [] };
     abrir("/meu-desempenho", { perfil: "PARCEIRO", rotas: { "GET /api/meu-desempenho": { corpo: vazio } } });
 
-    expect(await screen.findByText("Ponto Azul 2: seus números ainda não chegaram.")).toBeInTheDocument();
+    expect(await screen.findByText("Ponto Azul 2: seus números ainda não chegaram")).toBeInTheDocument();
   });
 });
