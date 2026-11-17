@@ -37,6 +37,7 @@ from sqlalchemy import insert, text
 RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ / "api"))
 
+from app import formato  # noqa: E402
 from app.db import Sessao, engine  # noqa: E402
 from app.modelos import (  # noqa: E402
     AcaoComercial,
@@ -316,20 +317,50 @@ def resumo(n_parceiros: int, n_periodos: int, n_metricas: int, semente: int) -> 
                 " FROM metrica WHERE periodo_id = (SELECT max(id) FROM periodo)"
             )
         ).one()
-        top15 = c.execute(
+        maiores = c.execute(
             text(
                 "SELECT sum(faturamento) FROM (SELECT faturamento FROM metrica"
                 " WHERE periodo_id = (SELECT max(id) FROM periodo)"
-                " ORDER BY faturamento DESC LIMIT 15) t"
+                f" ORDER BY faturamento DESC LIMIT {MAIORES}) t"
             )
         ).scalar()
 
-    print(f"\n{n_parceiros} parceiros · {n_periodos} períodos · {n_metricas} métricas · semente {semente}")
-    print(f"\nÚltimo período: faturamento total R$ {total:,.2f} · mediana R$ {mediana:,.2f}")
-    print(f"Concentração do Top 15: {100 * float(top15) / float(total):.1f}% do faturamento")
-    print("\nTop 5 do último período:")
-    for nome, valor in top:
-        print(f"  {nome:<28} R$ {valor:>12,.2f}")
+    texto = texto_do_resumo(
+        n_parceiros, n_periodos, n_metricas, semente,
+        Decimal(total), Decimal(str(mediana)), Decimal(maiores), top,
+    )
+    print("\n".join(texto))
+
+
+# Quanto do faturamento os maiores concentram: diz se a massa tem a cauda longa de
+# que a campanha precisa. Não é o Top da segmentação, que é o limiar em vigor:
+# chamar estes de "Top 15" mentiria com outro limiar (RN01, #229, #287).
+MAIORES = 15
+
+
+def texto_do_resumo(
+    n_parceiros: int,
+    n_periodos: int,
+    n_metricas: int,
+    semente: int,
+    total: Decimal,
+    mediana: Decimal,
+    soma_dos_maiores: Decimal,
+    top: list[tuple[str, Decimal]],
+) -> list[str]:
+    """O resumo da massa gerada, com os números como a tela os escreve (app/formato.py)."""
+    concentracao = formato.percentual(100 * soma_dos_maiores / total).removeprefix("+")
+    return [
+        "",
+        f"{formato.inteiro(n_parceiros)} parceiros · {n_periodos} períodos · "
+        f"{formato.inteiro(n_metricas)} métricas · semente {semente}",
+        "",
+        f"Último período: faturamento total {formato.reais(total)} · mediana {formato.reais(mediana)}",
+        f"Os {MAIORES} maiores faturamentos somam {concentracao} do total",
+        "",
+        f"Os {len(top)} maiores do último período:",
+        *(f"  {nome:<28} {formato.reais(Decimal(valor)):>16}" for nome, valor in top),
+    ]
 
 
 def main() -> None:
