@@ -30,6 +30,8 @@ export default function MeuDesempenho() {
   }
 
   const periodoAtual = d.atual?.periodo ?? d.pontos[d.pontos.length - 1].periodo;
+  // O selo vai nos três indicadores, como no Painel: cada número diz de quando é.
+  const selo = `${comoDiaMes(periodoAtual.data_inicio)} – ${comoDiaMes(periodoAtual.data_fim)}`;
   const semValoresNoAtual = d.atual && d.atual.faturamento === null;
   const primeiro = !d.anterior;
 
@@ -58,13 +60,13 @@ export default function MeuDesempenho() {
           Seus indicadores do período mais recente
         </h2>
         <div className="faixa-kpi__grade">
-          <Kpi rotulo="Faturamento" principal selo={`${comoDiaMes(periodoAtual.data_inicio)} – ${comoDiaMes(periodoAtual.data_fim)}`} variacao={<Variacao valor={d.variacao?.faturamento} semBase="Sem período anterior seu para comparar" />}>
+          <Kpi rotulo="Faturamento" principal selo={selo} variacao={<Variacao valor={d.variacao?.faturamento} semBase="Sem período anterior seu para comparar" />}>
             <Dinheiro valor={d.atual?.faturamento} grande porque="o último relatório não trouxe o seu comércio" />
           </Kpi>
-          <Kpi rotulo="Pedidos" variacao={<Variacao valor={d.variacao?.pedidos} semBase="Sem período anterior seu para comparar" />}>
+          <Kpi rotulo="Pedidos" selo={selo} variacao={<Variacao valor={d.variacao?.pedidos} semBase="Sem período anterior seu para comparar" />}>
             {d.atual?.pedidos === null || d.atual?.pedidos === undefined ? <Ausente porque="o último relatório não trouxe o seu comércio" /> : comoInteiro(d.atual.pedidos)}
           </Kpi>
-          <Kpi rotulo="Ticket médio" variacao={<Variacao valor={d.variacao?.ticket_medio} semBase="Sem período anterior seu para comparar" />}>
+          <Kpi rotulo="Ticket médio" selo={selo} variacao={<Variacao valor={d.variacao?.ticket_medio} semBase="Sem período anterior seu para comparar" />}>
             <Dinheiro valor={d.atual?.ticket_medio} grande porque="o último relatório não trouxe o seu comércio" />
           </Kpi>
         </div>

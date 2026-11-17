@@ -17,6 +17,11 @@ describe("Meu desempenho (RF26)", () => {
     expect(indicadores).toHaveTextContent("1.070");
     expect(indicadores).toHaveTextContent("−15,06%");
     expect(screen.getByText(/Ponto Azul 2/)).toBeInTheDocument();
+    // Como no Painel, cada indicador traz o selo do período, e não só o primeiro (#283).
+    const selos = [...indicadores.querySelectorAll(".kpi")].map((k) => k.querySelector(".kpi__selo")?.textContent);
+    expect(selos).toHaveLength(3);
+    expect(new Set(selos).size).toBe(1);
+    expect(selos[0]).toMatch(/^\d{2}\/\d{2} – \d{2}\/\d{2}$/);
   });
 
   it("chama só a consulta do próprio parceiro, e nenhuma da rede", async () => {
