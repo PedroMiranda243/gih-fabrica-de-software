@@ -86,7 +86,7 @@ export default function Modelo() {
             </Vazio>
           ) : (
             <>
-              <Lacre titulo={`${m.versao_em_uso} em uso · ${ROTULO_ORIGEM_PREVISAO[m.origem] ?? m.origem}`} quando={tv?.concluido_em} quem={tv?.autor ?? (tv ? "pelo terminal" : null)} />
+              <Lacre titulo={`${m.versao_em_uso} em uso · ${ROTULO_ORIGEM_PREVISAO[m.origem] ?? m.origem}`} quando={tv?.concluido_em} quem={tv?.autor} peloTerminal={Boolean(tv) && !tv.autor} />
               {tv && (
                 <dl className="pares pares--modelo">
                   <div>

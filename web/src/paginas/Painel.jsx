@@ -450,7 +450,7 @@ function UltimaCampanha({ campanha, usuario }) {
         <h3 className="bloco__titulo">Última campanha</h3>
         <p className="bloco__sub">Aplicação de {comoData(p.aplicacao_inicio)} a {comoData(p.aplicacao_fim)}</p>
       </div>
-      <Lacre numero={p.execucao_id} titulo="Plano calculado" quando={p.concluida_em} quem={execucao.dados?.autor ?? null}>
+      <Lacre numero={p.execucao_id} titulo="Plano calculado" quando={p.concluida_em} quem={execucao.dados?.autor ?? null} peloTerminal={Boolean(execucao.dados) && !execucao.dados.autor}>
         <span className="lacre__assinatura">Previsões da {p.modelo_versao}</span>
       </Lacre>
       <dl className="pares pares--campanha">

@@ -43,7 +43,7 @@ export default function PlanoDeCampanha({ execucao, novo = false, comMensagens =
   return (
     <div className="plano">
       <div className="plano__topo">
-        <Lacre numero={e.id} titulo="Plano calculado" quando={e.concluida_em} quem={e.autor} novo={novo}>
+        <Lacre numero={e.id} titulo="Plano calculado" quando={e.concluida_em} quem={e.autor} peloTerminal={!e.autor} novo={novo}>
           <span className="lacre__assinatura">Previsões da {e.modelo_versao}, com dados até {comoData(e.periodo_base?.data_fim)}</span>
         </Lacre>
         <Link to="/ajuda#ganho" className="link-seta">

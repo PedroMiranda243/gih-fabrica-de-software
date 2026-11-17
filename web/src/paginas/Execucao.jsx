@@ -60,7 +60,7 @@ export default function Execucao() {
             {nome}
           </h2>
           <p className="folha__recorte">
-            Calculada por {e.autor ?? "pelo terminal"} · previsões da {e.modelo_versao}
+            {e.autor ? `Calculada por ${e.autor}` : "Calculada pelo terminal"} · previsões da {e.modelo_versao}
           </p>
           <Emitido quem={usuario?.nome} />
         </header>
