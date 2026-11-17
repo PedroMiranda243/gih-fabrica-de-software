@@ -39,7 +39,7 @@ export default function Execucoes() {
 
   function comparar() {
     const [a, b] = [...marcados].sort((x, y) => Date.parse(x.iniciada_em) - Date.parse(y.iniciada_em));
-    navegar(`/execucoes/comparar?a=${a.id}&b=${b.id}`);
+    navegar(`/execucoes/comparar?a=${a.id}&b=${b.id}`, { state: { busca: lugar.search } });
   }
 
   const frase = marcados.length === 0 ? "Marque dois planos calculados para compará-los lado a lado." : marcados.length === 1 ? "Marque mais um plano." : "Dois planos marcados.";
@@ -131,7 +131,9 @@ export default function Execucoes() {
                           </td>
                         )}
                         <th scope="row" className="nome">
-                          {abre ? <Link to={`/execucoes/${e.id}`}>{comoDataHora(e.iniciada_em)}</Link> : comoDataHora(e.iniciada_em)}
+                          {abre ? <Link to={`/execucoes/${e.id}`} state={{ busca: lugar.search }}>
+                              {comoDataHora(e.iniciada_em)}
+                            </Link> : comoDataHora(e.iniciada_em)}
                         </th>
                         <td>{e.autor ?? <span className="discreto">pelo terminal</span>}</td>
                         <td className="parametros">

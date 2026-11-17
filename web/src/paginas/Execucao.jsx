@@ -1,5 +1,5 @@
 /** Uma execução: o que foi pedido e o plano que saiu, com CSV (só com itens) e impressão. */
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { useCarregar } from "../api/ganchos";
@@ -15,6 +15,8 @@ import { comoData, comoDataHora, comoDinheiro, comoFracao, comoInteiro, cotasDoP
 export default function Execucao() {
   const { id } = useParams();
   const { usuario } = useSessao();
+  // A volta leva o filtro com que a lista estava, como nos Parceiros e nos Usuários.
+  const lista = `/execucoes${useLocation().state?.busca ?? ""}`;
   const execucao = useCarregar(() => api.get(`/api/otimizacoes/${id}`), id);
   const e = execucao.dados;
   const nome = e ? `Execução de ${comoDataHora(e.iniciada_em)}` : "Execução";
@@ -24,8 +26,8 @@ export default function Execucao() {
   if (execucao.erro?.status === 404) {
     return (
       <div className="pagina">
-        <Trilha passos={[{ rotulo: "Execuções", para: "/execucoes" }, { rotulo: "Não encontrada" }]} />
-        <Vazio titulo="Execução não encontrada" acao="Voltar para as execuções" para="/execucoes" icone="busca">
+        <Trilha passos={[{ rotulo: "Execuções", para: lista }, { rotulo: "Não encontrada" }]} />
+        <Vazio titulo="Execução não encontrada" acao="Voltar para as execuções" para={lista} icone="busca">
           Ela pode ter sido removida, ou o endereço está incompleto.
         </Vazio>
       </div>
@@ -39,7 +41,7 @@ export default function Execucao() {
   return (
     <div className="pagina pagina--relatorio">
       <div className="barra-acoes nao-imprime">
-        <Trilha passos={[{ rotulo: "Execuções", para: "/execucoes" }, { rotulo: nome }]} />
+        <Trilha passos={[{ rotulo: "Execuções", para: lista }, { rotulo: nome }]} />
         <div className="barra-acoes__botoes">
           {temItens && (
             <a className="botao botao--secundario" href={`/api/otimizacoes/${e.id}/exportacao.csv`} download>

@@ -3,7 +3,7 @@
  * chega pronta da API; a tela desenha do resumo ao detalhe, A e B na mesma escala.
  */
 import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 
 import { api } from "../api/cliente";
 import { useCarregar } from "../api/ganchos";
@@ -33,19 +33,20 @@ export default function Comparacao() {
   useTitulo("Comparação de dois planos", "Execuções");
   const { usuario } = useSessao();
   const [busca] = useSearchParams();
+  const lista = `/execucoes${useLocation().state?.busca ?? ""}`;
   const a = busca.get("a");
   const b = busca.get("b");
   const temOsDois = Boolean(a && b);
   const comp = useCarregar(() => api.get("/api/otimizacoes/comparacao", { a, b }), `${a}-${b}`, { ativo: temOsDois });
   const [mostrarIguais, setMostrarIguais] = useState(false);
 
-  const trilha = <Trilha passos={[{ rotulo: "Execuções", para: "/execucoes" }, { rotulo: "Comparação de dois planos" }]} />;
+  const trilha = <Trilha passos={[{ rotulo: "Execuções", para: lista }, { rotulo: "Comparação de dois planos" }]} />;
 
   if (!temOsDois) {
     return (
       <div className="pagina">
         {trilha}
-        <Vazio titulo="Escolha dois planos para comparar" acao="Ir para as execuções" para="/execucoes" icone="comparar">
+        <Vazio titulo="Escolha dois planos para comparar" acao="Ir para as execuções" para={lista} icone="comparar">
           No histórico das execuções, marque dois planos calculados e peça a comparação.
         </Vazio>
       </div>
@@ -56,7 +57,7 @@ export default function Comparacao() {
     return (
       <div className="pagina">
         {trilha}
-        <Vazio titulo="Plano não encontrado" acao="Ir para as execuções" para="/execucoes" icone="busca">
+        <Vazio titulo="Plano não encontrado" acao="Ir para as execuções" para={lista} icone="busca">
           {comp.erro.ajuda ?? "Um dos dois planos do endereço não existe. Escolha dois planos no histórico das execuções."}
         </Vazio>
       </div>

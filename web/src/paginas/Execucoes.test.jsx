@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -49,5 +49,35 @@ describe("as execuções do otimizador", () => {
     await usuario.click(comparar);
 
     await waitFor(() => expect(endereco()).toMatch(/^\/execucoes\/comparar\?a=\d+&b=\d+$/));
+  });
+
+  /* Como nos Parceiros (CT-N09) e nos Usuários: abrir um item e voltar pela trilha
+     devolve a lista com o filtro que ela tinha (#276). */
+  it("a volta de uma execução, e a da comparação, mantêm o filtro da lista", async () => {
+    const usuario = userEvent.setup();
+    abrir("/execucoes?modo=CPU_PARALELO", {
+      rotas: {
+        ...ROTAS(),
+        "GET /api/otimizacoes/:id": { corpo: amostra("GET_api_otimizacoes_execucao_id") },
+        "GET /api/otimizacoes/comparacao": { corpo: amostra("GET_api_otimizacoes_comparacao") },
+      },
+    });
+    const voltarPelaTrilha = async () => {
+      const trilha = await screen.findByRole("navigation", { name: "Onde você está" });
+      await usuario.click(within(trilha).getByRole("link", { name: "Execuções" }));
+    };
+
+    await usuario.click((await screen.findAllByRole("link", { name: /\d{2}\/\d{2}\/\d{4} às/ }))[0]);
+    await waitFor(() => expect(endereco()).toMatch(/^\/execucoes\/\d+$/));
+    await voltarPelaTrilha();
+    await waitFor(() => expect(endereco()).toBe("/execucoes?modo=CPU_PARALELO"));
+
+    const caixas = await screen.findAllByRole("checkbox", { name: /Marcar a execução de/ });
+    await usuario.click(caixas[0]);
+    await usuario.click(caixas[1]);
+    await usuario.click(screen.getByRole("button", { name: "Comparar os dois" }));
+    await waitFor(() => expect(endereco()).toMatch(/^\/execucoes\/comparar/));
+    await voltarPelaTrilha();
+    await waitFor(() => expect(endereco()).toBe("/execucoes?modo=CPU_PARALELO"));
   });
 });
