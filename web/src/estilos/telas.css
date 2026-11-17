@@ -1540,9 +1540,13 @@
   font-size: 1.3rem;
 }
 
+/* Os três passos um embaixo do outro, em toda largura. Lado a lado, o primeiro
+   ficava com um terço do bloco: o seletor de público (~510 px) quebrava em duas
+   linhas, os seletores cortavam o que estava escolhido, e a prévia do passo 2 — uma
+   tabela — cabia num terço (#278). */
 .passos__lista {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--e-5);
   counter-reset: passo;
 }
@@ -1555,8 +1559,8 @@
 }
 
 .passo + .passo {
-  padding-left: var(--e-5);
-  border-left: 1.5px dashed var(--fio);
+  padding-top: var(--e-5);
+  border-top: 1.5px dashed var(--fio);
 }
 
 .passo__titulo {
@@ -1961,17 +1965,6 @@
   .previa__grade,
   .pagina.conta-pessoal {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .passos__lista {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .passo + .passo {
-    padding-left: 0;
-    padding-top: var(--e-5);
-    border-left: 0;
-    border-top: 1.5px dashed var(--fio);
   }
 
   .plano__resumo {
