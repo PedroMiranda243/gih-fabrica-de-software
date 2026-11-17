@@ -64,7 +64,8 @@ describe("as execuções do otimizador", () => {
     });
     const voltarPelaTrilha = async () => {
       const trilha = await screen.findByRole("navigation", { name: "Onde você está" });
-      await usuario.click(within(trilha).getByRole("link", { name: "Execuções" }));
+      // A trilha é da casca, e a tela de destino a preenche ao carregar: espera o link aparecer.
+      await usuario.click(await within(trilha).findByRole("link", { name: "Execuções" }));
     };
 
     await usuario.click((await screen.findAllByRole("link", { name: /\d{2}\/\d{2}\/\d{4} às/ }))[0]);
