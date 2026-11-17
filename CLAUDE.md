@@ -234,7 +234,10 @@ não precisa de comentário.
 
 A API é o contrato entre `api/` e `web/`. Ele é definido **antes** de qualquer um dos dois codificar.
 
-- FastAPI gera a especificação em `/docs` automaticamente
+- A especificação está em `/api/docs` (Swagger), com o sistema no ar, e em
+  [`docs/13-api.md`](docs/13-api.md) no repositório. O FastAPI a gera das rotas, e
+  `api/app/documentacao_api.py` a completa: o resumo de cada rota, os perfis, a sessão, os
+  formatos de erro e os exemplos
 - Mudou o formato de uma resposta? Avise no canal da equipe **e** atualize a issue
 - Frontend não codifica contra a implementação; codifica contra o contrato
 
@@ -573,6 +576,11 @@ frente com alguma, a resposta já está aqui.
   das rotas dele. Na primeira execução ele achou sete requisitos em que `docs/02` dizia menos do que a API
   fazia desde a Sprint 1. Rota que não é de um requisito só vai para a seção "Rotas de apoio", com o motivo.
 
+- **Rota nova entra também na documentação da API.** O `test_documentacao_api.py` reprova a rota sem o
+  resumo em `app/documentacao_api.py`, sem descrição ou sem exemplo do corpo — e o exemplo que o próprio
+  esquema recusaria. Depois de mudar uma rota, `python scripts/exportar_api.py` gera de novo o
+  `docs/api/openapi.json` e o `docs/13-api.md`; o mesmo teste reprova os dois quando ficam velhos.
+
 - **A parte entregue do documento lê a cópia da entrega, nunca o arquivo vivo.** A Parte VI lia a medição das
   telas direto de `docs/medicoes/`, e na geração da Sprint 07 passou a dizer 26 telas onde o PDF entregue diz
   20 — sem erro e sem aviso (#208). Evidência, figura e medição de uma entrega ficam na pasta dela
@@ -593,6 +601,7 @@ frente com alguma, a resposta já está aqui.
 | Papéis, cerimônias, Definition of Done | [`docs/06-equipe-e-processo.md`](docs/06-equipe-e-processo.md) |
 | Arquitetura e decisões registradas | [`docs/07-arquitetura-preliminar.md`](docs/07-arquitetura-preliminar.md) |
 | Onde cada requisito está: rota, tela e teste | [`docs/11-rastreabilidade.md`](docs/11-rastreabilidade.md) |
+| Cada rota da API: quem pode, parâmetros, corpo, respostas e exemplos | [`docs/13-api.md`](docs/13-api.md) |
 | Como se testa, e os casos executados pela tela | [`docs/12-plano-de-testes.md`](docs/12-plano-de-testes.md) |
 | Ramos, commits, Pull Requests | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 
