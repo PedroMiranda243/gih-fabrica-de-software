@@ -21,13 +21,18 @@ export function Carregando({ rotulo = "Carregando", linhas = 3, altura }) {
   );
 }
 
-/** Vazio: título, explicação e, quando houver, a ação seguinte. */
+/**
+ * Vazio: título, explicação e, quando houver, a ação seguinte. O título não leva
+ * ponto final, como todo título; o motivo que a API manda é uma frase, com ponto, e
+ * perde o ponto aqui quando vira título (#284).
+ */
 export function Vazio({ titulo, children, acao, para, aoClicar, icone = "vazio", compacto = false }) {
+  const semPonto = typeof titulo === "string" ? titulo.replace(/(?<!\.)\.$/, "") : titulo;
   return (
     <div className={`vazio${compacto ? " vazio--compacto" : ""}`}>
       <Icone nome={icone} className="vazio__icone" />
       <div>
-        <p className="vazio__titulo">{titulo}</p>
+        <p className="vazio__titulo">{semPonto}</p>
         {children && <div className="vazio__texto">{children}</div>}
         {acao && para && (
           <Link className="botao botao--secundario" to={para}>

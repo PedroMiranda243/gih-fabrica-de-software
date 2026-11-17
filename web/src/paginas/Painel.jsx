@@ -336,7 +336,7 @@ function ProximoPeriodo({ previsao, usuario }) {
           <h3 className="bloco__titulo">Próximo período</h3>
           <Estimativa />
         </div>
-        <Vazio titulo={previsao.motivo ?? "Ainda não há previsão."} compacto icone="modelo" acao={tem(usuario, "modelo") ? "Ir para o Modelo" : undefined} para="/modelo">
+        <Vazio titulo={previsao.motivo ?? "Ainda não há previsão"} compacto icone="modelo" acao={tem(usuario, "modelo") ? "Ir para o Modelo" : undefined} para="/modelo">
           {previsao.ajuda}
         </Vazio>
       </div>
@@ -450,7 +450,7 @@ function UltimaCampanha({ campanha, usuario }) {
         <h3 className="bloco__titulo">Última campanha</h3>
         <p className="bloco__sub">Aplicação de {comoData(p.aplicacao_inicio)} a {comoData(p.aplicacao_fim)}</p>
       </div>
-      <Lacre numero={p.execucao_id} titulo="Plano calculado" quando={p.concluida_em} quem={execucao.dados?.autor ?? null}>
+      <Lacre numero={p.execucao_id} titulo="Plano calculado" quando={p.concluida_em} quem={execucao.dados?.autor ?? null} peloTerminal={Boolean(execucao.dados) && !execucao.dados.autor}>
         <span className="lacre__assinatura">Previsões da {p.modelo_versao}</span>
       </Lacre>
       <dl className="pares pares--campanha">

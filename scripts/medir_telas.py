@@ -5,7 +5,9 @@ Cada tela, aberta pelo perfil que a usa, a **768 e a 1440 px**:
 - **sem rolagem horizontal da página** (RNF21), e **sem conteúdo cortado** por
   uma caixa que esconde o que passa dela. A tabela larga que rola na própria
   caixa passa — é o desenho do projeto (`componentes.css`, `.tabela-rolagem`) —,
-  e o relatório lista onde isso acontece;
+  e o relatório lista onde isso acontece. Também é cortado o seletor estreito
+  demais para o que está escolhido nele: ele mostra "Qualquer segm…", e não se lê
+  a escolha (#278);
 - **o axe-core com o layout de verdade** (RNF22). Nos testes da interface, o
   jsdom não desenha, e o contraste fica de fora; aqui ele entra, nos dois temas;
 - **a captura de cada tela**, em `docs/medicoes/telas/`.
@@ -316,6 +318,23 @@ PASSAM_DA_BORDA = f"""() => {{
     .slice(0, 5)
     .map(nome);
 }}"""
+# O seletor que não cabe o que está escolhido nele: o texto sai com reticências
+# ("Qualquer segm…"), e a pessoa não lê a própria escolha. A seta do seletor fica no
+# padding da direita (`select.entrada`), e por isso a largura livre é a de dentro.
+SELETORES_CORTADOS = f"""() => {{
+  const nome = {NOME};
+  const regua = document.createElement("canvas").getContext("2d");
+  return [...document.querySelectorAll("select")]
+    .filter((s) => s.offsetParent !== null)
+    .filter((s) => {{
+      const e = getComputedStyle(s);
+      regua.font = `${{e.fontStyle}} ${{e.fontWeight}} ${{e.fontSize}} ${{e.fontFamily}}`;
+      const livre = s.clientWidth - parseFloat(e.paddingLeft) - parseFloat(e.paddingRight);
+      return regua.measureText(s.selectedOptions[0]?.text ?? "").width > livre + 1;
+    }})
+    .slice(0, 5)
+    .map((s) => nome(s) + " (o escolhido não cabe)");
+}}"""
 # As caixas que rolam na horizontal por conta própria, e estão rolando.
 ROLAM = f"""() => {{
   const nome = {NOME};
@@ -377,7 +396,9 @@ def medir(url_web: str, sessoes: dict[str, httpx.Client], lista: list[Tela], des
                                 "() => document.documentElement.scrollWidth > "
                                 "document.documentElement.clientWidth"
                             )
-                            passam = pagina.evaluate(PASSAM_DA_BORDA)
+                            passam = pagina.evaluate(PASSAM_DA_BORDA) + pagina.evaluate(
+                                SELETORES_CORTADOS
+                            )
                             rolam = pagina.evaluate(ROLAM)
                             arquivo = f"{tela.arquivo}-{largura}.jpg"
                             pagina.screenshot(path=str(destino / arquivo), type="jpeg", quality=70)
@@ -416,7 +437,8 @@ def montar_relatorio(ambiente, pares, medidas: list[Medida], auditorias: list[Au
         "da interface (`web/src/testes/preparar.js`), e aqui de novo, no navegador, com o "
         "contraste real do que está desenhado;",
         "- **a largura**: cada tela a 768 e a 1440 px, sem rolagem horizontal da página e sem "
-        "conteúdo cortado (RNF21). A tabela larga rola na própria caixa, e a página fica no lugar.",
+        "conteúdo cortado (RNF21) — nem seletor que corta o que está escolhido nele. A tabela "
+        "larga rola na própria caixa, e a página fica no lugar.",
         "",
         "## Ambiente",
         "",

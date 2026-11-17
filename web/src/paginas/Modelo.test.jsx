@@ -31,6 +31,15 @@ describe("o modelo preditivo", () => {
     expect(pagina).toHaveTextContent("9,2%");
   });
 
+  it("a versão treinada pelo terminal assina \"pelo terminal\", e não \"por pelo terminal\" (#279)", async () => {
+    abrir("/modelo", { rotas: ROTAS() });
+
+    const pagina = await screen.findByRole("main");
+    await waitFor(() => expect(pagina).toHaveTextContent("rede-1 em uso"));
+    expect(pagina.querySelector(".lacre")).toHaveTextContent(/às \d{2}:\d{2} pelo terminal$/);
+    expect(pagina).not.toHaveTextContent("por pelo terminal");
+  });
+
   it("enquanto treina, diz que está treinando e acompanha (RNF23)", async () => {
     const usuario = userEvent.setup();
     abrir("/modelo", {

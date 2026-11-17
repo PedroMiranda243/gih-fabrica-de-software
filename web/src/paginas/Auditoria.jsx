@@ -113,7 +113,7 @@ export default function Auditoria() {
                           <span className="rotulo-acao">{r.rotulo}</span>
                         </td>
                         <td className="resumo">{r.resumo || <span className="discreto">—</span>}</td>
-                        <td>{r.origem ? <code>{r.origem}</code> : <span className="discreto">—</span>}</td>
+                        <td className="origem">{r.origem ? <code>{r.origem}</code> : <span className="discreto">—</span>}</td>
                         <td>
                           <button type="button" className="botao botao--fantasma botao--pequeno" aria-expanded={aberto === r.id} aria-controls={`detalhe-${r.id}`} onClick={() => setAberto((a) => (a === r.id ? null : r.id))}>
                             O que foi gravado

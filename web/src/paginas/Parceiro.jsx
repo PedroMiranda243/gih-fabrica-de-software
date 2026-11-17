@@ -426,7 +426,7 @@ function Previsao({ id }) {
       {previsao.carregando && <Carregando rotulo="Carregando a previsão" linhas={3} />}
       <ErroDaTela erro={previsao.erro} />
       {p && !p.disponivel && (
-        <Vazio titulo={p.motivo ?? "Sem previsão para este parceiro."} compacto icone="modelo">
+        <Vazio titulo={p.motivo ?? "Sem previsão para este parceiro"} compacto icone="modelo">
           {p.ajuda}
         </Vazio>
       )}

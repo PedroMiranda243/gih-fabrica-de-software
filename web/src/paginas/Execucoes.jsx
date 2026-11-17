@@ -39,7 +39,7 @@ export default function Execucoes() {
 
   function comparar() {
     const [a, b] = [...marcados].sort((x, y) => Date.parse(x.iniciada_em) - Date.parse(y.iniciada_em));
-    navegar(`/execucoes/comparar?a=${a.id}&b=${b.id}`);
+    navegar(`/execucoes/comparar?a=${a.id}&b=${b.id}`, { state: { busca: lugar.search } });
   }
 
   const frase = marcados.length === 0 ? "Marque dois planos calculados para compará-los lado a lado." : marcados.length === 1 ? "Marque mais um plano." : "Dois planos marcados.";
@@ -131,16 +131,22 @@ export default function Execucoes() {
                           </td>
                         )}
                         <th scope="row" className="nome">
-                          {abre ? <Link to={`/execucoes/${e.id}`}>{comoDataHora(e.iniciada_em)}</Link> : comoDataHora(e.iniciada_em)}
+                          {abre ? <Link to={`/execucoes/${e.id}`} state={{ busca: lugar.search }}>
+                              {comoDataHora(e.iniciada_em)}
+                            </Link> : comoDataHora(e.iniciada_em)}
                         </th>
                         <td>{e.autor ?? <span className="discreto">pelo terminal</span>}</td>
-                        <td className="parametros">
-                          <span>{comoDinheiro(e.parametros.orcamento)}</span>
-                          <span>até {comoInteiro(e.parametros.maximo_acoes)} ações</span>
-                          {e.parametros.cota_cauda_longa !== null && <span>cauda longa {comoFracao(e.parametros.cota_cauda_longa, 0)}</span>}
-                          {cotasDoPedido(e).map((t) => (
-                            <span key={t}>{t}</span>
-                          ))}
+                        <td>
+                          {/* O arranjo em linha fica num div: com `display: flex` na própria
+                              célula, ela deixa de ser célula e o fio da linha se parte (#277). */}
+                          <div className="parametros">
+                            <span>{comoDinheiro(e.parametros.orcamento)}</span>
+                            <span>até {comoInteiro(e.parametros.maximo_acoes)} ações</span>
+                            {e.parametros.cota_cauda_longa !== null && <span>cauda longa {comoFracao(e.parametros.cota_cauda_longa, 0)}</span>}
+                            {cotasDoPedido(e).map((t) => (
+                              <span key={t}>{t}</span>
+                            ))}
+                          </div>
                         </td>
                         <td>{ROTULO_MODO_CURTO[e.modo] ?? e.modo}</td>
                         <td className="num">{comoMilissegundos(e.tempo_ms)}</td>

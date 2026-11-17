@@ -17,6 +17,15 @@ describe("uma execução do otimizador", () => {
     expect(screen.getAllByRole("link", { name: "Execuções" }).some((l) => l.getAttribute("href") === "/execucoes")).toBe(true);
   });
 
+  it("diz quem calculou, e \"pelo terminal\" quando não houve usuário (#279)", async () => {
+    abrir("/execucoes/4", { rotas: ROTAS({ ...EXECUCAO(), autor: null }) });
+
+    expect(await screen.findByText(/^Calculada pelo terminal · previsões da/)).toBeInTheDocument();
+    const lacre = document.querySelector(".plano .lacre");
+    expect(lacre).toHaveTextContent(/às \d{2}:\d{2} pelo terminal/);
+    expect(screen.getByRole("main")).not.toHaveTextContent("por pelo terminal");
+  });
+
   it("o plano com ações traz o CSV dele e o caminho para gerar as mensagens (RF53, RF36)", async () => {
     abrir("/execucoes/4", { rotas: ROTAS() });
 

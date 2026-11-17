@@ -118,7 +118,7 @@ describe("a fila de aprovação", () => {
   it("fila vazia diz isso, e oferece gerar mensagens a quem pode", async () => {
     abrir("/aprovacao", { rotas: { "GET /api/mensagens": { corpo: { itens: [], total: 0, pagina: 1, tamanho: 20 } } } });
 
-    expect(await screen.findByText("Nenhuma mensagem pendente.")).toBeInTheDocument();
+    expect(await screen.findByText("Nenhuma mensagem pendente")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Gerar mensagens" })).toHaveAttribute("href", "/mensagens");
   });
 });

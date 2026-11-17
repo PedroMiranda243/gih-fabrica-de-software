@@ -158,7 +158,8 @@ describe("o cadastro do parceiro", () => {
       }),
     });
 
-    expect(await screen.findByText("Parceiro com histórico curto demais para prever.")).toBeInTheDocument();
+    // O motivo vira o título do vazio, e título não leva ponto (#284).
+    expect(await screen.findByText("Parceiro com histórico curto demais para prever")).toBeInTheDocument();
   });
 
   it("o histórico diz o que mudou no cadastro, quem e quando (RF50)", async () => {

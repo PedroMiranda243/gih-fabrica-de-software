@@ -68,6 +68,10 @@ describe("os relatórios", () => {
 
     await screen.findByRole("heading", { level: 2, name: "Parceiros em risco" });
     expect((await screen.findAllByText("Estimativa")).length).toBeGreaterThan(0);
+    // O tracejado sozinho não basta (docs/09, regra 2): todo indicador estimado leva a etiqueta (#282).
+    const estimados = [...document.querySelectorAll(".kpi--estimado")];
+    expect(estimados.length).toBeGreaterThan(0);
+    for (const kpi of estimados) expect(kpi.querySelector(".etiqueta-estimativa")).not.toBeNull();
   });
 
   it("campanha: escolhe o plano, e o CSV é o do plano escolhido (RF46)", async () => {

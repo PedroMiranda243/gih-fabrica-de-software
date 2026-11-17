@@ -193,7 +193,7 @@ def test_cria_a_conta_parceiro_e_a_trilha_diz_de_quem(admin, parceiros):
 
     assert r.status_code == 201, r.text
     criado = _trilha(admin, "USUARIO_CRIADO")[0]
-    assert criado["resumo"] == "emporio.praca, perfil PARCEIRO, do parceiro Empório da Praça"
+    assert criado["resumo"] == "emporio.praca, perfil Parceiro, do parceiro Empório da Praça"
 
 
 def test_a_conta_aberta_traz_o_parceiro_pelo_nome(admin, criar_usuario, parceiros):

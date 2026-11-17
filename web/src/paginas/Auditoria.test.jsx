@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
@@ -21,6 +24,17 @@ describe("a trilha de auditoria", () => {
     expect(trilha).toHaveTextContent(primeiro.rotulo);
     expect(trilha).toHaveTextContent(primeiro.autor);
     expect(trilha).toHaveTextContent(primeiro.origem);
+  });
+
+  it("o endereço de origem não se parte em duas linhas (#280)", async () => {
+    abrir("/auditoria", { perfil: "ADMINISTRADOR", rotas: ROTAS() });
+
+    // O jsdom não desenha: o teste confere que a célula tem a classe, e que a classe não deixa quebrar.
+    const origem = amostra("GET_api_auditoria").itens[0].origem;
+    expect((await screen.findAllByText(origem))[0].closest("td")).toHaveClass("origem");
+    // O vitest roda de web/, aqui e na CI; o CSS importado chega vazio ao jsdom.
+    const telas = readFileSync(join(process.cwd(), "src", "estilos", "telas.css"), "utf8");
+    expect(telas).toMatch(/\.tabela--auditoria \.origem code \{[^}]*white-space: nowrap;/);
   });
 
   it("filtra por ação, por pessoa e por datas (RF08)", async () => {

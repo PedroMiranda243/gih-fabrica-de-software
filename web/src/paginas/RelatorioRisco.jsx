@@ -73,7 +73,7 @@ export default function RelatorioRisco() {
         <p>Os filtros continuam acima para escolher outro recorte.</p>
       </ErroDaTela>
       {r && !r.disponivel && (
-        <Vazio titulo={r.motivo ?? "Ainda não há previsão."} icone="modelo" acao={tem(usuario, "modelo") ? "Ir para o Modelo" : undefined} para="/modelo">
+        <Vazio titulo={r.motivo ?? "Ainda não há previsão"} icone="modelo" acao={tem(usuario, "modelo") ? "Ir para o Modelo" : undefined} para="/modelo">
           {r.ajuda}
         </Vazio>
       )}
@@ -96,7 +96,7 @@ export default function RelatorioRisco() {
               <Kpi rotulo="Medido, de quem tem previsão">
                 <Dinheiro valor={r.faturamento_medido} grande />
               </Kpi>
-              <Kpi rotulo="Previsto para o próximo período" className="kpi--estimado">
+              <Kpi rotulo={<>Previsto para o próximo período <Estimativa /></>} className="kpi--estimado">
                 <Dinheiro valor={r.faturamento_previsto} grande />
               </Kpi>
               <Kpi rotulo="No último plano">{comoInteiro(r.no_plano)}</Kpi>

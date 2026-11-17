@@ -201,7 +201,7 @@ def test_o_registro_traz_o_autor_o_rotulo_e_o_resumo(admin, criar_usuario):
 
     assert (item["autor"], item["autor_login"]) == ("Chefia", "chefia")
     assert item["rotulo"] == "Perfil de usuário alterado"
-    assert item["resumo"] == "alguem: de ANALISTA para GESTOR"
+    assert item["resumo"] == "alguem: de Analista para Gestor"
     # O código e os parâmetros crus continuam ali, para investigar.
     assert item["acao"] == "PERFIL_ALTERADO" and item["detalhes"]["para"] == "GESTOR"
 
@@ -305,26 +305,35 @@ def test_o_autor_nao_custa_uma_consulta_por_linha(admin, criar_usuario):
             Acao.IMPORTACAO_REALIZADA,
             {"periodo": "2026-09-14 a 2026-09-20", "gravados": 500, "rejeitados": 3,
              "parceiros_criados": 11},
-            "período 2026-09-14 a 2026-09-20: 500 registro(s) gravado(s), 3 rejeitado(s), "
+            "período 14/09/2026 a 20/09/2026: 500 registro(s) gravado(s), 3 rejeitado(s), "
             "11 parceiro(s) novo(s)",
         ),
         (
             Acao.OTIMIZACAO_EXECUTADA,
             {"execucao": 9, "modo": "GPU", "viavel": True, "custo_total": "5000.00"},
-            "execução 9, modo GPU, plano com custo de R$ 5000.00",
+            "execução 9, modo GPU, plano com custo de R$ 5.000,00",
+        ),
+        (
+            Acao.OTIMIZACAO_EXECUTADA,
+            {"execucao": 62, "modo": "CPU_PARALELO", "viavel": True, "custo_total": "7900"},
+            "execução 62, modo CPU paralelo, plano com custo de R$ 7.900,00",
         ),
         (
             Acao.OTIMIZACAO_EXECUTADA,
             {"execucao": 10, "modo": "SERIAL", "viavel": False, "restricao_violada": "orcamento"},
-            "execução 10, modo SERIAL, sem plano viável (orcamento)",
+            "execução 10, modo Serial, sem plano viável (orçamento)",
         ),
         (Acao.MENSAGEM_REJEITADA, {"mensagem": 4, "motivo": "tom frio"}, "mensagem 4: tom frio"),
         (Acao.ACESSO_NEGADO, {"metodo": "GET", "caminho": "/api/usuarios", "perfil": "GESTOR"},
-         "GET /api/usuarios, perfil GESTOR"),
+         "GET /api/usuarios, perfil Gestor"),
+        (Acao.PERFIL_ALTERADO, {"login": "ana", "de": "ANALISTA", "para": "GESTOR"},
+         "ana: de Analista para Gestor"),
+        (Acao.USUARIO_CRIADO, {"login": "t1.admin", "perfil": "ADMINISTRADOR"},
+         "t1.admin, perfil Administrador"),
     ],
     ids=["sem-detalhes", "criado", "editado", "status-e-contato", "classificado",
-         "classificado-antigo", "limiares", "importacao", "plano", "inviavel", "rejeitada",
-         "negado"],
+         "classificado-antigo", "limiares", "importacao", "plano", "plano-cpu", "inviavel",
+         "rejeitada", "negado", "perfil-alterado", "usuario-criado"],
 )
 def test_o_resumo_so_reescreve_o_que_foi_gravado(acao, detalhes, esperado):
     assert servico_auditoria.resumo(str(acao), detalhes) == esperado
@@ -350,7 +359,7 @@ def test_exporta_o_recorte_da_tela_em_csv(admin, criar_usuario):
     assert linhas[0] == ["Quando", "Autor", "Login", "Ação", "O que aconteceu", "Origem"]
     assert len(linhas) == 2  # o cabeçalho e a única alteração de perfil
     assert linhas[1][1:5] == [
-        "Chefia", "chefia", "Perfil de usuário alterado", "alguem: de ANALISTA para GESTOR",
+        "Chefia", "chefia", "Perfil de usuário alterado", "alguem: de Analista para Gestor",
     ]
 
 

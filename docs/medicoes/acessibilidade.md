@@ -6,14 +6,14 @@ Três verificações, em três lugares:
 
 - **o contraste dos tokens**, par a par, nos dois temas — também conferido a cada PR por `web/src/estilos/contraste.test.js`;
 - **rótulos, papéis e nomes acessíveis** — conferidos pelo axe-core no fim de cada teste da interface (`web/src/testes/preparar.js`), e aqui de novo, no navegador, com o contraste real do que está desenhado;
-- **a largura**: cada tela a 768 e a 1440 px, sem rolagem horizontal da página e sem conteúdo cortado (RNF21). A tabela larga rola na própria caixa, e a página fica no lugar.
+- **a largura**: cada tela a 768 e a 1440 px, sem rolagem horizontal da página e sem conteúdo cortado (RNF21) — nem seletor que corta o que está escolhido nele. A tabela larga rola na própria caixa, e a página fica no lugar.
 
 ## Ambiente
 
 | Item | Valor |
 |---|---|
-| Data | 22/10/2026 14:54 |
-| Navegador | Microsoft Edge 155.0.4283.62, sem cabeça, pelo Playwright |
+| Data | 17/11/2026 20:05 |
+| Navegador | Microsoft Edge 157.0.4341.60, sem cabeça, pelo Playwright |
 | axe-core | 4.14.0 |
 | Dados | a base de trabalho, com a massa do gerador; dois planos calculados para a medição e apagados depois |
 | Máquina | Windows 10, Python 3.11.9 |
@@ -124,8 +124,8 @@ api/.venv/Scripts/python scripts/medir_telas.py
 | Assistente | `/assistente` | gestor | ok | ok | 0 | 0 |
 | Campanha | `/campanha` | gestor | ok | ok | 0 | 0 |
 | Execuções | `/execucoes` | gestor | ok | ok | 0 | 0 |
-| Execução | `/execucoes/44` | gestor | ok | ok | 0 | 0 |
-| Comparação | `/execucoes/comparar?a=44&b=45` | gestor | ok | ok | 0 | 0 |
+| Execução | `/execucoes/67` | gestor | ok | ok | 0 | 0 |
+| Comparação | `/execucoes/comparar?a=67&b=68` | gestor | ok | ok | 0 | 0 |
 | Mensagens | `/mensagens` | gestor | ok | ok | 0 | 0 |
 | Aprovação | `/aprovacao` | gestor | ok | ok | 0 | 0 |
 | Benchmark | `/benchmark` | gestor | ok | ok | 0 | 0 |
@@ -136,7 +136,7 @@ api/.venv/Scripts/python scripts/medir_telas.py
 | Relatório da campanha | `/relatorios/campanha` | gestor | ok | ok | 0 | 0 |
 | Usuários | `/usuarios` | administrador | ok | ok | 0 | 0 |
 | Novo usuário | `/usuarios/novo` | administrador | ok | ok | 0 | 0 |
-| Conta do usuário | `/usuarios/38` | administrador | ok | ok | 0 | 0 |
+| Conta do usuário | `/usuarios/113` | administrador | ok | ok | 0 | 0 |
 | Auditoria | `/auditoria` | administrador | ok | ok | 0 | 0 |
 | Relatório de operações | `/relatorios/operacoes` | administrador | ok | ok | 0 | 0 |
 | Limiares | `/configuracao` | administrador | ok | ok | 0 | 0 |
