@@ -62,7 +62,9 @@ def pedir(caminho, metodo="GET", corpo=None, cabecalhos=None):
         "openapi": '"openapi"' in texto or "swagger" in texto.lower(),
     }
 
-saida = {c: pedir(c) for c in ("/", "/parceiros/12", "/docs", "/openapi.json", "/api/sessao/atual")}
+CAMINHOS = ("/", "/parceiros/12", "/docs", "/openapi.json", "/api/docs", "/api/redoc",
+            "/api/openapi.json", "/api/sessao/atual")
+saida = {c: pedir(c) for c in CAMINHOS}
 
 senha = os.environ.get("GIH_ADMIN_SENHA")
 if senha:
@@ -168,7 +170,9 @@ def borda(c: Conferencias, no_ar: set[str]) -> None:
     api = r["/api/sessao/atual"]
     c.confere("o `/api` chega à API: sem sessão, a resposta é o 401 dela",
               api["status"] == 401 and "json" in api["tipo"], (api["status"], api["tipo"]))
-    for caminho in ("/docs", "/openapi.json"):
+    # A documentação mora em `/api/docs`; os caminhos sem o prefixo ficam
+    # conferidos também, para nenhum dos dois voltar a passar (#268).
+    for caminho in ("/docs", "/openapi.json", "/api/docs", "/api/redoc", "/api/openapi.json"):
         c.confere(f"a documentação interativa da API não passa pela borda ({caminho})",
                   not r[caminho]["openapi"], r[caminho]["tipo"])
     for resposta, de in ((raiz, "na página"), (api, "no `/api`")):
