@@ -10,13 +10,20 @@ como `MENSAGENS_FALHARAM`.
 **O resumo nunca inventa.** Ele só reescreve o que está em `detalhes`; chave que
 falta some da frase, e ação sem formatador cai no rótulo. Registro antigo, de
 antes de um campo existir, continua legível.
+
+**E escreve como a tela escreve** (#281): o modo e o perfil pelo nome que a tela
+lhes dá, o dinheiro e a data pelo `app/formato.py`. O código cru ("CPU_PARALELO",
+"R$ 7900", "2026-09-14") fica no que foi gravado, que a tela também mostra.
 """
 from __future__ import annotations
 
+import re
 from datetime import date, datetime, time, timedelta
+from decimal import Decimal, InvalidOperation
 
 from sqlalchemy import Select, String, cast, or_, select
 
+from app import formato
 from app.auditoria import Acao
 from app.modelos import Auditoria, Usuario
 
@@ -87,6 +94,47 @@ def _valor(v: object) -> str:
     return "vazio" if v is None or v == "" else str(v)
 
 
+# Os nomes que a tela dá aos códigos (`web/src/formato.js`): ROTULO_MODO_CURTO,
+# ROTULO_PERFIL e ROTULO_RESTRICAO. Código que não está aqui sai como foi gravado.
+_MODO = {"SERIAL": "Serial", "CPU_PARALELO": "CPU paralelo", "GPU": "GPU"}
+_PERFIL = {
+    "ADMINISTRADOR": "Administrador",
+    "GESTOR": "Gestor",
+    "ANALISTA": "Analista",
+    "PARCEIRO": "Parceiro",
+}
+_RESTRICAO = {
+    "orcamento": "orçamento",
+    "maximo_acoes": "máximo de ações",
+    "cauda_longa": "cota da cauda longa",
+    "cota_categoria": "cota de categoria",
+    "elegiveis_categoria": "elegíveis da categoria",
+}
+
+
+def _modo(v: object) -> str:
+    return _MODO.get(str(v), _valor(v))
+
+
+def _perfil(v: object) -> str:
+    return _PERFIL.get(str(v), _valor(v))
+
+
+def _reais(v: object) -> str:
+    try:
+        return formato.reais(Decimal(str(v)))
+    except (InvalidOperation, ValueError):
+        return f"R$ {_valor(v)}"
+
+
+_DATA_ISO = re.compile(r"(?<!\d)(\d{4})-(\d{2})-(\d{2})(?!\d)")
+
+
+def _datas(texto: object) -> str:
+    """As datas ISO de um texto gravado ("2026-09-14 a 2026-09-20") como a tela as escreve."""
+    return _DATA_ISO.sub(lambda m: f"{m[3]}/{m[2]}/{m[1]}", _valor(texto))
+
+
 # Os nomes dos campos como a tela os chama; o que não está aqui sai como foi gravado.
 _NOMES = {
     "top_n": "Top N",
@@ -116,11 +164,12 @@ def _limiares(d: dict) -> str:
 def _campanha(d: dict) -> str:
     partes = [f"execução {d['execucao']}"] if "execucao" in d else []
     if d.get("modo"):
-        partes.append(f"modo {d['modo']}")
+        partes.append(f"modo {_modo(d['modo'])}")
     if d.get("viavel") is True:
-        partes.append(f"plano com custo de R$ {d.get('custo_total')}")
+        partes.append(f"plano com custo de {_reais(d.get('custo_total'))}")
     elif d.get("viavel") is False:
-        partes.append(f"sem plano viável ({d.get('restricao_violada')})")
+        restricao = d.get("restricao_violada")
+        partes.append(f"sem plano viável ({_RESTRICAO.get(str(restricao), _valor(restricao))})")
     return ", ".join(partes)
 
 
@@ -202,12 +251,12 @@ _FORMATADORES = {
         f"{d['sessoes_encerradas']} sessão(ões) encerrada(s)" if "sessoes_encerradas" in d else ""
     ) + (", pelo terminal" if d.get("via") == "cli" else ""),
     Acao.IMPORTACAO_REALIZADA: lambda d: (
-        f"período {d.get('periodo')}: {d.get('gravados')} registro(s) gravado(s), "
+        f"período {_datas(d.get('periodo'))}: {d.get('gravados')} registro(s) gravado(s), "
         f"{d.get('rejeitados')} rejeitado(s), {d.get('parceiros_criados')} parceiro(s) novo(s)"
     ),
     Acao.IMPORTACAO_SUBSTITUIDA: lambda d: (
-        f"período {d.get('periodo')}: {d.get('gravados')} registro(s) gravado(s) no lugar de "
-        f"{d.get('metricas_apagadas')} apagado(s)"
+        f"período {_datas(d.get('periodo'))}: {d.get('gravados')} registro(s) gravado(s) "
+        f"no lugar de {d.get('metricas_apagadas')} apagado(s)"
     ),
     Acao.PARCEIRO_CRIADO: _do_parceiro(Acao.PARCEIRO_CRIADO),
     Acao.PARCEIRO_EXCLUIDO: _do_parceiro(Acao.PARCEIRO_EXCLUIDO),
@@ -218,14 +267,18 @@ _FORMATADORES = {
     Acao.CATEGORIA_CRIADA: lambda d: _valor(d.get("nome")),
     Acao.SEGMENTACAO_CONFIGURADA: _limiares,
     Acao.SENHA_REDEFINIDA: _senha_redefinida,
-    Acao.USUARIO_CRIADO: lambda d: f"{d.get('login')}, perfil {d.get('perfil')}" + (
+    Acao.USUARIO_CRIADO: lambda d: f"{d.get('login')}, perfil {_perfil(d.get('perfil'))}" + (
         f", do parceiro {d['parceiro']}" if d.get("parceiro") else ""
     ),
     Acao.USUARIO_EDITADO: _usuario_editado,
     Acao.USUARIO_DESATIVADO: lambda d: _valor(d.get("login")),
     Acao.USUARIO_REATIVADO: lambda d: _valor(d.get("login")),
-    Acao.PERFIL_ALTERADO: lambda d: f"{d.get('login')}: de {d.get('de')} para {d.get('para')}",
-    Acao.ACESSO_NEGADO: lambda d: f"{d.get('metodo')} {d.get('caminho')}, perfil {d.get('perfil')}",
+    Acao.PERFIL_ALTERADO: lambda d: (
+        f"{d.get('login')}: de {_perfil(d.get('de'))} para {_perfil(d.get('para'))}"
+    ),
+    Acao.ACESSO_NEGADO: lambda d: (
+        f"{d.get('metodo')} {d.get('caminho')}, perfil {_perfil(d.get('perfil'))}"
+    ),
     Acao.MODELO_TREINADO: lambda d: (
         f"treino {d.get('treino')}: versão em uso {d.get('versao_em_uso')}"
         + ("" if d.get("promovido") else ", a anterior foi mantida")

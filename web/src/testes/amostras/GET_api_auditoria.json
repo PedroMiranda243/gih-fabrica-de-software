@@ -7,7 +7,7 @@
    "autor_login": "lab.gestor",
    "acao": "ACESSO_NEGADO",
    "rotulo": "Acesso negado",
-   "resumo": "GET /api/auditoria, perfil GESTOR",
+   "resumo": "GET /api/auditoria, perfil Gestor",
    "detalhes": {
     "metodo": "GET",
     "perfil": "GESTOR",
