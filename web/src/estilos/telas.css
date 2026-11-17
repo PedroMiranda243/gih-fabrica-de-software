@@ -1791,6 +1791,14 @@
   max-width: 48ch;
 }
 
+/* O `code` quebra em qualquer ponto (base.css), para o código longo não estourar a
+   caixa; o endereço de origem, numa coluna estreita, saía "172.19." numa linha e
+   "0.1" na outra (#280). Inteiro, ele faz a tabela rolar na própria caixa. */
+.tabela--auditoria .origem code {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
 .rotulo-acao {
   font-weight: 700;
 }
