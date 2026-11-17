@@ -317,7 +317,8 @@ function montar() {
     + 'três coisas contra a aplicação no ar. Ela termina lendo as linhas do banco por SQL — só leitura —, '
     + 'para mostrar o que ficou gravado de fato, e não o que a API diz que gravou.',
   ));
-  c.push(diagrama('mer-previsao', 520));
+  // A figura entregue, congelada: o diagrama vivo do docs/08 muda com o modelo de dados (#265).
+  c.push(diagrama('mer-previsao', 520, 'parte-v'));
   c.push(legenda('O recorte do modelo de dados que o módulo usa. A ligação tracejada não é chave estrangeira: vem da versão, pelo nome.'));
 
   c.push(quebra());
