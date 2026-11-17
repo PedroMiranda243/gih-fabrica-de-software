@@ -2,7 +2,7 @@
  * Cadastro do parceiro — criar, editar, desativar e excluir, com o desempenho, a
  * previsão e a campanha dele ao lado. A validação é do servidor.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { api, ErroDaApi } from "../api/cliente";
@@ -186,6 +186,13 @@ function Cadastro({ id, dados, recarregar, substituir, origem }) {
             </select>
           )}
         </Campo>
+        <NovaCategoria
+          aoCriar={(criada) => {
+            categorias.substituir((lista) => [...(lista ?? []), criada].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")));
+            mudar("categoria_id", String(criada.id));
+            setSugestao(null);
+          }}
+        />
         <Campo nome="status" rotulo="Status comercial" erro={erros.campos.status} ajuda="Prospecção é quem ainda não converteu.">
           {(a) => (
             <select {...a} ref={registrar("status")} className="entrada" value={valores.status} onChange={(e) => mudar("status", e.target.value)}>
@@ -240,6 +247,102 @@ function Cadastro({ id, dados, recarregar, substituir, origem }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Cria uma categoria sem sair do cadastro (#269): a API tinha a criação, e
+ * nenhuma tela a oferecia. A criada já fica escolhida no campo, e o cadastro
+ * continua por salvar — criar a categoria não grava o parceiro. Quem valida o
+ * nome é o servidor; a recusa (o nome curto, o nome repetido) aparece embaixo
+ * do campo.
+ */
+function NovaCategoria({ aoCriar }) {
+  const [aberta, setAberta] = useState(false);
+  const [nome, setNome] = useState("");
+  const [erro, setErro] = useState(null);
+  const [criando, setCriando] = useState(false);
+  const [aviso, setAviso] = useState(null);
+  const campo = useRef(null);
+
+  useEffect(() => {
+    if (aberta) campo.current?.focus();
+  }, [aberta]);
+
+  function fechar() {
+    setAberta(false);
+    setNome("");
+    setErro(null);
+  }
+
+  async function criar() {
+    setCriando(true);
+    setErro(null);
+    try {
+      const criada = await api.post("/api/categorias", { nome: nome.trim() });
+      aoCriar(criada);
+      fechar();
+      setAviso(`Categoria ${criada.nome} criada e escolhida. Salve o cadastro para gravar a escolha.`);
+      requestAnimationFrame(() => document.getElementById("campo-categoria_id")?.focus());
+    } catch (e) {
+      const doCampo = e instanceof ErroDaApi ? e.campos?.[0] : null;
+      setErro(
+        e instanceof ErroDaApi
+          ? { mensagem: doCampo?.mensagem ?? e.message, ajuda: doCampo?.ajuda ?? e.ajuda }
+          : { mensagem: "Não foi possível criar a categoria. Tente de novo." },
+      );
+      campo.current?.focus();
+    } finally {
+      setCriando(false);
+    }
+  }
+
+  if (!aberta) {
+    return (
+      <div className="nova-categoria__abrir">
+        <button type="button" className="botao botao--fantasma botao--pequeno" onClick={() => (setAviso(null), setAberta(true))}>
+          <Icone nome="mais" /> Nova categoria
+        </button>
+        {aviso && (
+          <p className="discreto" role="status">
+            {aviso}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="nova-categoria" role="group" aria-label="Nova categoria">
+      <Campo nome="categoria_nova" rotulo="Nome da categoria nova" obrigatorio erro={erro}>
+        {(a) => (
+          <input
+            {...a}
+            ref={campo}
+            className="entrada"
+            value={nome}
+            onChange={(e) => (setNome(e.target.value), setErro(null))}
+            onKeyDown={(e) => {
+              // Enter cria a categoria, e não envia o cadastro do parceiro em volta.
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (nome.trim() && !criando) criar();
+              }
+              if (e.key === "Escape" && !criando) fechar();
+            }}
+            autoComplete="off"
+          />
+        )}
+      </Campo>
+      <div className="nova-categoria__acoes">
+        <button type="button" className="botao botao--secundario botao--pequeno" onClick={criar} disabled={criando || !nome.trim()}>
+          {criando ? "Criando…" : "Criar categoria"}
+        </button>
+        <button type="button" className="botao botao--fantasma botao--pequeno" onClick={fechar} disabled={criando}>
+          Cancelar
+        </button>
+      </div>
     </div>
   );
 }

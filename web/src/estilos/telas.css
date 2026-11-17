@@ -765,6 +765,30 @@
   font-size: var(--t-14);
 }
 
+/* A categoria nova, criada sem sair do cadastro (#269). Sem fundo próprio: o
+   campo e a mensagem de erro ficam no chão do formulário, com o contraste já
+   medido; o fio à esquerda é o que diz que o grupo pertence à Categoria. */
+.nova-categoria__abrir {
+  display: grid;
+  justify-items: start;
+  gap: var(--e-2);
+  margin-top: calc(-1 * var(--e-3));
+}
+
+.nova-categoria {
+  display: grid;
+  gap: var(--e-3);
+  margin-top: calc(-1 * var(--e-3));
+  padding-left: var(--e-3);
+  border-left: 2px solid var(--fio-forte);
+}
+
+.nova-categoria__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2);
+}
+
 /* ---------- cadastro ---------- */
 
 .cadastro-grade,

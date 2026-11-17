@@ -84,6 +84,60 @@ describe("o cadastro do parceiro", () => {
     expect(await screen.findByRole("link", { name: "Abrir o cadastro de Ponto Azul 2" })).toHaveAttribute("href", "/parceiros/246");
   });
 
+  it("cria uma categoria sem sair do cadastro, e a criada já fica escolhida (RF14, #269)", async () => {
+    const usuario = userEvent.setup();
+    const { corpoDe, chamadas } = abrir("/parceiros/novo", {
+      rotas: DO_PARCEIRO({
+        "GET /api/categorias/sugestao": { corpo: { categoria: null } },
+        "POST /api/categorias": { status: 201, corpo: { id: 77, nome: "Doceria", ativa: true } },
+      }),
+    });
+
+    await usuario.click(await screen.findByRole("button", { name: "Nova categoria" }));
+    const campo = screen.getByLabelText(/^Nome da categoria nova/);
+    expect(campo).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Criar categoria" })).toBeDisabled();
+    await usuario.type(campo, "Doceria{Enter}");
+
+    expect(corpoDe("POST /api/categorias")).toEqual({ nome: "Doceria" });
+    await waitFor(() => expect(screen.getByLabelText("Categoria")).toHaveValue("77"));
+    expect(screen.getByRole("option", { name: "Doceria" })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Categoria Doceria criada e escolhida.");
+    // Criar a categoria não grava o parceiro: o cadastro continua por salvar.
+    expect(chamadas().some((c) => c.startsWith("POST /api/parceiros"))).toBe(false);
+  });
+
+  it("a categoria com nome repetido é recusada embaixo do campo, e nada é escolhido (#269)", async () => {
+    const usuario = userEvent.setup();
+    abrir("/parceiros/novo", {
+      rotas: DO_PARCEIRO({
+        "POST /api/categorias": { status: 409, corpo: { detail: "Já existe uma categoria com o nome 'Pizzaria'." } },
+      }),
+    });
+
+    await usuario.click(await screen.findByRole("button", { name: "Nova categoria" }));
+    await usuario.type(screen.getByLabelText(/^Nome da categoria nova/), "Pizzaria");
+    await usuario.click(screen.getByRole("button", { name: "Criar categoria" }));
+
+    const campo = screen.getByLabelText(/^Nome da categoria nova/);
+    expect(await screen.findByText("Já existe uma categoria com o nome 'Pizzaria'.")).toBeInTheDocument();
+    expect(campo).toHaveAttribute("aria-invalid", "true");
+    expect(campo).toHaveAccessibleDescription(/Já existe uma categoria/);
+    expect(screen.getByLabelText("Categoria")).toHaveValue("");
+  });
+
+  it("Esc fecha a categoria nova sem criar nada (#269)", async () => {
+    const usuario = userEvent.setup();
+    const { chamadas } = abrir("/parceiros/novo", { rotas: DO_PARCEIRO() });
+
+    await usuario.click(await screen.findByRole("button", { name: "Nova categoria" }));
+    await usuario.type(screen.getByLabelText(/^Nome da categoria nova/), "Doceria{Escape}");
+
+    expect(screen.queryByLabelText(/^Nome da categoria nova/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Nova categoria" })).toBeInTheDocument();
+    expect(chamadas().some((c) => c.startsWith("POST /api/categorias"))).toBe(false);
+  });
+
   it("mostra a previsão e a chance de queda como estimativa, com a versão do modelo (RF28)", async () => {
     abrir("/parceiros/246", { rotas: DO_PARCEIRO() });
 

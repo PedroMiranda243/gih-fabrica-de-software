@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 2.4 — 26/10/2026 · o diagrama com os dezesseis casos de uso, e as telas pela interface v2 (H103) (2.3 — 02/10/2026, como a matriz de permissões é conferida, na H100; 2.2 — 02/10/2026, o UC16 e os fluxos de senha; 2.1 — 01/10/2026, o UC15; 2.0 — 16/09/2026)
+**Versão:** 2.5 — 16/11/2026 · a categoria nova pelo cadastro, no UC04 (2.4 — 26/10/2026, o diagrama com os dezesseis casos de uso, e as telas pela interface v2, na H103; 2.3 — 02/10/2026, como a matriz de permissões é conferida, na H100; 2.2 — 02/10/2026, o UC16 e os fluxos de senha; 2.1 — 01/10/2026, o UC15; 2.0 — 16/09/2026)
 
 ---
 
@@ -346,6 +346,9 @@ anterior do mesmo domínio, e nenhum dos três aparece no caminho feliz.
 - **A5 — Massa de demonstração.** O Administrador gera uma rede sintética de 100 a 10.000 parceiros com
   múltiplos períodos (RF16), para demonstração e para o benchmark do otimizador. **Nenhum dado real de
   operação entra no sistema por esse caminho.**
+- **A6 — Categoria nova.** Nenhuma das categorias serve: o usuário cria uma no próprio cadastro ("Nova
+  categoria"), e ela já fica escolhida — o parceiro continua por salvar. O nome repetido é recusado embaixo
+  do campo (#269).
 
 **Exceções**
 
