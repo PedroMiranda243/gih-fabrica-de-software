@@ -45,10 +45,13 @@ isso já é um travamento, e ele vai para o registro.
 
 ## Os testes, com o sistema no ar (opcional)
 
+Desde a Sprint 10, o README traz o que é preciso para subir e avaliar, e o que só a equipe usa fica no guia de
+operação, a um link dele (`docs/14-guia-de-operacao.md`). Seguir esse link faz parte do README.
+
 | # | Passo do README | O que conferir |
 |--:|---|---|
 | 14 | Os testes da interface: `npm ci`, `npm run lint` e `npm test`, na pasta `web/` | O lint sem aviso, e todos os testes passando |
-| 15 | Os testes pela tela, só a navegação: `scripts/testar_na_tela.py --so CT-N` | "Resultado: 16 de 16 casos como esperado" |
+| 15 | Os testes pela tela, só a navegação: `scripts/testar_na_tela.py --so CT-N`, seguindo o link do README para o guia de operação (`docs/14`) | Antes, o ambiente de desenvolvimento do mesmo guia. "Resultado: 16 de 16 casos como esperado" |
 
 ## O que registrar na issue #164
 

@@ -603,6 +603,7 @@ frente com alguma, a resposta já está aqui.
 | Onde cada requisito está: rota, tela e teste | [`docs/11-rastreabilidade.md`](docs/11-rastreabilidade.md) |
 | Cada rota da API: quem pode, parâmetros, corpo, respostas e exemplos | [`docs/13-api.md`](docs/13-api.md) |
 | Como se testa, e os casos executados pela tela | [`docs/12-plano-de-testes.md`](docs/12-plano-de-testes.md) |
+| Desenvolver, testar, medir, administrar pelo terminal e gerar as entregas | [`docs/14-guia-de-operacao.md`](docs/14-guia-de-operacao.md) |
 | Ramos, commits, Pull Requests | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
 
 **Este arquivo é vivo.** Decisão de arquitetura ou convenção nova entra aqui, no mesmo Pull Request que a
