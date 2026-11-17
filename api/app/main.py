@@ -74,7 +74,10 @@ app = FastAPI(
     title="Growth Intelligence Hub",
     description="API do painel de inteligência de crescimento para redes de parceiros.",
     version=VERSAO,
+    # Os três endereços da documentação ficam debaixo de /api, como o README os dá e a
+    # borda do acesso remoto os bloqueia. O ReDoc tinha ficado no padrão, /redoc (#286).
     docs_url="/api/docs",
+    redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
 )
 

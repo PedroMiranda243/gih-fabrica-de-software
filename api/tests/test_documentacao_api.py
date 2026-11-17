@@ -111,6 +111,18 @@ def test_o_documento_nao_anuncia_o_422_do_fastapi():
     assert ESPEC["components"]["securitySchemes"]["sessao"]["in"] == "cookie"
 
 
+def test_os_enderecos_da_documentacao_que_o_readme_da_respondem(cliente):
+    """O README dá `/api/docs` e `/api/redoc`; o ReDoc ficou em `/redoc` até o #286."""
+    for caminho in ("/api/docs", "/api/redoc"):
+        r = cliente.get(caminho)
+        assert r.status_code == 200 and "text/html" in r.headers["content-type"], caminho
+        assert "/api/openapi.json" in r.text, f"{caminho} não lê o documento da API"
+    assert cliente.get("/api/openapi.json").status_code == 200
+    # Fora de /api, a borda remota entrega a interface: documentação ali escaparia do bloqueio.
+    assert cliente.get("/redoc").status_code == 404
+    assert cliente.get("/docs").status_code == 404
+
+
 def test_os_arquivos_exportados_sao_os_que_a_api_gera_agora():
     """`docs/api/openapi.json` e `docs/13-api.md`: rode `scripts/exportar_api.py` se falhar."""
     exportado = json.loads((RAIZ / "docs" / "api" / "openapi.json").read_text(encoding="utf-8"))
