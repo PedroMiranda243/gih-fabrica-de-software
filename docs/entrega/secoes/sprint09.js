@@ -723,8 +723,9 @@ function montar() {
     'A campanha com orçamento de R$ 1,00 não deu "inviável": deu um plano sem nenhuma ação, explicado na tela. E '
     + 'a interface não tem como criar uma categoria nova.',
     'O primeiro é o comportamento certo — inviável é quando as restrições se contradizem, como cotas mínimas que '
-    + 'custam mais que o orçamento, e é isso que o caso CT-V15 testa agora. O segundo é uma limitação registrada '
-    + 'no docs/07: o caso de uso não pede essa tela, e as categorias vêm do gerador; criar uma nova é pela API.',
+    + 'custam mais que o orçamento, e é isso que o caso CT-V15 testa agora. O segundo era uma limitação: a API '
+    + 'criava a categoria, e nenhuma tela oferecia isso. A Sprint 10 a corrigiu — o cadastro do parceiro ganhou a '
+    + '"Nova categoria" (#269), com o caso CT-F39 —, e a Parte X a registra.',
   );
 
   // ============================================== 10. PENDÊNCIAS E PRÓXIMOS PASSOS
@@ -739,12 +740,12 @@ function montar() {
     ['O Firefox (RNF08)', 'Não está instalado na máquina de teste', 'Rodar os casos de navegação nele, com o mesmo script', 'Antes da entrega final'],
     ['Os 52 períodos (RNF04)', 'Medido com 10.000 parceiros e 12 períodos', 'Medir com a base de 52 períodos', 'Antes da entrega final'],
     ['O usuário novo observado (RNF20)', 'A interface está em português e tem ajuda; ninguém de fora foi observado usando', 'Uma sessão com alguém de fora da equipe, sem ajuda', 'Antes da gravação'],
-    ['A transferência do núcleo (R4)', 'O núcleo foi construído por uma pessoa só', 'Apresentação à equipe, e as perguntas prováveis da banca em docs/banca.md', 'Até 08/11'],
-    ['Os vídeos (H74, H75)', 'Ficam para depois do congelamento, com a interface que fica', 'Roteiro, base de demonstração final e gravação', '09/11 a 04/12'],
+    ['A transferência do núcleo (R4)', 'O núcleo foi construído por uma pessoa só', 'Apresentação à equipe, e as perguntas prováveis da banca em docs/banca.md', 'Antes da gravação'],
+    ['Os vídeos (H74, H75)', 'Ficam para depois da Release Candidate, com a interface e a base que ficam', 'Roteiro e gravação, com a base de demonstração final', 'Até 04/12'],
   ], { zebra: true, boldCol: 0, size: 16 }));
   c.push(espaco(80));
   c.push(h2('Próximos passos'));
-  c.push(bullet('A base de demonstração final, recriada antes da gravação dos vídeos (09/11), com a rede, o modelo treinado, um plano, mensagens na fila e o benchmark com a GPU.'));
+  c.push(bullet('A base de demonstração final, recriada na Release Candidate (Parte X), com a rede, o modelo treinado, um plano, mensagens na fila e o benchmark com a GPU — a base dos vídeos e da banca.'));
   c.push(bullet('Os casos de teste pela tela de novo antes de cada entrega e da banca: o catálogo é vivo, e caso novo entra no docs/12 junto do código que o executa.'));
   c.push(bullet(`Os não funcionais ainda em parte — ${rnf.pendentes.map((r) => r.id).join(', ')} — fechados ou explicados antes da entrega final, cada um com a ação da tabela acima.`));
   c.push(bullet('As entregas da disciplina que vierem, na ordem dos enunciados; o código continua congelado, e só entra correção.'));
