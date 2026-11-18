@@ -329,13 +329,15 @@ GIH_ADMIN_SENHA=... python e2e/persistencia.py       > ../docs/entrega/evidencia
 cd ..
 GIH_ADMIN_SENHA=... node docs/entrega/capturar_sprintNN.js       # as telas da sprint
 api/.venv/Scripts/python scripts/registrar_testes.py --saida docs/entrega/evidencias/sprintNN
-python scripts/registrar_bugs.py --desde AAAA-MM-DD --marco "Sprint NN" --saida docs/entrega/evidencias/sprintNN
-python scripts/registrar_revisoes.py --depois-do-pr NNN --saida docs/entrega/evidencias/sprintNN
+python scripts/registrar_bugs.py --desde AAAA-MM-DD --marco "Sprint NN acadêmica" --saida docs/entrega/evidencias/sprintNN
+python scripts/registrar_revisoes.py --depois-do-pr NNN --marco "Sprint NN acadêmica" --saida docs/entrega/evidencias/sprintNN
 node docs/entrega/registrar_commits.js > docs/entrega/evidencias/sprintNN/commits.txt
 ```
 
 Os registros de bugs e de revisões leem o GitHub, e pedem o `gh` autenticado; a janela das revisões começa
-depois do PR do PDF da entrega anterior. O `--marco` separa os defeitos pelo marco da issue: é o que divide duas
-sprints entregues no mesmo PDF, como a 09 e a 10. Nenhum dos scripts deixa resíduo no banco. A seção de uma parte já entregue lê só a cópia da pasta dela, e
+depois do PR do PDF da entrega anterior. O `--marco` separa os defeitos e os PRs pelo marco: é o que divide duas
+sprints entregues no mesmo PDF, como a 09 e a 10. Ele compara o começo do título, e por isso vai com o
+"acadêmica": há um marco antigo, "Sprint 10 · Otimizador integrado…", das sprints internas. Um PR sem marco fica
+de fora — confira os da janela antes de gerar. Nenhum dos scripts deixa resíduo no banco. A seção de uma parte já entregue lê só a cópia da pasta dela, e
 nunca o arquivo vivo: antes de exportar o PDF, compare o texto e as figuras das partes anteriores com o
 documento já entregue (CLAUDE.md, seção 7).

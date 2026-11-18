@@ -26,7 +26,7 @@ Precisa do `gh` autenticado. Uso, da raiz do projeto:
     python scripts/registrar_bugs.py --desde 2026-09-25 \\
         --anterior docs/entrega/evidencias/sprint05/bugs.json \\
         --saida docs/entrega/evidencias/sprint06
-    python scripts/registrar_bugs.py --desde 2026-10-03 --marco "Sprint 09" \\
+    python scripts/registrar_bugs.py --desde 2026-10-03 --marco "Sprint 09 acadêmica" \\
         --anterior docs/entrega/evidencias/sprint08/bugs.json \\
         --saida docs/entrega/evidencias/sprint09
 """
