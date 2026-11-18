@@ -34,6 +34,7 @@ const sprint06 = require('./secoes/sprint06');
 const sprint07 = require('./secoes/sprint07');
 const sprint08 = require('./secoes/sprint08');
 const sprint09 = require('./secoes/sprint09');
+const sprint10 = require('./secoes/sprint10');
 
 const GRUPO = '18';
 const PROJETO = 'GROWTH INTELLIGENCE HUB (GIH)';
@@ -42,9 +43,9 @@ const PROJETO = 'GROWTH INTELLIGENCE HUB (GIH)';
 // as anteriores e a atual, então acrescentar uma sprint é acrescentar um módulo
 // em `secoes/` e uma linha aqui.
 const SPRINT = {
-  numero: '09',
-  titulo: 'TESTES E CORREÇÕES',
-  anteriores: 'Documento acumulado: inclui as Sprints 01, 02, 03, 04, 05, 06, 07 e 08',
+  numero: '10',
+  titulo: 'RELEASE CANDIDATE',
+  anteriores: 'Documento acumulado: inclui as Sprints 01 a 09',
 };
 const SAIDA = path.join(
   __dirname, '..', 'entregas', `GRUPO-${GRUPO}-GIH-SPRINT-${SPRINT.numero}.docx`,
@@ -173,6 +174,13 @@ function sumario() {
     '8. Como executar e demonstrar os testes', '9. Dificuldades encontradas', '10. Pendências e próximos passos',
   ].forEach((t) => c.push(p(t, { size: 20, after: 70, indent: { left: 280 } })));
 
+  c.push(p('PARTE X — SPRINT 10 · RELEASE CANDIDATE', { bold: true, size: 21, color: '2C5B8F', before: 260, after: 100 }));
+  [
+    '1. A versão Release Candidate', '2. O sistema estável', '3. A interface final', '4. O banco de dados final',
+    '5. As APIs documentadas', '6. O README', '7. Correções e ajustes', '8. Repositório, commits e revisões',
+    '9. Pendências e próximos passos',
+  ].forEach((t) => c.push(p(t, { size: 20, after: 70, indent: { left: 280 } })));
+
   c.push(espaco(300));
   c.push(rich([
     { t: 'Documentação completa e versionada em: ', s: 19, c: '5A6B7E' },
@@ -195,6 +203,7 @@ function main() {
     ...sprint07.montar(),
     ...sprint08.montar(),
     ...sprint09.montar(),
+    ...sprint10.montar(),
   ];
 
   const doc = new Document({
