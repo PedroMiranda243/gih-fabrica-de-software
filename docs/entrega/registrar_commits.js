@@ -43,6 +43,11 @@ const JANELAS = [
   { rotulo: 'Sprint 07 — 01/10, depois do PDF, a 02/10, até o PR do PDF (#215)', atePr: 215 },
   { rotulo: 'Sprint 08 — 02/10, depois do PDF, até o PR do PDF (#238)', atePr: 238 },
   { rotulo: 'Sprint 09 — 03/10 a 07/11', ate: '2026-11-07' },
+  /* A Sprint 10 sai no mesmo PDF da 09, e nenhum PR entrou entre 27/10 e 16/11:
+     a data separa as duas. As correções da campanha manual da Sprint 09 (18/11)
+     caem nesta janela pela data; o registro de bugs e o de revisões as devolvem
+     à Sprint 09 pelo marco. */
+  { rotulo: 'Sprint 10 — 08/11 a 21/11', ate: '2026-11-21' },
 ];
 
 // Separadores de controle: nenhum deles aparece em mensagem de commit.
