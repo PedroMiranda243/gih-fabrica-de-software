@@ -28,6 +28,7 @@ from fastapi.routing import APIRoute
 from app.dependencias import perfis_da_rota
 from app.documentacao_api import DESCRICOES, ERROS, EXEMPLOS, PUBLICAS, RESUMOS
 from app.main import app
+from tests.conftest import SENHA_PADRAO
 
 RAIZ = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(RAIZ / "scripts"))
@@ -109,6 +110,40 @@ def test_o_documento_nao_anuncia_o_422_do_fastapi():
     assert "HTTPValidationError" not in esquemas
     assert {"ErroDeCampos", "ErroSimples", "ErroComAjuda", "ErroInterno"} <= set(esquemas)
     assert ESPEC["components"]["securitySchemes"]["sessao"]["in"] == "cookie"
+
+
+def _exemplo(metodo: str, caminho: str, codigo: int) -> str:
+    return _op(metodo, caminho)["responses"][str(codigo)]["content"]["application/json"]["example"][
+        "detail"
+    ]
+
+
+def test_o_exemplo_de_cada_erro_e_o_que_a_api_responde(cliente, criar_usuario):
+    """O 401, o 403 e o 429 têm o mesmo esquema; o exemplo de cada um é a resposta dele.
+
+    O 401 mostrava "Seu perfil não permite esta operação." — o texto do 403.
+    """
+    from app.config import config
+    from app.modelos import Perfil
+
+    sem_sessao = cliente.get("/api/parceiros")
+    assert sem_sessao.json()["detail"] == _exemplo("GET", "/api/parceiros", 401)
+
+    criar_usuario(login="analista", perfil=Perfil.ANALISTA)
+    errada = cliente.post("/api/sessao", json={"login": "analista", "senha": "errada-mesmo"})
+    assert errada.json()["detail"] == _exemplo("POST", "/api/sessao", 401)
+    entrou = cliente.post("/api/sessao", json={"login": "analista", "senha": SENHA_PADRAO})
+    assert entrou.status_code == 201
+    sem_perfil = cliente.get("/api/usuarios")
+    assert sem_perfil.status_code == 403
+    assert sem_perfil.json()["detail"] == _exemplo("GET", "/api/usuarios", 403)
+    cliente.delete("/api/sessao")
+
+    for _ in range(config.login_falhas_para_bloquear):
+        cliente.post("/api/sessao", json={"login": "analista", "senha": "errada-mesmo"})
+    bloqueada = cliente.post("/api/sessao", json={"login": "analista", "senha": SENHA_PADRAO})
+    assert bloqueada.status_code == 429
+    assert bloqueada.json()["detail"] == _exemplo("POST", "/api/sessao", 429)
 
 
 def test_os_enderecos_da_documentacao_que_o_readme_da_respondem(cliente):
