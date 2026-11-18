@@ -11,9 +11,15 @@ A janela começa depois de um PR — o do PDF da entrega anterior —, como a do
 registro de commits (`docs/entrega/registrar_commits.js`): no mesmo dia do PDF
 entraram PRs que já são da entrega seguinte.
 
+**Duas entregas no mesmo PDF se separam pelo marco do PR** (`--marco`), como no
+registro de bugs: a Sprint 09 e a Sprint 10 saem juntas, e os PRs das duas se
+alternam depois do PDF da Sprint 08.
+
 Precisa do `gh` autenticado. Uso, da raiz do projeto:
 
     python scripts/registrar_revisoes.py --depois-do-pr 112 --saida docs/entrega/evidencias/sprint06
+    python scripts/registrar_revisoes.py --depois-do-pr 238 --marco "Sprint 09 acadêmica" \\
+        --saida docs/entrega/evidencias/sprint09
 """
 from __future__ import annotations
 
@@ -51,7 +57,7 @@ def prs_incorporados() -> list[dict]:
     r = subprocess.run(
         [
             "gh", "pr", "list", "-R", REPOSITORIO, "--state", "merged", "--limit", "500",
-            "--json", "number,title,author,mergedAt,mergedBy,reviews,reviewRequests,comments",
+            "--json", "number,title,author,mergedAt,mergedBy,reviews,reviewRequests,comments,milestone",
         ],
         capture_output=True, text=True, encoding="utf-8",
     )
@@ -60,13 +66,18 @@ def prs_incorporados() -> list[dict]:
     return sorted(json.loads(r.stdout), key=lambda p: p["mergedAt"])
 
 
-def registro(depois_do_pr: int) -> list[dict]:
+def do_marco(pr: dict, marco: str | None) -> bool:
+    """Sem marco pedido, todo PR vale; com ele, só o do marco cujo título começa assim."""
+    return marco is None or ((pr.get("milestone") or {}).get("title") or "").startswith(marco)
+
+
+def registro(depois_do_pr: int, marco: str | None = None) -> list[dict]:
     todos = prs_incorporados()
-    marco = next((p for p in todos if p["number"] == depois_do_pr), None)
-    if marco is None:
+    corte = next((p for p in todos if p["number"] == depois_do_pr), None)
+    if corte is None:
         raise SystemExit(f"O PR #{depois_do_pr} não está entre os incorporados.")
     itens = []
-    for pr in (p for p in todos if p["mergedAt"] > marco["mergedAt"]):
+    for pr in (p for p in todos if p["mergedAt"] > corte["mergedAt"] and do_marco(p, marco)):
         autor = pr["author"]["login"]
         revisoes = [
             {
@@ -107,12 +118,13 @@ def _cortar(texto: str, largura: int) -> str:
     return corte[: corte.rfind(" ")].rstrip(" ,—-") + "…"
 
 
-def texto(itens: list[dict], depois_do_pr: int) -> str:
+def texto(itens: list[dict], depois_do_pr: int, marco: str | None = None) -> str:
     linhas = [
         "Registro das revisões dos Pull Requests — gerado do GitHub",
         f"https://github.com/{REPOSITORIO}",
-        f"PRs incorporados depois do #{depois_do_pr}; gerado em "
-        f"{datetime.now():%d/%m/%Y %H:%M} por scripts/registrar_revisoes.py",
+        f"PRs incorporados depois do #{depois_do_pr}"
+        + (f", do marco que começa com \"{marco}\"" if marco else "")
+        + f"; gerado em {datetime.now():%d/%m/%Y %H:%M} por scripts/registrar_revisoes.py",
         "",
     ]
     for item in itens:
@@ -169,17 +181,19 @@ def main() -> None:
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--depois-do-pr", type=int, required=True,
                    help="o PR que fecha a entrega anterior; a janela começa depois dele")
+    p.add_argument("--marco", help='só os PRs do marco cujo título começa assim ("Sprint 09")')
     p.add_argument("--saida", required=True, help="pasta das evidências da entrega")
     a = p.parse_args()
 
-    itens = registro(a.depois_do_pr)
+    itens = registro(a.depois_do_pr, a.marco)
     destino = RAIZ / a.saida
     destino.mkdir(parents=True, exist_ok=True)
     (destino / "revisoes.json").write_text(
         json.dumps(itens, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
-    (destino / "revisoes.txt").write_text(texto(itens, a.depois_do_pr), encoding="utf-8")
-    print(texto(itens, a.depois_do_pr).splitlines()[-1])
+    registro_em_texto = texto(itens, a.depois_do_pr, a.marco)
+    (destino / "revisoes.txt").write_text(registro_em_texto, encoding="utf-8")
+    print(registro_em_texto.splitlines()[-1])
 
 
 if __name__ == "__main__":
