@@ -429,10 +429,15 @@ function montar() {
   c.push(rich([{ t: 'Resultado: ', b: true, s: 19 }, { t: verificacao, s: 19 }]));
 
   c.push(h2('2.3 A campanha manual da equipe'));
+  // O texto diz o que aconteceu: a campanha pede a execução, e a tabela mostra quem a registrou.
   c.push(p(
-    'Além do script, cada integrante executou à mão um roteiro da sua área, no sistema no ar, olhando o que o '
-    + 'script não vê: se o texto se entende, se a ordem dos passos faz sentido, se algo parece errado. O registro '
-    + 'é o comentário de cada um, com a própria conta, na issue #256.',
+    'Além do script, a campanha manual pede que cada integrante execute à mão um roteiro da sua área, no sistema '
+    + 'no ar, olhando o que o script não vê: se o texto se entende, se a ordem dos passos faz sentido, se algo parece '
+    + 'errado. O registro é o comentário de cada um, com a própria conta, na issue #256.'
+    + (testaram.length === manual.length
+      ? ''
+      : ` Até a geração deste documento, ${testaram.length} de ${manual.length} integrantes registraram a execução; `
+        + 'a campanha segue nas pendências (seção 10).'),
     { size: 19 },
   ));
   c.push(table([1500, 2600, 1150, 2500, 1888], [
@@ -635,7 +640,7 @@ function montar() {
   c.push(espaco(40));
   c.push(...mono(trecho(`${S}/commits.txt`, 'Totais', 'Por tipo')));
   c.push(espaco(40));
-  c.push(...mono(trecho(`${S}/commits.txt`, 'Sprint 09 — ')));
+  c.push(...mono(trecho(`${S}/commits.txt`, 'Sprint 09 — ', 'Sprint 10 — ')));
 
   c.push(quebra());
   c.push(h2('7.1 Autoria e coautoria'));
@@ -734,7 +739,10 @@ function montar() {
   c.push(p('O que não está concluído, por que, e como a equipe vai resolver:'));
   c.push(table([2600, 3000, 2800, 1238], [
     ['Pendência', 'Por que', 'Ação prevista', 'Quando'],
-    ['Validação do README por quem não o escreveu (H72; RNF07, RNF27)', 'Precisa de uma máquina limpa e de um integrante que não escreveu o código', 'Thiago ou João Pedro seguem o docs/validacao-do-readme.md e registram na issue #164', 'Até 20/11'],
+    ['Validação do README por quem não o escreveu (H72; RNF07, RNF27)', 'Precisa de uma máquina limpa e de um integrante que não escreveu o código', 'Thiago ou João Pedro seguem o docs/validacao-do-readme.md e registram na issue #164', 'Antes da entrega final'],
+    ...(testaram.length < manual.length
+      ? [['A campanha manual da equipe (#256)', `${testaram.length} de ${manual.length} integrantes registraram a execução`, 'Cada um executa o roteiro da sua área (docs/12, seção 9) e comenta na issue #256', 'Antes da entrega final']]
+      : []),
     ...pendentes.map((b) => [`Defeito #${b.numero}`, limpo(b.titulo), limpo(b.correcao), '—']),
     ['Aprovação dos Pull Requests registrada no GitHub (RNF25)', `${aprovadosNoGithub} de ${revisoes.length} desta entrega têm a aprovação de um colega`, 'Cada Pull Request aprovado por um integrante no GitHub antes da incorporação', 'A partir de agora'],
     ['O Firefox (RNF08)', 'Não está instalado na máquina de teste', 'Rodar os casos de navegação nele, com o mesmo script', 'Antes da entrega final'],
