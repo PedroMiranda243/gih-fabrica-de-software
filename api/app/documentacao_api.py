@@ -19,6 +19,7 @@ descrição ou sem exemplo, e o exemplo que o próprio esquema recusaria.
 """
 from __future__ import annotations
 
+import copy
 from typing import Any
 
 from fastapi import FastAPI
@@ -365,6 +366,10 @@ ERRO_DA_ROTA = {
         "login existe (RNF11)."
     ),
 }
+# E onde a mensagem também é outra: o exemplo da tabela abaixo mentiria ali.
+MENSAGEM_DA_ROTA = {
+    (("POST", "/api/sessao"), 401): "Login ou senha inválidos.",
+}
 
 # As rotas que não exigem sessão.
 PUBLICAS = {("POST", "/api/sessao"), ("GET", "/api/health")}
@@ -418,18 +423,29 @@ def _ref(modelo: type[BaseModel]) -> dict:
     return {"$ref": f"#/components/schemas/{modelo.__name__}"}
 
 
-def _resposta(descricao: str, *modelos: type[BaseModel]) -> dict:
+def _resposta(descricao: str, *modelos: type[BaseModel], exemplo: str | None = None) -> dict:
     esquema = _ref(modelos[0]) if len(modelos) == 1 else {"oneOf": [_ref(m) for m in modelos]}
-    return {"description": descricao, "content": {"application/json": {"schema": esquema}}}
+    conteudo: dict[str, Any] = {"schema": esquema}
+    if exemplo is not None:
+        conteudo["example"] = {"detail": exemplo}
+    return {"description": descricao, "content": {"application/json": conteudo}}
 
+
+# O que a API responde de verdade em cada um: o esquema `ErroSimples` é o mesmo nos
+# três, e o exemplo dele, um só — era o do 403 que aparecia no 401 (o teste da
+# documentação confere estes textos contra as respostas da API).
+MENSAGEM_401 = "Sessão inválida ou expirada."
+MENSAGEM_403 = "Seu perfil não permite esta operação."
+MENSAGEM_429 = "Muitas tentativas. Aguarde alguns minutos antes de tentar de novo."
 
 RESPOSTAS_DE_ERRO = {
     401: _resposta(
-        "Sem sessão, ou a sessão terminou: entre de novo em `POST /api/sessao`.", ErroSimples
+        "Sem sessão, ou a sessão terminou: entre de novo em `POST /api/sessao`.", ErroSimples,
+        exemplo=MENSAGEM_401,
     ),
     403: _resposta(
         "O perfil desta sessão não pode fazer isto. A tentativa fica na trilha de auditoria.",
-        ErroSimples,
+        ErroSimples, exemplo=MENSAGEM_403,
     ),
     404: _resposta("O registro pedido não existe.", ErroSimples, ErroComAjuda),
     409: _resposta(
@@ -439,7 +455,10 @@ RESPOSTAS_DE_ERRO = {
     422: _resposta(
         "Um ou mais campos não passaram na validação; cada um diz o que corrigir.", ErroDeCampos
     ),
-    429: _resposta("Tentativas de entrada demais desta origem: espere 15 minutos.", ErroSimples),
+    429: _resposta(
+        "Tentativas de entrada demais desta origem: espere 15 minutos.", ErroSimples,
+        exemplo=MENSAGEM_429,
+    ),
     500: _resposta("Falha inesperada. O detalhe fica no log, com o identificador.", ErroInterno),
 }
 
@@ -540,9 +559,15 @@ def documentar(app: FastAPI) -> dict[str, Any]:
                 codigos.append(422)
             codigos.append(500)
             for codigo in sorted(set(codigos)):
-                respostas[str(codigo)] = dict(RESPOSTAS_DE_ERRO[codigo])
+                # Cópia inteira: o exemplo mora dentro do `content`, e trocá-lo numa
+                # cópia rasa o trocaria em toda rota.
+                respostas[str(codigo)] = copy.deepcopy(RESPOSTAS_DE_ERRO[codigo])
                 if (chave, codigo) in ERRO_DA_ROTA:
                     respostas[str(codigo)]["description"] = ERRO_DA_ROTA[(chave, codigo)]
+                if (chave, codigo) in MENSAGEM_DA_ROTA:
+                    respostas[str(codigo)]["content"]["application/json"]["example"] = {
+                        "detail": MENSAGEM_DA_ROTA[(chave, codigo)]
+                    }
             for codigo, resposta in respostas.items():
                 if resposta.get("description") == "Successful Response":
                     resposta["description"] = SUCESSO.get(codigo, "Sucesso.")
