@@ -231,6 +231,9 @@ function campanhaManual() {
     const lista = porPessoa.get(login) ?? [];
     lista.push({
       data: c.createdAt.slice(0, 10).split('-').reverse().join('/'),
+      // A área vem da linha "Área:" quando o comentário a traz — quem executou pode
+      // ter feito outra área além da sua; sem ela, é a área da pessoa no roteiro.
+      area: campo(c.body, 'Área') ?? PESSOAS[login].area,
       casos: executei,
       perfil: campo(c.body, 'Perfil') ?? '—',
       resultado: campo(c.body, 'Resultado') ?? '—',
@@ -285,6 +288,8 @@ function montar() {
   const pendentes = bugs.filter((b) => b.situacao !== 'corrigido');
   const daTroca = bugs.filter((b) => b.prs.includes(242));
   const testaram = manual.filter((m) => m.execucoes.length);
+  const areas = manual.map((m) => m.area);
+  const cobertas = areas.filter((a) => manual.some((m) => m.execucoes.some((e) => e.area === a)));
   if (navegacaoChrome.length !== navegacao.length) {
     throw new Error(`A execução no Chrome tem ${navegacaoChrome.length} casos de navegação, e a do Edge, ${navegacao.length}.`);
   }
@@ -329,6 +334,7 @@ function montar() {
     ['Testes automatizados (as quatro suítes)', semRotulo(registroTestes).replace(/\.$/, '')],
     ['Defeitos registrados', `${bugs.length}: ${corrigidos.length} corrigidos, ${pendentes.length} pendentes`],
     ['Integrantes na campanha manual', `${testaram.length} de ${manual.length}`],
+    ['Áreas cobertas pela campanha manual', `${cobertas.length} de ${areas.length}`],
     ['Histórias da sprint', 'H104 a H106 — 11 pontos; o backlog foi de 484 para 495'],
   ], { zebra: true, boldCol: 0 }));
 
@@ -436,14 +442,14 @@ function montar() {
     + 'errado. O registro é o comentário de cada um, com a própria conta, na issue #256.'
     + (testaram.length === manual.length
       ? ''
-      : ` Até a geração deste documento, ${testaram.length} de ${manual.length} integrantes registraram a execução; `
-        + 'a campanha segue nas pendências (seção 10).'),
+      : ` Até a geração deste documento, ${testaram.length} de ${manual.length} integrantes registraram a execução, `
+        + `cobrindo ${cobertas.length} das ${areas.length} áreas; a campanha segue nas pendências (seção 10).`),
     { size: 19 },
   ));
   c.push(table([1500, 2600, 1150, 2500, 1888], [
     ['Integrante', 'Área', 'Data', 'Casos executados', 'Resultado'],
     ...manual.flatMap((m) => (m.execucoes.length
-      ? m.execucoes.map((e) => [m.nome, m.area, e.data, e.casos, e.resultado])
+      ? m.execucoes.map((e) => [m.nome, e.area, e.data, e.casos, e.resultado])
       : [[m.nome, m.area, '—', 'Não executado até a geração deste documento', '—']])),
   ], { zebra: true, boldCol: 0, size: 16 }));
 
