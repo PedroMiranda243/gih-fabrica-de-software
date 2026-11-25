@@ -231,6 +231,9 @@ function campanhaManual() {
     const lista = porPessoa.get(login) ?? [];
     lista.push({
       data: c.createdAt.slice(0, 10).split('-').reverse().join('/'),
+      // A área vem da linha "Área:" quando o comentário a traz — quem executou pode
+      // ter feito outra área além da sua; sem ela, é a área da pessoa no roteiro.
+      area: campo(c.body, 'Área') ?? PESSOAS[login].area,
       casos: executei,
       perfil: campo(c.body, 'Perfil') ?? '—',
       resultado: campo(c.body, 'Resultado') ?? '—',
@@ -285,6 +288,8 @@ function montar() {
   const pendentes = bugs.filter((b) => b.situacao !== 'corrigido');
   const daTroca = bugs.filter((b) => b.prs.includes(242));
   const testaram = manual.filter((m) => m.execucoes.length);
+  const areas = manual.map((m) => m.area);
+  const cobertas = areas.filter((a) => manual.some((m) => m.execucoes.some((e) => e.area === a)));
   if (navegacaoChrome.length !== navegacao.length) {
     throw new Error(`A execução no Chrome tem ${navegacaoChrome.length} casos de navegação, e a do Edge, ${navegacao.length}.`);
   }
@@ -329,6 +334,7 @@ function montar() {
     ['Testes automatizados (as quatro suítes)', semRotulo(registroTestes).replace(/\.$/, '')],
     ['Defeitos registrados', `${bugs.length}: ${corrigidos.length} corrigidos, ${pendentes.length} pendentes`],
     ['Integrantes na campanha manual', `${testaram.length} de ${manual.length}`],
+    ['Áreas cobertas pela campanha manual', `${cobertas.length} de ${areas.length}`],
     ['Histórias da sprint', 'H104 a H106 — 11 pontos; o backlog foi de 484 para 495'],
   ], { zebra: true, boldCol: 0 }));
 
@@ -429,16 +435,21 @@ function montar() {
   c.push(rich([{ t: 'Resultado: ', b: true, s: 19 }, { t: verificacao, s: 19 }]));
 
   c.push(h2('2.3 A campanha manual da equipe'));
+  // O texto diz o que aconteceu: a campanha pede a execução, e a tabela mostra quem a registrou.
   c.push(p(
-    'Além do script, cada integrante executou à mão um roteiro da sua área, no sistema no ar, olhando o que o '
-    + 'script não vê: se o texto se entende, se a ordem dos passos faz sentido, se algo parece errado. O registro '
-    + 'é o comentário de cada um, com a própria conta, na issue #256.',
+    'Além do script, a campanha manual pede que cada integrante execute à mão um roteiro da sua área, no sistema '
+    + 'no ar, olhando o que o script não vê: se o texto se entende, se a ordem dos passos faz sentido, se algo parece '
+    + 'errado. O registro é o comentário de cada um, com a própria conta, na issue #256.'
+    + (testaram.length === manual.length
+      ? ''
+      : ` Até a geração deste documento, ${testaram.length} de ${manual.length} integrantes registraram a execução, `
+        + `cobrindo ${cobertas.length} das ${areas.length} áreas; a campanha segue nas pendências (seção 10).`),
     { size: 19 },
   ));
   c.push(table([1500, 2600, 1150, 2500, 1888], [
     ['Integrante', 'Área', 'Data', 'Casos executados', 'Resultado'],
     ...manual.flatMap((m) => (m.execucoes.length
-      ? m.execucoes.map((e) => [m.nome, m.area, e.data, e.casos, e.resultado])
+      ? m.execucoes.map((e) => [m.nome, e.area, e.data, e.casos, e.resultado])
       : [[m.nome, m.area, '—', 'Não executado até a geração deste documento', '—']])),
   ], { zebra: true, boldCol: 0, size: 16 }));
 
@@ -635,7 +646,7 @@ function montar() {
   c.push(espaco(40));
   c.push(...mono(trecho(`${S}/commits.txt`, 'Totais', 'Por tipo')));
   c.push(espaco(40));
-  c.push(...mono(trecho(`${S}/commits.txt`, 'Sprint 09 — ')));
+  c.push(...mono(trecho(`${S}/commits.txt`, 'Sprint 09 — ', 'Sprint 10 — ')));
 
   c.push(quebra());
   c.push(h2('7.1 Autoria e coautoria'));
@@ -734,7 +745,10 @@ function montar() {
   c.push(p('O que não está concluído, por que, e como a equipe vai resolver:'));
   c.push(table([2600, 3000, 2800, 1238], [
     ['Pendência', 'Por que', 'Ação prevista', 'Quando'],
-    ['Validação do README por quem não o escreveu (H72; RNF07, RNF27)', 'Precisa de uma máquina limpa e de um integrante que não escreveu o código', 'Thiago ou João Pedro seguem o docs/validacao-do-readme.md e registram na issue #164', 'Até 20/11'],
+    ['Validação do README por quem não o escreveu (H72; RNF07, RNF27)', 'Precisa de uma máquina limpa e de um integrante que não escreveu o código', 'Thiago ou João Pedro seguem o docs/validacao-do-readme.md e registram na issue #164', 'Antes da entrega final'],
+    ...(testaram.length < manual.length
+      ? [['A campanha manual da equipe (#256)', `${testaram.length} de ${manual.length} integrantes registraram a execução`, 'Cada um executa o roteiro da sua área (docs/12, seção 9) e comenta na issue #256', 'Antes da entrega final']]
+      : []),
     ...pendentes.map((b) => [`Defeito #${b.numero}`, limpo(b.titulo), limpo(b.correcao), '—']),
     ['Aprovação dos Pull Requests registrada no GitHub (RNF25)', `${aprovadosNoGithub} de ${revisoes.length} desta entrega têm a aprovação de um colega`, 'Cada Pull Request aprovado por um integrante no GitHub antes da incorporação', 'A partir de agora'],
     ['O Firefox (RNF08)', 'Não está instalado na máquina de teste', 'Rodar os casos de navegação nele, com o mesmo script', 'Antes da entrega final'],

@@ -45,6 +45,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Login ou senha inválidos."
                 }
               }
             }
@@ -65,6 +68,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Muitas tentativas. Aguarde alguns minutos antes de tentar de novo."
                 }
               }
             }
@@ -98,6 +104,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -145,6 +154,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -199,6 +211,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -316,6 +331,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -326,6 +344,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -396,6 +417,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -406,6 +430,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -500,6 +527,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -510,6 +540,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -578,6 +611,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -588,6 +624,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -686,6 +725,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -696,6 +738,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -805,6 +850,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -815,6 +863,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -1061,6 +1112,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -1071,6 +1125,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -1141,6 +1198,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -1151,6 +1211,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -1351,6 +1414,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -1361,6 +1427,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -1430,6 +1499,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -1440,6 +1512,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -1538,6 +1613,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -1548,6 +1626,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -1642,6 +1723,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -1652,6 +1736,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -1755,6 +1842,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -1765,6 +1855,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -1851,6 +1944,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -1861,6 +1957,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -1951,6 +2050,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -1961,6 +2063,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -2050,6 +2155,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -2060,6 +2168,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -2140,6 +2251,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -2150,6 +2264,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -2218,6 +2335,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -2228,6 +2348,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -2318,6 +2441,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -2328,6 +2454,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -2401,6 +2530,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -2411,6 +2543,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -2566,6 +2701,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -2576,6 +2714,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -2643,6 +2784,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -2653,6 +2797,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -2730,6 +2877,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -2740,6 +2890,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -2824,6 +2977,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -2834,6 +2990,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -2919,6 +3078,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -2929,6 +3091,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -3066,6 +3231,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -3076,6 +3244,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -3244,6 +3415,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -3254,6 +3428,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -3366,6 +3543,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -3376,6 +3556,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -3470,6 +3653,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -3480,6 +3666,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -3574,6 +3763,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -3584,6 +3776,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -3658,6 +3853,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -3668,6 +3866,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -3728,6 +3929,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -3738,6 +3942,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -3795,6 +4002,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -3805,6 +4015,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -3852,6 +4065,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -3862,6 +4078,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -3951,6 +4170,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -3961,6 +4183,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -4030,6 +4255,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -4040,6 +4268,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -4114,6 +4345,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -4124,6 +4358,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -4194,6 +4431,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -4204,6 +4444,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -4394,6 +4637,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -4404,6 +4650,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -4485,6 +4734,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -4495,6 +4747,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -4581,6 +4836,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -4591,6 +4849,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -4677,6 +4938,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -4687,6 +4951,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -4782,6 +5049,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -4792,6 +5062,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -4852,6 +5125,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -4862,6 +5138,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -4962,6 +5241,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -4972,6 +5254,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -5064,6 +5349,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -5074,6 +5362,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -5136,6 +5427,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -5146,6 +5440,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -5245,6 +5542,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -5255,6 +5555,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -5324,6 +5627,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -5334,6 +5640,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -5408,6 +5717,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -5418,6 +5730,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -5479,6 +5794,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -5489,6 +5807,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -5577,6 +5898,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -5587,6 +5911,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -5690,6 +6017,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -5700,6 +6030,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -5786,6 +6119,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -5796,6 +6132,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -5999,6 +6338,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -6009,6 +6351,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -6124,6 +6469,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -6134,6 +6482,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -6208,6 +6559,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -6218,6 +6572,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -6304,6 +6661,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -6314,6 +6674,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -6430,6 +6793,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -6440,6 +6806,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -6556,6 +6925,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -6566,6 +6938,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -6657,6 +7032,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -6667,6 +7045,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -6714,6 +7095,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -6724,6 +7108,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -6784,6 +7171,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -6794,6 +7184,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -6970,6 +7363,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -6980,6 +7376,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -7131,6 +7530,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -7141,6 +7543,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -7202,6 +7607,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -7212,6 +7620,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -7315,6 +7726,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -7325,6 +7739,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -7455,6 +7872,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -7465,6 +7885,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -7622,6 +8045,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -7632,6 +8058,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -7747,6 +8176,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -7757,6 +8189,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -7851,6 +8286,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -7861,6 +8299,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -7939,6 +8380,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -7949,6 +8393,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -8016,6 +8463,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -8026,6 +8476,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -8192,6 +8645,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -8202,6 +8658,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -8334,6 +8793,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -8344,6 +8806,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
@@ -8401,6 +8866,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Sessão inválida ou expirada."
                 }
               }
             }
@@ -8411,6 +8879,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErroSimples"
+                },
+                "example": {
+                  "detail": "Seu perfil não permite esta operação."
                 }
               }
             }
