@@ -109,14 +109,19 @@ def mapear_colunas(cabecalho: list[str]) -> dict[str, int]:
 def ler_decimal(bruto: str) -> Decimal:
     """Converte valor monetário em português.
 
-    Aceita `12.500,40`, `12500,40`, `12500.40` e `R$ 12.500,40`. A regra que
-    resolve a ambiguidade é simples: **o último separador que aparecer é o
-    decimal**, e o outro é de milhar.
+    Aceita `12.500,40`, `12500,40`, `12500.40`, `R$ 12.500,40` e `12.500`. A
+    regra que resolve a ambiguidade é simples: **o último separador que aparecer
+    é o decimal**, e o outro é de milhar — com uma exceção: ponto sem vírgula,
+    seguido de grupos de exatamente três dígitos, é milhar. Dinheiro tem no
+    máximo dois dígitos de centavos, então `12.500` só pode ser doze mil e
+    quinhentos; lido como decimal, gravava R$ 12,50 em silêncio (#293).
     """
     limpo = re.sub(r"[^\d,.\-]", "", bruto).strip()
     if not limpo:
         raise InvalidOperation("vazio")
 
+    if "," not in limpo and re.fullmatch(r"-?\d{1,3}(\.\d{3})+", limpo):
+        return Decimal(limpo.replace(".", ""))
     if "," in limpo and "." in limpo:
         decimal = max(limpo.rfind(","), limpo.rfind("."))
         inteiro = re.sub(r"[,.]", "", limpo[:decimal])
