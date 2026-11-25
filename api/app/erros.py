@@ -15,6 +15,8 @@ from fastapi import Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from app.rotulos import rotulo
+
 # Explicação de RN03, num lugar só. Repetir o texto nos dois campos faria as
 # duas cópias divergirem na primeira vez que alguém reescrevesse uma delas.
 POR_QUE_O_PERIODO = (
@@ -65,8 +67,8 @@ GENERICA = "Valor inválido para este campo."
 # vazio recebia "Valor curto demais.", que não diz nem que o campo é
 # obrigatório nem quanto falta.
 MENSAGENS_COM_LIMITE = {
-    "string_too_short": "Curto demais: use ao menos {min_length} caracteres.",
-    "string_too_long": "Longo demais: use no máximo {max_length} caracteres.",
+    "string_too_short": "Curto demais: use ao menos {min_length} {unidade}.",
+    "string_too_long": "Longo demais: use no máximo {max_length} {unidade}.",
     "greater_than_equal": "Use um valor a partir de {ge}.",
     "less_than_equal": "Use um valor até {le}.",
     # Os estritos — `gt` e `lt` — tinham ficado de fora, e caíam na frase
@@ -80,12 +82,20 @@ MENSAGENS_COM_LIMITE = {
     "enum": "Escolha uma destas opções: {expected}.",
 }
 
-VAZIO_OBRIGATORIO = "Obrigatório: informe ao menos {min_length} caracteres."
+VAZIO_OBRIGATORIO = "Obrigatório: informe ao menos {min_length} {unidade}."
+# Mínimo de 1 é só "não pode ficar vazio": dizer "ao menos 1 caracteres" errava o
+# plural e, na senha — cujo mínimo de verdade, 10, é de um validador à parte —,
+# dava um limite falso (#294).
+VAZIO = "Campo obrigatório."
 
 
 def _opcoes(esperado: str) -> str:
-    """`'A', 'B' or 'C'`, como o Pydantic escreve, vira `A, B ou C`."""
-    return esperado.replace("' or '", "' ou '").replace("'", "")
+    """`'A', 'B' or 'C'`, como o Pydantic escreve, vira `A, B ou C` — pelo nome da tela.
+
+    O código cru ("ADMINISTRADOR, GESTOR…") não é o que a pessoa vê no seletor (#294).
+    """
+    nomes = [rotulo(x.strip().strip("'")) for x in esperado.replace("' or '", "', '").split("', '")]
+    return nomes[0] if len(nomes) == 1 else f"{', '.join(nomes[:-1])} ou {nomes[-1]}"
 
 
 def mensagem_de(erro: dict) -> str:
@@ -96,10 +106,15 @@ def mensagem_de(erro: dict) -> str:
     if tipo == "value_error":
         return erro["msg"].removeprefix("Value error, ")
 
-    contexto = erro.get("ctx") or {}
+    contexto = dict(erro.get("ctx") or {})
     if "expected" in contexto:
-        contexto = {**contexto, "expected": _opcoes(str(contexto["expected"]))}
-    if tipo == "string_too_short" and not str(erro.get("input") or "").strip():
+        contexto["expected"] = _opcoes(str(contexto["expected"]))
+    limite = contexto.get("min_length", contexto.get("max_length"))
+    contexto["unidade"] = "caractere" if limite == 1 else "caracteres"
+    vazio = tipo == "string_too_short" and not str(erro.get("input") or "").strip()
+    if vazio and contexto.get("min_length") == 1:
+        modelo = VAZIO
+    elif vazio:
         modelo = VAZIO_OBRIGATORIO
     else:
         modelo = MENSAGENS_COM_LIMITE.get(tipo)

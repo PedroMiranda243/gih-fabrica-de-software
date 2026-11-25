@@ -35,7 +35,28 @@ def test_opcao_fora_da_lista_diz_quais_sao_as_opcoes(analista):
     """Respondia "Input should be 'ATIVO', 'PROSPECCAO' or 'INATIVO'"."""
     r = analista.post("/api/parceiros", json={"nome": "Nome Bom", "status": "XYZ"})
 
-    assert mensagens(r)["status"] == "Escolha uma destas opções: ATIVO, PROSPECCAO ou INATIVO."
+    # Pelo nome que a tela usa, e não o código cru "ATIVO, PROSPECCAO ou INATIVO" (#294).
+    assert mensagens(r)["status"] == "Escolha uma destas opções: Ativo, Prospecção ou Inativo."
+
+
+def test_novo_usuario_vazio_sem_limite_falso_nem_codigo(criar_usuario, autenticar, cliente):
+    """A senha vazia dizia "ao menos 1 caracteres" — o mínimo dela é 10, de um
+    validador à parte — e o perfil listava "ADMINISTRADOR, GESTOR…" (#294)."""
+    criar_usuario(login="chefia", perfil=Perfil.ADMINISTRADOR)
+    autenticar("chefia")
+    r = cliente.post("/api/usuarios", json={"login": "", "nome": "", "senha": "", "perfil": ""})
+
+    m = mensagens(r)
+    assert m["senha"] == "Campo obrigatório."
+    assert m["perfil"] == "Escolha uma destas opções: Administrador, Gestor, Analista ou Parceiro."
+    assert m["login"] == "Obrigatório: informe ao menos 3 caracteres."
+
+
+def test_o_limite_de_um_caractere_fica_no_singular():
+    erro = {"type": "string_too_long", "input": "ab", "ctx": {"max_length": 1}}
+    assert mensagem_de(erro) == "Longo demais: use no máximo 1 caractere."
+    erro = {"type": "string_too_short", "input": "a", "ctx": {"min_length": 2}}
+    assert mensagem_de(erro) == "Curto demais: use ao menos 2 caracteres."
 
 
 def test_ordenacao_desconhecida_responde_em_portugues(analista):
