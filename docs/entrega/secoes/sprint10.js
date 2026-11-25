@@ -413,6 +413,7 @@ function montar() {
     ['A API', `${api.ops.length} operações; ${api.protegidas.length} pedem sessão; ${api.comExemplo.length} de ${api.comCorpo.length} com corpo em JSON têm exemplo`],
     ['Defeitos registrados nesta entrega', `${bugs.length}: ${corrigidos.length} corrigidos, ${pendentes.length} pendentes`],
     ['Pull Requests incorporados nesta entrega', `${revisoes.length}`],
+    ['Histórias da sprint', 'H107 a H110 — 16 pontos; o backlog foi de 495 para 511'],
   ], { zebra: true, boldCol: 0 }));
 
   // ============================================== 1. A VERSÃO
