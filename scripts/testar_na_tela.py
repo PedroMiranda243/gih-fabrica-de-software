@@ -1489,7 +1489,15 @@ def nao_encontrada(x: Execucao, pg) -> str:
     pg.get_by_role("link", name="Ir para o início").click()
     pg.wait_for_url(lambda u: u.rstrip("/") == x.web, timeout=15000)
     sossegar(pg)
-    return f"'{texto[:160]}'; 'Ir para o início' levou ao '{h1(pg)}'"
+    # O título é o mesmo elemento, e troca de texto quando o Painel carrega: lido logo
+    # depois do clique, o registro dizia "levou ao 'Página não encontrada'" (#291).
+    try:
+        expect(pg.locator("h1").first).to_have_text("Painel", timeout=10000)
+    except AssertionError:
+        pass
+    titulo = h1(pg)
+    confere(titulo == "Painel", f"'Ir para o início' levou a '{titulo}'")
+    return f"'{texto[:160]}'; 'Ir para o início' levou ao '{titulo}'"
 
 
 @caso("CT-N08")
