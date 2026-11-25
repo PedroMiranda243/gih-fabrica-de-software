@@ -55,6 +55,7 @@ import httpx
 RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ / "api"))
 
+from playwright.sync_api import TimeoutError as PlaywrightTimeout  # noqa: E402
 from playwright.sync_api import expect  # noqa: E402
 
 from e2e.limpeza import desativar_usuarios, limpar_execucao  # noqa: E402
@@ -659,10 +660,17 @@ def importar(x: Execucao, pg) -> str:
         pg, "POST", r"/api/importacoes$", lambda: pg.get_by_role("button", name=re.compile("^Gravar")).click()
     )
     confere(r.status == 201, f"a gravação respondeu {r.status}: {r.text()[:200]}")
-    sossegar(pg)
-    historico = pg.get_by_role("region", name="Importações anteriores", exact=True).inner_text()
-    confere(inicio[8:10] in historico, "o histórico não mostra a semana importada")
-    x.alvo = pg.get_by_role("region", name="Importações anteriores", exact=True)
+    # O histórico recarrega depois da resposta, sem a página recarregar: o `sossegar`
+    # (o networkidle da carga da página) já voltou, e a leitura saía antes da linha
+    # nova. Espera a semana, como a tela a escreve, com prazo — e reprova sem ela.
+    regiao = pg.get_by_role("region", name="Importações anteriores", exact=True)
+    semana = f"{inicio[8:10]}/{inicio[5:7]}/{inicio[:4]}"
+    try:
+        expect(regiao).to_contain_text(semana, timeout=10000)
+    except AssertionError:
+        pass
+    confere(semana in regiao.inner_text(), f"o histórico não mostra a semana importada ({semana})")
+    x.alvo = regiao
     return f"gravado (201): o período {inicio} a {fim} aparece em 'Importações anteriores'"
 
 
@@ -1603,6 +1611,18 @@ def teclado(x: Execucao, pg) -> str:
     menu(pg).get_by_role("link", name=re.compile("^Parceiros")).click()
     pg.wait_for_url("**/parceiros", timeout=15000)
     sossegar(pg)
+    # A troca de tela não recarrega a página, e o `sossegar` volta antes do quadro em
+    # que o foco vai ao título: o clique deixa o foco no link até lá. Espera o título,
+    # com prazo — e, se ele não vier, o caso reprova com o que tem o foco.
+    # E o título é o mesmo elemento, que troca de texto quando a tela nova carrega.
+    try:
+        pg.wait_for_function(
+            "document.activeElement && document.activeElement.tagName === 'H1'"
+            " && document.activeElement.textContent.trim() === 'Parceiros'",
+            timeout=5000,
+        )
+    except PlaywrightTimeout:
+        pass
     foco = pg.evaluate("document.activeElement.tagName + ':' + document.activeElement.textContent.trim()")
     confere(foco.startswith("H1"), f"depois de trocar de tela, o foco está em {foco}")
     return f"o primeiro Tab é '{primeiro}', e Enter leva a #{alvo}; ao trocar de tela, o foco vai ao título ({foco})"
