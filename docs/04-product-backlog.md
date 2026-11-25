@@ -2,7 +2,7 @@
 
 **Projeto:** Growth Intelligence Hub (GIH)
 **Sprint:** 1 — Planejamento e Descoberta
-**Versão:** 2.6 — 26/10/2026 · as histórias da Sprint 09 acadêmica, de testes e documentação (2.5 — 22/10/2026, a H103, da interface refeita; 2.4 — 04/10/2026, a H102, do acesso remoto por rede privada; 2.3 — 02/10/2026, as histórias da Sprint 08 acadêmica; 2.2 — 01/10/2026, as da Sprint 07; 2.1 — 30/09/2026, as da Sprint 06; 2.0 — 15/09/2026, sprints semanais)
+**Versão:** 2.7 — 25/11/2026 · as histórias da Sprint 10 acadêmica, a Release Candidate; o E9 e o total dos épicos com as histórias da Sprint 09, que a 2.6 não somou (2.6 — 26/10/2026, as histórias da Sprint 09 acadêmica, de testes e documentação; 2.5 — 22/10/2026, a H103, da interface refeita; 2.4 — 04/10/2026, a H102, do acesso remoto por rede privada; 2.3 — 02/10/2026, as histórias da Sprint 08 acadêmica; 2.2 — 01/10/2026, as da Sprint 07; 2.1 — 30/09/2026, as da Sprint 06; 2.0 — 15/09/2026, sprints semanais)
 
 ---
 
@@ -43,8 +43,8 @@ veio com a nota da data e do porquê, no fim da seção 4.
 | **E6** | Otimização, paralelismo e GPU | 88 | 3–11, S07 |
 | **E7** | Central de comunicação | 26 | 12 |
 | **E8** | Assistente analítico | 21 | 12–13 |
-| **E9** | Qualidade, documentação e entrega | 81 | 2–13, S06, S08, pós-S08 |
-| | **Total** | **484** | |
+| **E9** | Qualidade, documentação e entrega | 108 | 2–13, S06, S08, pós-S08, S09, S10 |
+| | **Total** | **511** | |
 
 ---
 
@@ -203,6 +203,10 @@ veio com a nota da data e do porquê, no fim da seção 4.
 | **H104** | Como equipe, quero os casos de teste escritos e executados pela tela, com o resultado obtido ao lado do esperado, para demonstrar com evidência que cada funcionalidade faz o que os requisitos dizem. | M | 5 | S09 | Os RF de cada módulo, pela matriz do `docs/11`; RNF24; `docs/12-plano-de-testes.md` com o catálogo; `scripts/testar_na_tela.py`, que recusa rodar com o catálogo e o código divergentes; as contas e os dados de teste marcados e limpos no fim; `--ver`, para demonstrar na orientação |
 | **H105** | Como equipe, quero provar pela tela que o sistema recusa dado inválido com mensagem clara, e que cada perfil navega só pelo que pode, para mostrar validação e navegação com evidência. | M | 3 | S09 | RNF08, RNF20, RNF21; os casos de validação e de navegação do `docs/12`; a navegação no Edge e no Chrome; o bloqueio de cinco tentativas fica no teste da API, que pela tela travaria a máquina inteira |
 | **H106** | Como banca e equipe, quero a documentação técnica igual ao sistema de hoje, para ler os requisitos, os diagramas, o modelo de dados, a arquitetura e as instruções de execução sem encontrar o sistema de antes. | M | 3 | S09 | RNF27; os documentos de `docs/` revisados, cada um com a versão nova; o diagrama de casos de uso com os UC01 a UC16; o mapa de navegação da interface v2; nenhuma contagem escrita que divirja do que se mede; a documentação técnica consolidada regerada |
+| **H107** | Como avaliador, quero cada rota da API documentada — quem pode chamá-la, os parâmetros, o corpo, as respostas, os erros e um exemplo —, para usar e avaliar a API sem ler o código. | M | 5 | S10 | O Swagger em `/api/docs` e o ReDoc em `/api/redoc`; o `docs/13-api.md` e o `docs/api/openapi.json` gerados da própria aplicação; a sessão por cookie e os perfis de cada rota; o 422 no formato real; um teste reprova a rota sem documentação e a cópia velha |
+| **H108** | Como banca e equipe, quero o banco de dados final descrito e conferido contra as migrações, para confiar que o documento é o banco. | M | 3 | S10 | O `docs/08` com as 20 tabelas, as cardinalidades da chave e a política de exclusão; `test_modelo_de_dados.py` com o `compare_metadata` e as contagens do catálogo; `scripts/descrever_banco.py`, que descreve o banco no ar |
+| **H109** | Como avaliador, quero um README com os nove itens do enunciado, para instalar e usar o sistema sem ajuda. | M | 3 | S10 | Os nove itens, na ordem do enunciado; a tabela de cada variável do `.env`; o que só a equipe usa no `docs/14`; nenhum comando de antes perdido; a validação por quem não o escreveu é a H72 |
+| **H110** | Como equipe, quero a versão 1.0.0-rc.1 marcada e verificada do zero, para entregar uma Release Candidate estável. | M | 5 | S10 | A tag e o Release no GitHub; a instalação do zero pelo README num clone novo (`scripts/instalar_do_zero.py`); a persistência; a Parte X do documento, lida das evidências |
 
 ---
 
@@ -231,7 +235,8 @@ Detalhamento e datas em [05 — Cronograma](05-cronograma.md).
 | **S08** | Sprint 08 acadêmica — conta, permissões, usabilidade e revisão das regras | H92, H93, H94, H95, H96, H97, H98, H99, H100, H101 | 33 |
 | **pós-S08** | Depois da Sprint 08 acadêmica — o acesso remoto por rede privada e a interface refeita | H102, H103 | 11 |
 | **S09** | Sprint 09 acadêmica — testes funcionais, de validação e de navegação, e a documentação atualizada | H104, H105, H106 | 11 |
-| | | **Total** | **495** |
+| **S10** | Sprint 10 acadêmica — a Release Candidate: a API documentada, o banco final, o README e a versão verificada do zero | H107, H108, H109, H110 | 16 |
+| | | **Total** | **511** |
 
 > A média é de **30,2 pontos por semana**, contra uma capacidade nominal de ~40. A folga é pequena, e a
 > Sprint 13 está deliberadamente acima da média — ver a seção *A semana que não fecha* no cronograma.
@@ -271,6 +276,13 @@ Detalhamento e datas em [05 — Cronograma](05-cronograma.md).
 > atualizada. Nenhuma das três histórias é funcionalidade nova — o congelamento de 25/10 continua —: a H104 e a
 > H105 escrevem os casos (`docs/12`) e os executam pela tela, contra o sistema no ar; a H106 alinha a
 > documentação à interface v2 e ao que se mede hoje. O escopo passa de 484 para 495 pontos.
+
+> **Sprint 10 acadêmica, 16/11/2026.** O enunciado pede a Release Candidate: o sistema estável, a interface e o
+> banco finais, as APIs documentadas e o README atualizado. As quatro histórias também não são funcionalidade
+> nova: a H107 documenta a API que já existe, a H108 confere o banco contra o documento, a H109 reescreve o
+> README, e a H110 marca a versão e a instala do zero. A Sprint 09 e a 10 saem no mesmo PDF. O escopo passa de
+> 495 para 511 pontos — e a tabela dos épicos, que na 2.6 tinha ficado com o E9 sem as histórias da Sprint 09,
+> volta a somar o que as histórias somam.
 
 ## Primeiro corte, se o prazo apertar
 
