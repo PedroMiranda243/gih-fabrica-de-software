@@ -90,6 +90,14 @@ def test_cabecalho_sem_as_colunas_necessarias():
         ("1.234.567,89", "1234567.89"),
         ("0,00", "0.00"),
         ("1,234.56", "1234.56"),  # formato em inglês
+        # Ponto sem vírgula, com grupos de três dígitos, é milhar (#293): era
+        # lido como decimal, e "12.500" gravava R$ 12,50.
+        ("12.500", "12500"),
+        ("1.234.567", "1234567"),
+        ("R$ 12.500", "12500"),
+        # Com dois dígitos ou um depois do ponto, continua decimal.
+        ("12.50", "12.50"),
+        ("12.5", "12.5"),
     ],
 )
 def test_le_valor_monetario(bruto, esperado):
