@@ -559,7 +559,10 @@ Comércio Beta;8940,00;201
 | pedidos | pedidos, qtd, quantidade, numero de pedidos |
 
 Acentuação e caixa são ignoradas. Colunas extras são ignoradas. O valor monetário aceita `12.500,40`,
-`12500,40`, `12500.40` e `R$ 12.500,40` — **o último separador que aparecer é o decimal**.
+`12500,40`, `12500.40`, `R$ 12.500,40` e `12.500` — **o último separador que aparecer é o decimal**, com uma
+exceção: ponto sem vírgula, seguido de grupos de exatamente três dígitos, é milhar. Dinheiro tem no máximo dois
+dígitos de centavos, então `12.500` só pode ser doze mil e quinhentos; lido como decimal, ele gravava R$ 12,50
+em silêncio, e foi achado na campanha manual da Sprint 09 (#293).
 
 **Consequências:**
 

@@ -26,6 +26,7 @@ from sqlalchemy import Select, String, cast, or_, select
 from app import formato
 from app.auditoria import Acao
 from app.modelos import Auditoria, Usuario
+from app.rotulos import rotulo as nome_na_tela
 
 ROTULOS: dict[Acao, str] = {
     Acao.LOGIN_SUCESSO: "Entrada no sistema",
@@ -94,15 +95,9 @@ def _valor(v: object) -> str:
     return "vazio" if v is None or v == "" else str(v)
 
 
-# Os nomes que a tela dá aos códigos (`web/src/formato.js`): ROTULO_MODO_CURTO,
-# ROTULO_PERFIL e ROTULO_RESTRICAO. Código que não está aqui sai como foi gravado.
-_MODO = {"SERIAL": "Serial", "CPU_PARALELO": "CPU paralelo", "GPU": "GPU"}
-_PERFIL = {
-    "ADMINISTRADOR": "Administrador",
-    "GESTOR": "Gestor",
-    "ANALISTA": "Analista",
-    "PARCEIRO": "Parceiro",
-}
+# O modo e o perfil pelo nome da tela vêm de `app/rotulos.py`, a tabela que a
+# tradução dos erros também usa; a restrição violada é só desta frase
+# (ROTULO_RESTRICAO, em `web/src/formato.js`). O que não tem nome sai como foi gravado.
 _RESTRICAO = {
     "orcamento": "orçamento",
     "maximo_acoes": "máximo de ações",
@@ -112,12 +107,9 @@ _RESTRICAO = {
 }
 
 
-def _modo(v: object) -> str:
-    return _MODO.get(str(v), _valor(v))
-
-
-def _perfil(v: object) -> str:
-    return _PERFIL.get(str(v), _valor(v))
+def _pelo_nome(v: object) -> str:
+    """O modo, o perfil: o código gravado pelo nome que a tela lhe dá."""
+    return nome_na_tela(v) if v not in (None, "") else _valor(v)
 
 
 def _reais(v: object) -> str:
@@ -164,7 +156,7 @@ def _limiares(d: dict) -> str:
 def _campanha(d: dict) -> str:
     partes = [f"execução {d['execucao']}"] if "execucao" in d else []
     if d.get("modo"):
-        partes.append(f"modo {_modo(d['modo'])}")
+        partes.append(f"modo {_pelo_nome(d['modo'])}")
     if d.get("viavel") is True:
         partes.append(f"plano com custo de {_reais(d.get('custo_total'))}")
     elif d.get("viavel") is False:
@@ -267,17 +259,17 @@ _FORMATADORES = {
     Acao.CATEGORIA_CRIADA: lambda d: _valor(d.get("nome")),
     Acao.SEGMENTACAO_CONFIGURADA: _limiares,
     Acao.SENHA_REDEFINIDA: _senha_redefinida,
-    Acao.USUARIO_CRIADO: lambda d: f"{d.get('login')}, perfil {_perfil(d.get('perfil'))}" + (
+    Acao.USUARIO_CRIADO: lambda d: f"{d.get('login')}, perfil {_pelo_nome(d.get('perfil'))}" + (
         f", do parceiro {d['parceiro']}" if d.get("parceiro") else ""
     ),
     Acao.USUARIO_EDITADO: _usuario_editado,
     Acao.USUARIO_DESATIVADO: lambda d: _valor(d.get("login")),
     Acao.USUARIO_REATIVADO: lambda d: _valor(d.get("login")),
     Acao.PERFIL_ALTERADO: lambda d: (
-        f"{d.get('login')}: de {_perfil(d.get('de'))} para {_perfil(d.get('para'))}"
+        f"{d.get('login')}: de {_pelo_nome(d.get('de'))} para {_pelo_nome(d.get('para'))}"
     ),
     Acao.ACESSO_NEGADO: lambda d: (
-        f"{d.get('metodo')} {d.get('caminho')}, perfil {_perfil(d.get('perfil'))}"
+        f"{d.get('metodo')} {d.get('caminho')}, perfil {_pelo_nome(d.get('perfil'))}"
     ),
     Acao.MODELO_TREINADO: lambda d: (
         f"treino {d.get('treino')}: versão em uso {d.get('versao_em_uso')}"

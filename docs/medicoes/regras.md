@@ -10,7 +10,7 @@ Cada regra de `docs/02-requisitos.md`, parte IV, contra o que o sistema faz: o c
 
 | Item | Valor |
 |---|---|
-| Data | 02/10/2026 04:56 |
+| Data | 26/11/2026 00:59 |
 | Banco | `gih_regras` — **separado do banco de trabalho**, recriado a cada execução |
 | PostgreSQL | PostgreSQL 16.14 on x86_64-pc-linux-musl |
 | Python | 3.11.9 |
@@ -333,7 +333,7 @@ O motivo para a Loja 20: "Com 2 períodos de histórico, ainda não há previsã
 
 | O que se confere | Esperado | Voltou | |
 |---|---|---|---|
-| o ganho das 9 ações do plano, refeito pela fórmula, ao centavo | nenhum | nenhum | ok |
+| das 9 ações do plano, as que diferem do ganho refeito pela fórmula, ao centavo | nenhum | nenhum | ok |
 | o ganho do plano é a soma dos ganhos das ações | 15448.64 | 15448.64 | ok |
 
 Um exemplo: Loja 02, Destaque na vitrine: 18625.00 × 0.1400 + 18625.00 × 0.047619047619047616 × 0.0500 = 2651.85.

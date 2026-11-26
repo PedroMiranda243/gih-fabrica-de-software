@@ -1,0 +1,160 @@
+[
+  {
+    "numero": 243,
+    "titulo": "Duas regiões com o mesmo nome na mesma tela: a seção e a caixa de rolagem da tabela",
+    "situacao": "corrigido",
+    "prs": [
+      242
+    ],
+    "apareceu": "Na interface nova, a caixa que rola cada tabela tinha o mesmo nome da seção em volta (duas regiões \"Ranking de parceiros\", por exemplo), em 7 telas; e o texto da frente da tela de entrada ficava fora de qualquer região. Quem navega por regiões com leitor de tela ouvia o mesmo nome duas vezes, sem saber qual era a tabela.",
+    "causa": "A caixa de rolagem da tabela (`Lista.jsx`) recebia o rótulo da seção, e a frente da entrada (`Entrar.jsx`) não estava dentro de uma região com nome. O teste de uma tela solta não pega isso: as regras do axe que valem para a página inteira ficam desligadas.",
+    "correcao": "A caixa se chama \"Tabela: …\", e a frente da entrada é uma seção \"Sobre o GIH\". O `App.acessibilidade.test.jsx`, novo, abre a aplicação inteira com essas regras ligadas. Commit ac2fac9.",
+    "encontrado": "22/10, na medição do laboratório de interfaces (`lab medir`): 16 das 60 auditorias do axe-core acusavam `landmark-unique` ou `region`. Depois da correção, 0 de 60."
+  },
+  {
+    "numero": 244,
+    "titulo": "O nome do link da conta e o dos segmentos do painel não continham o texto que se lê neles (WCAG 2.5.3)",
+    "situacao": "corrigido",
+    "prs": [
+      242
+    ],
+    "apareceu": "O link da conta, no cabeçalho, se chamava \"Gestora do Laboratório, Gestor — Minha conta\", e as linhas da distribuição por segmento, \"Em risco: 104 parceiros — ver na lista\", enquanto a tela mostra \"Gestora do Laboratório Gestor\" e \"Em risco 104\". Quem usa comando de voz fala o que vê, e o nome não continha o que se via.",
+    "causa": "O nome acessível vinha de um `aria-label` escrito à parte, com pontuação e ordem que a tela não mostra (`Casca.jsx`, `Painel.jsx`).",
+    "correcao": "O nome passa a vir do texto visível, com o complemento só para o leitor de tela em `.sr-only` (\"Minha conta:\" antes; \"parceiros — ver na lista\" depois). Os dois links ganharam o teste que confere a regra. Commit 2843d7e.",
+    "encontrado": "22/10, na medição oficial (`scripts/medir_telas.py`, axe-core 4.14) contra a base da equipe: 58 das 60 auditorias acusavam `label-content-name-mismatch`. O laboratório, com o axe-core 4.13, não aplicava a regra. Depois da correção, 0 de 60."
+  },
+  {
+    "numero": 245,
+    "titulo": "Mensagens aberta a partir de um plano não trazia a prévia do público sozinha",
+    "situacao": "corrigido",
+    "prs": [
+      242
+    ],
+    "apareceu": "Vindo de um plano de campanha (\"Gerar mensagens\", que abre `/mensagens?plano=…`), a tela de Mensagens ficava sem a prévia do público até a pessoa clicar de novo. Na interface anterior, a prévia chegava sozinha.",
+    "causa": "A interface nova lia o plano do endereço, mas não pedia a prévia (`POST /api/mensagens/publico`) ao abrir.",
+    "correcao": "Ao abrir com `?plano=`, a tela pede a prévia na hora, com o indicador de carregamento desde o início (`Mensagens.jsx`). O teste abre a tela pelo endereço do plano e espera a prévia sem clique. Commit ac2fac9.",
+    "encontrado": "22/10, comparando a interface nova com a anterior, tela a tela, no laboratório de interfaces."
+  },
+  {
+    "numero": 246,
+    "titulo": "O menu e a guarda dos endereços tinham, cada um, a sua lista de permissões",
+    "situacao": "corrigido",
+    "prs": [
+      242
+    ],
+    "apareceu": "A permissão de cada tela estava escrita duas vezes: no menu (`navegacao/telas.js`) e na guarda dos endereços (`App.jsx`). As duas listas precisavam concordar à mão.",
+    "causa": "A interface nova voltou a ter duas tabelas para a mesma regra. Foi assim que, na interface anterior, o menu escondeu a Auditoria do analista enquanto o endereço a abria para ele (H94).",
+    "correcao": "Uma tabela só, `EXIGE`, em `navegacao/telas.js`: o menu e a guarda leem dela. O teste confere que cada tela do menu e cada endereço guardado usam a mesma entrada. Commit ac2fac9.",
+    "encontrado": "22/10, na leitura do código da interface nova, antes de ela entrar no repositório."
+  },
+  {
+    "numero": 247,
+    "titulo": "Encerrar a sessão não limpava a tela quando o erro não vinha da API",
+    "situacao": "corrigido",
+    "prs": [
+      242
+    ],
+    "apareceu": "Ao clicar em \"Sair\" com a rede fora ou com outro erro que não fosse uma resposta da API, a pessoa continuava vendo as telas de dentro, como se a sessão seguisse.",
+    "causa": "A função `sair` (`api/sessao.jsx`) só limpava o usuário da tela quando a API respondia com erro; qualquer outra falha deixava o usuário como estava.",
+    "correcao": "A tela é limpa em qualquer caso, num `finally`: a pessoa pediu para sair. Commit ac2fac9.",
+    "encontrado": "22/10, na leitura do código da interface nova, antes de ela entrar no repositório."
+  },
+  {
+    "numero": 248,
+    "titulo": "O risco mínimo ia para o endereço em fração, e os links antigos mandariam 14 à API",
+    "situacao": "corrigido",
+    "prs": [
+      242
+    ],
+    "apareceu": "No relatório de risco, a interface nova gravava o risco mínimo no endereço em fração (`0.14`). Os links da interface anterior, e os que alguém tivesse guardado, trazem o percentual (`14`): abertos na nova, mandariam 14 — 1.400% — à API.",
+    "causa": "A interface nova trocou o formato do filtro no endereço sem converter os links que já existiam (`RelatorioRisco.jsx`).",
+    "correcao": "O endereço guarda o percentual, como a pessoa digita e como antes; a conversão para fração acontece só no pedido à API (`paraFracao`). O teste abre o link antigo e confere o valor que chega à API. Commit ac2fac9.",
+    "encontrado": "22/10, comparando os filtros no endereço da interface nova com os da anterior."
+  },
+  {
+    "numero": 249,
+    "titulo": "O título da página ficava vazio enquanto a tela carregava",
+    "situacao": "corrigido",
+    "prs": [
+      242
+    ],
+    "apareceu": "As telas são carregadas sob demanda. Até a tela chegar, o título de nível 1 da página ficava vazio: o leitor de tela anunciava um título sem nada.",
+    "causa": "A casca mostrava só o título que a própria tela informa ao montar; antes disso, não havia nenhum (`Casca.jsx`).",
+    "correcao": "Enquanto a tela carrega, o título é o nome dela no menu. Commit a4d6f5c.",
+    "encontrado": "22/10, no laboratório de interfaces: o axe acusava `empty-heading` durante o carregamento."
+  },
+  {
+    "numero": 250,
+    "titulo": "A confirmação da campanha mostrava \"?\" no campo em branco",
+    "situacao": "corrigido",
+    "prs": [
+      242
+    ],
+    "apareceu": "Com o máximo de ações em branco, a frase de confirmação do cálculo da campanha mostrava \"?\" e \"(vazio)\" no lugar do valor.",
+    "causa": "A frase de confirmação (`Campanha.jsx`) era o único lugar da interface que escrevia o nulo por conta própria; em todo o resto, nulo é travessão.",
+    "correcao": "Travessão, como no resto da interface. A API continua recusando o pedido sem o máximo de ações e diz o porquê ao lado do campo. Commit fbfe4e4.",
+    "encontrado": "22/10, nos fluxos da seção 10 do kit, rodados pela tela no laboratório (`ferramentas/fluxos.py`, \"calcular a campanha\")."
+  },
+  {
+    "numero": 251,
+    "titulo": "Quatro testes da interface liam o endereço antes de ele ser anotado, e falhavam às vezes",
+    "situacao": "corrigido",
+    "prs": [
+      242
+    ],
+    "apareceu": "O teste da sessão que termina e volta ao mesmo lugar falhou uma vez na suíte inteira da interface, e passou rodando sozinho.",
+    "causa": "O auxiliar dos testes anota o endereço num efeito, que roda depois de a tela ser desenhada. Quatro testes de `App.sessao.test.jsx` liam o endereço assim que achavam um texto na tela; com a máquina ocupada, a leitura chegava antes da anotação.",
+    "correcao": "Os quatro esperam o endereço com `waitFor`, em vez de lê-lo uma vez. Commit 9069515.",
+    "encontrado": "26/10, rodando a suíte inteira da interface antes de abrir o #242."
+  },
+  {
+    "numero": 291,
+    "titulo": "Dois casos do executor conferiam antes de a tela terminar de trocar",
+    "situacao": "corrigido",
+    "prs": [],
+    "apareceu": "Na rodada final da Sprint 09 (25/11), dois casos do executor reprovaram, e reprovam de novo a cada execução: o CT-N14 (\"depois de trocar de tela, o foco está em A:Parceiros\") e o CT-F17 (\"o histórico não mostra a semana importada\"). Na tela, os dois estão certos: o foco chega ao título 33 ms depois do clique, e a captura do CT-F17 mostra a semana importada no histórico.",
+    "causa": "O executor conferia cedo demais. O `sossegar` espera o `networkidle` com `wait_for_load_state`, que diz respeito à carga da página — e, numa troca de tela sem recarregar, essa carga já tinha terminado: a espera volta na hora. O CT-N14 lia o foco antes do quadro em que ele vai ao título, e o CT-F17 lia o histórico antes de ele recarregar. Em 26/10 passaram por folga de tempo.",
+    "correcao": "Os dois casos esperam o que conferem, com prazo: o foco no título da tela nova (já com o texto dela), e a semana importada no histórico, como a tela a escreve (dd/mm/aaaa, e não só o dia). Sem isso no prazo, o caso continua reprovando.",
+    "encontrado": "25/11, na rodada final das evidências da Sprint 09."
+  },
+  {
+    "numero": 293,
+    "titulo": "Na importação, \"12.500\" é lido como R$ 12,50",
+    "situacao": "corrigido",
+    "prs": [],
+    "apareceu": "Na importação, um relatório com \"12.500\" no faturamento — doze mil e quinhentos, como se escreve no Brasil — aparece na prévia como **R$ 12,50**, e o botão oferece gravar o valor mil vezes menor, sem aviso. \"1.234,56\" entra certo.",
+    "causa": "O `ler_decimal` (`api/app/leitor_relatorio.py`) usa a regra \"o último separador que aparecer é o decimal\". Com um ponto só e nenhuma vírgula, o ponto vira decimal: `12.500` → 12,5.",
+    "correcao": "Ponto seguido de exatamente três dígitos, sem vírgula, é separador de milhar: dinheiro tem no máximo dois dígitos de centavos, então \"12.500\" só pode ser doze mil e quinhentos, e \"1.234.567\", um milhão e tanto. \"12.50\" e \"12.5\" continuam decimais. Decidido pelo Pedro em 25/11.",
+    "encontrado": "25/11, na campanha manual da Sprint 09 (#256), importando um relatório escrito como se escreve no Brasil."
+  },
+  {
+    "numero": 294,
+    "titulo": "Novo usuário vazio: \"ao menos 1 caracteres\" e os códigos do perfil",
+    "situacao": "corrigido",
+    "prs": [],
+    "apareceu": "No Novo usuário enviado vazio, duas mensagens destoam (CT-V03): a da senha diz **\"Obrigatório: informe ao menos 1 caracteres.\"** — o mínimo da senha é 10, e o singular é \"caractere\" —, e a do perfil lista os **códigos internos**: \"Escolha uma destas opções: ADMINISTRADOR, GESTOR, ANALISTA ou PARCEIRO.\", em vez dos nomes que a tela usa. O mesmo acontece com o status comercial do parceiro (\"ATIVO, PROSPECCAO ou INATIVO\").",
+    "causa": "As duas são a tradução automática do 422 (`api/app/erros.py`): o campo vazio usa o tamanho mínimo do esquema (1, na senha, cuja regra de 10 é de um validador à parte), e a opção do enum sai com o valor interno.",
+    "correcao": "Campo vazio com mínimo de 1 diz \"Campo obrigatório.\"; o número de caracteres no singular quando é 1; e as opções pelo nome que a tela usa (Administrador, Gestor…), de uma tabela só, que o resumo da auditoria também usa.",
+    "encontrado": "25/11, na campanha manual da Sprint 09 (#256), relendo o que a tela mostrou no CT-V03."
+  },
+  {
+    "numero": 295,
+    "titulo": "Nova categoria: o Escape devolve o foco ao topo da página",
+    "situacao": "corrigido",
+    "prs": [],
+    "apareceu": "No cadastro do parceiro, a \"Nova categoria\" abre pelo teclado com o foco no campo; mas o **Escape fecha o campo e joga o foco para o topo da página** (\"Pular para o conteúdo\"), em vez de devolvê-lo ao botão \"Nova categoria\". Quem usa o teclado perde o lugar no formulário. O \"Cancelar\" faz o mesmo.",
+    "causa": "Ao fechar, o campo sai da tela com o foco dentro dele, e nada põe o foco de volta no botão que o abriu.",
+    "correcao": "Ao fechar pelo Escape ou pelo Cancelar, o foco volta ao botão \"Nova categoria\".",
+    "encontrado": "25/11, na campanha manual da Sprint 09 (#256), percorrendo o formulário só pelo teclado."
+  },
+  {
+    "numero": 296,
+    "titulo": "CSV de parceiros e de mensagens com o cabeçalho sem acento",
+    "situacao": "corrigido",
+    "prs": [],
+    "apareceu": "O CSV da lista de parceiros sai com o cabeçalho sem acento — \"Situacao\", \"Ticket medio\", \"Variacao %\" —, e o das mensagens aprovadas também (\"Acao\"). Os CSVs dos relatórios saem com acento (\"Ticket médio\", \"Variação %\"), e a tela também.",
+    "causa": "Os dois cabeçalhos (`api/app/rotas/parceiros.py`, `api/app/rotas/mensagens.py`) foram escritos sem acento. O arquivo leva o BOM, e o acento abre certo na planilha.",
+    "correcao": "\"Situação\", \"Ticket médio\", \"Variação %\" e \"Ação\", como nos relatórios e na tela.",
+    "encontrado": "25/11, na campanha manual da Sprint 09 (#256), abrindo o CSV exportado."
+  }
+]
