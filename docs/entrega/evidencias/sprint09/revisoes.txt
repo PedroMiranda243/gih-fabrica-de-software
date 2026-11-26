@@ -1,0 +1,52 @@
+Registro das revisões dos Pull Requests — gerado do GitHub
+https://github.com/PedroMiranda243/gih-fabrica-de-software
+PRs incorporados depois do #238, do marco que começa com "Sprint 09 acadêmica"; gerado em 26/11/2026 00:36 por scripts/registrar_revisoes.py
+
+#240  22/10  Acesso remoto ao sistema por rede privada, e não por link público — o perfil…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#242  26/10  A interface Etiqueta e Lacre como front oficial, com a suíte de testes…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#257  26/10  As ferramentas da entrega e o modelo de defeito prontos para a Sprint 09
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#258  26/10  O plano de testes e os 77 casos executados pela tela, no navegador de verdade…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#259  26/10  A documentação técnica alinhada ao sistema de hoje: requisitos, casos de uso…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#292  25/11  fix: dois casos do executor conferiam antes de a tela terminar de trocar
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#297  26/11  fix: os quatro defeitos da campanha manual da Sprint 09
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+Resumo
+  PRs incorporados                                  7
+  com aprovação de um colega                        0
+  com revisão de um colega, sem aprovação           0
+  sem revisão registrada no GitHub                  7
+
+Por colega convidado
+  ingrydaraujob            convidado em   7 · aprovou   0 · pediu mudanças  0 · comentou  0
+  joaopfranca04            convidado em   7 · aprovou   0 · pediu mudanças  0 · comentou  0
+  mihaeldatoman            convidado em   7 · aprovou   0 · pediu mudanças  0 · comentou  0
+  ThiagojFalcao            convidado em   4 · aprovou   0 · pediu mudanças  0 · comentou  0
+
+Resultado: 7 PRs incorporados, 0 com aprovação registrada de um colega, 7 sem revisão registrada.
