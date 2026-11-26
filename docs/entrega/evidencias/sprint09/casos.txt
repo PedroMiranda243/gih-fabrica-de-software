@@ -1,0 +1,473 @@
+Casos de teste pela tela — gerado por scripts/testar_na_tela.py
+Executado em 26/11/2026 00:41, contra http://localhost:5173, no Microsoft Edge 158.0.4370.33
+Catálogo: docs/12-plano-de-testes.md (78 casos; 78 executados)
+
+CT-F01  Autenticação · RF01 · Gestor
+    passos:    Abrir `/entrar`, digitar login e senha válidos e clicar em Entrar
+    esperado:  Abre o Painel; o cabeçalho mostra o nome e o perfil de quem entrou
+    obtido:    abriu / com o título 'Painel'; o cabeçalho mostra 'Minha conta: TG Teste Gestor Gestor'
+    situação:  ok (2 s)  — captura CT-F01.png
+
+CT-F02  Autenticação · RF02 · Gestor
+    passos:    Com a sessão aberta, clicar em "Encerrar sessão"; depois, abrir `/parceiros`
+    esperado:  Volta para `/entrar`; abrir uma tela de dentro pede a entrada de novo
+    obtido:    voltou para /entrar; abrir /parceiros depois de sair pede a entrada de novo
+    situação:  ok (2 s)  — captura CT-F02.png
+
+CT-F03  Autenticação · RF07 · Gestor
+    passos:    Em Minha conta, informar a senha atual e a nova duas vezes, e clicar em "Trocar a senha"
+    esperado:  A tela confirma a troca; a conta entra com a senha nova
+    obtido:    'Senha trocada. As outras sessões desta conta foram encerradas; esta continua aberta.'; a conta entra com a senha nova (201)
+    situação:  ok (6 s)  — captura CT-F03.png
+
+CT-F04  Usuários · RF03 · Administrador
+    passos:    Em Usuários › Novo, preencher login, nome, senha inicial e perfil Analista, e clicar em "Criar usuário"
+    esperado:  A conta é criada e aparece na lista de usuários
+    obtido:    criou t29277.novo (201); a lista mostra 'Teste Novo Analista t29277.novo Analista Ativa'
+    situação:  ok (2 s)  — captura CT-F04.png
+
+CT-F05  Usuários · RF52 · Administrador
+    passos:    Na lista de usuários, buscar pelo login da conta criada
+    esperado:  A lista mostra só ela; o endereço guarda a busca
+    obtido:    a busca por 't29277.novo' mostra 1 linha, a dele; o endereço guarda a busca (/usuarios?busca=t29277.novo)
+    situação:  ok (2 s)  — captura CT-F05.png
+
+CT-F06  Usuários · RF04 · Administrador
+    passos:    Abrir a conta, trocar o perfil de Analista para Gestor e salvar
+    esperado:  A alteração é salva e a lista mostra o perfil novo
+    obtido:    perfil de Analista para Gestor (200); a lista mostra 'Teste Novo Analista t29277.novo Gestor Ativa'
+    situação:  ok (2 s)  — captura CT-F06.png
+
+CT-F07  Usuários · RF03 · Administrador
+    passos:    Na conta, clicar em Desativar e confirmar; depois, tentar entrar com ela
+    esperado:  A conta aparece como Desativada e não entra mais; o histórico continua
+    obtido:    'Desativada — não entra; o histórico e a auditoria continuam.'; tentar entrar com ela responde 401: 'Login ou senha inválidos.'
+    situação:  ok (4 s)  — captura CT-F07.png
+
+CT-F08  Usuários · RF56 · Administrador
+    passos:    Criar uma conta de perfil Parceiro, buscar o parceiro pelo nome e escolhê-lo
+    esperado:  A tela diz de qual parceiro a conta vê o desempenho, e a conta é criada vinculada a ele
+    obtido:    'A conta vê só o desempenho de Ponto Azul 2.'; a conta foi criada (201) vinculada ao parceiro 246
+    situação:  ok (2 s)  — captura CT-F08.png
+
+CT-F09  Usuários · RF54 · Administrador
+    passos:    Abrir a conta de outra pessoa, digitar uma senha nova em "Redefinir a senha" e confirmar
+    esperado:  A senha é redefinida e a conta entra com ela
+    obtido:    redefinida (204); a conta entra com a senha nova (201)
+    situação:  ok (6 s)  — captura CT-F09.png
+
+CT-F10  Parceiros · RF14, RF15 · Gestor
+    passos:    Em Parceiros › Novo, digitar o nome, aceitar a categoria sugerida, informar o contato e clicar em "Cadastrar parceiro"
+    esperado:  O parceiro é cadastrado e o cadastro dele abre com "Parceiro cadastrado."
+    obtido:    'Pelo nome, parece Padaria. Usar Padaria'; cadastrado (201), abriu /parceiros/551 com 'Parceiro cadastrado.'
+    situação:  ok (2 s)  — captura CT-F10.png
+
+CT-F11  Parceiros · RF23 · Gestor
+    passos:    Na lista de parceiros, filtrar pelo segmento Em risco
+    esperado:  Só aparecem parceiros Em risco; o endereço guarda o filtro
+    obtido:    25 linhas, todas 'Em risco'; o endereço guarda o filtro (/parceiros?segmento=EM_RISCO)
+    situação:  ok (2 s)  — captura CT-F11.png
+
+CT-F12  Parceiros · RF14 · Gestor
+    passos:    No cadastro, mudar o contato e o status comercial e clicar em "Salvar alterações"
+    esperado:  A tela diz "Alterações salvas." e a API devolve os valores novos
+    obtido:    'Alterações salvas.'; a API devolveu contato '(81) 3000-0000' e status PROSPECCAO
+    situação:  ok (2 s)  — captura CT-F12.png
+
+CT-F13  Parceiros · RF14 · Gestor
+    passos:    No cadastro de um parceiro sem histórico, clicar em "Excluir parceiro" e confirmar
+    esperado:  O parceiro é excluído e o cadastro dele deixa de existir
+    obtido:    excluído (204); a tela foi para /parceiros; o cadastro dele responde 404
+    situação:  ok (6 s)  — captura CT-F13.png
+
+CT-F14  Parceiros · RF25 · Gestor
+    passos:    Na lista filtrada pelo segmento Top, clicar em "Exportar CSV"
+    esperado:  Um CSV com o cabeçalho e as linhas do mesmo filtro
+    obtido:    /api/parceiros/exportacao.csv?segmento=TOP → 200 text/csv, 14 linhas; cabeçalho 'Parceiro;Categoria;Segmento;Status;Situação;Contato;Faturamento;Pedidos;Ticket médio;Varia'
+    situação:  ok (2 s)  — captura CT-F14.png
+
+CT-F15  Parceiros · RF14 · Gestor
+    passos:    No cadastro, desativar o parceiro e confirmar; depois, reativá-lo
+    esperado:  As duas mudanças são gravadas pela tela
+    obtido:    desativado e reativado pela tela (200 nas duas)
+    situação:  ok (2 s)  — captura CT-F15.png
+
+CT-F39  Parceiros · RF14 · Gestor
+    passos:    Em Parceiros › Novo, clicar em "Nova categoria", digitar o nome e clicar em "Criar categoria"
+    esperado:  A categoria é criada e já fica escolhida no campo Categoria; o parceiro continua por salvar
+    obtido:    'Categoria Doceria t29277 criada e escolhida. Salve o cadastro para gravar a escolha.'; a categoria 17 ficou escolhida no campo, e o parceiro continua por salvar
+    situação:  ok (2 s)  — captura CT-F39.png
+
+CT-F19  Painel · RF17, RF18 · Gestor
+    passos:    Abrir o Painel
+    esperado:  Os indicadores do período e o ranking de parceiros, com dados
+    obtido:    indicadores: 'Indicadores do período Faturamento Nº 12 R$ 1.839.707,96 R$ 1.839.707 ,96 −0,12% Pedidos Nº 12 41.974 −0,06% Ticket médio Nº 12 R$ 43,83 R$ 43 ,83 −0,'; ranking com 25 linhas
+    situação:  ok (2 s)  — captura CT-F19.png
+
+CT-F20  Painel · RF17 · Gestor
+    passos:    No Painel, escolher uma categoria no recorte
+    esperado:  Indicadores e ranking são pedidos com o recorte, e o endereço o guarda
+    obtido:    recorte 'Açaí e sorvetes': indicadores e ranking pedidos com categoria_id=6; endereço /?categoria_id=6
+    situação:  ok (2 s)  — captura CT-F20.png
+
+CT-F21  Modelo · RF27 · Gestor
+    passos:    Em Modelo, clicar em Treinar e confirmar
+    esperado:  O treino é disparado, acompanhado na tela até o fim, e termina
+    obtido:    treino 17 disparado (202) e acompanhado até o fim: CONCLUIDO
+    situação:  ok (10 s)  — captura CT-F21.png
+
+CT-F22  Campanha · RF29, RF30 · Gestor
+    passos:    Em Campanha, informar orçamento e máximo de ações, clicar em "Calcular plano" e confirmar
+    esperado:  O plano é calculado e acompanhado na tela até ficar pronto
+    obtido:    plano 85 calculado no modo GPU: 8 ações, custo R$ 3450.00, ganho esperado R$ 76170.28, em 335 ms
+    situação:  ok (6 s)  — captura CT-F22.png
+
+CT-F23  Campanha · RF35 · Gestor
+    passos:    Abrir a comparação de dois planos calculados
+    esperado:  A comparação lado a lado abre
+    obtido:    a comparação dos planos 85 e 86 abriu ('Comparação de dois planos')
+    situação:  ok (7 s)  — captura CT-F23.png
+
+CT-F24  Campanha · RF53 · Gestor
+    passos:    Na execução de um plano, clicar no link do CSV
+    esperado:  Um CSV com as ações do plano
+    obtido:    /api/otimizacoes/85/exportacao.csv → 200 text/csv, 9 ações; cabeçalho 'Parceiro;Categoria;Segmento;Cauda longa;Ação;Custo;Ganho esperado'
+    situação:  ok (2 s)  — captura CT-F24.png
+
+CT-F25  Campanha · RF29 · Gestor
+    passos:    No catálogo de ações, criar uma ação nova; depois, editar o custo e desmarcar "Ativa"
+    esperado:  A ação é criada, editada e fica inativa no catálogo
+    obtido:    criada (201), editada e desativada (200); a linha do catálogo: 'Cupom t29277 R$ 40,00 4% 2% Inativa Editar'
+    situação:  ok (2 s)  — captura CT-F25.png
+
+CT-F26  Benchmark · RF33 · Gestor
+    passos:    Em Benchmark, pedir 500 parceiros e 1 repetição, e clicar em "Rodar benchmark"
+    esperado:  O benchmark roda, é acompanhado na tela e termina com os modos medidos
+    obtido:    benchmark 11 concluído; PYTHON MEDIDA 6.609 s; CPP_SERIAL MEDIDA 0.086 s; OPENMP MEDIDA 0.016 s; GPU MEDIDA 0.205 s
+    situação:  ok (12 s)  — captura CT-F26.png
+
+CT-F27  Mensagens e aprovação · RF36 · Gestor
+    passos:    Abrir Mensagens a partir de um plano e clicar em "Gerar N mensagens"
+    esperado:  O público do plano aparece sozinho; as mensagens são geradas, com o link para a fila de aprovação
+    obtido:    'Gerar 8 mensagens' (202); lote 45 pronto: {"situacao": "CONCLUIDA", "autor": "Teste Gestor", "descricao": "Plano de campanha de 28/09/2026 a 04/10/2026", "iniciado_em": "2026-11-26T03:38:01.811566Z", "c
+    situação:  ok (27 s)  — captura CT-F27.png
+
+CT-F28  Mensagens e aprovação · RF37, RF38, RN06 · Gestor
+    passos:    Na fila de aprovação daquela geração, aprovar uma mensagem
+    esperado:  A mensagem é aprovada e sai da fila de pendentes
+    obtido:    a fila do lote tinha 8 pendentes; uma aprovada (200), e a fila ficou com 7
+    situação:  ok (2 s)  — captura CT-F28.png
+
+CT-F29  Mensagens e aprovação · RF38 · Gestor
+    passos:    Na fila, editar o texto de uma mensagem e salvar
+    esperado:  O texto salvo é o editado
+    obtido:    o texto editado foi salvo (200) e voltou com a frase acrescentada
+    situação:  ok (2 s)  — captura CT-F29.png
+
+CT-F30  Mensagens e aprovação · RF38, RF40 · Gestor
+    passos:    Na fila, rejeitar uma mensagem com o motivo
+    esperado:  A mensagem é rejeitada e o motivo fica gravado
+    obtido:    rejeitada (200) com o motivo; estado REJEITADA
+    situação:  ok (2 s)  — captura CT-F30.png
+
+CT-F31  Assistente · RF41, RF42 · Gestor
+    passos:    Perguntar o faturamento total da rede na última semana
+    esperado:  A resposta vem com a fonte (o período de origem)
+    obtido:    RESPONDIDA, redigida por MODELO; na tela: 'Qual foi o faturamento total da rede na última semana? 26/11/2026 às 00:38 O faturamento total da rede na última semana, de 21/09/2026 a 27/09/2026, foi de R$ 1.839.707,96, representando uma queda de 0,12% em comparação '
+    situação:  ok (6 s)  — captura CT-F31.png
+
+CT-F32  Assistente · RF42, RF43, RN08 · Gestor
+    passos:    Perguntar a cotação do dólar amanhã
+    esperado:  O assistente se abstém: diz que não tem base para responder, sem inventar número
+    obtido:    ABSTENCAO; na tela: 'Qual vai ser a cotação do dólar amanhã? 26/11/2026 às 00:38 Sem base para responder Essa pergunta está fora do que o assistente sabe responder. Ele responde sobre o desempenho, a evolução, a posição, o segmento e a previ'
+    situação:  ok (3 s)  — captura CT-F32.png
+
+CT-F33  Relatórios · RF44, RF45, RF46 · Gestor
+    passos:    Abrir os relatórios de desempenho, de risco e da campanha
+    esperado:  Cada um abre a folha do relatório
+    obtido:    desempenho: 'Desempenho por período'; risco: 'Parceiros em risco'; campanha: 'Campanha'
+    situação:  ok (4 s)  — captura CT-F33.png
+
+CT-F34  Relatórios · RF48 · Gestor
+    passos:    Num relatório, imprimir (a mídia de impressão)
+    esperado:  Só a folha do relatório aparece; o menu e o cabeçalho saem
+    obtido:    na mídia de impressão, só a folha do relatório aparece: o menu e o cabeçalho saem
+    situação:  ok (2 s)  — captura CT-F34.png
+
+CT-F35  Relatórios · RF47 · Administrador
+    passos:    Abrir o relatório de operações
+    esperado:  O relatório abre para o Administrador
+    obtido:    o Administrador abre 'Operações do sistema'
+    situação:  ok (2 s)  — captura CT-F35.png
+
+CT-F36  Auditoria · RF08, RF49 · Administrador
+    passos:    Na trilha de auditoria, buscar pela marca da execução
+    esperado:  Aparecem os registros das ações da execução
+    obtido:    a busca por 't29277' trouxe 50 registros; o primeiro: '26/11/2026 às 00:38 Teste Administrador (t29277.adm) Entrada no sistema — 172.19.0.6 O que foi gravado'
+    situação:  ok (2 s)  — captura CT-F36.png
+
+CT-F37  Configuração · RF21, RN01 · Administrador
+    passos:    Em Configuração, aumentar em 1 os períodos de tendência e salvar
+    esperado:  O limiar novo é gravado; ao fim, o valor de antes é restaurado
+    obtido:    períodos de tendência de 2 para 3 (200), gravado por Teste Administrador
+    situação:  ok (8 s)  — captura CT-F37.png
+
+CT-F38  Portal do parceiro · RF26 · Parceiro
+    passos:    Entrar como Parceiro
+    esperado:  Abre "Meu desempenho", com os indicadores só do próprio parceiro
+    obtido:    abriu /meu-desempenho; indicadores do próprio parceiro: 'Seus indicadores do período mais recente Faturamento 21/09 – 27/09 R$ 79.410,29 R$ 79.410 ,29 −15,06% Pedidos 21/09 – 27/09 1.070 −15,08% Ticket médio 21/09 – 2'
+    situação:  ok (2 s)  — captura CT-F38.png
+
+CT-V01  Entrada e senha · RF01 · —
+    passos:    Entrar com o login certo e a senha errada
+    esperado:  "Login ou senha inválidos.", a mesma mensagem para login e para senha; só a senha é apagada
+    obtido:    'Login ou senha inválidos.'; o login continua preenchido e só a senha foi apagada
+    situação:  ok (1 s)  — captura CT-V01.png
+
+CT-V02  Entrada e senha · RF01 · —
+    passos:    Abrir `/entrar` e olhar o botão com os campos vazios, só com o login, e com os dois
+    esperado:  O botão Entrar só liga com os dois campos preenchidos
+    obtido:    o botão Entrar fica desligado com os campos vazios e com só o login; liga com os dois
+    situação:  ok (1 s)  — captura CT-V02.png
+
+CT-V18  Entrada e senha · RF07 · Analista
+    passos:    Em Minha conta, trocar a senha informando a senha atual errada
+    esperado:  A recusa aparece embaixo do campo Senha atual
+    obtido:    senha atual errada: 'A senha atual está incorreta.'
+    situação:  ok (4 s)  — captura CT-V18.png
+
+CT-V19  Entrada e senha · RF07 · Analista
+    passos:    Em Minha conta, digitar a senha nova diferente nas duas vezes
+    esperado:  "As duas digitações da senha nova não são iguais.", sem enviar nada à API
+    obtido:    'As duas digitações da senha nova não são iguais.' — nada foi enviado à API
+    situação:  ok (1 s)  — captura CT-V19.png
+
+CT-V03  Usuários · RF03 · Administrador
+    passos:    Em Novo usuário, clicar em "Criar usuário" sem preencher nada
+    esperado:  Uma mensagem embaixo de cada campo obrigatório: login, nome, senha e perfil
+    obtido:    login: 'Obrigatório: informe ao menos 3 caracteres.'; nome: 'Obrigatório: informe ao menos 2 caracteres.'; senha: 'Campo obrigatório.'; perfil: 'Escolha uma destas opções: Administrador, Gestor, Analista ou Parceiro.'
+    situação:  ok (1 s)  — captura CT-V03.png
+
+CT-V04  Usuários · RF03 · Administrador
+    passos:    Criar um usuário com o login "Fulano Silva"
+    esperado:  A mensagem diz o formato do login: minúsculas, números, ponto, hífen e sublinhado
+    obtido:    login 'Fulano Silva': 'Formato inválido.'
+    situação:  ok (1 s)  — captura CT-V04.png
+
+CT-V05  Usuários · RF03 · Administrador
+    passos:    Criar um usuário com a senha "curta1"; depois, com uma senha que contém o login
+    esperado:  Cada recusa diz a regra: o tamanho mínimo; não conter o login
+    obtido:    'curta1': 'A senha precisa ter pelo menos 10 caracteres.'; com o login dentro: 'A senha não pode conter o login.'
+    situação:  ok (2 s)  — captura CT-V05.png
+
+CT-V06  Usuários · RF03 · Administrador
+    passos:    Criar um usuário com um login que já existe
+    esperado:  A recusa diz que o login já é usado e leva à conta que o usa
+    obtido:    'Já existe um usuário com o login 't29277.gestor'. Escolha outro login. Se a conta é da mesma pessoa e está desativada, reative-a em vez de criar outra. Abrir a conta que já usa este login (Teste Gestor)'
+    situação:  ok (1 s)  — captura CT-V06.png
+
+CT-V17  Usuários · RF54 · Administrador
+    passos:    Abrir a própria conta na lista de usuários
+    esperado:  A redefinição de senha não aparece: a tela aponta para Minha conta, que pede a senha atual
+    obtido:    na própria conta, a redefinição não aparece: 'Esta é a sua conta: a sua senha se troca em Minha conta, que pede a senha atual.'
+    situação:  ok (4 s)  — captura CT-V17.png
+
+CT-V07  Parceiros · RF14 · Gestor
+    passos:    Cadastrar um parceiro sem nome
+    esperado:  A mensagem embaixo do campo Nome
+    obtido:    nome em branco: 'Obrigatório: informe ao menos 2 caracteres.'
+    situação:  ok (2 s)  — captura CT-V07.png
+
+CT-V08  Parceiros · RF14 · Gestor
+    passos:    Cadastrar um parceiro com o nome de um que já existe
+    esperado:  A recusa diz que o nome já existe e leva ao cadastro dele
+    obtido:    'Já existe um parceiro com o nome 'Ponto Azul 2'. Corrija o nome, ou abra o cadastro existente e edite-o em vez de criar outro. Abrir o cadastro de Ponto Azul 2'
+    situação:  ok (2 s)  — captura CT-V08.png
+
+CT-V09  Parceiros · RF14 · Gestor
+    passos:    Excluir um parceiro que tem histórico
+    esperado:  A exclusão é recusada, com o motivo: o histórico dele sustenta os períodos fechados
+    obtido:    recusada (409): 'O parceiro 'Ponto Azul 2' tem histórico e não pode ser excluído. Excluir apagaria registros que outros períodos já contabilizam. Para tirá-lo de circulação sem perder o histórico, desative o parceiro. 12 métricas 12 segmentos 2 previsões 3 itens de plano 2 mensagens 44 usuários Desativar em vez de excluir'
+    situação:  ok (2 s)  — captura CT-V09.png
+
+CT-V21  Parceiros · RF28, RN09 · Gestor
+    passos:    Abrir o cadastro de um parceiro recém-criado, sem histórico
+    esperado:  O bloco de previsão, marcado como estimativa, diz por que não há previsão para ele
+    obtido:    'Próximo período Estimativa Com 0 períodos de histórico, ainda não há previsão: são necessários 4 A previsão aparece no primeiro treino depois que o parceiro completar a janela. O que é estimativa?'
+    situação:  ok (2 s)  — captura CT-V21.png
+
+CT-V10  Importação · RF10, RN03 · Gestor
+    passos:    Pedir a prévia de um relatório sem informar o período
+    esperado:  A importação é recusada, com a mensagem no campo do período
+    obtido:    recusada (422): início 'Campo obrigatório. Sem o período, as métricas ficam órfãs na linha do tempo e a segmentação por tendência classifica errado sem emitir erro (RN03). Não existe valor padrão: informe a data inicial e a data final do relatório.'
+    situação:  ok (4 s)  — captura CT-V10.png
+
+CT-V11  Importação · RF10 · Gestor
+    passos:    Pedir a prévia com o fim do período antes do início
+    esperado:  A recusa diz que o período está invertido
+    obtido:    recusado (422): 'A data final do período não pode ser anterior à inicial.'
+    situação:  ok (4 s)  — captura CT-V11.png
+
+CT-V12  Importação · RF12 · Gestor
+    passos:    Gravar um relatório num período que já foi importado, e cancelar
+    esperado:  A gravação é recusada, a tela explica e oferece substituir; cancelado, nada muda
+    obtido:    recusado (409), nada gravado: 'Este período já foi importado. Já existem 500 registros deste período, importados por Gerador de dados em 02/10/2026 às 21:02. O padrão é cancelar, para não duplicar nem apagar dados sem querer. Para ' — cancelado, sem substituir
+    situação:  ok (6 s)  — captura CT-V12.png
+
+CT-V13  Importação · RF11 · Gestor
+    passos:    Pedir a prévia de um relatório sem nenhuma linha aproveitável
+    esperado:  A prévia diz "Nenhuma linha aproveitável", com o motivo de cada linha, e não oferece gravar
+    obtido:    a prévia diz 'Nenhuma linha aproveitável', com o motivo de cada linha, e não oferece gravar
+    situação:  ok (2 s)  — captura CT-V13.png
+
+CT-V22  Importação · RF09, RNF15 · Gestor
+    passos:    Enviar um arquivo CSV maior que o limite
+    esperado:  A recusa diz que o arquivo é grande demais
+    obtido:    arquivo de 675 kB: 'O arquivo passa do limite de 500.000 bytes. Envie o relatório de um período por vez.'
+    situação:  ok (2 s)  — captura CT-V22.png
+
+CT-V14  Campanha · RF29 · Gestor
+    passos:    Calcular um plano com orçamento zero
+    esperado:  A mensagem embaixo do Orçamento diz o mínimo
+    obtido:    orçamento zero: 'Use um valor maior que 0.'
+    situação:  ok (2 s)  — captura CT-V14.png
+
+CT-V15  Campanha · RF31, RN07 · Gestor
+    passos:    Calcular um plano com orçamento de R$ 100,00, 8 ações e cota mínima de 100% para a cauda longa
+    esperado:  Nenhum plano parcial: a tela diz que as cotas exigem mais que o orçamento, e quanto falta
+    obtido:    sem solução viável (restrição: orcamento); a tela diz: 'As cotas mínimas exigem pelo menos R$ 720,00, acima do orçamento de R$ 100,00: faltam R$ 620,00.'
+    situação:  ok (4 s)  — captura CT-V15.png
+
+CT-V23  Campanha · RF29 · Gestor
+    passos:    Criar uma ação no catálogo com custo zero
+    esperado:  A recusa diz que o custo precisa ser maior que zero
+    obtido:    custo zero: 'Use um valor maior que 0.'
+    situação:  ok (2 s)  — captura CT-V23.png
+
+CT-V16  Configuração e assistente · RF21, RN01 · Administrador
+    passos:    Salvar o tamanho do Top igual a zero
+    esperado:  A mensagem embaixo do campo diz o mínimo
+    obtido:    Top 0: 'Use um valor a partir de 1.'
+    situação:  ok (2 s)  — captura CT-V16.png
+
+CT-V20  Configuração e assistente · RF41 · Gestor
+    passos:    Olhar o botão Perguntar com a pergunta vazia e com só espaços
+    esperado:  O botão Perguntar fica desligado
+    obtido:    o botão Perguntar fica desligado com a pergunta vazia e com só espaços
+    situação:  ok (2 s)  — captura CT-V20.png
+
+CT-N01  Menus e permissões · RF05 · Administrador
+    passos:    Clicar, um por um, em todos os itens do menu
+    esperado:  Cada item abre a sua tela, com título, sem "Sem acesso" nem "Página não encontrada"
+    obtido:    9 itens, todos abriram a tela com título: Painel → /, Importação → /importacao, Modelo → /modelo, Execuções → /execucoes, Benchmark → /benchmark, Usuários → /usuarios, Auditoria → /auditoria, Operações → /relatorios/operacoes, Configuração → /configuracao
+    situação:  ok (2 s)  — captura CT-N01.png
+
+CT-N02  Menus e permissões · RF05 · Gestor
+    passos:    Clicar, um por um, em todos os itens do menu
+    esperado:  Cada item abre a sua tela, com título, sem "Sem acesso" nem "Página não encontrada"
+    obtido:    11 itens, todos abriram a tela com título: Painel → /, Importação → /importacao, Parceiros → /parceiros, Assistente → /assistente, Relatórios → /relatorios, Modelo → /modelo, Campanha → /campanha, Execuções → /execucoes, Benchmark → /benchmark, Mensagens → /mensagens, Aprovação → /aprovacao
+    situação:  ok (2 s)  — captura CT-N02.png
+
+CT-N03  Menus e permissões · RF05 · Analista
+    passos:    Clicar, um por um, em todos os itens do menu
+    esperado:  Cada item abre a sua tela, com título, sem "Sem acesso" nem "Página não encontrada"
+    obtido:    9 itens, todos abriram a tela com título: Painel → /, Importação → /importacao, Parceiros → /parceiros, Assistente → /assistente, Relatórios → /relatorios, Campanha → /campanha, Execuções → /execucoes, Mensagens → /mensagens, Aprovação → /aprovacao
+    situação:  ok (2 s)  — captura CT-N03.png
+
+CT-N04  Menus e permissões · RF26 · Parceiro
+    passos:    Entrar e abrir `/`
+    esperado:  Vai para "Meu desempenho"; o menu tem só esse item
+    obtido:    / levou a /meu-desempenho; o menu tem só ['Meu desempenho']
+    situação:  ok (2 s)  — captura CT-N04.png
+
+CT-N05  Menus e permissões · RF05, RNF14 · Analista
+    passos:    Abrir `/modelo` pelo endereço
+    esperado:  "O seu perfil não abre esta tela", com o perfil e o endereço, sem chamar a API do modelo
+    obtido:    'O seu perfil não abre esta tela O perfil Analista não tem acesso a /modelo. As telas que você abre estão no menu. Se precisar desta, fale com o administrador do sistema. Ir para o início' — nenhuma chamada a /api/modelo
+    situação:  ok (1 s)  — captura CT-N05.png
+
+CT-N06  Redirecionamentos · RF01 · Gestor
+    passos:    Sem sessão, abrir `/parceiros?segmento=TOP`; depois, entrar
+    esperado:  Vai para a entrada e, depois de entrar, volta ao endereço pedido, com o filtro
+    obtido:    sem sessão, /parceiros?segmento=TOP levou à entrada; depois de entrar, voltou a /parceiros?segmento=TOP
+    situação:  ok (2 s)  — captura CT-N06.png
+
+CT-N07  Redirecionamentos · — · Gestor
+    passos:    Abrir um endereço que não existe e clicar em "Ir para o início"
+    esperado:  "Página não encontrada", com o endereço pedido; o link leva ao Painel
+    obtido:    'Página não encontrada Não existe tela em /relatorio-que-nao-existe. O endereço pode ter sido digitado errado, ou o link está incompleto. Ir para o início'; 'Ir para o início' levou ao 'Painel'
+    situação:  ok (1 s)  — captura CT-N07.png
+
+CT-N13  Redirecionamentos · RF02 · Gestor
+    passos:    Com a sessão encerrada no servidor, clicar num item do menu; depois, entrar de novo
+    esperado:  A tela diz que a sessão terminou; ao entrar, volta para onde a pessoa ia
+    obtido:    'A sua sessão terminou. Entre de novo para continuar de onde parou.'; ao entrar de novo, voltou a /execucoes
+    situação:  ok (3 s)  — captura CT-N13.png
+
+CT-N08  Links entre telas · RF17, RF23 · Gestor
+    passos:    No Painel, clicar num segmento da distribuição
+    esperado:  Abre a lista de parceiros filtrada por aquele segmento
+    obtido:    'Estável 272 parceiros — ver na lista' levou a /parceiros?segmento=ESTAVEL, com o segmento escolhido no filtro
+    situação:  ok (2 s)  — captura CT-N08.png
+
+CT-N09  Links entre telas · RF23 · Gestor
+    passos:    Na lista filtrada, abrir um parceiro e clicar em "Voltar para a lista"
+    esperado:  Abre o cadastro dele; a volta mantém o filtro
+    obtido:    'Casa Caseiro 2' abriu o cadastro dele; 'Voltar para a lista' voltou a /parceiros?segmento=TOP, com o filtro
+    situação:  ok (2 s)  — captura CT-N09.png
+
+CT-N10  Links entre telas · RF36 · Gestor
+    passos:    Na execução de um plano, clicar em "Gerar mensagens para este plano"
+    esperado:  Abre Mensagens com o plano e a prévia do público já carregada
+    obtido:    da execução 85, 'Gerar mensagens para este plano' abriu /mensagens?plano=85 com a prévia do público já carregada
+    situação:  ok (2 s)  — captura CT-N10.png
+
+CT-N16  Links entre telas · RNF20 · Gestor
+    passos:    No cadastro de um parceiro, ler "Onde você está" e clicar no link de volta
+    esperado:  O cabeçalho diz a área (Análise); o link volta à tela de antes
+    obtido:    o cabeçalho diz 'Área: Análise Parceiros'; 'Voltar para a lista' levou a /parceiros
+    situação:  ok (2 s)  — captura CT-N16.png
+
+CT-N11  Continuidade dos fluxos · RNF20 · Gestor
+    passos:    Ir do Painel a Parceiros e a Relatórios pelo menu; voltar duas vezes e avançar uma pelo navegador
+    esperado:  Voltar e avançar passam pelas mesmas telas, na ordem
+    obtido:    voltar → /parceiros ('Parceiros'); voltar → / ('Painel'); avançar → /parceiros ('Parceiros')
+    situação:  ok (2 s)  — captura CT-N11.png
+
+CT-N12  Continuidade dos fluxos · RNF20 · Gestor
+    passos:    Alterar um campo do cadastro e clicar num item do menu; escolher "Continuar editando", e depois "Sair sem salvar"
+    esperado:  O aviso de alterações não salvas aparece; continuar mantém o texto; sair navega
+    obtido:    'Há alterações que não foram salvas. Sair desta tela agora descarta o que você mudou. Sair sem salvar Continuar editando'; 'Continuar editando' manteve o texto; 'Sair sem salvar' foi ao painel
+    situação:  ok (2 s)  — captura CT-N12.png
+
+CT-N14  Continuidade dos fluxos · RNF20 · Gestor
+    passos:    Apertar Tab ao abrir uma tela, e Enter; trocar de tela pelo menu
+    esperado:  O primeiro Tab é "Pular para o conteúdo"; ao trocar de tela, o foco vai ao título
+    obtido:    o primeiro Tab é 'Pular para o conteúdo', e Enter leva a #conteudo; ao trocar de tela, o foco vai ao título (H1:Parceiros)
+    situação:  ok (2 s)  — captura CT-N14.png
+
+CT-N15  Continuidade dos fluxos · RNF21 · Gestor
+    passos:    A 768 px de largura, abrir o menu pelo botão e escolher Parceiros
+    esperado:  O menu começa fechado, abre pelo botão, navega e fecha; a página não rola na horizontal
+    obtido:    a 768 px o menu começa fora da tela; 'Abrir o menu' o mostra, e escolher Parceiros navega e o fecha; a página tem 768 px, sem rolar na horizontal
+    situação:  ok (2 s)  — captura CT-N15.png
+
+CT-F16  Importação · RF09, RF11 · Gestor
+    passos:    Informar o período, colar um relatório com duas linhas boas e uma sem sentido, e clicar em "Ver a prévia"
+    esperado:  A prévia mostra as linhas que serão gravadas e as rejeitadas, cada uma com o motivo
+    obtido:    2 linhas para gravar e 1 rejeitada, com o motivo: 'A linha tem 1 coluna(s); esperado ao menos 3.'
+    situação:  ok (4 s)  — captura CT-F16.png
+
+CT-F17  Importação · RF09, RF13 · Gestor
+    passos:    Depois da prévia, clicar em Gravar
+    esperado:  A importação é gravada e o período aparece em "Importações anteriores"
+    obtido:    gravado (201): o período 2115-06-24 a 2115-06-30 aparece em 'Importações anteriores'
+    situação:  ok (4 s)  — captura CT-F17.png
+
+CT-F18  Importação · RF12 · Gestor
+    passos:    Importar de novo o mesmo período e escolher "Substituir mesmo assim"
+    esperado:  O período repetido é recusado e explicado; a substituição só acontece com a confirmação
+    obtido:    o mesmo período foi recusado (409) com 'Este período já foi importado. Já existem 2 registros deste período, importados por Teste Gestor em 26/11/2026 às 00:40. O padrão é cancelar'; 'Substituir mesmo assim' gravou (201)
+    situação:  ok (6 s)  — captura CT-F18.png
+
+Resultado: 78 de 78 casos como esperado.

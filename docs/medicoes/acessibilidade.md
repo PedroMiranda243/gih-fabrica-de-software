@@ -12,8 +12,8 @@ Três verificações, em três lugares:
 
 | Item | Valor |
 |---|---|
-| Data | 17/11/2026 20:05 |
-| Navegador | Microsoft Edge 157.0.4341.60, sem cabeça, pelo Playwright |
+| Data | 26/11/2026 01:01 |
+| Navegador | Microsoft Edge 158.0.4370.33, sem cabeça, pelo Playwright |
 | axe-core | 4.14.0 |
 | Dados | a base de trabalho, com a massa do gerador; dois planos calculados para a medição e apagados depois |
 | Máquina | Windows 10, Python 3.11.9 |
@@ -124,8 +124,8 @@ api/.venv/Scripts/python scripts/medir_telas.py
 | Assistente | `/assistente` | gestor | ok | ok | 0 | 0 |
 | Campanha | `/campanha` | gestor | ok | ok | 0 | 0 |
 | Execuções | `/execucoes` | gestor | ok | ok | 0 | 0 |
-| Execução | `/execucoes/67` | gestor | ok | ok | 0 | 0 |
-| Comparação | `/execucoes/comparar?a=67&b=68` | gestor | ok | ok | 0 | 0 |
+| Execução | `/execucoes/93` | gestor | ok | ok | 0 | 0 |
+| Comparação | `/execucoes/comparar?a=93&b=94` | gestor | ok | ok | 0 | 0 |
 | Mensagens | `/mensagens` | gestor | ok | ok | 0 | 0 |
 | Aprovação | `/aprovacao` | gestor | ok | ok | 0 | 0 |
 | Benchmark | `/benchmark` | gestor | ok | ok | 0 | 0 |
@@ -136,7 +136,7 @@ api/.venv/Scripts/python scripts/medir_telas.py
 | Relatório da campanha | `/relatorios/campanha` | gestor | ok | ok | 0 | 0 |
 | Usuários | `/usuarios` | administrador | ok | ok | 0 | 0 |
 | Novo usuário | `/usuarios/novo` | administrador | ok | ok | 0 | 0 |
-| Conta do usuário | `/usuarios/113` | administrador | ok | ok | 0 | 0 |
+| Conta do usuário | `/usuarios/236` | administrador | ok | ok | 0 | 0 |
 | Auditoria | `/auditoria` | administrador | ok | ok | 0 | 0 |
 | Relatório de operações | `/relatorios/operacoes` | administrador | ok | ok | 0 | 0 |
 | Limiares | `/configuracao` | administrador | ok | ok | 0 | 0 |
