@@ -448,7 +448,7 @@ def test_a_exportacao_traz_so_as_aprovadas_prontas_para_envio(fila, gestor):
         "Contato",
         "Segmento",
         "Categoria",
-        "Acao",
+        "Ação",
         "Mensagem",
         "Editada",
         "Aprovada por",

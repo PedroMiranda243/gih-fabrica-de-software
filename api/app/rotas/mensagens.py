@@ -332,7 +332,7 @@ CABECALHO_CSV = (
     "Contato",
     "Segmento",
     "Categoria",
-    "Acao",
+    "Ação",
     "Mensagem",
     "Editada",
     "Aprovada por",

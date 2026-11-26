@@ -311,7 +311,7 @@ def test_o_arquivo_abre_em_planilha_com_acentuacao(analista, rede):
     linha = _ler_csv(resposta)[0]
     assert linha["Parceiro"] == "Casa da Praça"
     assert linha["Faturamento"] == "1234,56"
-    assert linha["Ticket medio"] == "411,52"
+    assert linha["Ticket médio"] == "411,52"
 
 
 def test_o_arquivo_usa_rotulo_e_nao_o_valor_interno(analista, rede):
@@ -335,7 +335,7 @@ def test_o_arquivo_usa_rotulo_e_nao_o_valor_interno(analista, rede):
 
     assert linha["Status"] == "Prospecção"
     assert linha["Segmento"] == "Em risco"
-    assert linha["Situacao"] == "Ativo"
+    assert linha["Situação"] == "Ativo"
 
 
 def test_a_exportacao_vem_como_arquivo_nomeado(analista, rede):

@@ -136,6 +136,19 @@ describe("o cadastro do parceiro", () => {
     expect(screen.queryByLabelText(/^Nome da categoria nova/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Nova categoria" })).toBeInTheDocument();
     expect(chamadas().some((c) => c.startsWith("POST /api/categorias"))).toBe(false);
+    // E o foco volta ao botão: ia parar no topo da página, e quem usa o teclado perdia o lugar (#295).
+    await waitFor(() => expect(screen.getByRole("button", { name: "Nova categoria" })).toHaveFocus());
+  });
+
+  it("Cancelar também devolve o foco ao botão Nova categoria (#295)", async () => {
+    const usuario = userEvent.setup();
+    abrir("/parceiros/novo", { rotas: DO_PARCEIRO() });
+
+    await usuario.click(await screen.findByRole("button", { name: "Nova categoria" }));
+    await usuario.type(screen.getByLabelText(/^Nome da categoria nova/), "Doceria");
+    await usuario.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Nova categoria" })).toHaveFocus());
   });
 
   it("mostra a previsão e a chance de queda como estimativa, com a versão do modelo (RF28)", async () => {

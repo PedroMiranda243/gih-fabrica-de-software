@@ -265,6 +265,7 @@ function NovaCategoria({ aoCriar }) {
   const [criando, setCriando] = useState(false);
   const [aviso, setAviso] = useState(null);
   const campo = useRef(null);
+  const botaoAbrir = useRef(null);
 
   useEffect(() => {
     if (aberta) campo.current?.focus();
@@ -274,6 +275,13 @@ function NovaCategoria({ aoCriar }) {
     setAberta(false);
     setNome("");
     setErro(null);
+  }
+
+  /* Desistir (Escape ou Cancelar) devolve o foco ao botão que abriu o campo: o campo
+     sai da tela com o foco dentro dele, e o foco ia parar no topo da página (#295). */
+  function desistir() {
+    fechar();
+    requestAnimationFrame(() => botaoAbrir.current?.focus());
   }
 
   async function criar() {
@@ -301,7 +309,7 @@ function NovaCategoria({ aoCriar }) {
   if (!aberta) {
     return (
       <div className="nova-categoria__abrir">
-        <button type="button" className="botao botao--fantasma botao--pequeno" onClick={() => (setAviso(null), setAberta(true))}>
+        <button type="button" ref={botaoAbrir} className="botao botao--fantasma botao--pequeno" onClick={() => (setAviso(null), setAberta(true))}>
           <Icone nome="mais" /> Nova categoria
         </button>
         {aviso && (
@@ -329,7 +337,7 @@ function NovaCategoria({ aoCriar }) {
                 e.preventDefault();
                 if (nome.trim() && !criando) criar();
               }
-              if (e.key === "Escape" && !criando) fechar();
+              if (e.key === "Escape" && !criando) desistir();
             }}
             autoComplete="off"
           />
@@ -339,7 +347,7 @@ function NovaCategoria({ aoCriar }) {
         <button type="button" className="botao botao--secundario botao--pequeno" onClick={criar} disabled={criando || !nome.trim()}>
           {criando ? "Criando…" : "Criar categoria"}
         </button>
-        <button type="button" className="botao botao--fantasma botao--pequeno" onClick={fechar} disabled={criando}>
+        <button type="button" className="botao botao--fantasma botao--pequeno" onClick={desistir} disabled={criando}>
           Cancelar
         </button>
       </div>

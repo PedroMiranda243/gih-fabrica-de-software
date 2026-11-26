@@ -80,17 +80,19 @@ ROTULO_STATUS = {
     StatusComercial.INATIVO: "Inativo",
 }
 
+# Com acento, como na tela e nos CSVs dos relatórios: o arquivo leva o BOM, e a
+# planilha o abre certo (#296).
 CABECALHO_CSV = (
     "Parceiro",
     "Categoria",
     "Segmento",
     "Status",
-    "Situacao",
+    "Situação",
     "Contato",
     "Faturamento",
     "Pedidos",
-    "Ticket medio",
-    "Variacao %",
+    "Ticket médio",
+    "Variação %",
     "Risco de queda",
 )
 
