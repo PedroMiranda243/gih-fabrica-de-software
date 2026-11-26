@@ -384,8 +384,8 @@ ver [`docs/06-equipe-e-processo.md`](docs/06-equipe-e-processo.md).
 | Sprint 06 — aprimoramento do sistema | 17/10/2026 | [`GRUPO-18-GIH-SPRINT-06.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-06.pdf) |
 | Sprint 07 — sistema quase completo | 24/10/2026 | [`GRUPO-18-GIH-SPRINT-07.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-07.pdf) |
 | Sprint 08 — funcionalidades concluídas | 31/10/2026 | [`GRUPO-18-GIH-SPRINT-08.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-08.pdf) |
-| Sprint 09 — testes e correções | 07/11/2026 | entregue junto com a Sprint 10 |
-| **Sprint 10 — Release Candidate** | 14/11/2026 | em preparação |
+| Sprint 09 — testes e correções | 07/11/2026 | no mesmo PDF da Sprint 10 |
+| **Sprint 10 — Release Candidate** | 14/11/2026 | [`GRUPO-18-GIH-SPRINT-10.pdf`](docs/entregas/GRUPO-18-GIH-SPRINT-10.pdf) |
 
 O documento é acumulado: cada entrega traz as sprints anteriores e a atual. Ele é **gerado a partir da
 documentação deste repositório**, e não escrito à parte; como gerá-lo está no
