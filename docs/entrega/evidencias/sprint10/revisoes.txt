@@ -1,6 +1,6 @@
 Registro das revisões dos Pull Requests — gerado do GitHub
 https://github.com/PedroMiranda243/gih-fabrica-de-software
-PRs incorporados depois do #238, do marco que começa com "Sprint 10 acadêmica"; gerado em 27/11/2026 08:35 por scripts/registrar_revisoes.py
+PRs incorporados depois do #238, do marco que começa com "Sprint 10 acadêmica"; gerado em 27/11/2026 09:03 por scripts/registrar_revisoes.py
 
 #270  17/11  A Parte V já entregue passa a ler o diagrama da previsão congelado (#265)
       aberto por PedroMiranda243 · mesclado por PedroMiranda243
@@ -47,16 +47,21 @@ PRs incorporados depois do #238, do marco que começa com "Sprint 10 acadêmica"
       convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
       revisões:   nenhuma registrada no GitHub
 
+#299  27/11  docs: a Release Candidate — a Parte X, a tag v1.0.0-rc.1 e a instalação do zero
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
 Resumo
-  PRs incorporados                                  9
+  PRs incorporados                                 10
   com aprovação de um colega                        0
   com revisão de um colega, sem aprovação           0
-  sem revisão registrada no GitHub                  9
+  sem revisão registrada no GitHub                 10
 
 Por colega convidado
-  ingrydaraujob            convidado em   9 · aprovou   0 · pediu mudanças  0 · comentou  0
-  joaopfranca04            convidado em   9 · aprovou   0 · pediu mudanças  0 · comentou  0
-  mihaeldatoman            convidado em   9 · aprovou   0 · pediu mudanças  0 · comentou  0
+  ingrydaraujob            convidado em  10 · aprovou   0 · pediu mudanças  0 · comentou  0
+  joaopfranca04            convidado em  10 · aprovou   0 · pediu mudanças  0 · comentou  0
+  mihaeldatoman            convidado em  10 · aprovou   0 · pediu mudanças  0 · comentou  0
   ThiagojFalcao            convidado em   3 · aprovou   0 · pediu mudanças  0 · comentou  0
 
-Resultado: 9 PRs incorporados, 0 com aprovação registrada de um colega, 9 sem revisão registrada.
+Resultado: 10 PRs incorporados, 0 com aprovação registrada de um colega, 10 sem revisão registrada.

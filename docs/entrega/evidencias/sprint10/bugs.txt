@@ -1,5 +1,5 @@
 Registro de bugs — gerado das issues com o rótulo `fix`
-Abertas desde 03/10/2026; gerado em 27/11/2026 08:35 por scripts/registrar_bugs.py
+Abertas desde 03/10/2026; gerado em 27/11/2026 09:03 por scripts/registrar_bugs.py
 Só as do marco que começa com "Sprint 10 acadêmica"
 
 #265  A Parte V já entregue lia o diagrama do modelo de previsão vivo, e mudaria ao corrigir o docs/08

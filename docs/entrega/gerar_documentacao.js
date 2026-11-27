@@ -153,7 +153,8 @@ function sumario(titulos) {
     if (nivel === 1) c.push(p(texto, { bold: true, size: 21, color: '2C5B8F', before: 200, after: 80 }));
     else if (nivel === 2) c.push(p(texto, { size: 19, after: 50, indent: { left: 280 } }));
   }
-  c.push(quebra());
+  // Sem quebra no fim: cada parte já começa com a sua, e duas seguidas deixavam a
+  // página depois do sumário em branco.
   return c;
 }
 

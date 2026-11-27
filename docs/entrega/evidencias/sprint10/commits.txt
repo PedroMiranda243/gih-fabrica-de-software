@@ -1,23 +1,23 @@
 Commits do repositório
 https://github.com/PedroMiranda243/gih-fabrica-de-software
-Referência origin/main em 9068f09 · de 2026-09-03 a 2026-11-27
+Referência origin/main em 1a1b311 · de 2026-09-03 a 2026-11-27
 Gerado a partir do git log; nenhum número foi escrito à mão.
 
 Totais
 ------
-  commits de trabalho              527
-  Pull Requests incorporados       117
+  commits de trabalho              539
+  Pull Requests incorporados       118
   commits direto na main            22   (até 15/09, antes de a main ser protegida)
 
 Por tipo (Conventional Commits)
 -------------------------------
-  docs      185   35%
-  feat      117   22%
-  test      107   20%
+  docs      193   36%
+  feat      119   22%
+  test      108   20%
   fix        65   12%
   ci         19    4%
-  chore      13    2%
-  build       8    2%
+  chore      14    3%
+  build       8    1%
   refactor    7    1%
   spike       3    1%
   perf        2    0%
@@ -37,17 +37,17 @@ Por semana (segunda a domingo)
   26/10 a 01/11   15  ███
   02/11 a 08/11    0  
   09/11 a 15/11    0  
-  16/11 a 22/11   35  ███████
-  23/11 a 29/11   16  ███
+  16/11 a 22/11   39  ███████
+  23/11 a 29/11   24  █████
 
 Autoria e coautoria
 -------------------
   Cada commit tem um autor e, por área, o colega responsável como coautor
   (trailer Co-authored-by, que o GitHub credita ao coautor).
-  autor     Pedro Miranda                             527
-  coautor   Marcio Maycom                             183
-  coautor   João Pedro Nunes de França                180
-  coautor   Ingryd Vitoria de Araújo Barbosa           80
+  autor     Pedro Miranda                             539
+  coautor   Marcio Maycom                             192
+  coautor   João Pedro Nunes de França                184
+  coautor   Ingryd Vitoria de Araújo Barbosa           82
   coautor   Thiago José Falcão de Freitas              27
   sem coautor                                         88
 
@@ -186,4 +186,4 @@ Pull Requests incorporados, por janela de entrega
     #288 17/11  fix: o que o ensaio da instalação do zero achou — o ReDoc e o resumo do…
     #290 17/11  fix: cada resposta de erro da API com o exemplo dela, e não o do 403
 
-  depois da última janela: 3
+  depois da última janela: 4

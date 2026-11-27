@@ -136,5 +136,20 @@
     "revisoes": [],
     "aprovado": false,
     "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 299,
+    "titulo": "docs: a Release Candidate — a Parte X, a tag v1.0.0-rc.1 e a instalação do zero",
+    "mesclado_em": "2026-11-27T09:02-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
   }
 ]
