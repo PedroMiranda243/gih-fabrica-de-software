@@ -374,6 +374,9 @@ function montar() {
     ['O que fica na base', 'Nada: o que a execução grava sai no fim, e as contas são desativadas — não apagadas, porque a auditoria aponta para o autor'],
   ], { zebra: true, boldCol: 0, size: 18 }));
 
+  // A seção 1 não cabe numa página: dividida aqui, saem duas páginas cheias, e não
+  // uma cheia e outra com as duas últimas linhas da tabela das suítes.
+  c.push(quebra());
   c.push(h2('1.3 Como um caso é executado, e quando ele passa'));
   c.push(p(
     'O script lê o catálogo e recusa rodar se um caso do documento não tiver o código que o executa, ou o '
@@ -517,7 +520,7 @@ function montar() {
     s: 19,
   }]));
 
-  c.push(quebra());
+  // Sem quebra: a tabela enche a página, e o resultado ficaria sozinho na seguinte.
   c.push(h2('4.1 O que a pessoa vê'));
   c.push(...figura('CT-N05', 'CT-N05 — o Analista pelo endereço do Modelo: o perfil, o endereço e nenhuma chamada à API', 560));
   c.push(...figura('CT-N07', 'CT-N07 — o endereço que não existe, mostrado como foi pedido, com o caminho de volta', 560));
@@ -600,7 +603,9 @@ function montar() {
     'O acesso de fora da máquina por rede privada (H102, #240): o sistema continua fora da internet, e os '
     + 'aparelhos da equipe chegam a ele por uma rede só deles (ADR-014).',
   ));
-  c.push(...figura('interface-antes-painel', 'O painel na interface v1, como entrou no PDF da Sprint 08', 560));
+  // A captura é a página inteira do painel, alta: na largura de 560 ela ocupava uma página
+  // sozinha e deixava o título da seção quase vazio. Nesta, cabe embaixo do texto.
+  c.push(...figura('interface-antes-painel', 'O painel na interface v1, como entrou no PDF da Sprint 08', 330));
   c.push(...figura('CT-F19', 'O mesmo painel na interface v2, na execução do caso CT-F19 desta entrega', 560));
 
   c.push(quebra());

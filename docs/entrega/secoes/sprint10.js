@@ -106,9 +106,14 @@ const FLUXO = [
 ];
 
 // --------------------------------------------- títulos e figuras desta parte
-const titulo = (nivel, tamanho, antes, depois) => (texto) => new Paragraph({
+/* `novaPagina` põe o título no alto da página seguinte pelo próprio parágrafo, e
+   não por um quebra() antes dele: quando o texto anterior acaba rente ao pé da
+   página, o parágrafo da quebra já não cabe nela, desce para a seguinte e quebra
+   de novo — e sobra uma página em branco (a exportação de 27/11). */
+const titulo = (nivel, tamanho, antes, depois) => (texto, { novaPagina = false } = {}) => new Paragraph({
   heading: nivel,
   keepNext: true,
+  pageBreakBefore: novaPagina || undefined,
   spacing: { before: antes, after: depois },
   children: [new TextRun({ text: texto, bold: true, size: tamanho, color: AZUL, font: 'Calibri' })],
 });
@@ -608,8 +613,8 @@ function montar() {
   c.push(bullet('as contagens do documento — chaves, restrições e índices — são as do catálogo.'));
 
   // ============================================== 5. APIs
-  c.push(quebra());
-  c.push(h1('5. As APIs documentadas'));
+  // A seção 4 acaba rente ao pé da página: ver `novaPagina`, no titulo().
+  c.push(h1('5. As APIs documentadas', { novaPagina: true }));
   c.push(p(
     `A API tem ${api.ops.length} operações, e a documentação delas sai das próprias rotas: o FastAPI gera o documento, `
     + 'e o api/app/documentacao_api.py o completa com o resumo de cada rota, os perfis que podem chamá-la, a sessão, '
@@ -658,11 +663,12 @@ function montar() {
     ...api.porTag.map((t) => [t.name, t.n, limpo(t.description || '—')]),
   ], { zebra: true, boldCol: 0, size: 16, align: [null, AlignmentType.CENTER] }));
 
-  c.push(quebra());
+  // Sem quebra: a tabela das áreas transborda umas linhas, e o Swagger as acompanha.
+  // A sessão, curta, vem antes da rota aberta, que ocupa uma página sozinha.
   c.push(h2('5.3 No Swagger'));
-  c.push(...figura('api-1-visao-geral', `A visão geral: a versão ${api.versao}, a autenticação, os perfis, os erros e as convenções`, 560));
-  c.push(...figura('api-2-rota-aberta', 'Uma rota aberta: quem pode, o corpo com exemplo e cada resposta, com o formato do erro', 460));
+  c.push(...figura('api-1-visao-geral', `A visão geral: a versão ${api.versao}, a autenticação, os perfis, os erros e as convenções`, 520));
   c.push(...figura('api-3-sessao', 'A sessão (o cadeado): o cookie que a entrada devolve', 460));
+  c.push(...figura('api-2-rota-aberta', 'Uma rota aberta: quem pode, o corpo com exemplo e cada resposta, com o formato do erro', 460));
 
   // ============================================== 6. README
   c.push(quebra());
