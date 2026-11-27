@@ -1,0 +1,62 @@
+Registro das revisões dos Pull Requests — gerado do GitHub
+https://github.com/PedroMiranda243/gih-fabrica-de-software
+PRs incorporados depois do #238, do marco que começa com "Sprint 10 acadêmica"; gerado em 27/11/2026 08:35 por scripts/registrar_revisoes.py
+
+#270  17/11  A Parte V já entregue passa a ler o diagrama da previsão congelado (#265)
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#271  17/11  docs: o banco de dados final, conferido contra o documento e contra as…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#272  17/11  fix: a configuração do .env faz o que diz, e a documentação da API não passa…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#273  17/11  docs(api): as APIs documentadas — sessão, perfis, parâmetros, respostas, erros…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#274  17/11  fix(web): "Nova categoria" no cadastro do parceiro — a API criava, e nenhuma…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#275  17/11  docs: o README com os nove itens do enunciado, e o guia de operação à parte…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ThiagojFalcao, ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#285  17/11  fix: a revisão da interface final — nove inconsistências, cada uma com o seu…
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#288  17/11  fix: o que o ensaio da instalação do zero achou — o ReDoc e o resumo do gerador
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+#290  17/11  fix: cada resposta de erro da API com o exemplo dela, e não o do 403
+      aberto por PedroMiranda243 · mesclado por PedroMiranda243
+      convidados: ingrydaraujob, joaopfranca04, mihaeldatoman
+      revisões:   nenhuma registrada no GitHub
+
+Resumo
+  PRs incorporados                                  9
+  com aprovação de um colega                        0
+  com revisão de um colega, sem aprovação           0
+  sem revisão registrada no GitHub                  9
+
+Por colega convidado
+  ingrydaraujob            convidado em   9 · aprovou   0 · pediu mudanças  0 · comentou  0
+  joaopfranca04            convidado em   9 · aprovou   0 · pediu mudanças  0 · comentou  0
+  mihaeldatoman            convidado em   9 · aprovou   0 · pediu mudanças  0 · comentou  0
+  ThiagojFalcao            convidado em   3 · aprovou   0 · pediu mudanças  0 · comentou  0
+
+Resultado: 9 PRs incorporados, 0 com aprovação registrada de um colega, 9 sem revisão registrada.
