@@ -230,7 +230,9 @@ function campanhaManual() {
     if (!PESSOAS[login] || !executei) continue;
     const lista = porPessoa.get(login) ?? [];
     lista.push({
-      data: c.createdAt.slice(0, 10).split('-').reverse().join('/'),
+      // O GitHub grava a hora em UTC: o comentário das 23h53 de 26/11, em Recife, sai
+      // "2026-11-27T02:53Z". A data da tabela é a de quem comentou.
+      data: new Date(c.createdAt).toLocaleDateString('pt-BR', { timeZone: 'America/Recife' }),
       // A área vem da linha "Área:" quando o comentário a traz — quem executou pode
       // ter feito outra área além da sua; sem ela, é a área da pessoa no roteiro.
       area: campo(c.body, 'Área') ?? PESSOAS[login].area,
