@@ -1,7 +1,7 @@
 # 05 — Cronograma
 
 **Projeto:** Growth Intelligence Hub (GIH)
-**Versão:** 3.8 — 26/11/2026 · as Sprints 09 e 10 da disciplina, num PDF só, e o que resta com as datas que dependem do que vem antes (3.7 — 26/10/2026, a Sprint 09 da disciplina, e a H72 adiada; 3.6 — 26/10/2026, a H103 entra na `main`, depois do envio da Sprint 08; 3.5 — 22/10/2026, a exceção ao congelamento, para a H103; 3.4 — 04/10/2026, a H102, do acesso remoto; 3.3 — 02/10/2026, a Sprint 08 da disciplina; 3.2 — 01/10/2026, a Sprint 07; 3.1 — 30/09/2026, a Sprint 06; 3.0 — 28/09/2026, o calendário real; 2.1 — 16/09/2026, o plano em sprints semanais)
+**Versão:** 3.9 — 27/11/2026 · a Release Candidate marcada, `v1.0.0-rc.1`, e instalada do zero (3.8 — 26/11/2026, as Sprints 09 e 10 da disciplina, num PDF só, e o que resta com as datas que dependem do que vem antes; 3.7 — 26/10/2026, a Sprint 09 da disciplina, e a H72 adiada; 3.6 — 26/10/2026, a H103 entra na `main`, depois do envio da Sprint 08; 3.5 — 22/10/2026, a exceção ao congelamento, para a H103; 3.4 — 04/10/2026, a H102, do acesso remoto; 3.3 — 02/10/2026, a Sprint 08 da disciplina; 3.2 — 01/10/2026, a Sprint 07; 3.1 — 30/09/2026, a Sprint 06; 3.0 — 28/09/2026, o calendário real; 2.1 — 16/09/2026, o plano em sprints semanais)
 **Datas oficiais da disciplina:** entrega da Sprint 1 em **05/09/2026** · entrega final em **05/12/2026**
 
 ---
@@ -139,8 +139,8 @@ validação numa máquina limpa, por outro integrante.
 | **H72** — subir o sistema do zero numa máquina limpa, só com o README, e registrar o que travar. Adiada: a Sprint 09 a declara como pendência, e o roteiro (`docs/validacao-do-readme.md`) já está atualizado para a interface v2 | Thiago ou João Pedro | antes da entrega final |
 | **Congelamento de funcionalidades** — a partir dele, só correção, documentação e vídeo | equipe | 25/10 |
 | **H103** — a interface refeita, a única exceção ao congelamento (#241), mesclada com a Sprint 08 já enviada (#242) | Pedro e Ingryd | 26/10 |
-| **Sprint 09** — os 78 casos pela tela, a campanha manual (#256), as correções e a documentação; a Parte IX | equipe | 26/10 – 26/11 |
-| **Sprint 10** — a Release Candidate: a API documentada, o banco final, o README, a versão 1.0.0-rc.1; a Parte X, e o PDF com as Partes IX e X | equipe | 16/11 – entrega com a Sprint 09 |
+| **Sprint 09** — os 78 casos pela tela, a campanha manual (#256), as correções e a documentação; a Parte IX | equipe | 26/10 – 27/11 |
+| **Sprint 10** — a Release Candidate: a API documentada, o banco final, o README, a versão 1.0.0-rc.1; a Parte X, e o PDF com as Partes IX e X | equipe | 16/11 – 27/11, a tag `v1.0.0-rc.1` |
 | Roteiros dos vídeos; a base de demonstração final (a rede, o modelo treinado, um plano, mensagens na fila e o benchmark com a GPU), recriada na Release Candidate | equipe | com a Sprint 10 |
 | **Transferência do núcleo** (R4): o otimizador, a GPU e o benchmark apresentados à equipe; as perguntas prováveis da banca em `docs/banca.md` | Pedro e equipe | antes da gravação |
 | **H74** e **H75** — a gravação dos dois vídeos, com a base da Release Candidate | equipe | até 04/12 |
@@ -165,10 +165,10 @@ gantt
     section Fechamento
     H72 validação do README         :2026-09-29, 2026-12-04
     Congelamento                    :milestone, 2026-10-25, 0d
-    Sprint 09 testes e correções    :done, 2026-10-26, 2026-11-26
-    Sprint 10 Release Candidate     :active, 2026-11-16, 2026-11-26
-    Roteiros, demonstração e banca  :2026-11-26, 2026-12-04
-    Gravação dos vídeos             :crit, 2026-11-26, 2026-12-05
+    Sprint 09 testes e correções    :done, 2026-10-26, 2026-11-27
+    Sprint 10 Release Candidate     :done, 2026-11-16, 2026-11-27
+    Roteiros, demonstração e banca  :2026-11-27, 2026-12-04
+    Gravação dos vídeos             :crit, 2026-11-27, 2026-12-05
     Entrega final                   :milestone, 2026-12-05, 0d
 ```
 
@@ -289,7 +289,7 @@ tem só o que não podia sair, com mais de dois meses até 05/12.
 | **23/10** | Inteligência de negócio pronta | Segmentação determinística e mobilidade do Top N | ✅ 20/09 |
 | **30/10** | Modelo batendo o baseline | MAPE registrado e inferior ao baseline ingênuo | ✅ 25/09 — MAPE de 9,8%, contra 10,2% da melhor referência e 11,5% do ingênuo |
 | **07/11** | Sistema verificado | Os casos de teste pela tela com o esperado e o obtido, os bugs registrados e corrigidos (Sprint 09) | ✅ 26/11 — 78 de 78 casos pela tela; os 14 defeitos registrados, os 14 corrigidos |
-| **14/11** | Release Candidate | A versão marcada, instalada do zero pelo README, com a API e o banco documentados (Sprint 10) | — |
+| **14/11** | Release Candidate | A versão marcada, instalada do zero pelo README, com a API e o banco documentados (Sprint 10) | ✅ 27/11 — a tag `v1.0.0-rc.1`, instalada do zero num clone novo: 17 de 17 conferências |
 | **13/11** | Otimizador paralelo em CPU | Plano válido e ganho medido sobre o serial | ✅ 26/09 — OpenMP 5,9x sobre o C++ serial, com 8 threads e o mesmo plano |
 | **20/11** | **Componente avançado demonstrável** | *Speedup* medido e exibido na interface | ✅ 27/09 — a GPU 106x sobre o Python no cenário de referência; o benchmark na tela (H57) |
 | **27/11** | Produto completo | Fluxo inteiro, do dado bruto à mensagem aprovada | ✅ 27/09 |
