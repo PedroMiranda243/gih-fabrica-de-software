@@ -1,0 +1,255 @@
+Instalação do zero — o README seguido num clone novo (H110)
+27/11/2026 07:40 · Windows 10.0.26200
+Docker 29.9.3 · Compose 5.7.0 · projeto do ensaio: gih-rc
+
+==============================================================================
+[1/7] O clone e o .env — os dois primeiros comandos do README
+==============================================================================
+
+$ git clone --depth 1 --branch v1.0.0-rc.1 https://github.com/PedroMiranda243/gih-fabrica-de-software.git
+  warning: refs/tags/v1.0.0-rc.1 9adeb419a44ed1d6088b8ee7f86ec287fb91cec9 is not a commit!
+  Note: switching to '9068f090282b35f0585149ebdc5db5da6d900f1a'.
+  You are in 'detached HEAD' state. You can look around, make experimental
+  changes and commit them, and you can discard any commits you make in this
+  state without impacting any branches by switching back to a branch.
+  If you want to create a new branch to retain commits you create, you may
+  do so (now or later) by using -c with the switch command. Example:
+    git switch -c <new-branch-name>
+  Or undo this operation with:
+    git switch -
+  Turn off this advice by setting config variable advice.detachedHead to false
+  ok    o clone de v1.0.0-rc.1 veio
+  commit: 9068f09 Merge pull request #298 from PedroMiranda243/docs/255-fechamento-s09
+
+$ cp .env.example .env
+  ok    o .env é a cópia do .env.example, sem mudança
+
+==============================================================================
+[2/7] docker compose up -d — constrói as imagens e sobe os serviços
+==============================================================================
+
+$ docker compose build --no-cache
+  (Reading database ... 5%
+  (Reading database ... 10%
+  (Reading database ... 15%
+  (Reading database ... 20%
+  (Reading database ... 25%
+  (Reading database ... 30%
+  (Reading database ... 35%
+  (Reading database ... 40%
+  (Reading database ... 45%
+  (Reading database ... 50%
+  (Reading database ... 55%
+  (Reading database ... 60%
+  (Reading database ... 65%
+  (Reading database ... 70%
+  (Reading database ... 75%
+  (Reading database ... 80%
+  (Reading database ... 85%
+  (Reading database ... 90%
+  (Reading database ... 95%
+  (Reading database ... 100%
+  (Reading database ... 5652 files and directories currently installed.)
+  (Reading database ... 5%
+  (Reading database ... 10%
+  (Reading database ... 15%
+  (Reading database ... 20%
+  (Reading database ... 25%
+  (Reading database ... 30%
+  (Reading database ... 35%
+  (Reading database ... 40%
+  (Reading database ... 45%
+  (Reading database ... 50%
+  (Reading database ... 55%
+  (Reading database ... 60%
+  (Reading database ... 65%
+  (Reading database ... 70%
+  (Reading database ... 75%
+  (Reading database ... 80%
+  (Reading database ... 85%
+  (Reading database ... 90%
+  (Reading database ... 95%
+  (Reading database ... 100%
+  (Reading database ... 5652 files and directories currently installed.)
+  (Reading database ... 5%
+  (Reading database ... 10%
+  (Reading database ... 15%
+  (Reading database ... 20%
+  (Reading database ... 25%
+  (Reading database ... 30%
+  (Reading database ... 35%
+  (Reading database ... 40%
+  (Reading database ... 45%
+  (Reading database ... 50%
+  (Reading database ... 55%
+  (Reading database ... 60%
+  (Reading database ... 65%
+  (Reading database ... 70%
+  (Reading database ... 75%
+  (Reading database ... 80%
+  (Reading database ... 85%
+  (Reading database ... 90%
+  (Reading database ... 95%
+  (Reading database ... 100%
+  (Reading database ... 5652 files and directories currently installed.)
+  (Reading database ... 5%
+  (Reading database ... 10%
+  (Reading database ... 15%
+  (Reading database ... 20%
+  (Reading database ... 25%
+  (Reading database ... 30%
+  (Reading database ... 35%
+  (Reading database ... 40%
+  (Reading database ... 45%
+  (Reading database ... 50%
+  (Reading database ... 55%
+  (Reading database ... 60%
+  (Reading database ... 65%
+  (Reading database ... 70%
+  (Reading database ... 75%
+  (Reading database ... 80%
+  (Reading database ... 85%
+  (Reading database ... 90%
+  (Reading database ... 95%
+  (Reading database ... 100%
+  (Reading database ... 5652 files and directories currently installed.)
+   Image gih-rc-web Built 
+   Image gih-rc-api Built 
+  ok    as imagens foram construídas sem o cache
+
+$ docker compose up -d
+   Volume gih-rc_dados_postgres Created 
+   Volume gih-rc_dados_postgres Created 
+   Network gih-rc_default Created 
+   Network gih-rc_default Created 
+   Container gih-rc-postgres-1 Created 
+   Container gih-rc-api-1 Created 
+   Container gih-rc-web-1 Created 
+   Container gih-rc-postgres-1 Started 
+   Container gih-rc-postgres-1 Healthy 
+   Container gih-rc-api-1 Started 
+   Container gih-rc-web-1 Started 
+
+  em 135 s
+  ok    o docker compose up -d terminou sem erro
+  ok    o Compose fala com o projeto do ensaio (gih-rc)
+
+==============================================================================
+[3/7] A saúde, a interface e o primeiro acesso
+==============================================================================
+
+$ GET http://localhost:8000/api/health
+  {"status": "ok", "banco": "ok", "versao": "1.0.0-rc.1"}
+  ok    a API responde, com o banco ok (2 s depois do up)
+  versão: 1.0.0-rc.1
+
+$ GET http://localhost:5173
+  200
+  ok    a interface responde
+
+$ docker compose logs api | grep "Senha sorteada"
+  1 linha — a senha não vai para este registro
+  ok    o log tem uma linha "Senha sorteada"
+
+$ POST http://localhost:8000/api/sessao  (admin, com a senha do log)
+  201
+  ok    o administrador entra com a senha do log
+
+==============================================================================
+[4/7] A base de demonstração, e o banco pelo psql
+==============================================================================
+
+$ docker compose exec api python -m app.cli popular-demonstracao
+  Gerando 500 parceiros...
+  Gerando 12 períodos semanais...
+  Gerando séries de faturamento...
+  500 parceiros · 12 períodos · 5.689 métricas · semente 42
+  Último período: faturamento total R$ 1.839.707,96 · mediana R$ 1.931,58
+  Os 15 maiores faturamentos somam 23,00% do total
+  Os 5 maiores do último período:
+    Ponto Azul 2                     R$ 79.410,29
+    Quintal Verde 2                  R$ 57.841,79
+    Villa da Praça                   R$ 31.039,82
+    Celeiro do Chef                  R$ 28.667,26
+    Espaço do Chef                   R$ 27.668,36
+  Segmentação recalculada em 12 período(s).
+  Treinando (treino 1)...
+  Concluído: 500 parceiros, 12 períodos, 469 amostras de teste.
+    MAPE   rede 9,22% · último período 11,54% · média móvel 9,97%
+    Brier  rede 0,1051 · referência 0,1215
+  Versão em uso: rede-1
+
+  em 5 s
+  ok    o popular-demonstracao terminou sem erro
+  ok    o modelo foi treinado e entrou em uso
+
+$ docker compose exec postgres psql -U gih -d gih -tAc "select count(*) from parceiro"
+  500
+  ok    o psql do README responde, com os parceiros gerados
+
+==============================================================================
+[5/7] A documentação da API, nos endereços do README
+==============================================================================
+
+$ GET http://localhost:8000/api/docs
+  200
+  ok    /api/docs responde
+
+$ GET http://localhost:8000/api/redoc
+  200
+  ok    /api/redoc responde
+
+$ GET http://localhost:8000/api/openapi.json
+  200
+  ok    /api/openapi.json responde
+
+==============================================================================
+[6/7] A verificação de ponta a ponta e a persistência, as do clone
+==============================================================================
+
+$ python e2e/verificacao.py
+  As 158 verificações passaram.
+  ok    a verificação de ponta a ponta passou inteira
+
+$ python e2e/persistencia.py
+  Resultado: 16 de 16 conferências passaram.
+  ok    a persistência passou inteira (derrubar, subir, conferir)
+
+==============================================================================
+[7/7] Desmontar o ensaio — só o projeto gih-rc
+==============================================================================
+
+$ docker compose down -v --rmi local
+   Container gih-rc-web-1 Stopped 
+   Container gih-rc-web-1 Removed 
+   Container gih-rc-api-1 Stopped 
+   Container gih-rc-api-1 Removed 
+   Container gih-rc-postgres-1 Stopped 
+   Container gih-rc-postgres-1 Removed 
+   Volume gih-rc_dados_postgres Removed 
+   Network gih-rc_default Removed 
+   Image gih-rc-api:latest Removed 
+   Image gih-rc-web:latest Removed 
+
+  o projeto gih-rc, o volume e as imagens dele saíram
+
+Conferências:
+  ok    o clone de v1.0.0-rc.1 veio
+  ok    o .env é a cópia do .env.example, sem mudança
+  ok    as imagens foram construídas sem o cache
+  ok    o docker compose up -d terminou sem erro
+  ok    o Compose fala com o projeto do ensaio (gih-rc)
+  ok    a API responde, com o banco ok (2 s depois do up)
+  ok    a interface responde
+  ok    o log tem uma linha "Senha sorteada"
+  ok    o administrador entra com a senha do log
+  ok    o popular-demonstracao terminou sem erro
+  ok    o modelo foi treinado e entrou em uso
+  ok    o psql do README responde, com os parceiros gerados
+  ok    /api/docs responde
+  ok    /api/redoc responde
+  ok    /api/openapi.json responde
+  ok    a verificação de ponta a ponta passou inteira
+  ok    a persistência passou inteira (derrubar, subir, conferir)
+
+Resultado: 17 de 17 conferências passaram.

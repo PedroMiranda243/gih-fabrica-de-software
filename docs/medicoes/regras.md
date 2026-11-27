@@ -10,7 +10,7 @@ Cada regra de `docs/02-requisitos.md`, parte IV, contra o que o sistema faz: o c
 
 | Item | Valor |
 |---|---|
-| Data | 26/11/2026 00:59 |
+| Data | 27/11/2026 08:32 |
 | Banco | `gih_regras` — **separado do banco de trabalho**, recriado a cada execução |
 | PostgreSQL | PostgreSQL 16.14 on x86_64-pc-linux-musl |
 | Python | 3.11.9 |
