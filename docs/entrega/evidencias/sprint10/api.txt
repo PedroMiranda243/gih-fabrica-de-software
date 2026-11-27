@@ -1,0 +1,7 @@
+A documentação da API no Swagger — o que cada figura mostra
+
+endereço    http://localhost:8000/api/docs
+visão geral Growth Intelligence Hub ·  1.0.0-rc.1 
+rota aberta POST /api/parceiros — Cadastrar um parceiro
+respostas   201, 401, 403, 409, 422, 500
+sessão      sessao (apiKey) · O cookie que POST /api/sessao devolve. O navegador o manda sozinho. · Name: gih_sessao · In: cookie · Value: · Authorize · Close

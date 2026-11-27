@@ -1,0 +1,363 @@
+Estrutura do banco de dados — gerada por scripts/descrever_banco.py
+Lida do catálogo em 27/11/2026 08:32; PostgreSQL 16.14; migração aplicada: 5b2e9d47a1c8
+Extensões: pg_trgm, plpgsql
+
+Resumo
+  20 tabelas de domínio, 20 chaves primárias, 28 chaves estrangeiras, 11 restrições UNIQUE, 25 restrições CHECK, 48 índices, 10 tipos ENUM
+
+acao_comercial  (5 linhas)
+    id                           integer                          NOT NULL
+    nome                         character varying(80)            NOT NULL
+    custo_unitario               numeric(10,2)                    NOT NULL
+    efeito_crescimento           numeric(5,4)                     NOT NULL
+    ativa                        boolean                          NOT NULL
+    efeito_retencao              numeric(5,4)                     NOT NULL
+    CHECK   ck_acao_custo_positivo: CHECK ((custo_unitario > (0)::numeric))
+    CHECK   ck_acao_efeitos_entre_0_e_1: CHECK ((((efeito_crescimento >= (0)::numeric) AND (efeito_crescimento <= (1)::numeric)) AND ((efeito_retencao >= (0)::numeric) AND (efeito_retencao <= (1)::numeric))))
+    PK      acao_comercial_pkey: PRIMARY KEY (id)
+    UNIQUE  acao_comercial_nome_key: UNIQUE (nome)
+    índice  acao_comercial_nome_key: btree (nome)
+    índice  acao_comercial_pkey: btree (id)
+
+auditoria  (540 linhas)
+    id                           integer                          NOT NULL
+    usuario_id                   integer                          nulo
+    acao                         character varying(60)            NOT NULL
+    detalhes                     jsonb                            nulo
+    origem                       character varying(45)            nulo
+    ocorrido_em                  timestamp with time zone         NOT NULL
+    FK      auditoria_usuario_id_fkey: FOREIGN KEY (usuario_id) REFERENCES usuario(id)
+    PK      auditoria_pkey: PRIMARY KEY (id)
+    índice  auditoria_pkey: btree (id)
+    índice  ix_auditoria_acao: btree (acao, ocorrido_em)
+    índice  ix_auditoria_alvo: btree (((detalhes ->> 'alvo'::text)))
+    índice  ix_auditoria_ocorrido_em: btree (ocorrido_em)
+    índice  ix_auditoria_usuario: btree (usuario_id, ocorrido_em)
+
+categoria  (10 linhas)
+    id                           integer                          NOT NULL
+    nome                         character varying(60)            NOT NULL
+    ativa                        boolean                          NOT NULL
+    PK      categoria_pkey: PRIMARY KEY (id)
+    UNIQUE  categoria_nome_key: UNIQUE (nome)
+    índice  categoria_nome_key: btree (nome)
+    índice  categoria_pkey: btree (id)
+
+configuracao_segmentacao  (1 linhas)
+    id                           integer                          NOT NULL
+    top_n                        integer                          NOT NULL
+    periodos_tendencia           integer                          NOT NULL
+    periodos_novato              integer                          NOT NULL
+    atualizado_em                timestamp with time zone         NOT NULL
+    atualizado_por_id            integer                          nulo
+    CHECK   ck_configuracao_linha_unica: CHECK ((id = 1))
+    CHECK   ck_configuracao_novato: CHECK ((periodos_novato >= 1))
+    CHECK   ck_configuracao_tendencia: CHECK ((periodos_tendencia >= 1))
+    CHECK   ck_configuracao_top_n: CHECK ((top_n >= 1))
+    FK      configuracao_segmentacao_atualizado_por_id_fkey: FOREIGN KEY (atualizado_por_id) REFERENCES usuario(id)
+    PK      configuracao_segmentacao_pkey: PRIMARY KEY (id)
+    índice  configuracao_segmentacao_pkey: btree (id)
+
+execucao_benchmark  (0 linhas)
+    id                           integer                          NOT NULL
+    situacao                     situacaoexecucao                 NOT NULL
+    usuario_id                   integer                          nulo
+    parceiros                    integer                          NOT NULL
+    acoes                        integer                          NOT NULL
+    repeticoes                   integer                          NOT NULL
+    semente                      integer                          NOT NULL
+    iniciada_em                  timestamp with time zone         NOT NULL
+    concluida_em                 timestamp with time zone         nulo
+    progresso                    jsonb                            nulo
+    resultados                   jsonb                            nulo
+    ambiente                     jsonb                            nulo
+    disputada                    boolean                          nulo
+    motivo                       text                             nulo
+    CHECK   ck_benchmark_acoes: CHECK (((acoes >= 1) AND (acoes <= 10)))
+    CHECK   ck_benchmark_concluido_tem_resultado: CHECK (((situacao <> 'CONCLUIDA'::situacaoexecucao) OR (resultados IS NOT NULL)))
+    CHECK   ck_benchmark_falha_tem_motivo: CHECK (((situacao <> 'FALHOU'::situacaoexecucao) OR (motivo IS NOT NULL)))
+    CHECK   ck_benchmark_parceiros: CHECK (((parceiros >= 100) AND (parceiros <= 10000)))
+    CHECK   ck_benchmark_repeticoes: CHECK (((repeticoes >= 1) AND (repeticoes <= 10)))
+    FK      execucao_benchmark_usuario_id_fkey: FOREIGN KEY (usuario_id) REFERENCES usuario(id)
+    PK      execucao_benchmark_pkey: PRIMARY KEY (id)
+    índice  execucao_benchmark_pkey: btree (id)
+    índice  uq_benchmark_um_em_andamento: btree (situacao) WHERE (situacao = 'EM_ANDAMENTO'::situacaoexecucao)
+
+execucao_otimizador  (0 linhas)
+    id                           integer                          NOT NULL
+    usuario_id                   integer                          nulo
+    modo                         modoexecucao                     NOT NULL
+    parametros                   jsonb                            NOT NULL
+    viavel                       boolean                          nulo
+    restricao_violada            character varying(120)           nulo
+    uplift_total                 numeric(12,2)                    nulo
+    custo_total                  numeric(12,2)                    nulo
+    tempo_ms                     integer                          nulo
+    iniciada_em                  timestamp with time zone         NOT NULL
+    situacao                     situacaoexecucao                 NOT NULL
+    concluida_em                 timestamp with time zone         nulo
+    periodo_base_id              integer                          NOT NULL
+    modelo_versao                character varying(40)            NOT NULL
+    semente                      integer                          NOT NULL
+    parcial                      boolean                          nulo
+    motivo                       text                             nulo
+    detalhes                     jsonb                            nulo
+    CHECK   ck_execucao_concluida_tem_resultado: CHECK (((situacao <> 'CONCLUIDA'::situacaoexecucao) OR ((viavel IS NOT NULL) AND (tempo_ms IS NOT NULL))))
+    CHECK   ck_execucao_falha_tem_motivo: CHECK (((situacao <> 'FALHOU'::situacaoexecucao) OR (motivo IS NOT NULL)))
+    CHECK   ck_execucao_inviavel_tem_motivo: CHECK (((viavel AND (restricao_violada IS NULL)) OR ((NOT viavel) AND (restricao_violada IS NOT NULL))))
+    FK      execucao_otimizador_usuario_id_fkey: FOREIGN KEY (usuario_id) REFERENCES usuario(id)
+    FK      fk_execucao_otimizador_periodo_base: FOREIGN KEY (periodo_base_id) REFERENCES periodo(id)
+    PK      execucao_otimizador_pkey: PRIMARY KEY (id)
+    índice  execucao_otimizador_pkey: btree (id)
+    índice  uq_execucao_uma_em_andamento: btree (situacao) WHERE (situacao = 'EM_ANDAMENTO'::situacaoexecucao)
+
+historico_segmento  (5689 linhas)
+    id                           integer                          NOT NULL
+    parceiro_id                  integer                          NOT NULL
+    periodo_id                   integer                          NOT NULL
+    segmento                     segmento                         NOT NULL
+    calculado_em                 timestamp with time zone         NOT NULL
+    FK      historico_segmento_parceiro_id_fkey: FOREIGN KEY (parceiro_id) REFERENCES parceiro(id)
+    FK      historico_segmento_periodo_id_fkey: FOREIGN KEY (periodo_id) REFERENCES periodo(id)
+    PK      historico_segmento_pkey: PRIMARY KEY (id)
+    UNIQUE  uq_segmento_parceiro_periodo: UNIQUE (parceiro_id, periodo_id)
+    índice  historico_segmento_pkey: btree (id)
+    índice  ix_segmento_periodo_segmento: btree (periodo_id, segmento)
+    índice  uq_segmento_parceiro_periodo: btree (parceiro_id, periodo_id)
+
+importacao  (12 linhas)
+    id                           integer                          NOT NULL
+    periodo_id                   integer                          NOT NULL
+    usuario_id                   integer                          NOT NULL
+    origem                       origemimportacao                 NOT NULL
+    total_gravado                integer                          NOT NULL
+    total_rejeitado              integer                          NOT NULL
+    enviado_em                   timestamp with time zone         NOT NULL
+    FK      importacao_periodo_id_fkey: FOREIGN KEY (periodo_id) REFERENCES periodo(id)
+    FK      importacao_usuario_id_fkey: FOREIGN KEY (usuario_id) REFERENCES usuario(id)
+    PK      importacao_pkey: PRIMARY KEY (id)
+    índice  importacao_pkey: btree (id)
+
+item_plano  (0 linhas)
+    id                           integer                          NOT NULL
+    plano_id                     integer                          NOT NULL
+    parceiro_id                  integer                          NOT NULL
+    acao_id                      integer                          NOT NULL
+    uplift_esperado              numeric(12,2)                    NOT NULL
+    custo                        numeric(10,2)                    NOT NULL
+    FK      item_plano_acao_id_fkey: FOREIGN KEY (acao_id) REFERENCES acao_comercial(id)
+    FK      item_plano_parceiro_id_fkey: FOREIGN KEY (parceiro_id) REFERENCES parceiro(id)
+    FK      item_plano_plano_id_fkey: FOREIGN KEY (plano_id) REFERENCES plano_campanha(id)
+    PK      item_plano_pkey: PRIMARY KEY (id)
+    UNIQUE  uq_item_plano_parceiro: UNIQUE (plano_id, parceiro_id)
+    índice  item_plano_pkey: btree (id)
+    índice  uq_item_plano_parceiro: btree (plano_id, parceiro_id)
+
+lote_mensagens  (0 linhas)
+    id                           integer                          NOT NULL
+    situacao                     situacaoexecucao                 NOT NULL
+    usuario_id                   integer                          nulo
+    publico                      jsonb                            NOT NULL
+    alvos                        jsonb                            NOT NULL
+    falhas                       jsonb                            NOT NULL
+    modelo                       character varying(60)            nulo
+    iniciado_em                  timestamp with time zone         NOT NULL
+    concluido_em                 timestamp with time zone         nulo
+    motivo                       text                             nulo
+    CHECK   ck_lote_mensagens_falha_tem_motivo: CHECK (((situacao <> 'FALHOU'::situacaoexecucao) OR (motivo IS NOT NULL)))
+    FK      lote_mensagens_usuario_id_fkey: FOREIGN KEY (usuario_id) REFERENCES usuario(id)
+    PK      lote_mensagens_pkey: PRIMARY KEY (id)
+    índice  lote_mensagens_pkey: btree (id)
+    índice  uq_lote_mensagens_um_em_andamento: btree (situacao) WHERE (situacao = 'EM_ANDAMENTO'::situacaoexecucao)
+
+mensagem  (0 linhas)
+    id                           integer                          NOT NULL
+    parceiro_id                  integer                          NOT NULL
+    item_plano_id                integer                          nulo
+    texto_gerado                 text                             NOT NULL
+    texto_final                  text                             nulo
+    estado                       estadomensagem                   NOT NULL
+    decidida_por_id              integer                          nulo
+    motivo_rejeicao              character varying(240)           nulo
+    gerada_em                    timestamp with time zone         NOT NULL
+    decidida_em                  timestamp with time zone         nulo
+    lote_id                      integer                          nulo
+    segmento                     segmento                         nulo
+    fatos                        jsonb                            NOT NULL
+    redator                      redatormensagem                  NOT NULL
+    modelo                       character varying(60)            nulo
+    motivo_redator               text                             nulo
+    CHECK   ck_mensagem_decisao_tem_autor: CHECK ((((estado = 'PENDENTE'::estadomensagem) AND (decidida_por_id IS NULL) AND (decidida_em IS NULL)) OR ((estado <> 'PENDENTE'::estadomensagem) AND (decidida_por_id IS NOT NULL) AND (decidida_em IS NOT NULL))))
+    CHECK   ck_mensagem_redator_explicado: CHECK ((((redator = 'MODELO'::redatormensagem) AND (modelo IS NOT NULL)) OR ((redator = 'MODELO_FIXO'::redatormensagem) AND (motivo_redator IS NOT NULL))))
+    FK      mensagem_decidida_por_id_fkey: FOREIGN KEY (decidida_por_id) REFERENCES usuario(id)
+    FK      mensagem_item_plano_id_fkey: FOREIGN KEY (item_plano_id) REFERENCES item_plano(id)
+    FK      mensagem_lote_id_fkey: FOREIGN KEY (lote_id) REFERENCES lote_mensagens(id)
+    FK      mensagem_parceiro_id_fkey: FOREIGN KEY (parceiro_id) REFERENCES parceiro(id)
+    PK      mensagem_pkey: PRIMARY KEY (id)
+    índice  ix_mensagem_estado: btree (estado)
+    índice  ix_mensagem_lote: btree (lote_id)
+    índice  mensagem_pkey: btree (id)
+
+metrica  (5689 linhas)
+    id                           integer                          NOT NULL
+    parceiro_id                  integer                          NOT NULL
+    periodo_id                   integer                          NOT NULL
+    importacao_id                integer                          NOT NULL
+    faturamento                  numeric(12,2)                    NOT NULL
+    pedidos                      integer                          NOT NULL
+    projecao                     numeric(12,2)                    nulo
+    CHECK   ck_metrica_faturamento_nao_negativo: CHECK ((faturamento >= (0)::numeric))
+    CHECK   ck_metrica_pedidos_nao_negativo: CHECK ((pedidos >= 0))
+    FK      metrica_importacao_id_fkey: FOREIGN KEY (importacao_id) REFERENCES importacao(id)
+    FK      metrica_parceiro_id_fkey: FOREIGN KEY (parceiro_id) REFERENCES parceiro(id)
+    FK      metrica_periodo_id_fkey: FOREIGN KEY (periodo_id) REFERENCES periodo(id)
+    PK      metrica_pkey: PRIMARY KEY (id)
+    UNIQUE  uq_metrica_parceiro_periodo: UNIQUE (parceiro_id, periodo_id)
+    índice  ix_metrica_periodo_faturamento: btree (periodo_id, faturamento)
+    índice  metrica_pkey: btree (id)
+    índice  uq_metrica_parceiro_periodo: btree (parceiro_id, periodo_id)
+
+parceiro  (500 linhas)
+    id                           integer                          NOT NULL
+    nome                         character varying(160)           NOT NULL
+    categoria_id                 integer                          nulo
+    origem_categoria             origemcategoria                  nulo
+    status                       statuscomercial                  NOT NULL
+    contato                      character varying(120)           nulo
+    ativo                        boolean                          NOT NULL
+    criado_em                    timestamp with time zone         NOT NULL
+    nome_normalizado             character varying(160)           NOT NULL
+    CHECK   ck_parceiro_categoria_com_origem: CHECK (((categoria_id IS NULL) = (origem_categoria IS NULL)))
+    FK      parceiro_categoria_id_fkey: FOREIGN KEY (categoria_id) REFERENCES categoria(id)
+    PK      parceiro_pkey: PRIMARY KEY (id)
+    UNIQUE  parceiro_nome_key: UNIQUE (nome)
+    índice  ix_parceiro_nome: btree (nome)
+    índice  ix_parceiro_nome_normalizado_trgm: gin (nome_normalizado gin_trgm_ops)
+    índice  parceiro_nome_key: btree (nome)
+    índice  parceiro_pkey: btree (id)
+
+periodo  (12 linhas)
+    id                           integer                          NOT NULL
+    data_inicio                  date                             NOT NULL
+    data_fim                     date                             NOT NULL
+    CHECK   ck_periodo_ordem: CHECK ((data_fim >= data_inicio))
+    PK      periodo_pkey: PRIMARY KEY (id)
+    UNIQUE  uq_periodo_intervalo: UNIQUE (data_inicio, data_fim)
+    índice  periodo_pkey: btree (id)
+    índice  uq_periodo_intervalo: btree (data_inicio, data_fim)
+
+plano_campanha  (0 linhas)
+    id                           integer                          NOT NULL
+    execucao_id                  integer                          NOT NULL
+    aplicacao_inicio             date                             NOT NULL
+    aplicacao_fim                date                             NOT NULL
+    FK      plano_campanha_execucao_id_fkey: FOREIGN KEY (execucao_id) REFERENCES execucao_otimizador(id)
+    PK      plano_campanha_pkey: PRIMARY KEY (id)
+    UNIQUE  plano_campanha_execucao_id_key: UNIQUE (execucao_id)
+    índice  plano_campanha_execucao_id_key: btree (execucao_id)
+    índice  plano_campanha_pkey: btree (id)
+
+previsao  (469 linhas)
+    id                           integer                          NOT NULL
+    parceiro_id                  integer                          NOT NULL
+    periodo_base_id              integer                          NOT NULL
+    faturamento_previsto         numeric(12,2)                    NOT NULL
+    probabilidade_queda          double precision                 NOT NULL
+    modelo_versao                character varying(40)            NOT NULL
+    gerada_em                    timestamp with time zone         NOT NULL
+    CHECK   ck_previsao_probabilidade: CHECK (((probabilidade_queda >= (0)::double precision) AND (probabilidade_queda <= (1)::double precision)))
+    FK      previsao_parceiro_id_fkey: FOREIGN KEY (parceiro_id) REFERENCES parceiro(id)
+    FK      previsao_periodo_base_id_fkey: FOREIGN KEY (periodo_base_id) REFERENCES periodo(id)
+    PK      previsao_pkey: PRIMARY KEY (id)
+    UNIQUE  uq_previsao_parceiro_periodo_modelo: UNIQUE (parceiro_id, periodo_base_id, modelo_versao)
+    índice  ix_previsao_periodo_versao: btree (periodo_base_id, modelo_versao)
+    índice  previsao_pkey: btree (id)
+    índice  uq_previsao_parceiro_periodo_modelo: btree (parceiro_id, periodo_base_id, modelo_versao)
+
+sessao_acesso  (128 linhas)
+    id                           integer                          NOT NULL
+    token_hash                   character varying(64)            NOT NULL
+    usuario_id                   integer                          NOT NULL
+    criada_em                    timestamp with time zone         NOT NULL
+    expira_em                    timestamp with time zone         NOT NULL
+    revogada_em                  timestamp with time zone         nulo
+    motivo_revogacao             character varying(40)            nulo
+    origem                       character varying(45)            nulo
+    agente                       character varying(255)           nulo
+    FK      sessao_acesso_usuario_id_fkey: FOREIGN KEY (usuario_id) REFERENCES usuario(id)
+    PK      sessao_acesso_pkey: PRIMARY KEY (id)
+    UNIQUE  sessao_acesso_token_hash_key: UNIQUE (token_hash)
+    índice  ix_sessao_acesso_usuario: btree (usuario_id)
+    índice  sessao_acesso_pkey: btree (id)
+    índice  sessao_acesso_token_hash_key: btree (token_hash)
+
+tentativa_login  (135 linhas)
+    id                           integer                          NOT NULL
+    login                        character varying(60)            NOT NULL
+    origem                       character varying(45)            NOT NULL
+    sucesso                      boolean                          NOT NULL
+    ocorrido_em                  timestamp with time zone         NOT NULL
+    PK      tentativa_login_pkey: PRIMARY KEY (id)
+    índice  ix_tentativa_origem_ocorrido: btree (origem, ocorrido_em)
+    índice  tentativa_login_pkey: btree (id)
+
+treino_modelo  (1 linhas)
+    id                           integer                          NOT NULL
+    situacao                     situacaotreino                   NOT NULL
+    usuario_id                   integer                          nulo
+    periodo_base_id              integer                          NOT NULL
+    semente                      integer                          NOT NULL
+    iniciado_em                  timestamp with time zone         NOT NULL
+    concluido_em                 timestamp with time zone         nulo
+    parceiros                    integer                          nulo
+    periodos                     integer                          nulo
+    amostras_treino              integer                          nulo
+    amostras_validacao           integer                          nulo
+    amostras_teste               integer                          nulo
+    mape_modelo                  double precision                 nulo
+    mape_ultimo                  double precision                 nulo
+    mape_media_movel             double precision                 nulo
+    brier_modelo                 double precision                 nulo
+    brier_referencia             double precision                 nulo
+    calibracao_modelo            double precision                 nulo
+    calibracao_referencia        double precision                 nulo
+    detalhes                     jsonb                            nulo
+    promovido                    boolean                          nulo
+    versao_em_uso                character varying(40)            nulo
+    motivo                       text                             nulo
+    pesos                        bytea                            nulo
+    CHECK   ck_treino_concluido_tem_versao: CHECK (((situacao <> 'CONCLUIDO'::situacaotreino) OR ((versao_em_uso IS NOT NULL) AND (promovido IS NOT NULL))))
+    CHECK   ck_treino_falho_tem_motivo: CHECK (((situacao <> 'FALHOU'::situacaotreino) OR (motivo IS NOT NULL)))
+    FK      treino_modelo_periodo_base_id_fkey: FOREIGN KEY (periodo_base_id) REFERENCES periodo(id)
+    FK      treino_modelo_usuario_id_fkey: FOREIGN KEY (usuario_id) REFERENCES usuario(id)
+    PK      treino_modelo_pkey: PRIMARY KEY (id)
+    índice  treino_modelo_pkey: btree (id)
+    índice  uq_treino_um_em_andamento: btree (situacao) WHERE (situacao = 'EM_ANDAMENTO'::situacaotreino)
+
+usuario  (22 linhas)
+    id                           integer                          NOT NULL
+    login                        character varying(60)            NOT NULL
+    nome                         character varying(120)           NOT NULL
+    senha_hash                   character varying(255)           NOT NULL
+    perfil                       perfil                           NOT NULL
+    ativo                        boolean                          NOT NULL
+    parceiro_id                  integer                          nulo
+    criado_em                    timestamp with time zone         NOT NULL
+    CHECK   ck_usuario_parceiro_apenas_perfil_parceiro: CHECK (((perfil = 'PARCEIRO'::perfil) = (parceiro_id IS NOT NULL)))
+    FK      usuario_parceiro_id_fkey: FOREIGN KEY (parceiro_id) REFERENCES parceiro(id)
+    PK      usuario_pkey: PRIMARY KEY (id)
+    UNIQUE  usuario_login_key: UNIQUE (login)
+    índice  usuario_login_key: btree (login)
+    índice  usuario_pkey: btree (id)
+
+Tipos ENUM
+    estadomensagem: PENDENTE, APROVADA, REJEITADA
+    modoexecucao: SERIAL, CPU_PARALELO, GPU
+    origemcategoria: INFERIDA, SUGERIDA_IA, MANUAL
+    origemimportacao: TEXTO, CSV
+    perfil: ADMINISTRADOR, GESTOR, ANALISTA, PARCEIRO
+    redatormensagem: MODELO, MODELO_FIXO
+    segmento: PROSPECCAO, RECEM_CHEGADO, EM_RISCO, TOP, EM_ASCENSAO, ESTAVEL
+    situacaoexecucao: EM_ANDAMENTO, CONCLUIDA, FALHOU
+    situacaotreino: EM_ANDAMENTO, CONCLUIDO, FALHOU
+    statuscomercial: ATIVO, PROSPECCAO, INATIVO

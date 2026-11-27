@@ -1,0 +1,140 @@
+[
+  {
+    "numero": 270,
+    "titulo": "A Parte V já entregue passa a ler o diagrama da previsão congelado (#265)",
+    "mesclado_em": "2026-11-17T02:49-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 271,
+    "titulo": "docs: o banco de dados final, conferido contra o documento e contra as migrações (H108)",
+    "mesclado_em": "2026-11-17T03:01-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 272,
+    "titulo": "fix: a configuração do .env faz o que diz, e a documentação da API não passa pela borda",
+    "mesclado_em": "2026-11-17T03:16-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 273,
+    "titulo": "docs(api): as APIs documentadas — sessão, perfis, parâmetros, respostas, erros e exemplos (H107)",
+    "mesclado_em": "2026-11-17T18:09-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 274,
+    "titulo": "fix(web): \"Nova categoria\" no cadastro do parceiro — a API criava, e nenhuma tela oferecia",
+    "mesclado_em": "2026-11-17T18:27-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 275,
+    "titulo": "docs: o README com os nove itens do enunciado, e o guia de operação à parte (H109)",
+    "mesclado_em": "2026-11-17T19:29-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 285,
+    "titulo": "fix: a revisão da interface final — nove inconsistências, cada uma com o seu teste",
+    "mesclado_em": "2026-11-17T20:38-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 288,
+    "titulo": "fix: o que o ensaio da instalação do zero achou — o ReDoc e o resumo do gerador",
+    "mesclado_em": "2026-11-17T20:58-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 290,
+    "titulo": "fix: cada resposta de erro da API com o exemplo dela, e não o do 403",
+    "mesclado_em": "2026-11-17T22:17-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  }
+]

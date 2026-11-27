@@ -97,6 +97,24 @@ o banco errado.
 A persistência desliga e religa os contêineres, e as validações param o banco por alguns segundos: rode com
 a aplicação livre.
 
+### A instalação do zero
+
+O `scripts/instalar_do_zero.py` faz o que o README manda, num clone novo, e transcreve cada passo: o clone e
+o `.env`, o `docker compose up -d`, a saúde, a senha sorteada no log (que ele usa e **não imprime**), a base
+de demonstração, o `psql`, a documentação da API, e a verificação e a persistência do próprio clone. No fim,
+ele desmonta o ensaio.
+
+```bash
+docker compose stop          # o ensaio usa as portas do README
+api/.venv/Scripts/python scripts/instalar_do_zero.py --ref main
+docker compose up -d
+```
+
+O ensaio é **um projeto à parte do Docker**, `gih-rc`: o volume do sistema principal não é tocado, e o
+`down -v` do fim só roda depois de o script conferir que o Compose fala com o `gih-rc`. Com `--sem-cache`,
+as imagens são construídas de novo, sem o cache do Docker; com `--manter`, o ensaio fica no ar. Ele não
+substitui a validação do README por quem não o escreveu (H72, [`validacao-do-readme.md`](validacao-do-readme.md)).
+
 ## Testes pela tela
 
 Os casos de teste do [`docs/12`](12-plano-de-testes.md) — funcionais, de validação e de navegação —

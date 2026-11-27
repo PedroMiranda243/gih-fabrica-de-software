@@ -1,0 +1,124 @@
+Registro de bugs — gerado das issues com o rótulo `fix`
+Abertas desde 03/10/2026; gerado em 27/11/2026 08:35 por scripts/registrar_bugs.py
+Só as do marco que começa com "Sprint 10 acadêmica"
+
+#265  A Parte V já entregue lia o diagrama do modelo de previsão vivo, e mudaria ao corrigir o docs/08
+    situação:    corrigido em #270
+    apareceu:    A Parte V do documento acumulado, já entregue, desenha o diagrama `mer-previsao` a partir do arquivo vivo de `docs/diagramas/`. Corrigir o modelo de dados e renderizar os diagramas de novo mudaria, sem aviso, uma parte que já foi entregue.
+    causa:       A chamada em `docs/entrega/secoes/sprint05.js` não passa a pasta congelada, ao contrário das Partes II, VI, VII e VIII — o mesmo defeito do #208, num diagrama.
+    correção:    A figura entregue copiada para `docs/entrega/diagramas/parte-v/`, e a Parte V lendo de lá.
+    encontrado:  16/11, no levantamento da Sprint 10, antes de corrigir o `docs/08`: procurando quem lia cada diagrama do modelo de dados.
+
+#266  A duração da sessão no .env não chegava à API no Docker
+    situação:    corrigido em #272
+    apareceu:    O `.env.example` oferece `SESSAO_DURACAO_HORAS`, mas mudar o valor no `.env` não muda nada com o sistema no Docker: a sessão continua de 8 horas.
+    causa:       O serviço `api` do `docker-compose.yml` lista as variáveis que repassa ao contêiner, e essa não está na lista; a API usa o padrão do `config.py`.
+    correção:    A variável repassada pelo Compose, com o mesmo padrão de 8 horas.
+    encontrado:  16/11, no levantamento do README da Sprint 10, conferindo cada variável do `.env.example` contra quem a lê.
+
+#267  Variáveis do .env.example que não fazem nada, e a porta padrão do banco diferente fora do contêiner
+    situação:    corrigido em #272
+    apareceu:    `OTIMIZADOR_MODO` e `API_PORT` estão no `.env.example`, e mudá-las não muda nada: ninguém lê a primeira, e a porta da API está fixa no Compose. E quem roda a API fora do contêiner sem `api/.env` cai na porta 5432, enquanto o banco do Compose está na 5433.
+    causa:       O modo do otimizador passou a ser escolhido por cálculo, na tela, e a variável ficou. A porta publicada foi escrita no Compose sem a variável. O padrão do `config.py` ficou com a porta de antes da mudança para 5433.
+    correção:    `OTIMIZADOR_MODO` sai do `.env.example`; `API_PORT` passa a valer na porta publicada; o padrão do `config.py` passa a ser a 5433.
+    encontrado:  16/11, no levantamento do README da Sprint 10, conferindo cada variável do `.env.example` contra quem a lê.
+
+#268  A documentação interativa da API passava pela borda do acesso remoto
+    situação:    corrigido em #272
+    apareceu:    Pelo acesso remoto, `/api/docs` e `/api/openapi.json` respondem. O `remoto/nginx.conf` diz que a documentação "fica na porta dela, presa à máquina, e não passa por aqui", e o `conferir_acesso_remoto.py` confere `/docs`, que não existe.
+    causa:       A documentação fica em `/api/docs` desde que a API ganhou o prefixo `/api`, e esse caminho cai no `location /api/` da borda.
+    correção:    A borda recusa os caminhos da documentação, como o comentário dizia, e a conferência passa a olhar `/api/docs`, `/api/redoc` e `/api/openapi.json`.
+    encontrado:  16/11, no levantamento da documentação da API para a Sprint 10.
+
+#269  A API cria categoria, e nenhuma tela oferece isso
+    situação:    corrigido em #274
+    apareceu:    `POST /api/categorias` existe e está na matriz de rastreabilidade (RF14), mas nenhuma tela o chama — nem a interface v1, nem a v2. A categoria nova só se cria pela API ou pelo gerador.
+    causa:       O cadastro do parceiro foi feito para escolher entre as categorias que vêm do gerador; a criação ficou só na API.
+    correção:    "Nova categoria" no cadastro do parceiro, ao lado do campo Categoria: cria pela API, já escolhe a criada, e mostra embaixo do campo o nome repetido.
+    encontrado:  26/10, contando as operações da API que a interface chama (78 de 81), e decidido na Sprint 10 (16/11): a interface final precisa ser coerente com as funcionalidades.
+
+#276  Voltar de uma execução, ou da comparação, perde o filtro da lista de Execuções
+    situação:    corrigido em 
+    apareceu:    Na lista de Parceiros e na de Usuários, abrir um item e voltar (pela trilha ou por "Voltar para a lista") devolve a lista **com o filtro** que estava aplicado (CT-N09). Nas Execuções, não: abrir uma execução, ou comparar duas, e voltar pela trilha leva a `/execucoes` sem o filtro — o resultado, o modo, quem calculou e as datas se perdem.
+    causa:       O link da lista de Parceiros e o da de Usuários levam o filtro (`state.busca`) para o detalhe, e a trilha do detalhe volta para ele. O das Execuções, e o botão "Comparar os dois", não levam; a trilha da Execução e a da Comparação apontam sempre para `/execucoes`.
+    correção:    O mesmo padrão das outras listas: o filtro vai para a Execução e para a Comparação, e a trilha volta para a lista filtrada.
+    encontrado:  17/11, na revisão de consistência da interface da Sprint 10 (as 30 telas, nos dois temas, a 768 e 1440 px).
+
+#277  A linha da tabela de Execuções fica partida na coluna Parâmetros
+    situação:    corrigido em 
+    apareceu:    Na tabela das Execuções, o fio que separa as linhas fica partido na coluna **Parâmetros**: ele começa e termina fora do lugar, e deixa um vão até a coluna Modo. Nos dois temas, a 768 e a 1440 px.
+    causa:       A classe `.parametros` (`telas.css`) põe `display: flex` direto na célula `<td>`. Com isso a célula deixa de ser célula de tabela: não acompanha a altura da linha, e a borda dela sai do alinhamento das outras.
+    correção:    A célula continua célula; o arranjo em linha dos parâmetros vai para um elemento dentro dela.
+    encontrado:  17/11, na revisão de consistência da interface da Sprint 10.
+
+#278  Em Mensagens, a partir de 1.180 px, o passo 1 corta os seletores e quebra o seletor de público
+    situação:    corrigido em 
+    apareceu:    Em Mensagens, a partir de 1.180 px de largura, o passo 1 ("Para quem") fica com um terço do bloco: os seletores mostram "Qualquer segm…" e "Qualquer categ…" — não se lê o que está escolhido — e o seletor de público (Segmento e categoria · Plano de campanha · Escolher parceiros) quebra em duas linhas. A prévia do passo 2 (a tabela de quem entra) também cabe num terço. A 768 px, com os passos um embaixo do outro, nada disso acontece.
+    causa:       `.passos__lista` divide o bloco em três colunas iguais a partir de 1.180 px, e o passo 1 precisa de cerca de 510 px só para o seletor de público.
+    correção:    Os três passos um embaixo do outro em toda largura, como já são até 1.179 px.
+    encontrado:  17/11, na revisão de consistência da interface da Sprint 10.
+
+#279  "por pelo terminal" no lacre do Modelo e na Execução
+    situação:    corrigido em 
+    apareceu:    Quando o treino ou o plano foi feito pelo terminal (sem usuário), a tela escreve "por pelo terminal": no lacre do Modelo ("em 02/10/2026 às 21:02 por pelo terminal") e no subtítulo da Execução ("Calculada por pelo terminal"). Já o lacre do plano, no Painel, na Campanha e na Execução, simplesmente não diz quem calculou.
+    causa:       O Modelo passa "pelo terminal" como o nome de quem fez, e o `Lacre` escreve "por" antes do nome. A Execução faz o mesmo no texto. O plano passa o autor vazio, e o lacre omite a assinatura.
+    correção:    O `Lacre` diz "pelo terminal" quando não houve usuário, e a Execução também; o lacre do plano passa a dizer o mesmo.
+    encontrado:  17/11, na revisão de consistência da interface da Sprint 10.
+
+#280  O endereço de origem se parte em duas linhas na Auditoria
+    situação:    corrigido em 
+    apareceu:    Na Auditoria, o endereço de origem se parte em duas linhas no meio do número ("172.19." / "0.1"), em todas as linhas da tabela, nos dois temas.
+    causa:       O `code` do `base.css` tem `overflow-wrap: anywhere`, para o código longo não estourar a caixa; na coluna estreita da Origem, o endereço quebra em qualquer ponto.
+    correção:    Na coluna Origem, o endereço não quebra; a tabela larga já rola dentro da própria caixa.
+    encontrado:  17/11, na revisão de consistência da interface da Sprint 10.
+
+#281  O resumo da Auditoria mostra o código do modo e do perfil, e o dinheiro sem formato
+    situação:    corrigido em 
+    apareceu:    Na coluna "O que aconteceu" da Auditoria (e no CSV dela), o resumo mostra o código interno e o dinheiro sem formato: "execução 62, modo CPU_PARALELO, plano com custo de R$ 7900", "t82457.admin, perfil ADMINISTRADOR", "GET /api/usuarios, perfil GESTOR". No resto do sistema, o mesmo dado se lê "CPU paralelo", "Administrador" e "R$ 7.900,00".
+    causa:       O resumo é montado na API (`servico_auditoria.py`) com o valor gravado como está: o enum do modo e do perfil, e o custo sem passar pelo `app/formato.py`.
+    correção:    O resumo com o rótulo do modo e do perfil, como a tela os chama, e o dinheiro pelo `formato.reais`. O que foi gravado (os detalhes) não muda.
+    encontrado:  17/11, na revisão de consistência da interface da Sprint 10.
+
+#282  O previsto do relatório Parceiros em risco sem a etiqueta Estimativa
+    situação:    corrigido em 
+    apareceu:    No relatório Parceiros em risco, o indicador "Previsto para o próximo período" tem a borda tracejada, mas não a etiqueta "Estimativa". No relatório da Campanha, o "Ganho esperado" tem as duas, e no Painel o "Próximo período" também.
+    causa:       O `Kpi` do previsto recebeu a classe `kpi--estimado` e não recebeu `<Estimativa />` no rótulo.
+    correção:    A etiqueta no rótulo, como no relatório da Campanha. É a regra 2 do sistema visual (`docs/09`): toda previsão leva a etiqueta, no bloco, no indicador e no gráfico — o tracejado sozinho não basta.
+    encontrado:  17/11, na revisão de consistência da interface da Sprint 10.
+
+#283  Em Meu desempenho, só o primeiro indicador tem o selo do período
+    situação:    corrigido em 
+    apareceu:    Em Meu desempenho (o portal do Parceiro), só o primeiro dos três indicadores (Faturamento) tem o selo do período ("21/09 – 27/09"); Pedidos e Ticket médio não têm. No Painel, os seis indicadores levam o selo.
+    causa:       O selo foi passado só ao primeiro `Kpi`.
+    correção:    O selo nos três indicadores.
+    encontrado:  17/11, na revisão de consistência da interface da Sprint 10.
+
+#284  Os textos dos estados vazios fora de um padrão
+    situação:    corrigido em 
+    apareceu:    Os textos dos estados vazios não seguem um padrão: - o atalho para a Campanha se chama "Ir para a Campanha" em quatro telas e "Ir para a campanha" em Mensagens; - a maioria dos títulos de vazio não tem ponto final ("Nenhuma execução ainda"), e alguns têm ("Nenhum benchmark ainda.", "Nenhuma mensagem pendente.", "Nenhuma decisão ainda."); - o recorte filtrado é "nesse recorte" em seis telas e "neste recorte" em três.
+    causa:       Cada tela escreveu o seu.
+    correção:    "Ir para a Campanha" (o nome da tela, como no menu), título de vazio sem ponto, e "nesse recorte".
+    encontrado:  17/11, na revisão de consistência da interface da Sprint 10.
+
+#286  O ReDoc responde em /redoc, e o README e a borda o esperam em /api/redoc
+    situação:    corrigido em 
+    apareceu:    O README dá dois endereços para a documentação da API: `/api/docs` (Swagger) e `/api/redoc` (para leitura). Numa instalação do zero, seguindo o README, o `/api/docs` abre e o `/api/redoc` responde **404**. O ReDoc está em `/redoc`, na raiz.
+    causa:       O `main.py` move o Swagger e o `openapi.json` para debaixo de `/api` (`docs_url`, `openapi_url`), mas não o ReDoc: o `redoc_url` ficou no padrão do FastAPI, `/redoc`. O resto do projeto já o esperava em `/api/redoc` — a borda do acesso remoto o bloqueia ali (#268), e os testes de autorização e de rastreabilidade o listam entre as rotas de documentação.
+    correção:    `redoc_url="/api/redoc"`, e um teste que abre os três endereços do README e confere que a raiz não tem mais o `/redoc`.
+    encontrado:  17/11, no ensaio da instalação do zero da Release Candidate: um clone novo, o `.env.example` copiado e o `docker compose up -d` do README, num projeto à parte (`gih-rc`).
+
+#287  O resumo do popular-demonstracao com dinheiro em formato inglês e "Top 15" escrito
+    situação:    corrigido em 
+    apareceu:    O `popular-demonstracao` — o comando que o README manda rodar para ter dados — termina com um resumo em que o dinheiro sai em formato inglês ("R$ 31,039.82", "R$ 1,839,707.96") e a porcentagem com ponto ("34.5%"), enquanto a linha do modelo, na mesma saída, já sai em português ("9,22%"). E escreve "Concentração do Top 15", com o número fixo no texto.
+    causa:       O `resumo()` de `scripts/gerar_dados_sinteticos.py` formata com `:,.2f` e `:.1f`, o padrão do Python, em vez do `app/formato.py`. E soma os 15 maiores com `LIMIT 15` e chama isso de "Top 15" — o mesmo defeito do #229: o Top é o limiar da segmentação, configurável, e a frase passa a mentir com outro limiar (RN01, CLAUDE.md 2.6).
+    correção:    O dinheiro pelo `formato.reais` e a porcentagem com vírgula; e a frase diz o que mede — "os 15 maiores faturamentos" —, sem chamar de Top.
+    encontrado:  17/11, no ensaio da instalação do zero da Release Candidate, seguindo o README.
+
+#289  O exemplo do 401 no Swagger traz a mensagem do 403
+    situação:    corrigido em 
+    apareceu:    No Swagger (`/api/docs`), toda rota protegida mostra no exemplo da resposta **401** ("sem sessão, ou a sessão terminou") o texto `"Seu perfil não permite esta operação."` — que é o do **403**. A API responde `"Sessão inválida ou expirada."`. O mesmo exemplo aparece no 429 da entrada, que responde "Muitas tentativas…", e no 401 da própria entrada, que responde "Login ou senha inválidos.".
+    causa:       O 401, o 403 e o 429 usam o mesmo esquema, `ErroSimples` (`app/documentacao_api.py`), e o exemplo estava no campo do esquema — um só, o do 403. Cada resposta herdava esse texto.
+    correção:    Cada resposta com o próprio exemplo, com o texto que a API manda; a entrada (`POST /api/sessao`) com o dela. Um teste provoca o 401, o 403 e o 429 de verdade e compara a resposta com o exemplo documentado. O `docs/api/openapi.json` é gerado de novo.
+    encontrado:  17/11, nas capturas do Swagger para a Parte X (a rota `POST /api/parceiros` aberta).
+
+Resultado: 17 defeitos registrados — 17 corrigidos, 0 pendentes.
