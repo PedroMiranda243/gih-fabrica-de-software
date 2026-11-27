@@ -1,7 +1,7 @@
 {
   "name": "gih-interface",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.0-rc.1",
   "type": "module",
   "description": "Interface web do Growth Intelligence Hub (GIH).",
   "scripts": {

@@ -15,11 +15,20 @@ foram abertas as issues registradas nele e, depois do PDF, outras duas que ele
 não tem. Cortar no dia seguinte perderia as duas; cortar no próprio dia
 repetiria as doze.
 
+**Duas entregas no mesmo PDF se separam pelo marco** (`--marco`). A Sprint 09 e a
+Sprint 10 saem juntas, e uma janela por data poria na Parte IX as correções da
+Sprint 10, abertas antes da rodada final dela. O marco da issue diz de qual
+sprint o defeito é, inclusive o que a campanha manual da Sprint 09 abrir depois
+de a Sprint 10 começar.
+
 Precisa do `gh` autenticado. Uso, da raiz do projeto:
 
     python scripts/registrar_bugs.py --desde 2026-09-25 \\
         --anterior docs/entrega/evidencias/sprint05/bugs.json \\
         --saida docs/entrega/evidencias/sprint06
+    python scripts/registrar_bugs.py --desde 2026-10-03 --marco "Sprint 09 acadêmica" \\
+        --anterior docs/entrega/evidencias/sprint08/bugs.json \\
+        --saida docs/entrega/evidencias/sprint09
 """
 from __future__ import annotations
 
@@ -52,7 +61,8 @@ def issues(desde: str) -> list[dict]:
         [
             "gh", "issue", "list", "-R", REPOSITORIO, "--label", "fix", "--state", "all",
             "--limit", "500", "--json",
-            "number,title,state,body,createdAt,closedAt,comments,url,closedByPullRequestsReferences",
+            "number,title,state,body,createdAt,closedAt,comments,url,closedByPullRequestsReferences,"
+            "milestone",
         ],
         capture_output=True, text=True, encoding="utf-8",
     )
@@ -93,10 +103,17 @@ def prs_da_correcao(issue: dict) -> list[int]:
     return []
 
 
-def registro(desde: str, ja_registradas: frozenset[int] = frozenset()) -> list[dict]:
+def do_marco(issue: dict, marco: str | None) -> bool:
+    """Sem marco pedido, toda issue vale; com ele, só a do marco cujo título começa assim."""
+    return marco is None or ((issue.get("milestone") or {}).get("title") or "").startswith(marco)
+
+
+def registro(
+    desde: str, ja_registradas: frozenset[int] = frozenset(), marco: str | None = None
+) -> list[dict]:
     itens = []
     for issue in issues(desde):
-        if issue["number"] in ja_registradas:
+        if issue["number"] in ja_registradas or not do_marco(issue, marco):
             continue
         partes = secoes(issue["body"])
         faltando = {"apareceu", "causa", "correcao", "encontrado"} - partes.keys()
@@ -122,7 +139,9 @@ def _quantos(n: int, um: str, varios: str) -> str:
     return f"{n} {um if n == 1 else varios}"
 
 
-def texto(itens: list[dict], desde: str, anterior: str | None = None) -> str:
+def texto(
+    itens: list[dict], desde: str, anterior: str | None = None, marco: str | None = None
+) -> str:
     corrigidos = [i for i in itens if i["situacao"] == "corrigido"]
     pendentes = [i for i in itens if i["situacao"] == "pendente"]
     linhas = [
@@ -130,6 +149,8 @@ def texto(itens: list[dict], desde: str, anterior: str | None = None) -> str:
         f"Abertas desde {desde[8:10]}/{desde[5:7]}/{desde[:4]}; gerado em "
         f"{datetime.now():%d/%m/%Y %H:%M} por scripts/registrar_bugs.py",
     ]
+    if marco:
+        linhas.append(f"Só as do marco que começa com \"{marco}\"")
     if anterior:
         linhas.append(f"Fora as que o registro da entrega anterior já tem ({anterior})")
     linhas.append("")
@@ -158,6 +179,7 @@ def main() -> None:
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--desde", required=True, help="data de abertura mínima, AAAA-MM-DD")
     p.add_argument("--anterior", help="o bugs.json da entrega anterior: as issues dele ficam de fora")
+    p.add_argument("--marco", help='só as issues do marco cujo título começa assim ("Sprint 09")')
     p.add_argument("--saida", required=True, help="pasta das evidências da entrega")
     a = p.parse_args()
 
@@ -165,13 +187,13 @@ def main() -> None:
     if a.anterior:
         anterior = json.loads((RAIZ / a.anterior).read_text(encoding="utf-8"))
         ja_registradas = frozenset(item["numero"] for item in anterior)
-    itens = registro(a.desde, ja_registradas)
+    itens = registro(a.desde, ja_registradas, a.marco)
     destino = RAIZ / a.saida
     destino.mkdir(parents=True, exist_ok=True)
     (destino / "bugs.json").write_text(
         json.dumps(itens, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
-    registro_em_texto = texto(itens, a.desde, a.anterior)
+    registro_em_texto = texto(itens, a.desde, a.anterior, a.marco)
     (destino / "bugs.txt").write_text(registro_em_texto, encoding="utf-8")
     print(registro_em_texto.splitlines()[-1])
 

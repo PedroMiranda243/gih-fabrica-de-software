@@ -1,0 +1,111 @@
+[
+  {
+    "numero": 240,
+    "titulo": "Acesso remoto ao sistema por rede privada, e não por link público — o perfil remoto do Compose, o RNF30 e a ADR-014 (H102)",
+    "mesclado_em": "2026-10-22T14:09-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 242,
+    "titulo": "A interface Etiqueta e Lacre como front oficial, com a suíte de testes refeita, o sistema visual 2.0 e a ADR-015 (H103)",
+    "mesclado_em": "2026-10-26T04:34-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 257,
+    "titulo": "As ferramentas da entrega e o modelo de defeito prontos para a Sprint 09",
+    "mesclado_em": "2026-10-26T06:00-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 258,
+    "titulo": "O plano de testes e os 77 casos executados pela tela, no navegador de verdade (H104, H105)",
+    "mesclado_em": "2026-10-26T22:35-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 259,
+    "titulo": "A documentação técnica alinhada ao sistema de hoje: requisitos, casos de uso, backlog, cronograma, arquitetura, classes e README (H106)",
+    "mesclado_em": "2026-10-26T22:51-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ThiagojFalcao",
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 292,
+    "titulo": "fix: dois casos do executor conferiam antes de a tela terminar de trocar",
+    "mesclado_em": "2026-11-25T18:59-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  },
+  {
+    "numero": 297,
+    "titulo": "fix: os quatro defeitos da campanha manual da Sprint 09",
+    "mesclado_em": "2026-11-26T00:31-03:00",
+    "autor": "PedroMiranda243",
+    "mesclado_por": "PedroMiranda243",
+    "convidados": [
+      "ingrydaraujob",
+      "joaopfranca04",
+      "mihaeldatoman"
+    ],
+    "revisoes": [],
+    "aprovado": false,
+    "comentarios_de_colegas": 0
+  }
+]

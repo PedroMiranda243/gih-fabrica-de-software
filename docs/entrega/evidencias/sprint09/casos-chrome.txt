@@ -1,0 +1,101 @@
+Casos de teste pela tela — gerado por scripts/testar_na_tela.py
+Executado em 26/11/2026 00:42, contra http://localhost:5173, no Google Chrome 158.0.8127.38
+Catálogo: docs/12-plano-de-testes.md (78 casos; 16 executados)
+
+CT-N01  Menus e permissões · RF05 · Administrador
+    passos:    Clicar, um por um, em todos os itens do menu
+    esperado:  Cada item abre a sua tela, com título, sem "Sem acesso" nem "Página não encontrada"
+    obtido:    9 itens, todos abriram a tela com título: Painel → /, Importação → /importacao, Modelo → /modelo, Execuções → /execucoes, Benchmark → /benchmark, Usuários → /usuarios, Auditoria → /auditoria, Operações → /relatorios/operacoes, Configuração → /configuracao
+    situação:  ok (2 s)  — captura CT-N01.png
+
+CT-N02  Menus e permissões · RF05 · Gestor
+    passos:    Clicar, um por um, em todos os itens do menu
+    esperado:  Cada item abre a sua tela, com título, sem "Sem acesso" nem "Página não encontrada"
+    obtido:    11 itens, todos abriram a tela com título: Painel → /, Importação → /importacao, Parceiros → /parceiros, Assistente → /assistente, Relatórios → /relatorios, Modelo → /modelo, Campanha → /campanha, Execuções → /execucoes, Benchmark → /benchmark, Mensagens → /mensagens, Aprovação → /aprovacao
+    situação:  ok (2 s)  — captura CT-N02.png
+
+CT-N03  Menus e permissões · RF05 · Analista
+    passos:    Clicar, um por um, em todos os itens do menu
+    esperado:  Cada item abre a sua tela, com título, sem "Sem acesso" nem "Página não encontrada"
+    obtido:    9 itens, todos abriram a tela com título: Painel → /, Importação → /importacao, Parceiros → /parceiros, Assistente → /assistente, Relatórios → /relatorios, Campanha → /campanha, Execuções → /execucoes, Mensagens → /mensagens, Aprovação → /aprovacao
+    situação:  ok (2 s)  — captura CT-N03.png
+
+CT-N04  Menus e permissões · RF26 · Parceiro
+    passos:    Entrar e abrir `/`
+    esperado:  Vai para "Meu desempenho"; o menu tem só esse item
+    obtido:    / levou a /meu-desempenho; o menu tem só ['Meu desempenho']
+    situação:  ok (2 s)  — captura CT-N04.png
+
+CT-N05  Menus e permissões · RF05, RNF14 · Analista
+    passos:    Abrir `/modelo` pelo endereço
+    esperado:  "O seu perfil não abre esta tela", com o perfil e o endereço, sem chamar a API do modelo
+    obtido:    'O seu perfil não abre esta tela O perfil Analista não tem acesso a /modelo. As telas que você abre estão no menu. Se precisar desta, fale com o administrador do sistema. Ir para o início' — nenhuma chamada a /api/modelo
+    situação:  ok (1 s)  — captura CT-N05.png
+
+CT-N06  Redirecionamentos · RF01 · Gestor
+    passos:    Sem sessão, abrir `/parceiros?segmento=TOP`; depois, entrar
+    esperado:  Vai para a entrada e, depois de entrar, volta ao endereço pedido, com o filtro
+    obtido:    sem sessão, /parceiros?segmento=TOP levou à entrada; depois de entrar, voltou a /parceiros?segmento=TOP
+    situação:  ok (2 s)  — captura CT-N06.png
+
+CT-N07  Redirecionamentos · — · Gestor
+    passos:    Abrir um endereço que não existe e clicar em "Ir para o início"
+    esperado:  "Página não encontrada", com o endereço pedido; o link leva ao Painel
+    obtido:    'Página não encontrada Não existe tela em /relatorio-que-nao-existe. O endereço pode ter sido digitado errado, ou o link está incompleto. Ir para o início'; 'Ir para o início' levou ao 'Painel'
+    situação:  ok (1 s)  — captura CT-N07.png
+
+CT-N13  Redirecionamentos · RF02 · Gestor
+    passos:    Com a sessão encerrada no servidor, clicar num item do menu; depois, entrar de novo
+    esperado:  A tela diz que a sessão terminou; ao entrar, volta para onde a pessoa ia
+    obtido:    'A sua sessão terminou. Entre de novo para continuar de onde parou.'; ao entrar de novo, voltou a /execucoes
+    situação:  ok (3 s)  — captura CT-N13.png
+
+CT-N08  Links entre telas · RF17, RF23 · Gestor
+    passos:    No Painel, clicar num segmento da distribuição
+    esperado:  Abre a lista de parceiros filtrada por aquele segmento
+    obtido:    'Estável 272 parceiros — ver na lista' levou a /parceiros?segmento=ESTAVEL, com o segmento escolhido no filtro
+    situação:  ok (2 s)  — captura CT-N08.png
+
+CT-N09  Links entre telas · RF23 · Gestor
+    passos:    Na lista filtrada, abrir um parceiro e clicar em "Voltar para a lista"
+    esperado:  Abre o cadastro dele; a volta mantém o filtro
+    obtido:    'Casa Caseiro 2' abriu o cadastro dele; 'Voltar para a lista' voltou a /parceiros?segmento=TOP, com o filtro
+    situação:  ok (2 s)  — captura CT-N09.png
+
+CT-N10  Links entre telas · RF36 · Gestor
+    passos:    Na execução de um plano, clicar em "Gerar mensagens para este plano"
+    esperado:  Abre Mensagens com o plano e a prévia do público já carregada
+    obtido:    da execução 88, 'Gerar mensagens para este plano' abriu /mensagens?plano=88 com a prévia do público já carregada
+    situação:  ok (6 s)  — captura CT-N10.png
+
+CT-N16  Links entre telas · RNF20 · Gestor
+    passos:    No cadastro de um parceiro, ler "Onde você está" e clicar no link de volta
+    esperado:  O cabeçalho diz a área (Análise); o link volta à tela de antes
+    obtido:    o cabeçalho diz 'Área: Análise Parceiros'; 'Voltar para a lista' levou a /parceiros
+    situação:  ok (2 s)  — captura CT-N16.png
+
+CT-N11  Continuidade dos fluxos · RNF20 · Gestor
+    passos:    Ir do Painel a Parceiros e a Relatórios pelo menu; voltar duas vezes e avançar uma pelo navegador
+    esperado:  Voltar e avançar passam pelas mesmas telas, na ordem
+    obtido:    voltar → /parceiros ('Parceiros'); voltar → / ('Painel'); avançar → /parceiros ('Parceiros')
+    situação:  ok (2 s)  — captura CT-N11.png
+
+CT-N12  Continuidade dos fluxos · RNF20 · Gestor
+    passos:    Alterar um campo do cadastro e clicar num item do menu; escolher "Continuar editando", e depois "Sair sem salvar"
+    esperado:  O aviso de alterações não salvas aparece; continuar mantém o texto; sair navega
+    obtido:    'Há alterações que não foram salvas. Sair desta tela agora descarta o que você mudou. Sair sem salvar Continuar editando'; 'Continuar editando' manteve o texto; 'Sair sem salvar' foi ao painel
+    situação:  ok (4 s)  — captura CT-N12.png
+
+CT-N14  Continuidade dos fluxos · RNF20 · Gestor
+    passos:    Apertar Tab ao abrir uma tela, e Enter; trocar de tela pelo menu
+    esperado:  O primeiro Tab é "Pular para o conteúdo"; ao trocar de tela, o foco vai ao título
+    obtido:    o primeiro Tab é 'Pular para o conteúdo', e Enter leva a #conteudo; ao trocar de tela, o foco vai ao título (H1:Parceiros)
+    situação:  ok (2 s)  — captura CT-N14.png
+
+CT-N15  Continuidade dos fluxos · RNF21 · Gestor
+    passos:    A 768 px de largura, abrir o menu pelo botão e escolher Parceiros
+    esperado:  O menu começa fechado, abre pelo botão, navega e fecha; a página não rola na horizontal
+    obtido:    a 768 px o menu começa fora da tela; 'Abrir o menu' o mostra, e escolher Parceiros navega e o fecha; a página tem 768 px, sem rolar na horizontal
+    situação:  ok (2 s)  — captura CT-N15.png
+
+Resultado: 16 de 16 casos como esperado.
